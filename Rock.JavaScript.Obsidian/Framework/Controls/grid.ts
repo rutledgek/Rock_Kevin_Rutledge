@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 //
-import { defineComponent, PropType } from "vue";
+import { computed, defineComponent, PropType } from "vue";
 import JavaScriptAnchor from "./javaScriptAnchor";
 
 export type FilterOptions = {
@@ -53,9 +53,11 @@ export function getRowId (rowData: RowData, rowIdKey: string): RowId {
 
 export default defineComponent({
     name: "Grid",
+
     components: {
         JavaScriptAnchor
     },
+
     props: {
         gridData: {
             type: Array as PropType<RowData[]>,
@@ -86,46 +88,46 @@ export default defineComponent({
             default: 0
         }
     },
-    data () {
-        return {
-            gridContext: {
-                selectedRowIds: {},
-                selectAllRows: false,
-                sortProperty: this.sortProperty
-            } as GridContext
+
+    setup(props) {
+        const gridContext: GridContext = {
+            selectedRowIds: {},
+            selectAllRows: false,
+            sortProperty: props.sortProperty
         };
-    },
-    computed: {
-        /** The number of rows in the dataset */
-        rowCount (): number {
-            if (this.rowCountOverride) {
-                return this.rowCountOverride;
-            }
 
-            return this.gridData.length;
-        },
+        const rowCount = computed((): number => {
+            return props.rowCountOverride || props.gridData.length;
+        });
 
-        /** How many pages are needed to display all of the rows */
-        pageCount (): number {
-            return Math.ceil(this.rowCount / this.pageSize);
-        },
+        const pageCount = computed((): number => {
+            return Math.ceil(rowCount.value / props.pageSize);
+        });
 
-        currentPageSet (): number[] {
+        const currentPageSet = computed((): number[] => {
             const pagesPerSet = 10;
-            const firstNumber = Math.floor(this.currentPageIndex / pagesPerSet) * pagesPerSet + 1;
+            const firstNumber = Math.floor(props.currentPageIndex / pagesPerSet) * pagesPerSet + 1;
             const set: number[] = [];
 
             for (let i = 0; i < pagesPerSet; i++) {
                 const pageIndex = firstNumber + i;
 
-                if (pageIndex <= this.pageCount) {
+                if (pageIndex <= pageCount.value) {
                     set.push(pageIndex);
                 }
             }
 
             return set;
-        }
+        });
+
+        return {
+            gridContext,
+            rowCount,
+            pageCount,
+            currentPageSet
+        };
     },
+
     watch: {
         gridData () {
             this.gridContext.selectedRowIds = {};
