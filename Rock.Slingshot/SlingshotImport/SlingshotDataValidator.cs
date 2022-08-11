@@ -1,4 +1,20 @@
-﻿using System.Collections.Generic;
+﻿// <copyright>
+// Copyright by the Spark Development Network
+//
+// Licensed under the Rock Community License (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.rockrms.com/license
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// </copyright>
+//
+using System.Collections.Generic;
 using Rock.Model;
 using Rock.Web.Cache;
 
@@ -10,32 +26,38 @@ namespace Rock.Slingshot
     class SlingshotDataValidator
     {
 
-        private Dictionary<int, string> campusIdToNameMapper = new Dictionary<int, string>();
+        private readonly Dictionary<int, string> campusIdToNameMapper = new Dictionary<int, string>();
 
-        internal void ValidatePerson( SlingshotCore.Model.Person person )
+        internal bool ValidatePerson( SlingshotCore.Model.Person person, out string errorMessage )
         {
             if ( person.Id == 0 )
             {
-                throw new UploadedPersonCSVInvalidException( $"Id Missing" );
+                errorMessage = $"Id Missing";
+                return false;
             }
 
             if ( person.FamilyId == 0 )
             {
-                throw new UploadedPersonCSVInvalidException( $"Family Id Missing" );
+                errorMessage = $"Family Id Missing";
+                return false;
             }
+            errorMessage = string.Empty;
+            return true;
         }
 
-        internal void ValidateCampus( SlingshotCore.Model.Person person )
+        internal bool ValidateCampus( SlingshotCore.Model.Person person, out string errorMessage )
         {
+            errorMessage = string.Empty;
             bool isCampusEmpty = person.Campus.CampusId == 0 && person.Campus.CampusName.IsNullOrWhiteSpace();
             if ( isCampusEmpty )
             {
-                return;
+                return true;
             }
 
             if ( person.Campus.CampusId == 0 || person.Campus.CampusName.IsNullOrWhiteSpace() )
             {
-                throw new UploadedPersonCSVInvalidException( $"Campus Data Incomplete: Please enter the value for both the Campus Id and the Campus Name " );
+                errorMessage = $"Campus Data Incomplete: Please enter the value for both the Campus Id and the Campus Name ";
+                return false;
             }
 
             // ensure campus id is unique to a campus
@@ -43,16 +65,19 @@ namespace Rock.Slingshot
             bool isCampusNameConsistent = existingCampusName == null || person.Campus.CampusName == existingCampusName;
             if ( !isCampusNameConsistent )
             {
-                throw new UploadedPersonCSVInvalidException( $"Campus Name Inconsistent: Campus ID: {person.Campus.CampusId} is assigned to multiple campuses." );
+                errorMessage = $"Campus Name Inconsistent: Campus ID: {person.Campus.CampusId} is assigned to multiple campuses.";
+                return false;
             }
             if ( existingCampusName == null )
             {
                 campusIdToNameMapper.Add( person.Campus.CampusId, person.Campus.CampusName );
             }
+            return true;
         }
 
-        internal void ValidateAddress( SlingshotCore.Model.PersonAddress personAddress )
+        internal bool ValidateAddress( SlingshotCore.Model.PersonAddress personAddress, out string addressInvalidErrorMessage )
         {
+            addressInvalidErrorMessage = string.Empty;
             bool isAddressBlank = personAddress.Street1.IsNullOrWhiteSpace()
                             && personAddress.Street2.IsNullOrWhiteSpace()
                             && personAddress.City.IsNullOrWhiteSpace()
@@ -62,8 +87,15 @@ namespace Rock.Slingshot
 
             if ( isAddressBlank )
             {
-                return;
+                return true;
             }
+            // default the country to the Organization Country if not present
+            if ( personAddress.Country.IsNullOrWhiteSpace() )
+            {
+                personAddress.Country = GlobalAttributesCache.Get().OrganizationCountry;
+            }
+
+
             Location location = new Location
             {
                 Street1 = personAddress.Street1,
@@ -73,16 +105,30 @@ namespace Rock.Slingshot
                 PostalCode = personAddress.PostalCode,
                 Country = personAddress.Country
             };
-            if ( location.Country.IsNullOrWhiteSpace() )
-            {
-                location.Country = GlobalAttributesCache.Get().OrganizationCountry;
-            }
-            bool isAddressValid = LocationService.ValidateAddressRequirements( location, out object errorMessage );
+
+            bool isAddressValid = LocationService.ValidateLocationAddressRequirements( location, out string errorMessage );
 
             if ( !isAddressValid )
             {
-                throw new UploadedPersonCSVInvalidException( $"{errorMessage} in Address: {location}" );
+                addressInvalidErrorMessage = $"{errorMessage} in Address: {location}";
             }
+            return isAddressValid;
+        }
+
+        internal bool ValidatePhoneNumber( SlingshotCore.Model.PersonPhone personPhone, out string errorMessage )
+        {
+            errorMessage = string.Empty;
+            if ( string.IsNullOrEmpty( personPhone.PhoneNumber ) )
+            {
+                errorMessage = $"{personPhone.PhoneType} : The Phone Number is Empty";
+                return false;
+            }
+            bool isPhoneNumberValid = !string.IsNullOrEmpty( PhoneNumber.CleanNumber( personPhone.PhoneNumber ) );
+            if ( !isPhoneNumberValid )
+            {
+                errorMessage = $"{personPhone.PhoneType} : The phone number {personPhone.PhoneNumber} is not valid";
+            }
+            return isPhoneNumberValid;
         }
     }
 }

@@ -30,19 +30,26 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
+    <Content Include="build\.eslintrc.js" />
+    <Content Include="build\build-fast.js" />
     <Content Include="package.json" />
     <Content Include="rollup.config.js" />
     <Content Include="tsconfig.json" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="build\" />
     <Folder Include="src\" />
     <Folder Include="src\Cms\" />
-    <Folder Include="src\Cms\ContentLibraryDetail\" />
-    <Folder Include="src\Cms\ContentLibraryView\" />
+    <Folder Include="src\Cms\ContentCollectionDetail\" />
+    <Folder Include="src\Cms\ContentCollectionView\" />
     <Folder Include="src\Cms\MediaAccountDetail\" />
+    <Folder Include="src\Cms\MediaFolderDetail\" />
+    <Folder Include="src\Cms\PersistedDatasetDetail\" />
+    <Folder Include="src\Cms\PersonalLinkSectionDetail\" />
     <Folder Include="src\Core\" />
     <Folder Include="src\Core\CampusDetail\" />
     <Folder Include="src\Crm\" />
+    <Folder Include="src\Crm\AssessmentTypeDetail\" />
     <Folder Include="src\Crm\PersonDetail\" />
     <Folder Include="src\Engagement\" />
     <Folder Include="src\Engagement\Steps\" />
@@ -61,29 +68,47 @@
     <Folder Include="src\WorkFlow\FormBuilder\Shared\" />
   </ItemGroup>
   <ItemGroup>
-    <TypeScriptCompile Include="src\Cms\contentLibraryDetail.ts" />
-    <TypeScriptCompile Include="src\Cms\ContentLibraryDetail\attributeSearchFilter.partial.ts" />
-    <TypeScriptCompile Include="src\Cms\ContentLibraryDetail\contentSources.partial.ts" />
-    <TypeScriptCompile Include="src\Cms\ContentLibraryDetail\editPanel.partial.ts" />
-    <TypeScriptCompile Include="src\Cms\ContentLibraryDetail\searchFilter.partial.ts" />
-    <TypeScriptCompile Include="src\Cms\ContentLibraryDetail\searchFilters.partial.ts" />
-    <TypeScriptCompile Include="src\Cms\ContentLibraryDetail\source.partial.ts" />
-    <TypeScriptCompile Include="src\Cms\ContentLibraryDetail\types.d.ts" />
-    <TypeScriptCompile Include="src\Cms\ContentLibraryDetail\viewPanel.partial.ts" />
-    <TypeScriptCompile Include="src\Cms\contentLibraryView.ts" />
-    <TypeScriptCompile Include="src\Cms\contentLibraryViewCustomSettings.ts" />
-    <TypeScriptCompile Include="src\Cms\ContentLibraryView\filterGrid.partial.ts" />
-    <TypeScriptCompile Include="src\Cms\ContentLibraryView\filtersContainer.partial.ts" />
-    <TypeScriptCompile Include="src\Cms\ContentLibraryView\types.d.ts" />
+    <TypeScriptCompile Include="src\Cms\contentCollectionDetail.ts" />
+    <TypeScriptCompile Include="src\Cms\ContentCollectionDetail\attributeSearchFilter.partial.ts" />
+    <TypeScriptCompile Include="src\Cms\ContentCollectionDetail\contentSources.partial.ts" />
+    <TypeScriptCompile Include="src\Cms\ContentCollectionDetail\editPanel.partial.ts" />
+    <TypeScriptCompile Include="src\Cms\ContentCollectionDetail\searchFilter.partial.ts" />
+    <TypeScriptCompile Include="src\Cms\ContentCollectionDetail\searchFilters.partial.ts" />
+    <TypeScriptCompile Include="src\Cms\ContentCollectionDetail\source.partial.ts" />
+    <TypeScriptCompile Include="src\Cms\ContentCollectionDetail\types.d.ts" />
+    <TypeScriptCompile Include="src\Cms\ContentCollectionDetail\viewPanel.partial.ts" />
+    <TypeScriptCompile Include="src\Cms\contentCollectionView.ts" />
+    <TypeScriptCompile Include="src\Cms\contentCollectionViewCustomSettings.ts" />
+    <TypeScriptCompile Include="src\Cms\ContentCollectionView\filterGrid.partial.ts" />
+    <TypeScriptCompile Include="src\Cms\ContentCollectionView\filtersContainer.partial.ts" />
+    <TypeScriptCompile Include="src\Cms\ContentCollectionView\types.d.ts" />
     <TypeScriptCompile Include="src\Cms\mediaAccountDetail.ts" />
     <TypeScriptCompile Include="src\Cms\MediaAccountDetail\editPanel.partial.ts" />
     <TypeScriptCompile Include="src\Cms\MediaAccountDetail\types.d.ts" />
     <TypeScriptCompile Include="src\Cms\MediaAccountDetail\viewPanel.partial.ts" />
+    <TypeScriptCompile Include="src\Cms\mediaFolderDetail.ts" />
+    <TypeScriptCompile Include="src\Cms\MediaFolderDetail\editPanel.partial.ts" />
+    <TypeScriptCompile Include="src\Cms\MediaFolderDetail\types.d.ts" />
+    <TypeScriptCompile Include="src\Cms\MediaFolderDetail\viewPanel.partial.ts" />
+    <TypeScriptCompile Include="src\Cms\persistedDatasetDetail.ts" />
+    <TypeScriptCompile Include="src\Cms\PersistedDatasetDetail\editPanel.partial.ts" />
+    <TypeScriptCompile Include="src\Cms\PersistedDatasetDetail\types.d.ts" />
+    <TypeScriptCompile Include="src\Cms\PersistedDatasetDetail\viewPanel.partial.ts" />
+    <TypeScriptCompile Include="src\Cms\personalLinkSectionDetail.ts" />
+    <TypeScriptCompile Include="src\Cms\PersonalLinkSectionDetail\editPanel.partial.ts" />
+    <TypeScriptCompile Include="src\Cms\PersonalLinkSectionDetail\types.d.ts" />
+    <TypeScriptCompile Include="src\Cms\PersonalLinkSectionDetail\viewPanel.partial.ts" />
     <TypeScriptCompile Include="src\Core\attributes.ts" />
     <TypeScriptCompile Include="src\Core\campusDetail.ts" />
     <TypeScriptCompile Include="src\Core\CampusDetail\editPanel.partial.ts" />
     <TypeScriptCompile Include="src\Core\CampusDetail\types.d.ts" />
     <TypeScriptCompile Include="src\Core\CampusDetail\viewPanel.partial.ts" />
+    <TypeScriptCompile Include="src\Crm\attributeValues.ts" />
+    <TypeScriptCompile Include="src\Crm\PersonDetail\badges.ts" />
+    <TypeScriptCompile Include="src\Crm\assessmentTypeDetail.ts" />
+    <TypeScriptCompile Include="src\Crm\AssessmentTypeDetail\editPanel.partial.ts" />
+    <TypeScriptCompile Include="src\Crm\AssessmentTypeDetail\types.d.ts" />
+    <TypeScriptCompile Include="src\Crm\AssessmentTypeDetail\viewPanel.partial.ts" />
     <TypeScriptCompile Include="src\Crm\attributeValues.ts" />
     <TypeScriptCompile Include="src\Crm\PersonDetail\badges.ts" />
     <TypeScriptCompile Include="src\Engagement\Steps\stepFlow.ts" />
@@ -149,6 +174,6 @@
     <Touch Files="node_modules/.install-stamp" AlwaysCreate="true" />
   </Target>
   <Target Name="AfterCompile">
-    <Exec Condition="'$(EnableTypeScript)' == 'true'" Command="npm run build" EnvironmentVariables="CONFIGURATION=$(Configuration)" />
+    <Exec Condition="'$(EnableTypeScript)' == 'true'" Command="npm run build-fast" EnvironmentVariables="CONFIGURATION=$(Configuration)" />
   </Target>
 </Project>
