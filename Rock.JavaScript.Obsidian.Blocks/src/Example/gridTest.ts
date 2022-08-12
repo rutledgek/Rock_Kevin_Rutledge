@@ -1,4 +1,4 @@
-﻿// <copyright>
+// <copyright>
 // Copyright by the Spark Development Network
 //
 // Licensed under the Rock Community License (the "License");
@@ -14,34 +14,27 @@
 // limitations under the License.
 // </copyright>
 //
-import { defineComponent, PropType } from "vue";
-import { RowContext } from "./grid";
+
+import { useConfigurationValues } from "@Obsidian/Utility/block";
+import { defineComponent } from "vue";
+import Grid from "./GridTest/grid.partial";
 
 export default defineComponent({
-    name: "GridRow",
-    props: {
-        rowContext: {
-            type: Object as PropType<RowContext>,
-            required: true
-        }
+    name: "Example.GridTest",
+
+    components: {
+        Grid
     },
-    provide () {
+
+    setup() {
+        const configuration = useConfigurationValues<{ rows: Record<string, unknown>[] }>();
+
         return {
-            rowContext: this.rowContext
+            rows: configuration.rows
         };
     },
-    methods: {
-        onRowClick () {
-            if (!this.rowContext.isHeader) {
-                this.$emit("click:body", this.rowContext);
-            }
-            else {
-                this.$emit("click:header", this.rowContext);
-            }
-        }
-    },
+
     template: `
-<tr @click="onRowClick">
-    <slot />
-</tr>`
+<Grid :rows="rows" />
+`
 });
