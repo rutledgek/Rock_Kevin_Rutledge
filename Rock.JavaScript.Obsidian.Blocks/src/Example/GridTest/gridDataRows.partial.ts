@@ -16,14 +16,14 @@
 //
 
 import { defineComponent, PropType } from "vue";
-import GridDataCell from "./gridDataCell.partial";
+import GridDataRow from "./gridDataRow.partial";
 import { GridColumnDefinition } from "./types";
 
 export default defineComponent({
-    name: "GridDataRow",
+    name: "GridDataRows",
 
     components: {
-        GridDataCell
+        GridDataRow
     },
 
     props: {
@@ -32,9 +32,9 @@ export default defineComponent({
             default: []
         },
 
-        data: {
-            type: Object as PropType<Record<string, unknown>>,
-            required: true
+        rows: {
+            type: Array as PropType<Record<string, unknown>[]>,
+            default: []
         }
     },
 
@@ -44,8 +44,6 @@ export default defineComponent({
     },
 
     template: `
-<tr>
-    <GridDataCell v-for="column in columns" :column="column" :data="data[column.name]" />
-</tr>
+<GridDataRow v-for="row in rows" :columns="columns" :data="row" />
 `
 });

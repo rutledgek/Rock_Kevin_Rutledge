@@ -15,9 +15,11 @@
 // </copyright>
 //
 
-import { useConfigurationValues } from "@Obsidian/Utility/block";
+import { useConfigurationValues, useInvokeBlockAction } from "@Obsidian/Utility/block";
+import { escapeHtml } from "@Obsidian/Utility/stringUtils";
 import { defineComponent } from "vue";
 import Grid from "./GridTest/grid.partial";
+import { GridData } from "./GridTest/types";
 
 export default defineComponent({
     name: "Example.GridTest",
@@ -27,14 +29,65 @@ export default defineComponent({
     },
 
     setup() {
-        const configuration = useConfigurationValues<{ rows: Record<string, unknown>[] }>();
+        const configuration = useConfigurationValues();
+        const invokeBlockAction = useInvokeBlockAction();
+
+        const loadGridData = async (): Promise<GridData> => {
+            const result = await invokeBlockAction<GridData>("GetGridData");
+
+            if (result.isSuccess && result.data) {
+                return {
+                    columns: [
+                        {
+                            name: "name",
+                            title: "Name"
+                        },
+                        {
+                            name: "description"
+                        },
+                        {
+                            name: "attr_Group1",
+                            title: "Group 1",
+                            format: (value: unknown) => {
+                                if (typeof value === "object") {
+                                    const linkValue = value as { guid: string, text: string };
+                                    return `<a href="/Group/${linkValue.guid}">${escapeHtml(linkValue.text)}</a>`;
+                                }
+
+                                return "";
+                            },
+                            quickFilter: (needle, haystack) => {
+                                if (typeof haystack === "object") {
+                                    const linkValue = haystack as { guid: string, text: string };
+                                    return linkValue.text.toLowerCase().includes(needle);
+                                }
+
+                                return false;
+                            },
+                            filter: (needle, haystack) => {
+                                if (typeof needle === "string" && typeof haystack === "object") {
+                                    const linkValue = haystack as { guid: string, text: string };
+                                    return linkValue.text.toLowerCase().includes(needle.toLowerCase());
+                                }
+
+                                return false;
+                            }
+                        }
+                    ],
+                    rows: result.data.rows
+                };
+            }
+            else {
+                throw new Error(result.errorMessage ?? "Unknown error while trying to load grid data.");
+            }
+        };
 
         return {
-            rows: configuration.rows
+            gridData: loadGridData
         };
     },
 
     template: `
-<Grid :rows="rows" />
+<Grid :data="gridData" />
 `
 });

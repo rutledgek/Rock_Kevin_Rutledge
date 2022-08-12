@@ -40,11 +40,17 @@ namespace Rock.Blocks.Example
     {
         public override object GetObsidianBlockInitialization()
         {
+            return new {
+            };
+        }
+
+        [BlockAction]
+        public BlockActionResult GetGridData()
+        {
             using ( var rockContext = new RockContext() )
             {
                 var count = RequestContext.GetPageParameter( "count" )?.AsIntegerOrNull() ?? 10_000;
 
-                // Add timing stopwatches.
                 var sw = System.Diagnostics.Stopwatch.StartNew();
                 var groups = new GroupService( rockContext )
                     .Queryable()
@@ -66,15 +72,23 @@ namespace Rock.Blocks.Example
                     .Select( g => new
                     {
                         g.Name,
-                        Description = g.GetAttributeCondensedTextValue( "Group1" ),
+                        g.Description,
+                        Attr_Group1 = new
+                        {
+                            Guid = g.GetAttributeValue( "Group1" ),
+                            Text = g.GetAttributeCondensedTextValue( "Group1" )
+                        }
                     } )
                     .ToList();
                 sw.Stop();
                 System.Diagnostics.Debug.WriteLine( $"Row translation took {sw.Elapsed}." );
 
-                return new {
+                var gridData = new
+                {
                     Rows = rows
                 };
+
+                return ActionOk( gridData );
             }
         }
     }

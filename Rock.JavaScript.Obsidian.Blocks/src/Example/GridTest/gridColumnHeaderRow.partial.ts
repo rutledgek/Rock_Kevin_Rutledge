@@ -15,27 +15,54 @@
 // </copyright>
 //
 
-import { defineComponent, ref } from "vue";
+import { useVModelPassthrough } from "@Obsidian/Utility/component";
+import { defineComponent, PropType } from "vue";
+import GridColumnHeaderCell from "./gridColumnHeaderCell.partial";
+import { GridColumnDefinition } from "./types";
 
 export default defineComponent({
     name: "GridColumnHeaderRow",
 
     components: {
+        GridColumnHeaderCell
     },
 
-    setup() {
+    props: {
+        columns: {
+            type: Array as PropType<GridColumnDefinition[]>,
+            default: []
+        },
+
+        columnFilters: {
+            type: Object as PropType<Record<string, unknown | undefined>>,
+            default: {}
+        }
+    },
+
+    emits: {
+        "update:columnFilters": (_value: Record<string, unknown | undefined>) => true
+    },
+
+    setup(props, { emit }) {
+        const columnFilters = useVModelPassthrough(props, "columnFilters", emit);
+
+        const onUpdateFilterValue = (columnName: string, filterValue: unknown | undefined): void => {
+            const newFilters = {...columnFilters.value};
+
+            newFilters[columnName] = filterValue;
+
+            columnFilters.value = newFilters;
+        };
+        
         return {
+            columnFilters,
+            onUpdateFilterValue
         };
     },
 
     template: `
 <tr>
-    <th>
-        Name
-    </th>
-    <th>
-        Description
-    </th>
+    <GridColumnHeaderCell v-for="column in columns" :column="column" :filterValue="columnFilters[column.name]" @update:filterValue="onUpdateFilterValue(column.name, $event)" />
 </tr>
 `
 });

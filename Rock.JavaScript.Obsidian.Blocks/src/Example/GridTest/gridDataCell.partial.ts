@@ -15,29 +15,44 @@
 // </copyright>
 //
 
-import { defineComponent, PropType } from "vue";
-import GridDataRow from "./gridDataRow.partial";
+import { escapeHtml } from "@Obsidian/Utility/stringUtils";
+import { computed, defineComponent, PropType } from "vue";
+import { GridColumnDefinition } from "./types";
 
 export default defineComponent({
-    name: "GridData",
+    name: "GridDataRow",
 
     components: {
-        GridDataRow
     },
 
     props: {
-        rows: {
-            type: Array as PropType<unknown[]>,
-            default: []
+        column: {
+            type: Object as PropType<GridColumnDefinition>,
+            required: true
+        },
+
+        data: {
+            type: Object as PropType<unknown>,
+            required: true
         }
     },
 
     setup(props) {
+        const htmlContent = computed((): string => {
+            if (props.column.format) {
+                return props.column.format(props.data);
+            }
+
+            return escapeHtml(new String(props.data) as string);
+        });
+
         return {
+            htmlContent
         };
     },
 
     template: `
-<GridDataRow v-for="row in rows" :data="row" />
+<td v-html="htmlContent">
+</td>
 `
 });

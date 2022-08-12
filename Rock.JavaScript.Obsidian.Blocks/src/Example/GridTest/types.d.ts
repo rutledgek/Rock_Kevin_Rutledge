@@ -45,3 +45,29 @@ export type GridAction = {
     /** True if the action is currently executing. */
     executing: boolean;
 };
+
+type GridData = {
+    columns: GridColumnDefinition[];
+
+    rows: Record<string, unknown>[];
+};
+
+type GridColumnDefinition = {
+    /** The name of the property in the rows objects. */
+    name: string;
+
+    /** The title to display in the column header. */
+    title?: string | null;
+
+    /** Formats the value for display in the cell. Should return HTML safe content. */
+    format?: (value: unknown) => string;
+
+    /** Determines if the value matches the quick search filter. */
+    quickFilter?: (needle: string, haystack: unknown) => boolean;
+
+    /** Determines if the value matches the custom column filter. */
+    filter?: (needle: unknown, haystack: unknown) => boolean;
+
+    /** Sorts the two values and determines the order. */
+    sort?: (a: unknown, b: unknown) => number;
+};

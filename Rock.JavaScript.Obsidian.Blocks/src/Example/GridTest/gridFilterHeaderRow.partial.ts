@@ -64,7 +64,7 @@ export default defineComponent({
 
     template: `
 <tr>
-    <td class="grid-filter" :colspan="visibleColumnCount">
+    <th class="grid-filter" :colspan="visibleColumnCount">
         <div class="d-flex">
             <div class="grid-quick-filter">
                 <TextBox v-model="filterValue" placeholder="Filter" />
@@ -72,7 +72,7 @@ export default defineComponent({
 
             <GridActionGroup :gridActions="gridActions" />
         </div>
-    </td>
+    </th>
 </tr>
 `
 });
