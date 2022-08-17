@@ -59,15 +59,19 @@ type GridColumnDefinition = {
     /** The title to display in the column header. */
     title?: string | null;
 
-    /** Formats the value for display in the cell. Should return HTML safe content. */
+    /**
+     * Formats the value for display in the cell. Should return HTML safe
+     * content, meaning if you intend to display the < character you need
+     * to HTML encode it as &lt;.
+     */
     format?: (value: unknown) => string;
 
-    /** Determines if the value matches the quick search filter. */
-    quickFilter?: (needle: string, haystack: unknown) => boolean;
+    /** Gets the value to use when filtering on the quick filter. */
+    quickFilterValue?: (value: unknown) => string | undefined;
+
+    /** Gets the value to use when sorting. */
+    sortValue?: (value: unknown) => string | number | undefined;
 
     /** Determines if the value matches the custom column filter. */
     filter?: (needle: unknown, haystack: unknown) => boolean;
-
-    /** Sorts the two values and determines the order. */
-    sort?: (a: unknown, b: unknown) => number;
 };

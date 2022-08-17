@@ -88,25 +88,33 @@ export default defineComponent({
 
                 const result = gridData.rows.filter(v => {
                     const quickFilterMatch = !filterValue || columns.some((column): boolean => {
-                        const value = v[column.name];
+                        const columnValue = v[column.name];
+                        let value: string | undefined;
 
-                        if (column.quickFilter) {
-                            return column.quickFilter(filterValue, value);
+                        if (column.quickFilterValue) {
+                            value = column.quickFilterValue(value);
+
+                            if (value === undefined) {
+                                return false;
+                            }
+
+                            value = value.toLowerCase();
                         }
-
-                        let textValue: string;
-
-                        if (column.format) {
-                            textValue = column.format(value);
+                        else if (typeof columnValue === "string") {
+                            value = columnValue;
                         }
-                        else if (typeof value === "string") {
-                            textValue = value;
+                        else if (typeof columnValue === "number") {
+                            value = columnValue.toString();
                         }
                         else {
-                            textValue = new String(value).toString();
+                            value = undefined;
                         }
 
-                        return textValue.toLowerCase().includes(filterValue);
+                        if (value === undefined) {
+                            return false;
+                        }
+
+                        return value.toLowerCase().includes(filterValue);
                     });
 
                     const filtersMatch = columns.every(column => {
@@ -143,38 +151,56 @@ export default defineComponent({
             const sortDirection = columnSortDirection.value;
 
             if (sortDirection) {
+                const column = visibleColumnDefinitions.value.find(c => c.name === sortDirection.column);
+                const order = sortDirection.isDescending ? -1 : 1;
+
+                if (!column) {
+                    throw new Error("Invalid sort definition");
+                }
+
+                const columnName = column.name;
+                const sortValue = column.sortValue;
+                console.log(columnName, sortValue, column);
+
                 const rows = [...filteredRows];
-                const columns = toRaw(visibleColumnDefinitions.value);
 
                 rows.sort((a, b) => {
-                    const valueA = a[sortDirection.column];
-                    const valueB = b[sortDirection.column];
+                    const columnValueA = a[columnName];
+                    const columnValueB = b[columnName];
+                    let valueA: string | number | undefined;
+                    let valueB: string | number | undefined;
 
-                    const column = columns.find(c => c.name === sortDirection.column);
-
-                    if (column && column.sort) {
-                        let sortResult = column.sort(valueA, valueB);
-
-                        if (sortDirection.isDescending) {
-                            if (sortResult < 0) {
-                                sortResult = 1;
-                            }
-                            else if (sortResult > 0) {
-                                sortResult = -1;
-                            }
+                    if (sortValue) {
+                        valueA = sortValue(columnValueA);
+                        valueB = sortValue(columnValueB);
+                    }
+                    else {
+                        if (typeof columnValueA === "string" || typeof columnValueA === "number") {
+                            valueA = columnValueA;
+                        }
+                        else {
+                            valueA = undefined;
                         }
 
-                        return sortResult;
+                        if (typeof columnValueB === "string" || typeof columnValueB === "number") {
+                            valueB = columnValueB;
+                        }
+                        else {
+                            valueB = undefined;
+                        }
                     }
 
-                    const textValueA = new String(valueA).toString();
-                    const textValueB = new String(valueB).toString();
-
-                    if (textValueA < textValueB) {
-                        return sortDirection.isDescending ? 1 : -1;
+                    if (valueA === undefined) {
+                        return -order;
                     }
-                    else if (textValueA > textValueB) {
-                        return sortDirection.isDescending ? -1 : 1;
+                    else if (valueB === undefined) {
+                        return order;
+                    }
+                    else if (valueA < valueB) {
+                        return -order;
+                    }
+                    else if (valueA > valueB) {
+                        return order;
                     }
                     else {
                         return 0;
@@ -230,13 +256,17 @@ export default defineComponent({
             return new Promise(resolve => setTimeout(resolve, 2000));
         };
 
-        watch(quickFilterValue, () => {
+        watch([quickFilterValue, columnFilterValues], () => {
             currentPage.value = 1;
             updateFilteredRows();
         });
 
         watch(columnSortDirection, () => {
             updateSortedRows();
+        });
+
+        watch([currentPage, pageSize], () => {
+            updateVisibleRows();
         });
 
         gridActions.value.push({

@@ -15,6 +15,7 @@
 // </copyright>
 //
 
+import textBox from "@Obsidian/Controls/textBox";
 import { Guid } from "@Obsidian/Types";
 import { useConfigurationValues, useInvokeBlockAction } from "@Obsidian/Utility/block";
 import { escapeHtml } from "@Obsidian/Utility/stringUtils";
@@ -63,13 +64,14 @@ export default defineComponent({
 
                                 return "";
                             },
-                            quickFilter: (needle, haystack) => {
-                                if (typeof haystack === "object") {
-                                    const linkValue = haystack as { guid: string, text: string };
-                                    return linkValue.text.toLowerCase().includes(needle);
+                            quickFilterValue: (value) => {
+                                if (typeof value === "object") {
+                                    const linkValue = value as { guid: string, text: string };
+
+                                    return linkValue.text;
                                 }
 
-                                return false;
+                                return undefined;
                             },
                             filter: (needle, haystack) => {
                                 if (typeof needle === "string" && typeof haystack === "object") {
@@ -79,20 +81,10 @@ export default defineComponent({
 
                                 return false;
                             },
-                            sort: (a, b) => {
-                                if (typeof a === "object" && typeof b === "object") {
-                                    const linkA = a as { guid: string, text: string };
-                                    const linkB = b as { guid: string, text: string };
-
-                                    if (linkA.text < linkB.text) {
-                                        return -1;
-                                    }
-                                    else if (linkA.text > linkB.text) {
-                                        return 1;
-                                    }
+                            sortValue: (value) => {
+                                if (typeof value === "object") {
+                                    return (value as { guid: string, text: string }).text;
                                 }
-
-                                return 0;
                             }
                         },
                         {
