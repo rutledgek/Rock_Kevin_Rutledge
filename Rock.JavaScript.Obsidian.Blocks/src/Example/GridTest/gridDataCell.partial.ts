@@ -43,7 +43,11 @@ export default defineComponent({
                 return props.column.format(props.data);
             }
 
-            return escapeHtml(new String(props.data) as string);
+            if (!props.data) {
+                return "";
+            }
+
+            return escapeHtml(new String(props.data).toString());
         });
 
         return {

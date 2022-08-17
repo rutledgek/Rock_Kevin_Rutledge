@@ -17,7 +17,7 @@
 
 import TextBox from "@Obsidian/Controls/textBox";
 import { useVModelPassthrough } from "@Obsidian/Utility/component";
-import { computed, defineComponent, PropType, ref, watch } from "vue";
+import { computed, defineComponent, nextTick, PropType, ref, watch } from "vue";
 import { GridColumnDefinition } from "./types";
 
 export default defineComponent({
@@ -33,6 +33,12 @@ export default defineComponent({
             required: false
         },
 
+        /** -1 means descending, 1 means ascending, 0 means no sort applied. */
+        sortDirection: {
+            type: Number as PropType<number>,
+            default: 0
+        },
+
         column: {
             type: Object as PropType<GridColumnDefinition>,
             required: true
@@ -40,16 +46,30 @@ export default defineComponent({
     },
 
     emits: {
-        "update:filterValue": (_value: unknown | undefined) => true
+        "update:filterValue": (_value: unknown | undefined) => true,
+        "update:sortDirection": (_value: number) => true
     },
 
     setup(props, { emit }) {
         const filterValue = useVModelPassthrough(props, "filterValue", emit);
+        const sortDirection = useVModelPassthrough(props, "sortDirection", emit);
+        const internalFilterValue = ref(filterValue.value ?? "");
         const isFilterVisible = ref(false);
         const filterElement = ref<HTMLElement | null>(null);
         const filterButtonElement = ref<HTMLElement | null>(null);
+        const resizeHandleElement = ref<HTMLElement | null>(null);
+        const columnHeaderElement = ref<HTMLElement | null>(null);
+        let resizePositionX = 0;
+        let resizeWidth = 0;
 
         const hasFilter = computed((): boolean => props.column.filter !== undefined);
+
+        const buttonCssClass = computed((): string => {
+            return filterValue.value !== undefined ? "btn-grid-column-filter active" : "btn-grid-column-filter";
+        });
+        
+        const isSortAscending = computed((): boolean => sortDirection.value > 0);
+        const isSortDescending = computed((): boolean => sortDirection.value < 0);
 
         const onMouseDownEvent = (ev: MouseEvent): void => {
             if (ev.target && ev.target instanceof HTMLElement) {
@@ -69,38 +89,125 @@ export default defineComponent({
             isFilterVisible.value = !isFilterVisible.value;
         };
 
+        const onFilterClearClick = (): void => {
+            isFilterVisible.value = false;
+            filterValue.value = undefined;
+        };
+
+        const onFilterCloseClick = (): void => {
+            isFilterVisible.value = false;
+        };
+
+        const onResizeMouseDown = (e: MouseEvent): void => {
+            if (!columnHeaderElement.value) {
+                return;
+            }
+
+            resizePositionX = e.pageX;
+            resizeWidth = columnHeaderElement.value.clientWidth;
+
+            document.body.addEventListener("mousemove", onResizeMouseMove);
+            document.body.addEventListener("mouseup", onResizeMouseUp);
+        };
+
+        const onResizeMouseUp = (): void => {
+            document.body.removeEventListener("mousemove", onResizeMouseMove);
+            document.body.removeEventListener("mouseup", onResizeMouseUp);
+        };
+
+        const onResizeMouseMove = (e: MouseEvent): void => {
+            if (!columnHeaderElement.value) {
+                return;
+            }
+
+            const changeAmount = resizePositionX - e.pageX;
+
+            columnHeaderElement.value.style.width = `${resizeWidth - changeAmount}px`;
+        };
+
+        const onSortClick = (): void => {
+            if (sortDirection.value > 0) {
+                sortDirection.value = -1;
+            }
+            else {
+                sortDirection.value = 1;
+            }
+        };
+
+        watch(filterValue, () => internalFilterValue.value = filterValue.value ?? "");
+        watch (internalFilterValue, () => {
+            // Temporary hack until we have actual filter components.
+            if (internalFilterValue.value === "") {
+                filterValue.value = undefined;
+            }
+            else {
+                filterValue.value = internalFilterValue.value;
+            }
+        });
+
         watch(isFilterVisible, () => {
             if (isFilterVisible.value) {
                 document.addEventListener("mousedown", onMouseDownEvent);
+
+                nextTick(() => {
+                    // Hack until this is handled by a filter component.
+                    filterElement.value?.querySelector("input")?.focus();
+                });
             }
             else {
                 document.removeEventListener("mousedown", onMouseDownEvent);
             }
         });
 
+        watch(resizeHandleElement, () => {
+            if (!resizeHandleElement.value) {
+                return;
+            }
+
+            resizeHandleElement.value.addEventListener("mousedown", onResizeMouseDown);
+        });
+
         return {
+            buttonCssClass,
+            columnHeaderElement,
             filterButtonElement,
             filterElement,
-            filterValue,
+            internalFilterValue,
+            isSortAscending,
+            isSortDescending,
             hasFilter,
             isFilterVisible,
-            onFilterClick
+            onFilterClearClick,
+            onFilterClick,
+            onFilterCloseClick,
+            onSortClick,
+            resizeHandleElement
         };
     },
 
     template: `
-<th class="grid-column-header">
-    <span class="grid-column-title">{{ column.title ?? column.name }}</span>
+<th ref="columnHeaderElement" class="grid-column-header">
+    <span class="grid-column-title clickable" @click.prevent="onSortClick">{{ column.title ?? column.name }}</span>
+
+    <span v-if="isSortAscending" class="grid-sort-direction"><i class="fa fa-sort-alpha-up"></i></span>
+    <span v-else-if="isSortDescending" class="grid-sort-direction"><i class="fa fa-sort-alpha-down"></i></span>
 
     <button v-if="hasFilter"
         ref="filterButtonElement"
-        class="btn-grid-column-filter"
+        :class="buttonCssClass"
         @click.prevent="onFilterClick">
         <i class="fa fa-filter "></i>
     </button>
 
+    <div ref="resizeHandleElement" class="resize-handle"></div>
+
     <div v-if="isFilterVisible" ref="filterElement" class="grid-filter-popup">
-        <TextBox v-model="filterValue" />
+        <TextBox v-model="internalFilterValue" />
+
+        <div class="actions">
+            <button class="btn btn-primary btn-xs" @click.prevent="onFilterCloseClick">Close</button>
+            <button class="btn btn-link btn-xs" @click.prevent="onFilterClearClick">Clear</button>
+        </div>
     </div>
 </th>
 `

@@ -19,13 +19,23 @@ import { asFormattedString } from "@Obsidian/Utility/numberUtils";
 import { pluralConditional } from "@Obsidian/Utility/stringUtils";
 import Alert from "@Obsidian/Controls/alert";
 import LoadingIndicator from "@Obsidian/Controls/loadingIndicator";
-import { computed, defineComponent, PropType, ref, watch } from "vue";
+import { computed, defineComponent, PropType, ref, toRaw, watch } from "vue";
 import GridActionGroup from "./gridActionGroup.partial";
 import GridColumnHeaderRow from "./gridColumnHeaderRow.partial";
 import GridDataRows from "./gridDataRows.partial";
 import GridFilterHeaderRow from "./gridFilterHeaderRow.partial";
 import GridPagerRow from "./gridPagerRow.partial";
 import { GridAction, GridColumnDefinition, GridData } from "./types";
+
+/*
+ * 8/17/2022 - DSH
+ * 
+ * The grid uses a number of non-ref instances with calculations via function call.
+ * This is because the normal wrapped references that Vue uses dramatically slow
+ * down our filtering and sorting processes. For example, filtering over wrapped
+ * references of 100,000 rows takes around 600ms. The same 100,000 rows using an
+ * unwrapped raw array takes about 40ms.
+ */
 
 export default defineComponent({
     name: "Grid",
@@ -42,7 +52,7 @@ export default defineComponent({
 
     props: {
         data: {
-            type: [Object,Function] as PropType<GridData | (() => GridData | Promise<GridData>)>,
+            type: [Object, Function] as PropType<GridData | (() => GridData | Promise<GridData>)>,
             default: []
         }
     },
@@ -55,108 +65,178 @@ export default defineComponent({
         const quickFilterValue = ref("");
         const loadingData = ref(false);
         const gridErrorMessage = ref("");
-        const gridData = ref<GridData | null>(null);
         const columnFilterValues = ref<Record<string, unknown | undefined>>({});
+        const columnSortDirection = ref<{ column: string, isDescending: boolean } | undefined>();
+        const visibleRows = ref<Record<string, unknown>[]>([]);
+        const pageCount = ref(0);
+        const pagerMessage = ref("");
+        const visibleColumnDefinitions = ref<GridColumnDefinition[]>([]);
 
-        const columnDefinitions = computed((): GridColumnDefinition[] => {
-            return gridData.value?.columns ?? [];
-        });
-
-        const visibleColumnDefinitions = computed((): GridColumnDefinition[] => {
-            return columnDefinitions.value;
-        });
+        let gridData: GridData | null = null;
+        let filteredRows: Record<string, unknown>[] = [];
+        let sortedRows: Record<string, unknown>[] = [];
 
         const visibleColumnCount = computed((): number => {
             return visibleColumnDefinitions.value.length;
         });
 
-        const rows = computed((): Record<string, unknown>[] => {
-            return gridData.value?.rows ?? [];
-        });
+        const updateFilteredRows = (): void => {
+            const start = Date.now();
+            if (gridData) {
+                const columns = toRaw(visibleColumnDefinitions.value);
+                const filterValue = quickFilterValue.value.toLowerCase();
 
-        const filteredRows = computed((): Record<string, unknown>[] => {
-            const filterValue = quickFilterValue.value.toLowerCase();
+                const result = gridData.rows.filter(v => {
+                    const quickFilterMatch = !filterValue || columns.some((column): boolean => {
+                        const value = v[column.name];
 
-            return rows.value.filter(v => {
-                const quickFilterMatch = !filterValue || visibleColumnDefinitions.value.some(column => {
-                    const value = v[column.name];
+                        if (column.quickFilter) {
+                            return column.quickFilter(filterValue, value);
+                        }
 
-                    if (column.quickFilter && column.quickFilter(filterValue, value)) {
-                        return true;
+                        let textValue: string;
+
+                        if (column.format) {
+                            textValue = column.format(value);
+                        }
+                        else if (typeof value === "string") {
+                            textValue = value;
+                        }
+                        else {
+                            textValue = new String(value).toString();
+                        }
+
+                        return textValue.toLowerCase().includes(filterValue);
+                    });
+
+                    const filtersMatch = columns.every(column => {
+                        if (!column.filter) {
+                            return true;
+                        }
+
+                        const columnFilterValue = columnFilterValues.value[column.name];
+
+                        if (columnFilterValue === undefined) {
+                            return true;
+                        }
+
+                        return column.filter(columnFilterValue, v[column.name]);
+                    });
+
+                    return quickFilterMatch && filtersMatch;
+                });
+
+                filteredRows = result;
+            }
+            else {
+                filteredRows = [];
+            }
+            console.log(`Filtering took ${Date.now() - start}ms.`);
+
+            updateSortedRows();
+            updatePageCount();
+            updatePagerMessage();
+        };
+
+        const updateSortedRows = (): void => {
+            const start = Date.now();
+            const sortDirection = columnSortDirection.value;
+
+            if (sortDirection) {
+                const rows = [...filteredRows];
+                const columns = toRaw(visibleColumnDefinitions.value);
+
+                rows.sort((a, b) => {
+                    const valueA = a[sortDirection.column];
+                    const valueB = b[sortDirection.column];
+
+                    const column = columns.find(c => c.name === sortDirection.column);
+
+                    if (column && column.sort) {
+                        let sortResult = column.sort(valueA, valueB);
+
+                        if (sortDirection.isDescending) {
+                            if (sortResult < 0) {
+                                sortResult = 1;
+                            }
+                            else if (sortResult > 0) {
+                                sortResult = -1;
+                            }
+                        }
+
+                        return sortResult;
                     }
 
-                    let textValue: string;
+                    const textValueA = new String(valueA).toString();
+                    const textValueB = new String(valueB).toString();
 
-                    if (column.format) {
-                        textValue = column.format(value);
+                    if (textValueA < textValueB) {
+                        return sortDirection.isDescending ? 1 : -1;
                     }
-                    else if (typeof value === "string") {
-                        textValue = value;
+                    else if (textValueA > textValueB) {
+                        return sortDirection.isDescending ? -1 : 1;
                     }
                     else {
-                        textValue = new String(value).toString();
-                    }
-
-                    if (textValue.toLowerCase().includes(filterValue)) {
-                        return true;
+                        return 0;
                     }
                 });
 
-                const filtersMatch = visibleColumnDefinitions.value.every(column => {
-                    if (!column.filter) {
-                        return true;
-                    }
+                sortedRows = rows;
+            }
+            else {
+                sortedRows = filteredRows;
+            }
+            console.log(`sortedRows took ${Date.now() - start}ms.`);
 
-                    const columnFilterValue = columnFilterValues.value[column.name];
+            updateVisibleRows();
+        };
 
-                    if (columnFilterValue === undefined) {
-                        return true;
-                    }
-
-                    return column.filter(columnFilterValue, v[column.name]);
-                });
-
-                return quickFilterMatch && filtersMatch;
-            });
-        });
-
-        const visibleRows = computed((): Record<string, unknown>[] => {
+        const updateVisibleRows = (): void => {
             const startIndex = (currentPage.value - 1) * pageSize.value;
 
-            return filteredRows.value.slice(startIndex, startIndex + pageSize.value);
-        });
+            visibleRows.value = sortedRows.slice(startIndex, startIndex + pageSize.value);
+        };
 
-        const pageCount = computed((): number => {
-            return Math.ceil(filteredRows.value.length / pageSize.value);
-        });
+        const updatePageCount = (): void => {
+            pageCount.value = Math.ceil(filteredRows.length / pageSize.value);
+        };
 
-        const pagerMessage = computed((): string => {
-            return `${asFormattedString(filteredRows.value.length)} ${pluralConditional(rows.value.length, "Group", "Groups")}`;
-        });
+        const updatePagerMessage = (): void => {
+            pagerMessage.value = `${asFormattedString(filteredRows.length)} ${pluralConditional(filteredRows.length, "Group", "Groups")}`;
+        };
 
         const updateGridData = async (): Promise<void> => {
             loadingData.value = true;
 
             if (typeof props.data === "object") {
-                gridData.value = props.data;
+                gridData = props.data;
             }
             else if (typeof props.data === "function") {
                 try {
-                    gridData.value = await props.data();
+                    gridData = await props.data();
                 }
                 catch (error) {
                     gridErrorMessage.value = error instanceof Error ? error.message : new String(error).toString();
                 }
             }
 
+            visibleColumnDefinitions.value = gridData?.columns ?? [];
+            updateFilteredRows();
+
             loadingData.value = false;
         };
+
         const onActionClick = (): Promise<void> => {
             return new Promise(resolve => setTimeout(resolve, 2000));
         };
 
         watch(quickFilterValue, () => {
             currentPage.value = 1;
+            updateFilteredRows();
+        });
+
+        watch(columnSortDirection, () => {
+            updateSortedRows();
         });
 
         gridActions.value.push({
@@ -177,8 +257,8 @@ export default defineComponent({
 
         return {
             currentPage,
-            filteredRows,
             columnFilterValues,
+            columnSortDirection,
             gridActions,
             gridErrorMessage,
             loadingData,
@@ -205,7 +285,7 @@ export default defineComponent({
             color: #e7e7e7;
             opacity: 0.5;
             transition-duration: 250ms;
-            transition-property: opacity;
+            transition-property: opacity, color;
         }
 
             table.table-obsidian th.grid-column-header .btn-grid-column-filter.active {
@@ -230,7 +310,26 @@ export default defineComponent({
             box-shadow: 2px 2px 4px rgba(0,0,0,0.2);
             font-weight: initial;
         }
+    
+        table.table-obsidian th.grid-column-header .grid-filter-popup .actions {
+            border-top: 1px solid #eee;
+            margin: 18px -12px 0px -12px;
+            padding: 12px 12px 0px 12px;
+        }
 
+        table.table-obsidian th.grid-column-header .resize-handle {
+            position: absolute;
+            right: 0px;
+            top: 0px;
+            bottom: 0px;
+            width: 2px;
+            height: 100%;
+            cursor: w-resize;
+        }
+        table.table-obsidian th.grid-column-header:hover .resize-handle {
+            background-color: #eee;
+        }
+    
     table.table-obsidian td.grid-paging {
     }
 
@@ -273,6 +372,7 @@ export default defineComponent({
 
     table.table-obsidian th.grid-filter {
         padding: 8px;
+        font-weight: initial;
     }
 
         table.table-obsidian th.grid-filter .grid-quick-filter {
@@ -301,7 +401,7 @@ export default defineComponent({
             :gridActions="gridActions"
             :visibleColumnCount="visibleColumnCount" />
 
-        <GridColumnHeaderRow :columns="visibleColumnDefinitions" v-model:columnFilters="columnFilterValues" />
+        <GridColumnHeaderRow :columns="visibleColumnDefinitions" v-model:columnFilters="columnFilterValues" v-model:columnSort="columnSortDirection" />
     </thead>
 
     <tbody>

@@ -15,6 +15,7 @@
 // </copyright>
 //
 
+import { Guid } from "@Obsidian/Types";
 import { useConfigurationValues, useInvokeBlockAction } from "@Obsidian/Utility/block";
 import { escapeHtml } from "@Obsidian/Utility/stringUtils";
 import { defineComponent } from "vue";
@@ -36,6 +37,7 @@ export default defineComponent({
             const result = await invokeBlockAction<GridData>("GetGridData");
 
             if (result.isSuccess && result.data) {
+                console.log(result.data.rows);
                 return {
                     columns: [
                         {
@@ -50,7 +52,12 @@ export default defineComponent({
                             title: "Group 1",
                             format: (value: unknown) => {
                                 if (typeof value === "object") {
-                                    const linkValue = value as { guid: string, text: string };
+                                    const linkValue = value as { guid?: Guid | null, text?: string | null };
+
+                                    if (!linkValue.guid || !linkValue.text) {
+                                        return "";
+                                    }
+
                                     return `<a href="/Group/${linkValue.guid}">${escapeHtml(linkValue.text)}</a>`;
                                 }
 
@@ -71,7 +78,26 @@ export default defineComponent({
                                 }
 
                                 return false;
+                            },
+                            sort: (a, b) => {
+                                if (typeof a === "object" && typeof b === "object") {
+                                    const linkA = a as { guid: string, text: string };
+                                    const linkB = b as { guid: string, text: string };
+
+                                    if (linkA.text < linkB.text) {
+                                        return -1;
+                                    }
+                                    else if (linkA.text > linkB.text) {
+                                        return 1;
+                                    }
+                                }
+
+                                return 0;
                             }
+                        },
+                        {
+                            name: "attr_CheckList",
+                            title: "Check List"
                         }
                     ],
                     rows: result.data.rows

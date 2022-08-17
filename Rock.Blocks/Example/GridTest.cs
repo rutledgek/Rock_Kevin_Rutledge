@@ -55,7 +55,7 @@ namespace Rock.Blocks.Example
                 var groups = new GroupService( rockContext )
                     .Queryable()
                     .AsNoTracking()
-                    .Where( g => g.GroupTypeId == 37 )
+                    .Where( g => g.GroupTypeId == 38 )
                     .OrderBy( g => g.Id )
                     .Take( count )
                     .ToList();
@@ -77,7 +77,8 @@ namespace Rock.Blocks.Example
                         {
                             Guid = g.GetAttributeValue( "Group1" ),
                             Text = g.GetAttributeCondensedTextValue( "Group1" )
-                        }
+                        },
+                        Attr_CheckList = g.GetAttributeCondensedHtmlValue( "CheckList" )
                     } )
                     .ToList();
                 sw.Stop();
