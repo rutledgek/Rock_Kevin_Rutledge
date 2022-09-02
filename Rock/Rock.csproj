@@ -644,15 +644,17 @@
     <Compile Include="Bus\Message\ScheduledGiftWasModifiedMessage.cs" />
     <Compile Include="Bus\Queue\ExpiringCardEventQueue.cs" />
     <Compile Include="Bus\Queue\PageRouteEventQueue.cs" />
-    <Compile Include="Chart\ChartJs\ChartColorPaletteGenerator.cs" />
+    <Compile Include="Chart\ChartColorPaletteGenerator.cs" />
     <Compile Include="Chart\ChartJs\ChartJsCategorySeriesDataFactory.cs" />
     <Compile Include="Chart\ChartJs\ChartJsCategorySeriesDataPoint.cs" />
     <Compile Include="Chart\ChartJs\ChartJsConstants.cs" />
     <Compile Include="Chart\ChartJs\ChartJsDataFactory.cs" />
-    <Compile Include="Chart\ChartJs\ChartJsDataset.cs" />
+    <Compile Include="Chart\ChartDataset.cs" />
+    <Compile Include="Chart\ChartJs\ChartJsPieChartDataFactory.cs" />
     <Compile Include="Chart\ChartJs\ChartJsTimeSeriesDataPoint.cs" />
     <Compile Include="Chart\ChartJs\IChartJsCategorySeriesDataPoint.cs" />
     <Compile Include="Chart\ChartJs\IChartJsTimeSeriesDataPoint.cs" />
+    <Compile Include="Chart\ChartDataFactory.cs" />
     <Compile Include="CheckIn\CompletedAchievement.cs" />
     <Compile Include="ClientService\ClientServiceBase.cs" />
     <Compile Include="ClientService\Connection\ConnectionOpportunity\ConnectionOpportunityClientService.cs" />
@@ -889,6 +891,9 @@
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>HotFixMigrationResource.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Reporting\Dashboard\LineBarPointsChartDashboardWidget.cs">
+      <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="Reporting\DataFilter\GroupMembers\GroupMemberGroupTypeFilter.cs" />
     <Compile Include="SystemGuid\DuplicateSystemGuidException.cs" />
@@ -1802,6 +1807,7 @@
     <Compile Include="Web\UI\Controls\Chart\Flot\LineChart.cs" />
     <Compile Include="Web\UI\Controls\Chart\Flot\PieChart.cs" />
     <Compile Include="Web\UI\Controls\Chart\IRockChart.cs" />
+    <Compile Include="Web\UI\Controls\Chart\RockPieChart.cs" />
     <Compile Include="Web\UI\Controls\CompositePlaceHolder.cs" />
     <Compile Include="Web\UI\Controls\ElectronicSignatureControl.cs" />
     <Compile Include="Web\UI\Controls\FieldVisibilityRuleField.cs" />
@@ -3150,7 +3156,7 @@
     <Compile Include="Reporting\Dashboard\DashboardWidget.cs">
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
-    <Compile Include="Reporting\Dashboard\LineBarPointsChartDashboardWidget.cs">
+    <Compile Include="Reporting\Dashboard\MetricChartDashboardWidget.cs">
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="Reporting\DataComponentSettingsHelper.cs" />

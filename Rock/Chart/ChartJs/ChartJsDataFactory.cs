@@ -14,18 +14,19 @@
 // limitations under the License.
 // </copyright>
 //
+using System;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Rock.Model;
 using Rock.Utility;
 using Rock.Web.UI.Controls;
 
 namespace Rock.Chart
 {
     /// <summary>
-    /// Provides base functionality for factories that build a data model for an "X vs Y" graph that can be rendered by the Chart.js library.
-    /// For this style of graph, the X-axis maps the independent variable and the Y-axis maps the dependent variable.
-    /// An example of this style of graph would be "Distance vs Time", where distance is determined by elapsed time.
+    /// Provides base functionality for factories that build the data structures needed to render a chart with the Chart.js library.
+    /// These factories produce data that describes the presentation and functionality of a chart,
+    /// they do not produce the datapoints that are mapped by the chart.
     /// </summary>
     /// <remarks>
     /// Compatible with ChartJS v2.8.0.
@@ -58,21 +59,6 @@ namespace Rock.Chart
         }
 
         private ChartColorPaletteGenerator _chartColorGenerator = null;
-
-        /// <summary>
-        /// Display legend?
-        /// </summary>
-        public bool DisplayLegend { get; set; } = true;
-
-        /// <summary>
-        /// Legend position: {top|left|bottom|right}
-        /// </summary>
-        public string LegendPosition { get; set; } = "bottom";
-
-        /// <summary>
-        /// Legend alignment: {start|center|end}
-        /// </summary>
-        public string LegendAlignment { get; set; } = "center";
 
         /// <summary>
         /// Size to fit container width?
@@ -136,11 +122,12 @@ namespace Rock.Chart
         public string CustomTooltipScript { get; set; }
 
         /// <summary>
-        /// Apply a Rock Chart Style to the settings of the ChartJs factory.
+        /// Apply a Rock Chart Style to the settings object for a Rock chart.
         /// </summary>
-        /// <param name="chartStyle">The chart style.</param>
-        public virtual void SetChartStyle( ChartStyle chartStyle )
+        /// <param name="args">The arguments object used to create a chart.</param>
+        protected void ApplyChartStyleToArgs( GetJsonArgs args )
         {
+            var chartStyle = args?.ChartStyle;
             if ( chartStyle == null )
             {
                 return;
@@ -149,9 +136,35 @@ namespace Rock.Chart
             // Set the chart Legend style.
             if ( chartStyle.Legend != null )
             {
-                this.DisplayLegend = chartStyle.Legend.Show ?? true;
+                args.DisplayLegend = chartStyle.Legend.Show ?? true;
 
-                SetLegendPositionAndAlignment( chartStyle.Legend.Position );
+                var rockLegendPosition = chartStyle.Legend?.Position?.ToLower() ?? string.Empty;
+
+                if ( rockLegendPosition == "ne" )
+                {
+                    args.LegendPosition = "top";
+                    args.LegendAlignment = "end";
+                }
+                else if ( rockLegendPosition.StartsWith( "nw" ) )
+                {
+                    args.LegendPosition = "top";
+                    args.LegendAlignment = "start";
+                }
+                else if ( rockLegendPosition.StartsWith( "se" ) )
+                {
+                    args.LegendPosition = "bottom";
+                    args.LegendAlignment = "end";
+                }
+                else if ( rockLegendPosition.StartsWith( "sw" ) )
+                {
+                    args.LegendPosition = "bottom";
+                    args.LegendAlignment = "start";
+                }
+                else
+                {
+                    args.LegendPosition = "bottom";
+                    args.LegendAlignment = "center";
+                }
             }
         }
 
@@ -200,14 +213,17 @@ namespace Rock.Chart
         /// <summary>
         /// Gets a JavaScript data object that represents the configuration for the ChartJs legend chart element.
         /// </summary>
+        /// <param name="showLegend"></param>
+        /// <param name="legendPosition"></param>
+        /// <param name="legendAlignment"></param>
         /// <returns></returns>
-        protected dynamic GetLegendConfigurationObject()
+        protected dynamic GetLegendConfigurationObject( bool showLegend, string legendPosition, string legendAlignment )
         {
             var optionsLegend = new
             {
-                position = this.LegendPosition,
-                align = this.LegendAlignment,
-                display = this.DisplayLegend
+                position = legendPosition,
+                align = legendAlignment,
+                display = showLegend
             };
 
             return optionsLegend;
@@ -217,7 +233,7 @@ namespace Rock.Chart
         /// Gets a JavaScript data object that represents the configuration for the ChartJs tooltip chart element.
         /// </summary>
         /// <returns></returns>
-        protected dynamic GetTooltipsConfigurationObject( string containerControlId, string valueFormatString )
+        protected virtual dynamic GetTooltipsConfigurationObject( string containerControlId, string valueFormatString )
         {
             if ( containerControlId == null )
             {
@@ -409,37 +425,6 @@ function(tooltipModel) {
             }
         }
 
-        private void SetLegendPositionAndAlignment( string rockLegendPosition )
-        {
-            rockLegendPosition = rockLegendPosition?.ToLower() ?? string.Empty;
-
-            if ( rockLegendPosition == "ne" )
-            {
-                this.LegendPosition = "top";
-                this.LegendAlignment = "end";
-            }
-            else if ( rockLegendPosition.StartsWith( "nw" ) )
-            {
-                this.LegendPosition = "top";
-                this.LegendAlignment = "start";
-            }
-            else if ( rockLegendPosition.StartsWith( "se" ) )
-            {
-                this.LegendPosition = "bottom";
-                this.LegendAlignment = "end";
-            }
-            else if ( rockLegendPosition.StartsWith( "sw" ) )
-            {
-                this.LegendPosition = "bottom";
-                this.LegendAlignment = "start";
-            }
-            else
-            {
-                this.LegendPosition = "bottom";
-                this.LegendAlignment = "center";
-            }
-        }
-
         private void SynchroniseSizingSettings()
         {
             // If "maintainAspectRatio" is enabled, responsive mode must also be enabled to avoid a Chart.js resizing bug detailed here:
@@ -450,6 +435,24 @@ function(tooltipModel) {
             {
                 _sizeToFitContainerWidth = true;
             }
+        }
+
+        /// <summary>
+        /// Serialize the specified object to JSON.
+        /// </summary>
+        /// <param name="jsonObject"></param>
+        /// <returns></returns>
+        protected string SerializeJsonObject( dynamic jsonObject )
+        {
+            var jsonSetting = new JsonSerializerSettings
+            {
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                NullValueHandling = NullValueHandling.Ignore
+            };
+
+            string jsonString = JsonConvert.SerializeObject( jsonObject, Formatting.None, jsonSetting );
+
+            return jsonString;
         }
 
         #region Helper Classes
@@ -478,6 +481,19 @@ function(tooltipModel) {
             /// Display legend?
             /// </summary>
             public bool DisplayLegend { get; set; } = true;
+
+            /// <summary>
+            /// Legend position: {top|left|bottom|right}
+            /// </summary>
+            public string LegendPosition { get; set; } = "bottom";
+
+            /// <summary>
+            /// Legend alignment: {start|center|end}
+            /// </summary>
+            /// <remarks>
+            /// This setting has no effect in ChartJs v2.8.0
+            /// </remarks>
+            public string LegendAlignment { get; set; } = "center";
 
             /// <summary>
             /// Bezier curve tension of the line. Set to 0 to draw straightlines.

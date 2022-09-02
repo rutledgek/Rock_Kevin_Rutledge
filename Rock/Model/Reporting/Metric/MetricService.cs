@@ -570,5 +570,74 @@ FROM (
 
             public int? EntityId { get; set; }
         }
+
+        #region Metric Reporting
+
+        /// <summary>
+        /// Gets the summary.
+        /// </summary>
+        /// <param name="metricIds">The metric identifier list.</param>
+        /// <param name="startDate">The start date.</param>
+        /// <param name="endDate">The end date.</param>
+        /// <param name="metricValueType">Type of the metric value.</param>
+        /// <param name="partitionValues">
+        /// A collection of identifiers that specify the metric partition values to be included.
+        /// If not specified, values from all parititions will be included.
+        /// </param>
+        /// <returns></returns>
+        public IQueryable<MetricValue> GetMetricValuesQuery( List<int> metricIds, MetricValueType? metricValueType = null, DateTime? startDate = null, DateTime? endDate = null, List<EntityIdentifierByTypeAndId> partitionValues = null )
+        {
+            var valuesService = new MetricValueService( ( RockContext ) this.Context );
+            var qry = valuesService.Queryable()
+                .AsNoTracking()
+                .Include( a => a.MetricValuePartitions.Select( b => b.MetricPartition ) )
+                .Where( a => metricIds.Contains( a.MetricId ) );
+
+            if ( metricValueType.HasValue )
+            {
+                qry = qry.Where( a => a.MetricValueType == metricValueType );
+            }
+
+            if ( startDate.HasValue )
+            {
+                qry = qry.Where( a => a.MetricValueDateTime >= startDate.Value );
+            }
+
+            if ( endDate.HasValue )
+            {
+                qry = qry.Where( a => a.MetricValueDateTime < endDate.Value );
+            }
+
+            // If partition filters are specified, ensure that the MetricValue has matches the entity instance and is for the same Entity Type as the partition.
+            if ( partitionValues != null )
+            {
+                partitionValues = partitionValues.Where( pv => pv.EntityTypeId != 0 && pv.EntityId != 0 ).ToList();
+                foreach ( var partitionValue in partitionValues )
+                {
+                    qry = qry.Where( a => a.MetricValuePartitions.Any( p => p.EntityId == partitionValue.EntityId && p.MetricPartition.EntityTypeId == partitionValue.EntityTypeId ) );
+                }
+            }
+
+            return qry;
+        }
+
+        /// <summary>
+        /// Identifies an entity by type and specific instance.
+        /// </summary>
+        public class EntityIdentifierByTypeAndId
+        {
+            /// <summary>
+            /// The Entity Type identifier.
+            /// </summary>
+            public int EntityTypeId;
+
+            /// <summary>
+            /// The Entity instance identifier.
+            /// </summary>
+            public int EntityId;
+        }
+
     }
+
+    #endregion
 }

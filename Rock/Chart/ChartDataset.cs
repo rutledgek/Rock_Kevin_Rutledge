@@ -19,9 +19,9 @@ using System.Collections.Generic;
 namespace Rock.Chart
 {
     /// <summary>
-    /// A set of data points and configuration options for a dataset that can be plotted on a ChartJs chart.
+    /// A set of data points and configuration options for a dataset that can be plotted on a Rock chart.
     /// </summary>
-    public class ChartJsDataset<TDataPoint>
+    public class ChartDataset<TDataPoint>
     {
         /// <summary>
         /// The name of the dataset.

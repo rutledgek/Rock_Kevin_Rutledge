@@ -18,12 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Rock.Model;
-using Rock.Utility;
-using Rock.Web.Cache;
-using Rock.Web.UI.Controls;
 
 namespace Rock.Chart
 {
@@ -34,6 +29,10 @@ namespace Rock.Chart
     /// This factory can generate the following data formats:
     /// * A JSON object compatible with the ChartJs constructor 'data' parameter: new Chart([chartContainer], [data]);
     /// * A Lava Chart Shortcode text block.
+    ///
+    /// NOTE: For future development, this factory should be replaced by new style-specific factories - ie. ChartJsLineChartDataFactory and ChartJsBarChartDataFactory.
+    /// Specific charts handle data types in ways that are appropriate to their presentation style.
+    /// Refer to the ChartJsPieChartDataFactory for an example of the preferred implementation - it handles both category and time series.
     /// </remarks>
     public class ChartJsTimeSeriesDataFactory<TDataPoint> : ChartJsDataFactory
             where TDataPoint : IChartJsTimeSeriesDataPoint
@@ -44,6 +43,8 @@ namespace Rock.Chart
 
         private List<ChartJsTimeSeriesDataset> _Datasets = new List<ChartJsTimeSeriesDataset>();
 
+        #region Constructors
+
         /// <summary>
         /// Initializes a new instance of the <see cref="ChartJsTimeSeriesDataFactory{TDataPoint}"/> class.
         /// </summary>
@@ -52,7 +53,9 @@ namespace Rock.Chart
             this.Datasets = new List<ChartJsTimeSeriesDataset>();
         }
 
-        #region Properties
+        #endregion
+
+        #region Public Methods and Properties
 
         /// <summary>
         /// The style of chart to display.
@@ -99,8 +102,6 @@ namespace Rock.Chart
                        && _Datasets.SelectMany( x => x.DataPoints ).Any();
             }
         }
-
-        #endregion
 
         #region Chart.js JSON Renderer
 
@@ -173,7 +174,7 @@ namespace Rock.Chart
         public string GetJson( ChartJsTimeSeriesDataFactory.GetJsonArgs args )
         {
             // Apply the argument settings.
-            this.SetChartStyle( args.ChartStyle );
+            ApplyChartStyleToArgs( args );
 
             this.MaintainAspectRatio = args.MaintainAspectRatio;
             this.SizeToFitContainerWidth = args.SizeToFitContainerWidth;
@@ -189,7 +190,7 @@ namespace Rock.Chart
             if ( this.TimeScale == ChartJsTimeSeriesTimeScaleSpecifier.Auto )
             {
                 // Allow Chart.js to scale the X-axis to best fit.
-                optionsXaxis = this.GetChartXaxisOptionsForAutoTimeScale();
+                optionsXaxis = GetChartXaxisOptionsForAutoTimeScale();
             }
             else
             {
@@ -214,11 +215,11 @@ namespace Rock.Chart
             // The suggested scale is from 0 to the maximum value in the data set, +10% to allow for a top margin.
             var suggestedMax = Math.Ceiling( maxValue * 1.1M );
 
-            var optionsYaxis = this.GetYAxisConfigurationObject( args.YValueFormatString, suggestedMax, stepSize, isStacked );
+            var optionsYaxis = GetYAxisConfigurationObject( args.YValueFormatString, suggestedMax, stepSize, isStacked );
 
             // Create the data structure for Chart.js parameter "options".
-            var optionsLegend = this.GetLegendConfigurationObject();
-            var tooltipsConfiguration = this.GetTooltipsConfigurationObject( args.ContainerControlId, args.YValueFormatString );
+            var optionsLegend = GetLegendConfigurationObject( args.DisplayLegend, args.LegendPosition, args.LegendAlignment );
+            var tooltipsConfiguration = GetTooltipsConfigurationObject( args.ContainerControlId, args.YValueFormatString );
             var optionsData = new
             {
                 maintainAspectRatio = this.MaintainAspectRatio,
@@ -250,28 +251,15 @@ namespace Rock.Chart
             if ( this.TimeScale == ChartJsTimeSeriesTimeScaleSpecifier.Auto )
             {
                 // Get the datapoints as a time/value series.
-                chartData = this.GetChartJsonObjectForAutoTimeScale( args );
+                chartData = GetChartJsonObjectForAutoTimeScale( args );
             }
             else
             {
                 // Get the datapoints grouped by category according to the TimeScale setting.
-                chartData = this.GetChartJsonObjectForSpecificTimeScale( args );
+                chartData = GetChartJsonObjectForSpecificTimeScale( args );
             }
 
             return chartData;
-        }
-
-        private string SerializeJsonObject( dynamic jsonObject )
-        {
-            var jsonSetting = new JsonSerializerSettings
-            {
-                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
-                NullValueHandling = NullValueHandling.Ignore
-            };
-
-            string jsonString = JsonConvert.SerializeObject( jsonObject, Formatting.None, jsonSetting );
-
-            return jsonString;
         }
 
         /// <summary>
@@ -282,7 +270,7 @@ namespace Rock.Chart
         private dynamic GetChartJsonObjectForAutoTimeScale( ChartJsTimeSeriesDataFactory.GetJsonArgs args )
         {
             var jsDatasets = new List<object>();
-            var colorGenerator = this.GetChartColorGenerator();
+            var colorGenerator = GetChartColorGenerator();
 
             foreach ( var dataset in this.Datasets )
             {
@@ -373,6 +361,7 @@ namespace Rock.Chart
             // Create the data structure for Chart.js parameter "options".
             long? minDate = null;
             long? maxDate = null;
+            var unit = "month";
 
             if ( this.StartDateTime != null )
             {
@@ -393,6 +382,8 @@ namespace Rock.Chart
                 new
                 {
                     type = "time",
+                    unit = unit,
+                    round = unit,
                     time = new { tooltipFormat = dateFormat, min = minDate, max = maxDate },
                 }
             };
@@ -452,6 +443,8 @@ namespace Rock.Chart
 
             return sbLava.ToString();
         }
+
+        #endregion
 
         #endregion
 
@@ -634,65 +627,6 @@ namespace Rock.Chart
         }
 
         /// <summary>
-        /// Return the datasets with all data points quantized according to the time scale.
-        /// </summary>
-        /// <remarks>
-        /// Quantizing the data points in this way will substantially improve the performance of Chart.js for large data sets.
-        /// </remarks>
-        private List<ChartJsTimeSeriesDataset> GetTimescaleDatasets()
-        {
-            var quantizedDatasets = new List<ChartJsTimeSeriesDataset>();
-
-            foreach ( var dataset in this.Datasets )
-            {
-                var datapoints = dataset.DataPoints;
-
-                var datasetQuantized = new ChartJsTimeSeriesDataset();
-
-                datasetQuantized.Name = dataset.Name;
-                datasetQuantized.BorderColor = dataset.BorderColor;
-                datasetQuantized.FillColor = dataset.FillColor;
-
-                if ( this.TimeScale == ChartJsTimeSeriesTimeScaleSpecifier.Month )
-                {
-                    var quantizedDataPoints = datapoints
-                        .GroupBy( x => new { Month = new DateTime( x.DateTime.Year, x.DateTime.Month, 1 ) } )
-                        .Select( x => new ChartJsTimeSeriesDataPoint
-                        {
-                            DateTime = x.Key.Month,
-                            Value = x.Sum( y => y.Value )
-                        } )
-                        .OrderBy( x => x.DateTime )
-                        .ToList();
-
-                    datasetQuantized.DataPoints = quantizedDataPoints.Cast<IChartJsTimeSeriesDataPoint>().ToList();
-                }
-                else if ( this.TimeScale == ChartJsTimeSeriesTimeScaleSpecifier.Year )
-                {
-                    var quantizedDataPoints = datapoints
-                        .GroupBy( x => new { Year = new DateTime( x.DateTime.Year, 1, 1 ) } )
-                        .Select( x => new ChartJsTimeSeriesDataPoint
-                        {
-                            DateTime = x.Key.Year,
-                            Value = x.Sum( y => y.Value )
-                        } )
-                        .OrderBy( x => x.DateTime )
-                        .ToList();
-
-                    datasetQuantized.DataPoints = quantizedDataPoints.Cast<IChartJsTimeSeriesDataPoint>().ToList();
-                }
-                else
-                {
-                    throw new NotImplementedException( "Timescale is not implemented" );
-                }
-
-                quantizedDatasets.Add( datasetQuantized );
-            }
-
-            return quantizedDatasets;
-        }
-
-        /// <summary>
         /// Convert the ChartJsTimeSeriesChartStyleSpecifier enumeration to a Chart.js parameter.
         /// </summary>
         /// <param name="chartStyle"></param>
@@ -817,7 +751,7 @@ namespace Rock.Chart
         /// <summary>
         /// Year time scale
         /// </summary>
-        Year = 4
+        Year = 4,
     }
 
     #endregion
@@ -841,7 +775,7 @@ namespace Rock.Chart
     /// <summary>
     /// An implementation of the Chart.js dataset for a value-over-time data series.
     /// </summary>
-    public class ChartJsTimeSeriesDataset : ChartJsDataset<IChartJsTimeSeriesDataPoint>
+    public class ChartJsTimeSeriesDataset : ChartDataset<IChartJsTimeSeriesDataPoint>
     {
     }
 

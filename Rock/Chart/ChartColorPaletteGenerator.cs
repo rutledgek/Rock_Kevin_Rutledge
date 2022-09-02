@@ -15,7 +15,6 @@
 // </copyright>
 //
 using System.Collections.Generic;
-using System.Linq;
 using Rock.Utility;
 
 namespace Rock.Chart
@@ -27,6 +26,8 @@ namespace Rock.Chart
     /// </summary>
     public class ChartColorPaletteGenerator
     {
+        #region Static Methods
+
         private static List<RockColor> _preferredChartColors = null;
 
         /// <summary>
@@ -62,6 +63,8 @@ namespace Rock.Chart
             return _preferredChartColors;
         }
 
+        #endregion
+
         #region Constructors
 
         /// <summary>
@@ -82,35 +85,13 @@ namespace Rock.Chart
 
         #endregion
 
+        #region Public Methods
+
         /// <summary>
         /// A collection of HTML Colors that represent the default palette for datasets in the chart.
         /// Colors are selected in order from this list for each dataset that does not have a specified color.
         /// </summary>
         public List<RockColor> BaseColors { get; set; }
-
-        private Queue<RockColor> _colorQueue = null;
-        private int _lightenPercentage = 0;
-
-        /// <summary>
-        /// Creates a queue of colors to be used as the palette for the chart datasets.
-        /// </summary>
-        /// <returns></returns>
-        private void GenerateColorQueue()
-        {
-            _colorQueue = new Queue<RockColor>();
-
-            var availableColors = this.BaseColors ?? ChartColorPaletteGenerator.GetPreferredChartColors();
-            foreach ( var color in availableColors )
-            {
-                var queueColor = new RockColor( color.ToArgb() );
-                if ( _lightenPercentage != 0 )
-                {
-                    queueColor.Lighten( _lightenPercentage );
-                }
-
-                _colorQueue.Enqueue( queueColor );
-            }
-        }
 
         /// <summary>
         /// Get the next set of colors in the palette.
@@ -151,6 +132,36 @@ namespace Rock.Chart
 
             return _colorQueue.Dequeue();
         }
+
+        #endregion
+
+        #region Internals
+
+        private Queue<RockColor> _colorQueue = null;
+        private int _lightenPercentage = 0;
+
+        /// <summary>
+        /// Creates a queue of colors to be used as the palette for the chart datasets.
+        /// </summary>
+        /// <returns></returns>
+        private void GenerateColorQueue()
+        {
+            _colorQueue = new Queue<RockColor>();
+
+            var availableColors = this.BaseColors ?? ChartColorPaletteGenerator.GetPreferredChartColors();
+            foreach ( var color in availableColors )
+            {
+                var queueColor = new RockColor( color.ToArgb() );
+                if ( _lightenPercentage != 0 )
+                {
+                    queueColor.Lighten( _lightenPercentage );
+                }
+
+                _colorQueue.Enqueue( queueColor );
+            }
+        }
+
+        #endregion
     }
 
     #endregion

@@ -26,6 +26,8 @@ namespace Rock.Web.UI.Controls
     /// </summary>
     public class RockBarChart : ChartJsChart
     {
+        #region Public Methods and Properties
+
         /// <summary>
         /// Gets or sets the width of the bar.
         /// Note that if the xaxis is time, BarWidth should be in milliseconds
@@ -46,13 +48,42 @@ namespace Rock.Web.UI.Controls
             }
         }
 
+        #endregion
+
+        #region Overrides
+
         /// <inheritdoc/>
-        protected override string OnGenerateChartJson( object dataSource )
+        protected override void OnInit( EventArgs e )
+        {
+            base.OnInit( e );
+
+            this.ChartClickScript = $@"function (event, pos, item) {{
+    var activePoints = _chart.getElementsAtEvent(event);
+    var chartData = activePoints[0]['_chart'].config.data;
+    var dataset = chartData.datasets[activePoints[0]['_datasetIndex']];
+    var dataItem = dataset.data[activePoints[0]['_index']];
+    var customData = dataItem.customData;
+    if (dataItem) {{
+        postbackArg = 'SeriesId=' + customData.SeriesName
+            + ';DateStamp=' + customData.DateTimeStamp
+            + ';YValue=' + ( customData.hasOwnProperty('YValue') ? customData.YValue : customData.Value );
+    }}
+    else
+    {{
+        // no point was clicked
+        postbackArg =  'DateStamp=;YValue=;SeriesId=';
+    }}
+    window.location = ""javascript:__doPostBack('{ ChartContainerControl.UniqueID }', '"" +  postbackArg + ""')"";
+}}";
+        }
+
+        /// <inheritdoc/>
+        protected override string OnGenerateChartJson( object dataSource, string defaultSeriesName = null )
         {
             var chartDataJson = string.Empty;
             if ( dataSource is IEnumerable<IChartData> chartData )
             {
-                chartDataJson = GetFromChartDataItems( chartData );
+                chartDataJson = GetFromChartDataItems( chartData, defaultSeriesName );
             }
             else if ( dataSource is List<ChartJsTimeSeriesDataset> datasets )
             {
@@ -81,36 +112,43 @@ namespace Rock.Web.UI.Controls
             return chartDataJson;
         }
 
-        private string GetFromChartDataItems( IEnumerable<IChartData> chartDataItems )
+        #endregion
+
+        #region Internal methods
+
+        private string GetFromChartDataItems( IEnumerable<IChartData> chartDataItems, string defaultSeriesName )
         {
             var chartDataJson = string.Empty;
+            List<ChartJsCategorySeriesDataset> categoryDatasets;
+
             var isTimeSeries = chartDataItems.Any( x => x.DateTimeStamp != 0 );
             if ( isTimeSeries )
             {
-                var timeDatasets = GetTimeSeriesFromChartData( chartDataItems );
-                var chartFactory = new ChartJsTimeSeriesDataFactory<ChartJsTimeSeriesDataPoint>();
-                chartFactory.Datasets = timeDatasets;
-                chartFactory.ChartStyle = ChartJsTimeSeriesChartStyleSpecifier.Bar;
-                chartFactory.CustomTooltipScript = this.TooltipContentScript;
+                var timeDatasets = ChartDataFactory.GetTimeSeriesFromChartData( chartDataItems, defaultSeriesName );
+                var timeDataset = timeDatasets.FirstOrDefault();
 
-                // Add client script to construct the chart.
-                var args = GetTimeChartDataFactoryArgs();
-                chartDataJson = chartFactory.GetJson( args );
+                if ( timeDataset == null )
+                {
+                    return string.Empty;
+                }
+                var scale = ChartDataFactory.GetRecommendedCategoryIntervalForTimeSeries( timeDataset );
+                var categoryDataset = ChartDataFactory.GetCategorySeriesFromTimeSeries( timeDataset, ChartJsTimeSeriesTimeScaleSpecifier.Auto );
 
-                return chartDataJson;
+                categoryDatasets = new List<ChartJsCategorySeriesDataset> { categoryDataset };
             }
             else
             {
-                var categoryDatasets = GetCategorySeriesFromChartData( chartDataItems );
-                var chartFactory = new ChartJsCategorySeriesDataFactory<ChartJsCategorySeriesDataPoint>();
-
-                chartFactory.Datasets = categoryDatasets;
-                chartFactory.ChartStyle = ChartJsCategorySeriesChartStyleSpecifier.Bar;
-  
-                // Add client script to construct the chart.
-                var args = GetCategoryChartDataFactoryArgs();
-                chartDataJson = chartFactory.GetJson( args );
+                categoryDatasets = ChartDataFactory.GetCategorySeriesFromChartData( chartDataItems, defaultSeriesName );
             }
+
+            var chartFactory = new ChartJsCategorySeriesDataFactory<ChartJsCategorySeriesDataPoint>();
+
+            chartFactory.Datasets = categoryDatasets;
+            chartFactory.ChartStyle = ChartJsCategorySeriesChartStyleSpecifier.Bar;
+
+            // Add client script to construct the chart.
+            var args = GetCategoryChartDataFactoryArgs();
+            chartDataJson = chartFactory.GetJson( args );
 
             return chartDataJson;
         }
@@ -142,5 +180,7 @@ namespace Rock.Web.UI.Controls
             args.YValueFormatString = this.YValueFormatString;
             return args;
         }
+
+        #endregion
     }
 }

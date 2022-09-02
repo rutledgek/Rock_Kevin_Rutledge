@@ -21,6 +21,9 @@ namespace Rock.Chart
     /// <summary>
     /// A chart data point that represents a value at a specific instant in time, and allows sorting by a specified key.
     /// </summary>
+    /// <remarks>
+    /// This class should be renamed ChartTimeSeriesDataPoint - it is not implementation specific.
+    /// </remarks>
     public class ChartJsTimeSeriesDataPoint : IChartJsTimeSeriesDataPoint
     {
         private long _DateTimeStamp = 0;
