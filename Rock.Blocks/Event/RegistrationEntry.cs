@@ -1,4 +1,4 @@
-﻿// <copyright>
+// <copyright>
 // Copyright by the Spark Development Network
 //
 // Licensed under the Rock Community License (the "License");
@@ -128,6 +128,7 @@ namespace Rock.Blocks.Event
     #endregion Block Attributes
 
     [Rock.SystemGuid.EntityTypeGuid( Rock.SystemGuid.EntityType.OBSIDIAN_EVENT_REGISTRATION_ENTRY )]
+    [Rock.SystemGuid.BlockTypeGuid( Rock.SystemGuid.BlockType.OBSIDIAN_EVENT_REGISTRATION_ENTRY )]
     public class RegistrationEntry : RockObsidianBlockType
     {
         #region Keys
@@ -849,7 +850,7 @@ namespace Rock.Blocks.Event
             if ( campusId.HasValue )
             {
                 context.Registration.CampusId = campusId;
-                History.EvaluateChange( registrationChanges, "Campus", string.Empty, linkage.Campus.Name );
+                History.EvaluateChange( registrationChanges, "Campus", string.Empty, CampusCache.Get( (int) campusId ).Name );
             }
 
             // if this registration was marked as temporary (started from another page, then specified in the url), set IsTemporary to False now that we are done

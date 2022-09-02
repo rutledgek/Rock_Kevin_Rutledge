@@ -876,6 +876,21 @@ namespace RockWeb.Blocks.Event
         }
 
         /// <summary>
+        /// Updates the RegistrationInstanceState property with info from the DB. This is to ensure that any change to the RegistrationInstnaceState made while the user was registering
+        /// is considered. e.g. If the registration was at capacity, made inactive, or the period ended then the user can be prevented from saving it.
+        /// </summary>
+        private void UpdateRegistrationInstanceStateInfo()
+        {
+            if ( RegistrationInstanceState == null || RegistrationInstanceState.Id == 0 )
+            {
+                return;
+            }
+
+            RegistrationInstanceState = new RegistrationInstanceService( new RockContext() ).Get( RegistrationInstanceState.Id );
+
+        }
+
+        /// <summary>
         /// Returns breadcrumbs specific to the block that should be added to navigation
         /// based on the current page reference.  This function is called during the page's
         /// oninit to load any initial breadcrumbs.
@@ -2412,6 +2427,8 @@ namespace RockWeb.Blocks.Event
 
             if ( RegistrationState != null && RegistrationState.Registrants.Any() && RegistrationTemplate != null )
             {
+                UpdateRegistrationInstanceStateInfo();
+
                 var rockContext = new RockContext();
 
                 var registrationService = new RegistrationService( rockContext );
@@ -2428,6 +2445,21 @@ namespace RockWeb.Blocks.Event
                             .Where( r => r.PersonAlias != null )
                             .Select( r => r.PersonAlias.PersonId )
                             .ToList();
+                    }
+                }
+
+                if ( isNewRegistration )
+                {
+                    if ( RegistrationInstanceState.EndDateTime < RockDateTime.Now )
+                    {
+                        ShowWarning( "Sorry", $"{RegistrationInstanceState.Name} closed on {RegistrationInstanceState.EndDateTime}." );
+                        return null;
+                    }
+
+                    if ( !RegistrationInstanceState.IsActive )
+                    {
+                        ShowWarning( "Sorry", $"{RegistrationInstanceState.Name} is no longer active." );
+                        return null;
                     }
                 }
 
@@ -5502,19 +5534,28 @@ namespace RockWeb.Blocks.Event
                 var familyOptions = RegistrationState.GetFamilyOptions( RegistrationTemplate, RegistrationState.RegistrantCount );
                 if ( familyOptions.Any() )
                 {
-                    // previous family selections are always null after postback, so default to anyone in the same family
+                    // Previous family selections are always null after postback, so default to anyone in the same family.
                     var selectedGuid = CurrentPerson != null ? CurrentPerson.GetFamily().Guid : rblRegistrarFamilyOptions.SelectedValueAsGuid();
+
+                    // Set selected to nothing before we repopulate rblRegistrarFamilyOptions,
+                    // then we'll set it back.
+                    rblRegistrarFamilyOptions.SetValue( ( Guid? ) null );
 
                     familyOptions.Add(
                         familyOptions.ContainsKey( RegistrationState.FamilyGuid ) ?
                         Guid.NewGuid() :
                         RegistrationState.FamilyGuid.Equals( Guid.Empty ) ? Guid.NewGuid() : RegistrationState.FamilyGuid,
                         "None" );
-                    rblRegistrarFamilyOptions.DataSource = familyOptions;
-                    rblRegistrarFamilyOptions.DataBind();
+
+                    rblRegistrarFamilyOptions.Items.Clear();
+                    foreach ( var option in familyOptions )
+                    {
+                        rblRegistrarFamilyOptions.Items.Add( new ListItem( option.Value, option.Key.ToString() ) );
+                    }
 
                     if ( selectedGuid.HasValue )
                     {
+                        // Note that SetValue internally checks to see if the specified value is a valid to set.
                         rblRegistrarFamilyOptions.SetValue( selectedGuid );
                     }
 

@@ -47,9 +47,20 @@ namespace Rock.Slingshot
             string csvColumnFamilyId = csvHeaderMapper[CSVHeaders.FamilyId];
             person.FamilyId = csvEntryLookup[csvColumnFamilyId].ToIntSafe();
 
-            string csvColumnFamilyRole = csvHeaderMapper[CSVHeaders.FamilyRole];
-            string familyRoleString = csvEntryLookup[csvColumnFamilyRole].ToStringSafe();
-            person.FamilyRole = ( SlingshotCore.Model.FamilyRole ) Enum.Parse( typeof( SlingshotCore.Model.FamilyRole ), familyRoleString );
+            var csvColumnFamilyRole = csvHeaderMapper.GetValueOrNull( CSVHeaders.FamilyRole );
+            if ( csvColumnFamilyRole != null )
+            {
+                string familyRoleString = csvEntryLookup[csvColumnFamilyRole].ToStringSafe();
+                var familyRoleEnum = familyRoleString.ConvertToEnumOrNull<SlingshotCore.Model.FamilyRole>();
+                if ( familyRoleEnum != null )
+                {
+                    person.FamilyRole = familyRoleEnum.Value;
+                }
+                else
+                {
+                    parserErrors.Add( $"Family Role {familyRoleString} is invalid; defaulting to {person.FamilyRole}" );
+                }
+            }
 
             string csvColumnFirstName = csvHeaderMapper[CSVHeaders.FirstName];
             person.FirstName = csvEntryLookup[csvColumnFirstName].ToStringSafe();
@@ -86,7 +97,7 @@ namespace Rock.Slingshot
                 bool isEmailValid = EmailAddressFieldValidator.Validate( person.Email, allowMultipleAddresses: false, allowLava: false ) == EmailFieldValidationResultSpecifier.Valid;
                 if ( !isEmailValid )
                 {
-                    parserErrors.Add( $"Email Address {person.Email} could not be read" );
+                    parserErrors.Add( $"Email Address {person.Email} is invalid" );
                     person.Email = string.Empty;
                 }
             }
@@ -102,7 +113,7 @@ namespace Rock.Slingshot
                 }
                 else
                 {
-                    parserErrors.Add( $"Gender {genderString} is invalid defaulting to {person.Gender}" );
+                    parserErrors.Add( $"Gender {genderString} is invalid; defaulting to {person.Gender}" );
                 }
             }
 
@@ -117,7 +128,7 @@ namespace Rock.Slingshot
                 }
                 else
                 {
-                    parserErrors.Add( $"Email Preference {emailPreferenceString} is invalid defaulting to {person.EmailPreference}" );
+                    parserErrors.Add( $"Email Preference {emailPreferenceString} is invalid; defaulting to {person.EmailPreference}" );
                 }
             }
 
@@ -139,7 +150,7 @@ namespace Rock.Slingshot
                 }
                 else
                 {
-                    parserErrors.Add( $"Marital Status {martialStatusString} is invalid defaulting to {person.MaritalStatus}" );
+                    parserErrors.Add( $"Marital Status {martialStatusString} is invalid; defaulting to {person.MaritalStatus}" );
                 }
             }
 
@@ -175,13 +186,14 @@ namespace Rock.Slingshot
             if ( csvColumnRecordStatus != null )
             {
                 string recordStatusString = csvEntryLookup[csvColumnRecordStatus].ToStringSafe();
-                if ( Enum.TryParse( recordStatusString, out SlingshotCore.Model.RecordStatus RecordStatusEnum ) )
+                var recordStatusEnum = recordStatusString.ConvertToEnumOrNull<SlingshotCore.Model.RecordStatus>();
+                if ( recordStatusEnum != null )
                 {
-                    person.RecordStatus = RecordStatusEnum;
+                    person.RecordStatus = recordStatusEnum.Value;
                 }
                 else
                 {
-                    parserErrors.Add( $"Record Status {recordStatusString} is invalid defaulting to {person.RecordStatus}" );
+                    parserErrors.Add( $"Record Status {recordStatusString} is invalid; defaulting to {person.RecordStatus}" );
                 }
             }
 
@@ -201,7 +213,7 @@ namespace Rock.Slingshot
                 }
                 else
                 {
-                    parserErrors.Add( $"Could not set Is Deceased to {isDeceasedString} defaulting to \'{person.IsDeceased}\'" );
+                    parserErrors.Add( $"Could not set Is Deceased to {isDeceasedString}; defaulting to \'{person.IsDeceased}\'" );
                 }
             }
 
@@ -239,7 +251,7 @@ namespace Rock.Slingshot
                 }
                 else
                 {
-                    parserErrors.Add( $"Could not set Give Individually to {givingIndividuallyString} defaulting to \'{person.GiveIndividually}\'" );
+                    parserErrors.Add( $"Could not set Give Individually to {givingIndividuallyString}; defaulting to \'{person.GiveIndividually}\'" );
                 }
             }
 

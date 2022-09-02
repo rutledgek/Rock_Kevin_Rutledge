@@ -18,36 +18,32 @@ namespace Rock.Migrations
 {
     using System;
     using System.Data.Entity.Migrations;
-
+    
     /// <summary>
     ///
     /// </summary>
-    public partial class Rollup_20220715 : Rock.Migrations.RockMigration
+    public partial class PersonPagesNotesBlockUpdate : Rock.Migrations.RockMigration
     {
         /// <summary>
         /// Operations to be performed during the upgrade process.
         /// </summary>
         public override void Up()
         {
-            Update_spCrm_FamilyAnalyticsEraDataset();
-            FixIncorrectERAStartDate();
+            // Add Block Attribute Value
+            //   Block: TimeLine
+            //   BlockType: Notes
+            //   Category: Core
+            //   Block Location: Page=Person Profile, Site=Rock RMS
+            //   Attribute: Add Always Visible
+            /*   Attribute Value: True */
+            RockMigrationHelper.AddBlockAttributeValue("0B2B550C-B0C9-420E-9CF3-BEC8979108F2","8E0BDD15-6B92-4BB0-9138-E9382B60F3A9",@"True");
         }
-
+        
         /// <summary>
         /// Operations to be performed during the downgrade process.
         /// </summary>
         public override void Down()
         {
-        }
-
-        private void FixIncorrectERAStartDate()
-        {
-            Sql( MigrationSQL._202207152352391_Rollup_20220715_RecoverERAStartDate_Update );
-        }
-
-        private void Update_spCrm_FamilyAnalyticsEraDataset()
-        {
-            Sql( MigrationSQL._202207152352391_Rollup_20220715_spCrm_FamilyAnalyticsEraDataset );
         }
     }
 }

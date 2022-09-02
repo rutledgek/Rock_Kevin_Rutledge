@@ -98,6 +98,7 @@ import SlidingDateRangePicker from "@Obsidian/Controls/slidingDateRangePicker";
 import DefinedValuePicker from "@Obsidian/Controls/definedValuePicker";
 import CategoryPicker from "@Obsidian/Controls/categoryPicker";
 import LocationPicker from "@Obsidian/Controls/locationPicker";
+import ConnectionRequestPicker from "@Obsidian/Controls/connectionRequestPicker";
 import CopyButton from "@Obsidian/Controls/copyButton";
 import EntityTagList from "@Obsidian/Controls/entityTagList";
 import Following from "@Obsidian/Controls/following";
@@ -158,6 +159,12 @@ import RockLabel from "@Obsidian/Controls/rockLabel";
 import RockValidation from "@Obsidian/Controls/rockValidation";
 import TabbedContent from "@Obsidian/Controls/tabbedContent";
 import ValueDetailList from "@Obsidian/Controls/valueDetailList";
+import PagePicker from "@Obsidian/Controls/pagePicker";
+import GroupPicker from "@Obsidian/Controls/groupPicker";
+import MergeTemplatePicker from "@Obsidian/Controls/mergeTemplatePicker";
+import { MergeTemplateOwnership } from "@Obsidian/Enums/Controls/mergeTemplateOwnership";
+import MetricCategoryPicker from "@Obsidian/Controls/metricCategoryPicker";
+import MetricItemPicker from "@Obsidian/Controls/metricItemPicker";
 
 // #region Gallery Support
 
@@ -195,10 +202,10 @@ function convertComponentName(name: string | undefined | null): string {
  * Takes an element name and a collection of attribute keys and values and
  * constructs the example code. This can be used inside a computed call to
  * have the example code dynamically match the selected settings.
- * 
+ *
  * @param elementName The name of the element to use in the example code.
  * @param attributes The attribute names and values to append to the element name.
- * 
+ *
  * @returns A string of valid HTML content for how to use the component.
  */
 function buildExampleCode(elementName: string, attributes: Record<string, Ref<unknown> | unknown>): string {
@@ -2804,6 +2811,38 @@ const locationPickerGallery = defineComponent({
 </GalleryAndResult>`
 });
 
+/** Demonstrates connection request picker */
+const connectionRequestPickerGallery = defineComponent({
+    name: "ConnectionRequestPickerGallery",
+    components: {
+        GalleryAndResult,
+        CheckBox,
+        ConnectionRequestPicker
+    },
+    setup() {
+        return {
+            multiple: ref(false),
+            value: ref(null),
+            importCode: getControlImportPath("connectionRequestPicker"),
+            exampleCode: `<ConnectionRequestPicker label="ConnectionRequest" v-model="value" :multiple="false" />`
+        };
+    },
+    template: `
+<GalleryAndResult
+    :value="value"
+    :importCode="importCode"
+    :exampleCode="exampleCode"
+    enableReflection >
+    <ConnectionRequestPicker label="ConnectionRequest" v-model="value" :multiple="multiple" />
+
+    <template #settings>
+        <CheckBox label="Multiple" v-model="multiple" />
+
+        <p class="text-semibold font-italic">Not all options have been implemented yet.</p>
+    </template>
+</GalleryAndResult>`
+});
+
 /** Demonstrates copy button */
 const copyButtonGallery = defineComponent({
     name: "CopyButtonGallery",
@@ -3728,7 +3767,7 @@ const gradePickerGallery = defineComponent({
             displayStyle: ref(PickerDisplayStyle.Auto),
             displayStyleItems,
             useAbbreviation: ref(false),
-            useGradeOffsetAsValue: ref(false),
+            useGuidAsValue: ref(false),
             enhanceForLongLists: ref(false),
             multiple: ref(false),
             showBlankItem: ref(false),
@@ -3751,7 +3790,7 @@ const gradePickerGallery = defineComponent({
         :displayStyle="displayStyle"
         :showBlankItem="showBlankItem"
         :useAbbreviation="useAbbreviation"
-        :useGradeOffsetAsValue="useGradeOffsetAsValue" />
+        :useGuidAsValue="useGuidAsValue" />
     <template #settings>
         <div class="row">
             <div class="col-md-4">
@@ -3775,7 +3814,7 @@ const gradePickerGallery = defineComponent({
                 <CheckBox label="Use Abbreviations" v-model="useAbbreviation" />
             </div>
             <div class="col-md-3">
-                <CheckBox label="Use Grade Offset Value" v-model="useGradeOffsetAsValue" />
+                <CheckBox label="Use GUID Value" v-model="useGuidAsValue" />
             </div>
         </div>
     </template>
@@ -5262,7 +5301,7 @@ const codeEditorGallery = defineComponent({
             { value: "mono_industrial", text: "mono_industrial" },
             { value: "monokai", text: "monokai" },
             { value: "pastel_on_dark", text: "pastel_on_dark" },
-            { value: "solarized_on_dark", text: "solarized_on_dark" },
+            { value: "solarized_dark", text: "solarized_dark" },
             { value: "terminal", text: "terminal" },
             { value: "tomorrow_night", text: "tomorrow_night" },
             { value: "tomorrow_night_blue", text: "tomorrow_night_blue" },
@@ -5333,6 +5372,230 @@ const codeEditorGallery = defineComponent({
 </GalleryAndResult>`
 });
 
+
+/** Demonstrates page picker */
+const pagePickerGallery = defineComponent({
+    name: "PagePickerGallery",
+    components: {
+        GalleryAndResult,
+        CheckBox,
+        PagePicker
+    },
+    setup() {
+        return {
+            multiple: ref(false),
+            showSelectCurrentPage: ref(false),
+            promptForPageRoute: ref(false),
+            value: ref({
+                "page": {
+                    value: "b07f30b3-95c4-40a5-9cf6-455399bef67a",
+                    text: "Universal Search"
+                }
+            }),
+            importCode: getControlImportPath("pagePicker"),
+            exampleCode: `<PagePicker label="Page" v-model="value" :multiple="false" promptForPageRoute showSelectCurrentPage />`
+        };
+    },
+    template: `
+<GalleryAndResult
+    :value="value"
+    :importCode="importCode"
+    :exampleCode="exampleCode"
+    enableReflection >
+    <PagePicker label="Page" v-model="value" :multiple="multiple" :promptForPageRoute="promptForPageRoute" :showSelectCurrentPage="showSelectCurrentPage" />
+
+    <template #settings>
+
+        <div class="row">
+            <div class="col-md-4">
+                <CheckBox label="Multiple" v-model="multiple" />
+            </div>
+            <div class="col-md-4">
+                <CheckBox label="Show 'Select Current Page' Button" v-model="showSelectCurrentPage" />
+            </div>
+            <div class="col-md-4">
+                <CheckBox label="Prompt for Route" v-model="promptForPageRoute" help="Only works if not selecting multiple values" />
+            </div>
+        </div>
+        <p class="text-semibold font-italic">Not all options have been implemented yet.</p>
+    </template>
+</GalleryAndResult>`
+});
+
+/** Demonstrates group picker */
+const groupPickerGallery = defineComponent({
+    name: "GroupPickerGallery",
+    components: {
+        GalleryAndResult,
+        CheckBox,
+        GroupPicker
+    },
+    setup() {
+        return {
+            multiple: ref(false),
+            limitToSchedulingEnabled: ref(false),
+            limitToRSVPEnabled: ref(false),
+            value: ref(null),
+            importCode: getControlImportPath("groupPicker"),
+            exampleCode: `<GroupPicker label="Group" v-model="value" :multiple="false" />`
+        };
+    },
+    template: `
+<GalleryAndResult
+    :value="value"
+    :importCode="importCode"
+    :exampleCode="exampleCode"
+    enableReflection >
+
+    <GroupPicker label="Group"
+        v-model="value"
+        :multiple="multiple"
+        :limitToSchedulingEnabled="limitToSchedulingEnabled"
+        :limitToRSVPEnabled="limitToRSVPEnabled" />
+
+    <template #settings>
+
+    <div class="row">
+        <div class="col-md-4">
+            <CheckBox label="Multiple" v-model="multiple" />
+        </div>
+        <div class="col-md-4">
+            <CheckBox label="Limit to Scheduling Enabled" v-model="limitToSchedulingEnabled" />
+        </div>
+        <div class="col-md-4">
+            <CheckBox label="Limit to RSVP Enabled" v-model="limitToRSVPEnabled" />
+        </div>
+    </div>
+
+        <p class="text-semibold font-italic">Not all options have been implemented yet.</p>
+    </template>
+</GalleryAndResult>`
+});
+
+/** Demonstrates merge template picker */
+const mergeTemplatePickerGallery = defineComponent({
+    name: "MergeTemplatePickerGallery",
+    components: {
+        GalleryAndResult,
+        DropDownList,
+        CheckBox,
+        MergeTemplatePicker
+    },
+    setup() {
+        const ownershipOptions = [
+            { text: "Global", value: MergeTemplateOwnership.Global },
+            { text: "Personal", value: MergeTemplateOwnership.Personal },
+            { text: "Both", value: MergeTemplateOwnership.PersonalAndGlobal },
+        ];
+
+        return {
+            ownershipOptions,
+            ownership: ref(MergeTemplateOwnership.Global),
+            multiple: ref(false),
+            value: ref(null),
+            importCode: getControlImportPath("mergeTemplatePicker"),
+            exampleCode: `<MergeTemplatePicker label="Merge Template" v-model="value" :multiple="false" />`
+        };
+    },
+    template: `
+<GalleryAndResult
+    :value="value"
+    :importCode="importCode"
+    :exampleCode="exampleCode"
+    enableReflection >
+
+    <MergeTemplatePicker label="Merge Template"
+        v-model="value"
+        :multiple="multiple"
+        :mergeTemplateOwnership="ownership" />
+
+    <template #settings>
+
+    <div class="row">
+        <div class="col-md-4">
+            <CheckBox label="Multiple" v-model="multiple" />
+        </div>
+        <div class="col-md-4">
+            <DropDownList label="Ownership" v-model="ownership" :items="ownershipOptions" />
+        </div>
+    </div>
+
+        <p class="text-semibold font-italic">Not all options have been implemented yet.</p>
+    </template>
+</GalleryAndResult>`
+});
+
+/** Demonstrates metric category picker */
+const metricCategoryPickerGallery = defineComponent({
+    name: "MetricCategoryPickerGallery",
+    components: {
+        GalleryAndResult,
+        DropDownList,
+        CheckBox,
+        MetricCategoryPicker
+    },
+    setup() {
+        return {
+            multiple: ref(false),
+            value: ref(null),
+            importCode: getControlImportPath("metricCategoryPicker"),
+            exampleCode: `<MetricCategoryPicker label="Metric Category" v-model="value" :multiple="false" />`
+        };
+    },
+    template: `
+<GalleryAndResult
+    :value="value"
+    :importCode="importCode"
+    :exampleCode="exampleCode"
+    enableReflection >
+
+    <MetricCategoryPicker label="Metric Category"
+        v-model="value"
+        :multiple="multiple" />
+
+    <template #settings>
+        <CheckBox label="Multiple" v-model="multiple" />
+
+        <p class="text-semibold font-italic">Not all options have been implemented yet.</p>
+    </template>
+</GalleryAndResult>`
+});
+
+/** Demonstrates metric item picker */
+const metricItemPickerGallery = defineComponent({
+    name: "MetricItemPickerGallery",
+    components: {
+        GalleryAndResult,
+        DropDownList,
+        CheckBox,
+        MetricItemPicker
+    },
+    setup() {
+        return {
+            multiple: ref(false),
+            value: ref(null),
+            importCode: getControlImportPath("metricItemPicker"),
+            exampleCode: `<MetricItemPicker label="Metric Item" v-model="value" :multiple="false" />`
+        };
+    },
+    template: `
+<GalleryAndResult
+    :value="value"
+    :importCode="importCode"
+    :exampleCode="exampleCode"
+    enableReflection >
+
+    <MetricItemPicker label="Metric Item"
+        v-model="value"
+        :multiple="multiple" />
+
+    <template #settings>
+        <CheckBox label="Multiple" v-model="multiple" />
+
+        <p class="text-semibold font-italic">Not all options have been implemented yet.</p>
+    </template>
+</GalleryAndResult>`
+});
 
 
 const controlGalleryComponents: Record<string, Component> = [
@@ -5434,6 +5697,12 @@ const controlGalleryComponents: Record<string, Component> = [
     tabbedContentGallery,
     transitionVerticalCollapseGallery,
     valueDetailListGallery,
+    pagePickerGallery,
+    connectionRequestPickerGallery,
+    groupPickerGallery,
+    mergeTemplatePickerGallery,
+    metricCategoryPickerGallery,
+    metricItemPickerGallery
 ]
     // Sort list by component name
     .sort((a, b) => a.name.localeCompare(b.name))

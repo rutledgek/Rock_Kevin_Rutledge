@@ -1,4 +1,4 @@
-// <copyright>
+﻿// <copyright>
 // Copyright by the Spark Development Network
 //
 // Licensed under the Rock Community License (the "License");
@@ -106,27 +106,6 @@ namespace RockWeb.Blocks.Finance
         }
 
         private List<int> TransactionImagesState { get; set; }
-
-        private Dictionary<int, string> _accountNames = null;
-
-        private Dictionary<int, string> AccountNames
-        {
-            get
-            {
-                if ( _accountNames == null )
-                {
-                    _accountNames = new Dictionary<int, string>();
-                    new FinancialAccountService( new RockContext() ).Queryable()
-                        .OrderBy( a => a.Order )
-                        .Select( a => new { a.Id, a.Name } )
-                        .ToList()
-                        .ForEach( a => _accountNames.Add( a.Id, a.Name ) );
-                    _accountNames.Add( TotalRowAccountId, "<strong>Total</strong>" );
-                }
-
-                return _accountNames;
-            }
-        }
 
         private bool UseSimpleAccountMode
         {
@@ -529,6 +508,24 @@ namespace RockWeb.Blocks.Finance
                     {
                         return;
                     }
+                }
+
+                bool hasValidAmount;
+                if ( UseSimpleAccountMode )
+                {
+                    var accountAmountMinusFeeCoverageAmount = tbSingleAccountAmountMinusFeeCoverageAmount.Value ?? 0.0M;
+                    var accountAmountFeeCoverageAmount = tbSingleAccountFeeCoverageAmount.Value;
+                    hasValidAmount = accountAmountMinusFeeCoverageAmount != 0.0M || ( accountAmountFeeCoverageAmount.HasValue && accountAmountFeeCoverageAmount.Value != 0.0M );
+                }
+                else
+                {
+                    hasValidAmount = TransactionDetailsState.Any( d => d.Amount != 0.0M || ( d.FeeCoverageAmount.HasValue && d.FeeCoverageAmount.Value != 0.0M ) );
+                }
+
+                if ( !hasValidAmount )
+                {
+                    nbTransactionDetailValidationMessage.Visible = true;
+                    return;
                 }
 
                 rockContext.WrapTransaction( () =>
@@ -996,6 +993,13 @@ namespace RockWeb.Blocks.Finance
                 }
 
                 BindAccounts();
+
+                if ( nbTransactionDetailValidationMessage.Visible )
+                {
+                    // If a message about no amounts is showing, hide it now that they have added one.
+                    // It'll get re-checked when saved.
+                    nbTransactionDetailValidationMessage.Visible = false;
+                }
             }
 
             HideDialog();
@@ -2227,7 +2231,7 @@ namespace RockWeb.Blocks.Finance
         {
             if ( accountId.HasValue )
             {
-                return AccountNames.ContainsKey( accountId.Value ) ? AccountNames[accountId.Value] : string.Empty;
+                return FinancialAccountCache.Get( accountId.Value )?.Name ?? string.Empty;
             }
 
             return string.Empty;
