@@ -1,4 +1,4 @@
-// <copyright>
+﻿// <copyright>
 // Copyright by the Spark Development Network
 //
 // Licensed under the Rock Community License (the "License");
@@ -2599,7 +2599,8 @@ namespace Rock.Blocks.Event
                     .ToList(),
 
                 EnableSaveAccount = enableSavedAccount,
-                SavedAccounts = savedAccounts
+                SavedAccounts = savedAccounts,
+                IsExistingRegistration = isExistingRegistration
             };
 
             if ( context.RegistrationSettings.SignatureDocumentTemplateId.HasValue && context.RegistrationSettings.IsInlineSignatureRequired )

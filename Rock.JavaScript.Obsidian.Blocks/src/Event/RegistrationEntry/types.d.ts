@@ -114,6 +114,7 @@ export type RegistrationEntryBlockViewModel = {
     isSignatureDrawn: boolean;
     signatureDocumentTerm?: string | null;
     signatureDocumentTemplateName?: string | null;
+    isExistingRegistration: boolean;
 };
 
 export type RegistrationEntryBlockFamilyMemberViewModel = {

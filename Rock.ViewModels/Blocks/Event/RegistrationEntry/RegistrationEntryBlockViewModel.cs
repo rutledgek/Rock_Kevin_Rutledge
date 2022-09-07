@@ -399,6 +399,14 @@ namespace Rock.ViewModels.Blocks.Event.RegistrationEntry
         /// The name of the signature document template.
         /// </value>
         public string SignatureDocumentTemplateName { get; set; }
+
+        /// <summary>
+        /// Gets a value indicating whether or not this is an existing registration.
+        /// </summary>
+        /// <value>
+        /// The value indicating whether or not this is an existing registration.
+        /// </value>
+        public bool IsExistingRegistration { get; set; }
     }
 
     /// <summary>
