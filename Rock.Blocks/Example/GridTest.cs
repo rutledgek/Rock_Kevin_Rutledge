@@ -15,6 +15,7 @@
 // </copyright>
 //
 
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data.Entity;
 using System.Linq;
@@ -52,33 +53,39 @@ namespace Rock.Blocks.Example
                 var count = RequestContext.GetPageParameter( "count" )?.AsIntegerOrNull() ?? 10_000;
 
                 var sw = System.Diagnostics.Stopwatch.StartNew();
-                var groups = new GroupService( rockContext )
+                var prayerRequests = new PrayerRequestService( rockContext )
                     .Queryable()
                     .AsNoTracking()
-                    .Where( g => g.GroupTypeId == 38 )
-                    .OrderBy( g => g.Id )
                     .Take( count )
                     .ToList();
                 sw.Stop();
                 System.Diagnostics.Debug.WriteLine( $"Entity load took {sw.Elapsed}." );
 
                 sw.Restart();
-                Rock.Attribute.Helper.LoadFilteredAttributes( groups, rockContext, a => a.IsGridColumn );
+                Rock.Attribute.Helper.LoadFilteredAttributes( prayerRequests, rockContext, a => a.IsGridColumn );
                 sw.Stop();
                 System.Diagnostics.Debug.WriteLine( $"Attribute load took {sw.Elapsed}." );
 
                 sw.Restart();
-                var rows = groups
-                    .Select( g => new
+                var rows = prayerRequests
+                    .Select( pr =>
                     {
-                        g.Name,
-                        g.Description,
-                        Attr_Group1 = new
+                        var row = new Dictionary<string, object>
                         {
-                            Guid = g.GetAttributeValue( "Group1" ),
-                            Text = g.GetAttributeCondensedTextValue( "Group1" )
-                        },
-                        Attr_CheckList = g.GetAttributeCondensedHtmlValue( "CheckList" )
+                            ["name"] = new { pr.FirstName, pr.LastName },
+                            ["email"] = pr.Email,
+                            ["enteredDateTime"] = pr.EnteredDateTime,
+                            ["expirationDateTime"] = pr.ExpirationDate,
+                            ["isUrgent"] = pr.IsUrgent,
+                            ["isPublic"] = pr.IsPublic
+                        };
+
+                        foreach ( var attrValue in pr.AttributeValues )
+                        {
+                            row[$"attr_{attrValue.Key}"] = pr.GetAttributeCondensedHtmlValue( attrValue.Key );
+                        }
+
+                        return row;
                     } )
                     .ToList();
                 sw.Stop();

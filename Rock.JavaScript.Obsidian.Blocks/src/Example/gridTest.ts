@@ -20,6 +20,7 @@ import { Guid } from "@Obsidian/Types";
 import { useConfigurationValues, useInvokeBlockAction } from "@Obsidian/Utility/block";
 import { escapeHtml } from "@Obsidian/Utility/stringUtils";
 import { defineComponent } from "vue";
+import { RockDateTime } from "@Obsidian/Utility/rockDateTime";
 import Grid from "./GridTest/grid.partial";
 import { GridData } from "./GridTest/types";
 
@@ -43,53 +44,107 @@ export default defineComponent({
                     columns: [
                         {
                             name: "name",
-                            title: "Name"
+                            title: "Name",
+                            format: (value: unknown) => {
+                                if (value && typeof value === "object") {
+                                    return `${value["firstName"]} ${value["lastName"]}`;
+                                }
+                                else {
+                                    return "";
+                                }
+                            },
+                            sortValue: (value: unknown) => {
+                                if (value && typeof value === "object") {
+                                    return `${value["lastName"]} ${value["firstName"]}`;
+                                }
+                                else {
+                                    return "";
+                                }
+                            }
                         },
                         {
-                            name: "description"
+                            name: "email",
+                            title: "Email"
+                        },
+                        {
+                            name: "enteredDateTime",
+                            title: "Entered On",
+                            format: (value: unknown) => {
+                                if (!(typeof value === "string")) {
+                                    return "";
+                                }
+
+                                const dt = RockDateTime.parseISO(value);
+
+                                return dt?.toASPString("g") ?? "";
+                            }
+                        },
+                        {
+                            name: "expirationDateTime",
+                            title: "Expires",
+                            format: (value: unknown) => {
+                                if (!(typeof value === "string")) {
+                                    return "";
+                                }
+
+                                const dt = RockDateTime.parseISO(value);
+
+                                return dt?.toASPString("g") ?? "";
+                            }
+                        },
+                        {
+                            name: "isUrgent",
+                            title: "Urgent",
+                            format: (value: unknown) => {
+                                return value ? `<i class="fa fa-check"></i>` : "";
+                            },
+                            sortValue: (value: unknown) => {
+                                return value ? 1 : 0;
+                            }
+                        },
+                        {
+                            name: "isPublic",
+                            title: "Public",
+                            format: (value: unknown) => {
+                                return value ? `<i class="fa fa-check"></i>` : "";
+                            },
+                            sortValue: (value: unknown) => {
+                                return value ? 1 : 0;
+                            }
+                        },
+                        {
+                            name: "attr_Person1",
+                            title: "Person 1",
+                            format: (value: unknown) => {
+                                if (!(typeof value === "string")) {
+                                    return "";
+                                }
+
+                                return value;
+                            }
+                        },
+                        {
+                            name: "attr_TextValue1",
+                            title: "Text Value 1"
+                        },
+                        {
+                            name: "attr_SingleSelect1",
+                            title: "Single Select 1"
                         },
                         {
                             name: "attr_Group1",
                             title: "Group 1",
                             format: (value: unknown) => {
-                                if (typeof value === "object") {
-                                    const linkValue = value as { guid?: Guid | null, text?: string | null };
-
-                                    if (!linkValue.guid || !linkValue.text) {
-                                        return "";
-                                    }
-
-                                    return `<a href="/Group/${linkValue.guid}">${escapeHtml(linkValue.text)}</a>`;
+                                if (!(typeof value === "string")) {
+                                    return "";
                                 }
 
-                                return "";
-                            },
-                            quickFilterValue: (value) => {
-                                if (typeof value === "object") {
-                                    const linkValue = value as { guid: string, text: string };
-
-                                    return linkValue.text;
-                                }
-
-                                return undefined;
-                            },
-                            filter: (needle, haystack) => {
-                                if (typeof needle === "string" && typeof haystack === "object") {
-                                    const linkValue = haystack as { guid: string, text: string };
-                                    return linkValue.text.toLowerCase().includes(needle.toLowerCase());
-                                }
-
-                                return false;
-                            },
-                            sortValue: (value) => {
-                                if (typeof value === "object") {
-                                    return (value as { guid: string, text: string }).text;
-                                }
+                                return value;
                             }
                         },
                         {
-                            name: "attr_CheckList",
-                            title: "Check List"
+                            name: "attr_GroupTypes",
+                            title: "Group Types"
                         }
                     ],
                     rows: result.data.rows

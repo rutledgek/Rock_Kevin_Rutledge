@@ -21,7 +21,7 @@
                             <Rock:DateTimeField DataField="EnteredDateTime" HeaderText="Entered On" SortExpression="EnteredDateTime" />
                             <Rock:DateTimeField DataField="ExpirationDate" HeaderText="Expires" SortExpression="ExpirationDate" />
                             <Rock:BoolField DataField="IsUrgent" HeaderText="Urgent" SortExpression="IsUrgent" />
-                            <Rock:BoolField DataField="IsPublic" HeaderText="IsPublic" SortExpression="IsPublic" />
+                            <Rock:BoolField DataField="IsPublic" HeaderText="Public" SortExpression="IsPublic" />
                         </Columns>
                     </Rock:Grid>
                 </div>
