@@ -1,4 +1,4 @@
-﻿// <copyright>
+// <copyright>
 // Copyright by the Spark Development Network
 //
 // Licensed under the Rock Community License (the "License");
@@ -14,34 +14,36 @@
 // limitations under the License.
 // </copyright>
 //
+
 import { defineComponent, PropType } from "vue";
-import { RowContext } from "./grid";
+import GridDataRow from "./gridDataRow.partial";
+import { GridColumnDefinition } from "./types";
 
 export default defineComponent({
-    name: "GridRow",
+    name: "GridDataRows",
+
+    components: {
+        GridDataRow
+    },
+
     props: {
-        rowContext: {
-            type: Object as PropType<RowContext>,
-            required: true
+        columns: {
+            type: Array as PropType<GridColumnDefinition[]>,
+            default: []
+        },
+
+        rows: {
+            type: Array as PropType<Record<string, unknown>[]>,
+            default: []
         }
     },
-    provide () {
+
+    setup(props) {
         return {
-            rowContext: this.rowContext
         };
     },
-    methods: {
-        onRowClick () {
-            if (!this.rowContext.isHeader) {
-                this.$emit("click:body", this.rowContext);
-            }
-            else {
-                this.$emit("click:header", this.rowContext);
-            }
-        }
-    },
+
     template: `
-<tr @click="onRowClick">
-    <slot />
-</tr>`
+<GridDataRow v-for="row in rows" :columns="columns" :data="row" />
+`
 });
