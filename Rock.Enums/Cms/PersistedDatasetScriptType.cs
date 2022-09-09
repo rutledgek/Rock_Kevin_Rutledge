@@ -14,27 +14,19 @@
 // limitations under the License.
 // </copyright>
 //
-
 namespace Rock.Model
 {
     /// <summary>
-    /// Types Web, Mobile
+    /// Scripting language for the dataset
     /// </summary>
-    public enum SiteType
+    [Enums.EnumDomain( "Cms" )]
+    public enum PersistedDatasetScriptType
     {
         /// <summary>
-        /// Websites
+        /// The lava
         /// </summary>
-        Web,
-
-        /// <summary>
-        /// Mobile applications
-        /// </summary>
-        Mobile,
-
-        /// <summary>
-        /// TV Apps
-        /// </summary>
-        Tv
+        Lava,
+        //Sql,
+        //Report
     }
 }

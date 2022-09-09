@@ -14,21 +14,28 @@
 // limitations under the License.
 // </copyright>
 //
+
 namespace Rock.Model
 {
     /// <summary>
-    /// Represents the type of content control.
+    /// Represents how a <see cref="Rock.Model.Page"/> should be displayed in the page navigation controls.
     /// </summary>
-    public enum ContentControlType
+    [Enums.EnumDomain( "Cms" )]
+    public enum DisplayInNavWhen
     {
         /// <summary>
-        /// Code Editor control
+        /// Display this page in navigation controls when allowed by security
         /// </summary>
-        CodeEditor = 0,
+        WhenAllowed = 0,
 
         /// <summary>
-        /// HTML Editor control
+        /// Always display this page in navigation controls, regardless of security
         /// </summary>
-        HtmlEditor = 1
+        Always = 1,
+
+        /// <summary>
+        /// Never display this page in navigation controls
+        /// </summary>
+        Never = 2
     }
 }

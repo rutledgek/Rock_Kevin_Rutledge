@@ -50,3 +50,12 @@ using System.Runtime.InteropServices;
 
 // The following type forwardings were setup in Rock 1.15.0
 [assembly: TypeForwardedTo( typeof( Rock.Model.CommunicationStatus ) )]
+[assembly: TypeForwardedTo( typeof( Rock.Model.BlockLocation ) )]
+[assembly: TypeForwardedTo( typeof( Rock.Model.ContentControlType ) )]
+[assembly: TypeForwardedTo( typeof( Rock.Model.ContentChannelItemStatus ) )]
+[assembly: TypeForwardedTo( typeof( Rock.Model.ContentChannelDateType ) )]
+[assembly: TypeForwardedTo( typeof( Rock.Model.TagType ) )]
+[assembly: TypeForwardedTo( typeof( Rock.Model.DisplayInNavWhen ) )]
+[assembly: TypeForwardedTo( typeof( Rock.Model.PersistedDatasetDataFormat ) )]
+[assembly: TypeForwardedTo( typeof( Rock.Model.PersistedDatasetScriptType ) )]
+[assembly: TypeForwardedTo( typeof( Rock.Model.SiteType ) )]

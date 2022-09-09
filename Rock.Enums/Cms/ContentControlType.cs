@@ -17,23 +17,19 @@
 namespace Rock.Model
 {
     /// <summary>
-    /// Represents the approval status of a content channel item
+    /// Represents the type of content control.
     /// </summary>
-    public enum ContentChannelItemStatus
+    [Enums.EnumDomain( "Cms" )]
+    public enum ContentControlType
     {
         /// <summary>
-        /// The <see cref="ContentChannelItem"/> is pending approval.
+        /// Code Editor control
         /// </summary>
-        PendingApproval = 1,
+        CodeEditor = 0,
 
         /// <summary>
-        /// The <see cref="ContentChannelItem"/> has been approved.
+        /// HTML Editor control
         /// </summary>
-        Approved = 2,
-
-        /// <summary>
-        /// The <see cref="ContentChannelItem"/> was denied.
-        /// </summary>
-        Denied = 3
+        HtmlEditor = 1
     }
 }

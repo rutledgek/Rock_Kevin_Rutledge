@@ -23,6 +23,7 @@ namespace Rock.Model
     /// The location where the Block is implemented
     /// </summary>
     [Serializable]
+    [Enums.EnumDomain( "Cms" )]
     public enum BlockLocation
     {
         /// <summary>

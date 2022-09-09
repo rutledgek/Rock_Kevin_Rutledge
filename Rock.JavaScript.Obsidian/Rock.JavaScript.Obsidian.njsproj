@@ -235,6 +235,15 @@
     <TypeScriptCompile Include="Framework\Controls\treeList.ts" />
     <TypeScriptCompile Include="Framework\Controls\urlLinkBox.ts" />
     <TypeScriptCompile Include="Framework\Enums\Blocks\Cms\ContentCollectionView\searchOrder.d.ts" />
+    <TypeScriptCompile Include="Framework\Enums\Cms\blockLocation.d.ts" />
+    <TypeScriptCompile Include="Framework\Enums\Cms\contentChannelDateType.d.ts" />
+    <TypeScriptCompile Include="Framework\Enums\Cms\contentChannelItemStatus.d.ts" />
+    <TypeScriptCompile Include="Framework\Enums\Cms\contentControlType.d.ts" />
+    <TypeScriptCompile Include="Framework\Enums\Cms\displayInNavWhen.d.ts" />
+    <TypeScriptCompile Include="Framework\Enums\Cms\persistedDatasetDataFormat.d.ts" />
+    <TypeScriptCompile Include="Framework\Enums\Cms\persistedDatasetScriptType.d.ts" />
+    <TypeScriptCompile Include="Framework\Enums\Cms\siteType.d.ts" />
+    <TypeScriptCompile Include="Framework\Enums\Cms\tagType.d.ts" />
     <TypeScriptCompile Include="Framework\Enums\Communication\communicationStatus.d.ts" />
     <TypeScriptCompile Include="Framework\Enums\Controls\slidingDateRangeType.d.ts" />
     <TypeScriptCompile Include="Framework\Enums\Controls\slidingDateRangeType.d.ts" />

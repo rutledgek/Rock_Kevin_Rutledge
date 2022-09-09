@@ -17,15 +17,24 @@
 namespace Rock.Model
 {
     /// <summary>
-    /// Scripting language for the dataset
+    /// Represents the type of DateRange that is supported.
     /// </summary>
-    public enum PersistedDatasetScriptType
+    [Enums.EnumDomain( "Cms" )]
+    public enum ContentChannelDateType
     {
         /// <summary>
-        /// The lava
+        /// Allows a single date.
         /// </summary>
-        Lava,
-        //Sql,
-        //Report
+        SingleDate = 1,
+
+        /// <summary>
+        /// Allows a date range (start - end date)
+        /// </summary>
+        DateRange = 2,
+
+        /// <summary>
+        /// Hides Date Controls
+        /// </summary>
+        NoDates = 3
     }
 }

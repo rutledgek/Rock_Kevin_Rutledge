@@ -14,27 +14,17 @@
 // limitations under the License.
 // </copyright>
 //
-
 namespace Rock.Model
 {
     /// <summary>
-    /// Represents how a <see cref="Rock.Model.Page"/> should be displayed in the page navigation controls.
+    /// Data format for serialization of the dataset
     /// </summary>
-    public enum DisplayInNavWhen
+    [Enums.EnumDomain( "Cms" )]
+    public enum PersistedDatasetDataFormat
     {
         /// <summary>
-        /// Display this page in navigation controls when allowed by security
+        /// The json
         /// </summary>
-        WhenAllowed = 0,
-
-        /// <summary>
-        /// Always display this page in navigation controls, regardless of security
-        /// </summary>
-        Always = 1,
-
-        /// <summary>
-        /// Never display this page in navigation controls
-        /// </summary>
-        Never = 2
+        JSON
     }
 }

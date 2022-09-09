@@ -46,8 +46,17 @@
     <Compile Include="..\Rock.Version\AssemblySharedInfo.cs">
       <Link>Properties\AssemblySharedInfo.cs</Link>
     </Compile>
+    <Compile Include="Cms\BlockLocation.cs" />
     <Compile Include="Blocks\Cms\ContentCollectionView\SearchOrder.cs" />
+    <Compile Include="Cms\ContentChannelDateType.cs" />
+    <Compile Include="Cms\ContentChannelItemStatus.cs" />
     <Compile Include="Cms\ContentCollectionFilterControl.cs" />
+    <Compile Include="Cms\ContentControlType.cs" />
+    <Compile Include="Cms\DisplayInNavWhen.cs" />
+    <Compile Include="Cms\PersistedDatasetDataFormat.cs" />
+    <Compile Include="Cms\PersistedDatasetScriptType.cs" />
+    <Compile Include="Cms\SiteType.cs" />
+    <Compile Include="Cms\TagType.cs" />
     <Compile Include="Communication\CommunicationStatus.cs" />
     <Compile Include="Controls\MergeTemplateOwnership.cs" />
     <Compile Include="Controls\SlidingDateRangePicker.cs" />
