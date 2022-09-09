@@ -181,8 +181,8 @@ export default defineComponent({
     setup(props, ctx) {
         const gridActions = ref<GridAction[]>([]);
         const currentPage = ref(1);
-        const pageSize = ref(10);
-        const pageSizes = [10, 50, 250];
+        const pageSize = ref(500);
+        const pageSizes = [50, 500, 5000];
         const quickFilterValue = ref("");
         const loadingData = ref(false);
         const gridErrorMessage = ref("");

@@ -134,7 +134,7 @@
     <TypeScriptCompile Include="src\Event\RegistrationEntry\utils.partial.ts" />
     <TypeScriptCompile Include="src\Example\controlGallery.ts" />
     <TypeScriptCompile Include="src\Example\fieldTypeGallery.ts" />
-    <TypeScriptCompile Include="src\Example\gridTest.ts" />
+    <TypeScriptCompile Include="src\Example\gridTest.vue" />
     <TypeScriptCompile Include="src\Example\GridTest\grid.partial.ts" />
     <TypeScriptCompile Include="src\Example\GridTest\gridActionRow.partial.ts" />
     <TypeScriptCompile Include="src\Example\GridTest\types.d.ts" />

@@ -1,20 +1,31 @@
-// <copyright>
-// Copyright by the Spark Development Network
-//
-// Licensed under the Rock Community License (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.rockrms.com/license
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
-//
+<template>
+    <Grid :data="loadGridData">
+        <Column name="name" title="Name" sortValue="{{ row.name.lastName }} {{ row.name.firstName }}">
+            <template #body="{ row }">
+                {{ row.name.firstName }} {{ row.name.lastName }}
+            </template>
+        </Column>
 
+        <Column name="email" title="Email" field="email" sortField="email" />
+
+        <Column name="enteredDateTime" title="Entered On" field="enteredDateTime" sortField="enteredDateTime">
+            <template #body="{ row }">
+                {{ formatDate(row.enteredDateTime) }}
+            </template>
+        </Column>
+
+        <DateColumn name="expirationDateTime" title="Expires" field="expirationDateTime" sortField="expirationDateTime" />
+
+        <BooleanColumn name="isUrgent" title="Urgent" field="isUrgent" sortField="isUrgent" />
+
+        <BooleanColumn name="isPublic" title="Public" field="isPublic" sortField="isPublic" />
+
+        <AttributeColumns :attributes="attributeColumns" />
+    </Grid>
+</template>
+
+<script setup lang="ts">
+// #region Imports
 import { useConfigurationValues, useInvokeBlockAction } from "@Obsidian/Utility/block";
 import { computed, defineComponent, PropType, VNode } from "vue";
 import { RockDateTime } from "@Obsidian/Utility/rockDateTime";
@@ -143,7 +154,6 @@ function booleanColumnSortValue(row: Record<string, unknown>, column: GridColumn
     return row[column.sortField] === true ? 1 : 0;
 }
 
-
 const BooleanColumn = defineComponent({
     props: {
         name: {
@@ -193,91 +203,35 @@ const AttributeColumns = defineComponent({
     }
 });
 
-export default defineComponent({
-    name: "Example.GridTest",
+// #endregion
 
-    components: {
-        AttributeColumns,
-        BooleanColumn,
-        Column,
-        DateColumn,
-        Grid
-    },
+const configuration = useConfigurationValues<{ gridDefinition: GridDefinition }>();
+const invokeBlockAction = useInvokeBlockAction();
 
-    setup() {
-        const configuration = useConfigurationValues<{ gridDefinition: GridDefinition }>();
-        const invokeBlockAction = useInvokeBlockAction();
-
-        const attributeColumns = computed((): AttributeColumnDefinition[] => {
-            return configuration.gridDefinition.attributeColumns ?? [];
-        });
-
-        const loadGridData = async (): Promise<GridData> => {
-            const result = await invokeBlockAction<GridData>("GetGridData");
-
-            if (result.isSuccess && result.data) {
-                return {
-                    rows: result.data.rows
-                };
-            }
-            else {
-                throw new Error(result.errorMessage ?? "Unknown error while trying to load grid data.");
-            }
-        };
-
-        function formatDate(value?: string): string {
-            if (!value) {
-                return "";
-            }
-
-            const dt = RockDateTime.parseISO(value);
-
-            return dt?.toASPString("g") ?? "";
-        }
-
-        return {
-            attributeColumns,
-            formatDate,
-            gridData: loadGridData
-        };
-    },
-
-    template: `
-<Grid :data="gridData">
-    <Column name="name"
-            title="Name"
-            sortValue="{{ row.name.lastName }} {{ row.name.firstName }}">
-        <template #body="{ row }">{{ row.name.firstName }} {{ row.name.lastName }}</template>
-    </Column>
-
-    <Column name="email"
-            title="Email"
-            field="email"
-            sortField="email" />
-
-    <Column name="enteredDateTime"
-            title="Entered On"
-            field="enteredDateTime"
-            sortField="enteredDateTime">
-        <template #body="{ row }">{{ formatDate(row.enteredDateTime) }}</template>
-    </Column>
-
-    <DateColumn name="expirationDateTime"
-                title="Expires"
-                field="expirationDateTime"
-                sortField="expirationDateTime" />
-
-    <BooleanColumn name="isUrgent"
-                   title="Urgent"
-                   field="isUrgent"
-                   sortField="isUrgent" />
-
-    <BooleanColumn name="isPublic"
-                   title="Public"
-                   field="isPublic"
-                   sortField="isPublic" />
-
-    <AttributeColumns :attributes="attributeColumns" />
-</Grid>
-`
+const attributeColumns = computed((): AttributeColumnDefinition[] => {
+    return configuration.gridDefinition.attributeColumns ?? [];
 });
+
+const loadGridData = async (): Promise<GridData> => {
+    const result = await invokeBlockAction<GridData>("GetGridData");
+
+    if (result.isSuccess && result.data) {
+        return {
+            rows: result.data.rows
+        };
+    }
+    else {
+        throw new Error(result.errorMessage ?? "Unknown error while trying to load grid data.");
+    }
+};
+
+function formatDate(value?: string): string {
+    if (!value) {
+        return "";
+    }
+
+    const dt = RockDateTime.parseISO(value);
+
+    return dt?.toASPString("g") ?? "";
+}
+</script>
