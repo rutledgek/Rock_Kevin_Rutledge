@@ -45,7 +45,7 @@ export default defineComponent({
 
     template: `
 <tr>
-    <GridDataCell v-for="column in columns" :column="column" :data="data[column.name]" />
+    <GridDataCell v-for="column in columns" :column="column" :row="data" />
 </tr>
 `
 });

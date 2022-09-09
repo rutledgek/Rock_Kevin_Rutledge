@@ -15,6 +15,8 @@
 // </copyright>
 //
 
+import { Component, VNode } from "vue";
+
 /** A function that will be called in response to an action. */
 export type GridActionCallback = (event: Event) => void | Promise<void>;
 
@@ -47,31 +49,45 @@ export type GridAction = {
 };
 
 type GridData = {
-    columns: GridColumnDefinition[];
-
     rows: Record<string, unknown>[];
 };
 
 type GridColumnDefinition = {
-    /** The name of the property in the rows objects. */
+    /** The unique name of this column. */
     name: string;
 
     /** The title to display in the column header. */
-    title?: string | null;
+    title?: string;
+
+    /** The name of the field in the row object. */
+    field?: string;
 
     /**
      * Formats the value for display in the cell. Should return HTML safe
      * content, meaning if you intend to display the < character you need
      * to HTML encode it as &lt;.
      */
-    format?: (value: unknown) => string;
+    format?: VNode | Component;
 
     /** Gets the value to use when filtering on the quick filter. */
     quickFilterValue?: (value: unknown) => string | undefined;
 
+    /** The name of the field to use for the sort value. */
+    sortField?: string;
+
     /** Gets the value to use when sorting. */
-    sortValue?: (value: unknown) => string | number | undefined;
+    sortValue?: (row: Record<string, unknown>, column: GridColumnDefinition) => string | number | undefined;
 
     /** Determines if the value matches the custom column filter. */
     filter?: (needle: unknown, haystack: unknown) => boolean;
+};
+
+type GridDefinition = {
+    attributeColumns?: AttributeColumnDefinition[];
+};
+
+type AttributeColumnDefinition = {
+    name?: string | null;
+
+    title?: string | null;
 };

@@ -15,8 +15,7 @@
 // </copyright>
 //
 
-import { escapeHtml } from "@Obsidian/Utility/stringUtils";
-import { computed, defineComponent, PropType } from "vue";
+import { Component, computed, defineComponent, PropType, VNode } from "vue";
 import { GridColumnDefinition } from "./types";
 
 export default defineComponent({
@@ -31,32 +30,25 @@ export default defineComponent({
             required: true
         },
 
-        data: {
-            type: Object as PropType<unknown>,
+        row: {
+            type: Object as PropType<Record<string, unknown>>,
             required: true
         }
     },
 
     setup(props) {
-        const htmlContent = computed((): string => {
-            if (props.column.format) {
-                return props.column.format(props.data);
-            }
-
-            if (!props.data) {
-                return "";
-            }
-
-            return escapeHtml(new String(props.data).toString());
+        const cellContent = computed((): VNode | Component | undefined => {
+            return props.column.format;
         });
 
         return {
-            htmlContent
+            cellContent
         };
     },
 
     template: `
-<td v-html="htmlContent">
+<td>
+    <component :is="cellContent" :row="row" :column="column" />
 </td>
 `
 });

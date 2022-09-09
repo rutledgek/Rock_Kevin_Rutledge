@@ -19,13 +19,134 @@ import { asFormattedString } from "@Obsidian/Utility/numberUtils";
 import { pluralConditional } from "@Obsidian/Utility/stringUtils";
 import Alert from "@Obsidian/Controls/alert.vue";
 import LoadingIndicator from "@Obsidian/Controls/loadingIndicator";
-import { computed, defineComponent, PropType, ref, toRaw, watch } from "vue";
+import { computed,  createApp,  defineComponent, PropType, ref, toRaw, VNode, watch } from "vue";
 import GridActionGroup from "./gridActionGroup.partial";
 import GridColumnHeaderRow from "./gridColumnHeaderRow.partial";
 import GridDataRows from "./gridDataRows.partial";
 import GridFilterHeaderRow from "./gridFilterHeaderRow.partial";
 import GridPagerRow from "./gridPagerRow.partial";
-import { GridAction, GridColumnDefinition, GridData } from "./types";
+import { AttributeColumnDefinition, GridAction, GridColumnDefinition, GridData } from "./types";
+
+function getVNodeProp<T>(node: VNode, propName: string): T | undefined {
+    if (node.props && node.props[propName] !== undefined) {
+        return node.props[propName] as T;
+    }
+
+    if (typeof node.type === "object" && typeof node.type["props"] === "object") {
+        const defaultProps = node.type["props"] as Record<string, unknown>;
+        const defaultProp = defaultProps[propName];
+        if (defaultProp && typeof defaultProp === "object" && defaultProp["default"] !== undefined) {
+            return defaultProp["default"] as T;
+        }
+    }
+
+    return undefined;
+}
+
+const textColumnValueComponent = defineComponent({
+    props: {
+        column: {
+            type: Object as PropType<GridColumnDefinition>,
+            required: true
+        },
+        row: {
+            type: Object as PropType<Record<string, unknown>>,
+            required: true
+        }
+    },
+
+    setup(props) {
+        return () => props.column.field ? props.row[props.column.field] : "";
+    }
+});
+
+function textColumnSortValue(row: Record<string, unknown>, column: GridColumnDefinition): string | undefined {
+    return column.sortField ? String(row[column.sortField]) : undefined;
+}
+
+function getColumnDefinitions(columnNodes: VNode[]): GridColumnDefinition[] {
+    const columns: GridColumnDefinition[] = [];
+
+    for (const node of columnNodes) {
+        console.log("Column Node", node);
+
+        const name = getVNodeProp<string>(node, "name");
+
+        if (!name) {
+            if (getVNodeProp<boolean>(node, "__attributeColumns") !== true) {
+                continue;
+            }
+
+            const attributes = getVNodeProp<AttributeColumnDefinition[]>(node, "attributes");
+            if (!attributes) {
+                continue;
+            }
+
+            for (const attribute of attributes) {
+                if (!attribute.name) {
+                    continue;
+                }
+
+                console.log("Attribute", attribute);
+                columns.push({
+                    name: attribute.name,
+                    title: attribute.title ?? undefined,
+                    field: attribute.name,
+                    sortField: attribute.name,
+                    format: getVNodeProp<VNode>(node, "format") ?? textColumnValueComponent
+                });
+            }
+
+            continue;
+        }
+
+        let sortValue = getVNodeProp<((row: Record<string, unknown>, column: GridColumnDefinition) => string | number | undefined) | string>(node, "sortValue");
+
+        if (typeof sortValue === "string") {
+            const template = sortValue;
+
+            sortValue = (row): string | undefined => {
+                const value = template.replace(/\{\{\s*([a-zA-Z.]+)\s*\}\}/g, (_, path: string) => {
+                    let pathSegments = path.split(".");
+
+                    if (pathSegments[0] !== "row") {
+                        return "";
+                    }
+                    else {
+                        pathSegments = pathSegments.slice(1);
+                    }
+
+                    let obj: unknown = row;
+                    for (const segment of pathSegments) {
+                        if (obj && typeof obj === "object") {
+                            obj = obj[segment];
+                        }
+                        else {
+                            obj = undefined;
+                        }
+                    }
+
+                    return String(obj);
+                });
+
+                return value;
+            };
+        }
+
+        columns.push({
+            name,
+            title: getVNodeProp<string>(node, "title"),
+            field: getVNodeProp<string>(node, "field"),
+            format: node.children?.["body"] ?? getVNodeProp<VNode>(node, "format") ?? textColumnValueComponent,
+            sortField: getVNodeProp<string>(node, "sortField"),
+            sortValue: sortValue
+        });
+    }
+
+    console.log("Columns", columns);
+
+    return columns;
+}
 
 /*
  * 8/17/2022 - DSH
@@ -57,7 +178,7 @@ export default defineComponent({
         }
     },
 
-    setup(props) {
+    setup(props, ctx) {
         const gridActions = ref<GridAction[]>([]);
         const currentPage = ref(1);
         const pageSize = ref(10);
@@ -71,8 +192,12 @@ export default defineComponent({
         const pageCount = ref(0);
         const pagerMessage = ref("");
         const visibleColumnDefinitions = ref<GridColumnDefinition[]>([]);
+        let rows: Record<string, unknown>[] = [];
+        const columns = computed((): GridColumnDefinition[] => {
+            console.log("compute columns");
+            return getColumnDefinitions(ctx.slots["default"]?.() ?? []);
+        });
 
-        let gridData: GridData | null = null;
         let filteredRows: Record<string, unknown>[] = [];
         let sortedRows: Record<string, unknown>[] = [];
 
@@ -82,11 +207,11 @@ export default defineComponent({
 
         const updateFilteredRows = (): void => {
             const start = Date.now();
-            if (gridData) {
+            if (columns.value.length > 0) {
                 const columns = toRaw(visibleColumnDefinitions.value);
                 const filterValue = quickFilterValue.value.toLowerCase();
 
-                const result = gridData.rows.filter(v => {
+                const result = rows.filter(v => {
                     const quickFilterMatch = !filterValue || columns.some((column): boolean => {
                         const columnValue = v[column.name];
                         let value: string | undefined;
@@ -158,54 +283,59 @@ export default defineComponent({
                     throw new Error("Invalid sort definition");
                 }
 
-                const columnName = column.name;
                 const sortValue = column.sortValue;
-                console.log(columnName, sortValue, column);
+                const sortField = column.sortField;
 
                 const rows = [...filteredRows];
 
-                rows.sort((a, b) => {
-                    const columnValueA = a[columnName];
-                    const columnValueB = b[columnName];
-                    let valueA: string | number | undefined;
-                    let valueB: string | number | undefined;
+                if (sortValue || sortField) {
+                    rows.sort((a, b) => {
+                        let valueA: string | number | undefined;
+                        let valueB: string | number | undefined;
 
-                    if (sortValue) {
-                        valueA = sortValue(columnValueA);
-                        valueB = sortValue(columnValueB);
-                    }
-                    else {
-                        if (typeof columnValueA === "string" || typeof columnValueA === "number") {
-                            valueA = columnValueA;
+                        if (sortValue) {
+                            valueA = sortValue(a, column);
+                            valueB = sortValue(b, column);
+                        }
+                        else if (sortField) {
+                            const columnValueA = a[sortField];
+                            const columnValueB = b[sortField];
+
+                            if (typeof columnValueA === "string" || typeof columnValueA === "number") {
+                                valueA = columnValueA;
+                            }
+                            else {
+                                valueA = undefined;
+                            }
+
+                            if (typeof columnValueB === "string" || typeof columnValueB === "number") {
+                                valueB = columnValueB;
+                            }
+                            else {
+                                valueB = undefined;
+                            }
                         }
                         else {
-                            valueA = undefined;
+                            return 0;
                         }
 
-                        if (typeof columnValueB === "string" || typeof columnValueB === "number") {
-                            valueB = columnValueB;
+                        if (valueA === undefined) {
+                            return -order;
+                        }
+                        else if (valueB === undefined) {
+                            return order;
+                        }
+                        else if (valueA < valueB) {
+                            return -order;
+                        }
+                        else if (valueA > valueB) {
+                            return order;
                         }
                         else {
-                            valueB = undefined;
+                            return 0;
                         }
-                    }
-
-                    if (valueA === undefined) {
-                        return -order;
-                    }
-                    else if (valueB === undefined) {
-                        return order;
-                    }
-                    else if (valueA < valueB) {
-                        return -order;
-                    }
-                    else if (valueA > valueB) {
-                        return order;
-                    }
-                    else {
-                        return 0;
-                    }
-                });
+                    });
+                }
 
                 sortedRows = rows;
             }
@@ -235,18 +365,20 @@ export default defineComponent({
             loadingData.value = true;
 
             if (typeof props.data === "object") {
-                gridData = props.data;
+                const data = props.data;
+                rows = data.rows;
             }
             else if (typeof props.data === "function") {
                 try {
-                    gridData = await props.data();
+                    const data = await props.data();
+                    rows = data.rows;
                 }
                 catch (error) {
                     gridErrorMessage.value = error instanceof Error ? error.message : new String(error).toString();
                 }
             }
 
-            visibleColumnDefinitions.value = gridData?.columns ?? [];
+            visibleColumnDefinitions.value = columns.value;
             updateFilteredRows();
 
             loadingData.value = false;
