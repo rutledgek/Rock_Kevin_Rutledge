@@ -13,37 +13,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+//
 
 namespace Rock.Model
 {
     /// <summary>
-    /// Represents the preferred resolution of the binary file type.
+    /// Represents the approval status of a note
     /// </summary>
-    public enum Resolution
+    [Enums.EnumDomain( "Core" )]
+    public enum NoteApprovalStatus
     {
         /// <summary>
-        /// The undefined.
+        /// The <see cref="Note"/> is pending approval.
         /// </summary>
-        Undefined = -1,
+        PendingApproval = 0,
 
         /// <summary>
-        /// A preferred resolution of 72 DPI.
+        /// The <see cref="Note"/> has been approved.
         /// </summary>
-        DPI72 = 0,
+        Approved = 1,
 
         /// <summary>
-        /// A preferred resolution of 150 DPI.
+        /// The <see cref="Note"/> was denied.
         /// </summary>
-        DPI150 = 1,
-
-        /// <summary>
-        /// A preferred resolution of 300 DPI.
-        /// </summary>
-        DPI300 = 2,
-
-        /// <summary>
-        /// A preferred resolution of 600 DPI.
-        /// </summary>
-        DPI600 = 3
+        Denied = 2
     }
 }

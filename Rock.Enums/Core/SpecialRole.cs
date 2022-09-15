@@ -18,23 +18,29 @@
 namespace Rock.Model
 {
     /// <summary>
-    /// Where a label should be printed
+    /// Authorization for a special group of users not defined by a specific role or person
     /// </summary>
-    public enum PrintTo
+    [Enums.EnumDomain( "Core" )]
+    public enum SpecialRole
     {
         /// <summary>
-        /// Print to the default printer
+        /// No special role
         /// </summary>
-        Default = 0,
+        None = 0,
 
         /// <summary>
-        /// Print to the printer associated with the selected kiosk
+        /// Authorize all users
         /// </summary>
-        Kiosk = 1,
+        AllUsers = 1,
 
         /// <summary>
-        /// Print to the printer associated with the selected location
+        /// Authorize all authenticated users
         /// </summary>
-        Location = 2
+        AllAuthenticatedUsers = 2,
+
+        /// <summary>
+        /// Authorize all un-authenticated users
+        /// </summary>
+        AllUnAuthenticatedUsers = 3,
     }
 }

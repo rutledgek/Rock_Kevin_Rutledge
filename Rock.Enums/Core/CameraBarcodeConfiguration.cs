@@ -15,31 +15,32 @@
 // </copyright>
 //
 
-using System.ComponentModel;
-
 namespace Rock.Model
 {
     /// <summary>
-    /// The various types of checkin clients that a Check-in Kiosk could be using.
+    /// The Camera barcode configuration values.
     /// </summary>
-    public enum KioskType
+    [Enums.EnumDomain( "Core" )]
+    public enum CameraBarcodeConfiguration
     {
         /// <summary>
-        /// The Kiosk is using IPad iOS Checkin Client app.
+        /// Off
         /// </summary>
-        [Description( "iPad" )]
-        IPad = 0,
+        Off = 0,
 
         /// <summary>
-        /// The Kiosk is using Windows Checkin Client.
+        /// Available
         /// </summary>
-        [Description( "Windows App" )]
-        WindowsApp = 1,
+        Available = 1,
 
         /// <summary>
-        /// This kiosk is using a browser
+        /// Always on
         /// </summary>
-        [Description( "Browser" )]
-        Browser = 2,
+        AlwaysOn = 2,
+
+        /// <summary>
+        /// Passive
+        /// </summary>
+        Passive = 3
     }
 }

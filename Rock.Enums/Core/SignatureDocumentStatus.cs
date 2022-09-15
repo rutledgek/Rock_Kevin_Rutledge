@@ -13,23 +13,38 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-//
 
 namespace Rock.Model
 {
     /// <summary>
-    /// The application responsible for printing a label
+    /// The status of a signature document
     /// </summary>
-    public enum PrintFrom
+    [Enums.EnumDomain( "Core" )]
+    public enum SignatureDocumentStatus
     {
         /// <summary>
-        /// The label will be printed by the kiosk
+        /// Document has not yet been sent
         /// </summary>
-        Client = 0,
+        None = 0,
 
         /// <summary>
-        /// The label will be printed by the server.
+        /// Document has been sent but not yet signed
         /// </summary>
-        Server = 1
+        Sent = 1,
+
+        /// <summary>
+        /// Document has been signed
+        /// </summary>
+        Signed = 2,
+
+        /// <summary>
+        /// Document was cancelled
+        /// </summary>
+        Cancelled = 3,
+
+        /// <summary>
+        /// Document Invite had expired
+        /// </summary>
+        Expired = 4
     }
 }

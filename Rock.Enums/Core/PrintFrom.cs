@@ -18,23 +18,19 @@
 namespace Rock.Model
 {
     /// <summary>
-    /// Represents the type for Updated Address.
+    /// The application responsible for printing a label
     /// </summary>
-    public enum UpdatedAddressType
+    [Enums.EnumDomain( "Core" )]
+    public enum PrintFrom
     {
         /// <summary>
-        /// None
+        /// The label will be printed by the kiosk
         /// </summary>
-        None = 0,
+        Client = 0,
 
         /// <summary>
-        /// Not Found
+        /// The label will be printed by the server.
         /// </summary>
-        Residential = 1,
-
-        /// <summary>
-        /// Vacant
-        /// </summary>
-        Business = 2
+        Server = 1
     }
 }

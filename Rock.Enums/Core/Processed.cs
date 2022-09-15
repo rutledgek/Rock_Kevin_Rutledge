@@ -13,57 +13,39 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+//
 
 namespace Rock.Model
 {
     /// <summary>
-    /// Represents the preferred format of the binary file type.
+    /// Represents the state of NCOA
     /// </summary>
-    public enum Format
+    [Enums.EnumDomain( "Core" )]
+    public enum Processed
     {
         /// <summary>
-        /// The undefined.
+        /// NotProcessed
         /// </summary>
-        Undefined = -1,
+        NotProcessed = 0,
 
         /// <summary>
-        /// The preferred format is as a .JPG file.
+        /// Complete
         /// </summary>
-        JPG = 0,
+        Complete = 1,
 
         /// <summary>
-        /// The preferred format is as a .GIF file.
+        /// Manual Update Required
         /// </summary>
-        GIF = 1,
+        ManualUpdateRequired = 2,
 
         /// <summary>
-        /// The preferred format is as a .PNG file.
+        /// Manual update required or not processed
         /// </summary>
-        PNG = 2,
+        ManualUpdateRequiredOrNotProcessed = 3,
 
         /// <summary>
-        /// The preferred format is as a .PDF file.
+        /// All records
         /// </summary>
-        PDF = 3,
-
-        /// <summary>
-        /// The preferred format is as a Word document.
-        /// </summary>
-        Word = 4,
-
-        /// <summary>
-        /// The preferred format is as an Excel document.
-        /// </summary>
-        Excel = 5,
-
-        /// <summary>
-        /// The preferred format is as a text file.
-        /// </summary>
-        Text = 6,
-
-        /// <summary>
-        /// The preferred format is as an HTML document.
-        /// </summary>
-        HTML = 7
+        All = 4
     }
 }

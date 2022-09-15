@@ -15,26 +15,32 @@
 // </copyright>
 //
 
+using System.ComponentModel;
+
 namespace Rock.Model
 {
     /// <summary>
-    /// Represents the approval status of a note
+    /// The various types of checkin clients that a Check-in Kiosk could be using.
     /// </summary>
-    public enum NoteApprovalStatus
+    [Enums.EnumDomain( "Core" )]
+    public enum KioskType
     {
         /// <summary>
-        /// The <see cref="Note"/> is pending approval.
+        /// The Kiosk is using IPad iOS Checkin Client app.
         /// </summary>
-        PendingApproval = 0,
+        [Description( "iPad" )]
+        IPad = 0,
 
         /// <summary>
-        /// The <see cref="Note"/> has been approved.
+        /// The Kiosk is using Windows Checkin Client.
         /// </summary>
-        Approved = 1,
+        [Description( "Windows App" )]
+        WindowsApp = 1,
 
         /// <summary>
-        /// The <see cref="Note"/> was denied.
+        /// This kiosk is using a browser
         /// </summary>
-        Denied = 2
+        [Description( "Browser" )]
+        Browser = 2,
     }
 }

@@ -18,9 +18,10 @@
 namespace Rock.Model
 {
     /// <summary>
-    /// Represents the matching flag.
+    /// Represents the move type for NCOA.
     /// </summary>
-    public enum MatchFlag
+    [Enums.EnumDomain( "Core" )]
+    public enum MoveType
     {
         /// <summary>
         /// None
@@ -28,23 +29,18 @@ namespace Rock.Model
         None = 0,
 
         /// <summary>
-        /// Moved
+        /// Family
         /// </summary>
-        Moved = 1,
+        Family = 1,
 
         /// <summary>
-        /// PO Box Closed
+        /// Individual
         /// </summary>
-        POBoxClosed = 2,
+        Individual = 2,
 
         /// <summary>
-        /// Moved left no forwarding
+        /// Business
         /// </summary>
-        MovedNoForwarding = 3,
-
-        /// <summary>
-        /// Moved to foreign country
-        /// </summary>
-        MovedToForeignCountry = 4
+        Business = 3
     }
 }

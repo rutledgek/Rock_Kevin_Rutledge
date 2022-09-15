@@ -17,33 +17,34 @@
 namespace Rock.Model
 {
     /// <summary>
-    /// The status of a signature document
+    /// Represents the preferred resolution of the binary file type.
     /// </summary>
-    public enum SignatureDocumentStatus
+    [Enums.EnumDomain( "Core" )]
+    public enum Resolution
     {
         /// <summary>
-        /// Document has not yet been sent
+        /// The undefined.
         /// </summary>
-        None = 0,
+        Undefined = -1,
 
         /// <summary>
-        /// Document has been sent but not yet signed
+        /// A preferred resolution of 72 DPI.
         /// </summary>
-        Sent = 1,
+        DPI72 = 0,
 
         /// <summary>
-        /// Document has been signed
+        /// A preferred resolution of 150 DPI.
         /// </summary>
-        Signed = 2,
+        DPI150 = 1,
 
         /// <summary>
-        /// Document was cancelled
+        /// A preferred resolution of 300 DPI.
         /// </summary>
-        Cancelled = 3,
+        DPI300 = 2,
 
         /// <summary>
-        /// Document Invite had expired
+        /// A preferred resolution of 600 DPI.
         /// </summary>
-        Expired = 4
+        DPI600 = 3
     }
 }

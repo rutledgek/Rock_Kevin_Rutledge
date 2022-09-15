@@ -17,38 +17,19 @@
 namespace Rock.Model
 {
     /// <summary>
-    /// Represents the preferred color depth of the binary file type.
+    /// Represents the type of signature. Either <see cref="Drawn"/> or <see cref="Typed"/>
     /// </summary>
-    public enum ColorDepth
+    [Enums.EnumDomain( "Core" )]
+    public enum SignatureType
     {
         /// <summary>
-        /// An undefined color depth.
+        /// Typed
         /// </summary>
-        Undefined = -1,
+        Typed = 0,
 
         /// <summary>
-        /// A preferred color depth of Black and White.
+        /// Drawn
         /// </summary>
-        BlackWhite = 0,
-
-        /// <summary>
-        /// A preferred color depth of 8-bit Grayscale.
-        /// </summary>
-        Grayscale8bit = 1,
-
-        /// <summary>
-        /// A preferred color depth of 24-bit Grayscale.
-        /// </summary>
-        Grayscale24bit = 2,
-
-        /// <summary>
-        /// A preferred color depth of 8-bit Color.
-        /// </summary>
-        Color8bit = 3,
-
-        /// <summary>
-        /// A preferred color depth of 24-bit Color.
-        /// </summary>
-        Color24bit = 4
+        Drawn = 1,
     }
 }

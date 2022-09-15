@@ -20,6 +20,7 @@ namespace Rock.Model
     /// <summary>
     /// An enum that represents when a Job notification status should be sent.
     /// </summary>
+    [Enums.EnumDomain( "Core" )]
     public enum JobNotificationStatus
     {
         /// <summary>

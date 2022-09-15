@@ -13,33 +13,43 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-//
 
 namespace Rock.Model
 {
     /// <summary>
-    /// Represents the move type for NCOA.
+    /// Represents the preferred color depth of the binary file type.
     /// </summary>
-    public enum MoveType
+    [Enums.EnumDomain( "Core" )]
+    public enum ColorDepth
     {
         /// <summary>
-        /// None
+        /// An undefined color depth.
         /// </summary>
-        None = 0,
+        Undefined = -1,
 
         /// <summary>
-        /// Family
+        /// A preferred color depth of Black and White.
         /// </summary>
-        Family = 1,
+        BlackWhite = 0,
 
         /// <summary>
-        /// Individual
+        /// A preferred color depth of 8-bit Grayscale.
         /// </summary>
-        Individual = 2,
+        Grayscale8bit = 1,
 
         /// <summary>
-        /// Business
+        /// A preferred color depth of 24-bit Grayscale.
         /// </summary>
-        Business = 3
+        Grayscale24bit = 2,
+
+        /// <summary>
+        /// A preferred color depth of 8-bit Color.
+        /// </summary>
+        Color8bit = 3,
+
+        /// <summary>
+        /// A preferred color depth of 24-bit Color.
+        /// </summary>
+        Color24bit = 4
     }
 }

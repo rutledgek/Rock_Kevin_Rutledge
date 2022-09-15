@@ -18,9 +18,10 @@
 namespace Rock.Model
 {
     /// <summary>
-    /// Represents the Invalid Reason for address.
+    /// Represents the type for Updated Address.
     /// </summary>
-    public enum AddressInvalidReason
+    [Enums.EnumDomain( "Core" )]
+    public enum UpdatedAddressType
     {
         /// <summary>
         /// None
@@ -30,11 +31,11 @@ namespace Rock.Model
         /// <summary>
         /// Not Found
         /// </summary>
-        NotFound = 1,
+        Residential = 1,
 
         /// <summary>
         /// Vacant
         /// </summary>
-        Vacant = 2
+        Business = 2
     }
 }

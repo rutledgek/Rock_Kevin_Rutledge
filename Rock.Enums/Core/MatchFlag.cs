@@ -18,33 +18,34 @@
 namespace Rock.Model
 {
     /// <summary>
-    /// Represents the state of NCOA
+    /// Represents the matching flag.
     /// </summary>
-    public enum Processed
+    [Enums.EnumDomain( "Core" )]
+    public enum MatchFlag
     {
         /// <summary>
-        /// NotProcessed
+        /// None
         /// </summary>
-        NotProcessed = 0,
+        None = 0,
 
         /// <summary>
-        /// Complete
+        /// Moved
         /// </summary>
-        Complete = 1,
+        Moved = 1,
 
         /// <summary>
-        /// Manual Update Required
+        /// PO Box Closed
         /// </summary>
-        ManualUpdateRequired = 2,
+        POBoxClosed = 2,
 
         /// <summary>
-        /// Manual update required or not processed
+        /// Moved left no forwarding
         /// </summary>
-        ManualUpdateRequiredOrNotProcessed = 3,
+        MovedNoForwarding = 3,
 
         /// <summary>
-        /// All records
+        /// Moved to foreign country
         /// </summary>
-        All = 4
+        MovedToForeignCountry = 4
     }
 }

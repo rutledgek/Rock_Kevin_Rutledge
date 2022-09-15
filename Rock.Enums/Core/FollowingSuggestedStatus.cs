@@ -14,32 +14,27 @@
 // limitations under the License.
 // </copyright>
 //
-
 namespace Rock.Model
 {
     /// <summary>
-    /// Authorization for a special group of users not defined by a specific role or person
+    /// The Following Suggested Status
     /// </summary>
-    public enum SpecialRole
+    [Enums.EnumDomain( "Core" )]
+    public enum FollowingSuggestedStatus
     {
         /// <summary>
-        /// No special role
+        /// Pending Notification
         /// </summary>
-        None = 0,
+        PendingNotification = 0,
 
         /// <summary>
-        /// Authorize all users
+        /// Suggested
         /// </summary>
-        AllUsers = 1,
+        Suggested = 1,
 
         /// <summary>
-        /// Authorize all authenticated users
+        /// Ignored
         /// </summary>
-        AllAuthenticatedUsers = 2,
-
-        /// <summary>
-        /// Authorize all un-authenticated users
-        /// </summary>
-        AllUnAuthenticatedUsers = 3,
+        Ignored = 2,
     }
 }
