@@ -18,60 +18,39 @@
 namespace Rock.Model
 {
     /// <summary>
-    /// Type of workflow trigger
+    /// The status of communication being sent to recipient
     /// </summary>
-    public enum ConnectionWorkflowTriggerType
+    [Enums.EnumDomain( "Communication" )]
+    public enum CommunicationRecipientStatus
     {
         /// <summary>
-        /// Request Started
+        /// Communication has not yet been sent to recipient
         /// </summary>
-        RequestStarted = 0,
+        Pending = 0,
 
         /// <summary>
-        /// Request Connected
+        /// Communication was successfully delivered to recipient's mail server
         /// </summary>
-        RequestConnected = 1,
+        Delivered = 1,
 
         /// <summary>
-        /// Status Changed
+        /// Communication failed to be sent to recipient
         /// </summary>
-        StatusChanged = 2,
+        Failed = 2,
 
         /// <summary>
-        /// State Changed
+        /// Communication was cancelled prior to sending to the recipient
         /// </summary>
-        StateChanged = 3,
+        Cancelled = 3,
 
         /// <summary>
-        /// Activity Added
+        /// Communication was sent and opened (viewed) by the recipient
         /// </summary>
-        ActivityAdded = 4,
+        Opened = 4,
 
         /// <summary>
-        /// Placed in a group
+        /// Temporary status used while sending ( to prevent transaction and job sending same record )
         /// </summary>
-        PlacementGroupAssigned = 5,
-
-        /// <summary>
-        /// Manual
-        /// </summary>
-        Manual = 6,
-
-        /// <summary>
-        /// Request Transferred
-        /// </summary>
-        RequestTransferred = 7,
-
-        /// <summary>
-        /// Request Assigned
-        /// </summary>
-        RequestAssigned = 8,
-
-        /// <summary>
-        /// Future Follow-up Date Reached
-        /// </summary>
-        FutureFollowupDateReached = 9
-
+        Sending = 5
     }
-
 }

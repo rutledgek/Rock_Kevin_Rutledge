@@ -14,20 +14,33 @@
 // limitations under the License.
 // </copyright>
 //
-using System;
 
-using Rock.Attribute;
-using Rock.Model;
-
-namespace Rock.Field.Types
+namespace Rock.Model // Added the namespace as it was not present. Verify with Daniel if this is needed.
 {
     /// <summary>
-    /// Field Type used to display a list of connection states
+    /// Type of connection state
     /// </summary>
-    [Serializable]
-    [RockPlatformSupport( Utility.RockPlatform.WebForms )]
-    [Rock.SystemGuid.FieldTypeGuid( Rock.SystemGuid.FieldType.CONNECTION_STATE )]
-    public class ConnectionStateFieldType : EnumFieldType<ConnectionState>
+    [Enums.EnumDomain( "Connection" )]
+    public enum ConnectionState
     {
+        /// <summary>
+        /// Active
+        /// </summary>
+        Active = 0,
+
+        /// <summary>
+        /// Inactive
+        /// </summary>
+        Inactive = 1,
+
+        /// <summary>
+        /// Future Follow-up
+        /// </summary>
+        FutureFollowUp = 2,
+
+        /// <summary>
+        /// Connected
+        /// </summary>
+        Connected = 3,
     }
 }

@@ -18,28 +18,19 @@
 namespace Rock.Model
 {
     /// <summary>
-    /// The classification of the notification (borrowed from Bootstrap)
+    /// Flag indicating if communication is for all selected segments or any segments
     /// </summary>
-    public enum NotificationClassification
+    [Enums.EnumDomain( "Communication" )]
+    public enum SegmentCriteria
     {
         /// <summary>
-        /// The success
+        /// All
         /// </summary>
-        Success,
+        All = 0,
 
         /// <summary>
-        /// The information
+        /// Any
         /// </summary>
-        Info,
-
-        /// <summary>
-        /// The warning
-        /// </summary>
-        Warning,
-
-        /// <summary>
-        /// The danger
-        /// </summary>
-        Danger
+        Any = 1,
     }
 }

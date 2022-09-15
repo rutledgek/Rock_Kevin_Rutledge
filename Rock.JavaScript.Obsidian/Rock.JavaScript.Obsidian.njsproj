@@ -73,6 +73,7 @@
     <Folder Include="Framework\Enums\Blocks\Cms\ContentCollectionView\" />
     <Folder Include="Framework\Enums\Cms\" />
     <Folder Include="Framework\Enums\Communication\" />
+    <Folder Include="Framework\Enums\Connection\" />
     <Folder Include="Framework\Enums\Controls\" />
     <Folder Include="Framework\Enums\Crm\" />
     <Folder Include="Framework\Enums\Event\" />
@@ -244,7 +245,15 @@
     <TypeScriptCompile Include="Framework\Enums\Cms\persistedDatasetScriptType.d.ts" />
     <TypeScriptCompile Include="Framework\Enums\Cms\siteType.d.ts" />
     <TypeScriptCompile Include="Framework\Enums\Cms\tagType.d.ts" />
+    <TypeScriptCompile Include="Framework\Enums\Communication\communicationRecipientStatus.d.ts" />
     <TypeScriptCompile Include="Framework\Enums\Communication\communicationStatus.d.ts" />
+    <TypeScriptCompile Include="Framework\Enums\Communication\notificationClassification.d.ts" />
+    <TypeScriptCompile Include="Framework\Enums\Communication\segmentCriteria.d.ts" />
+    <TypeScriptCompile Include="Framework\Enums\Connection\connectionRequestViewModelSortProperty.d.ts" />
+    <TypeScriptCompile Include="Framework\Enums\Connection\connectionState.d.ts" />
+    <TypeScriptCompile Include="Framework\Enums\Connection\connectionTypeViewMode.d.ts" />
+    <TypeScriptCompile Include="Framework\Enums\Connection\connectionWorkflowTriggerType.d.ts" />
+    <TypeScriptCompile Include="Framework\Enums\Connection\groupRequirementsFilter.d.ts" />
     <TypeScriptCompile Include="Framework\Enums\Controls\slidingDateRangeType.d.ts" />
     <TypeScriptCompile Include="Framework\Enums\Controls\slidingDateRangeType.d.ts" />
     <TypeScriptCompile Include="Framework\Enums\Controls\timeUnitType.d.ts" />

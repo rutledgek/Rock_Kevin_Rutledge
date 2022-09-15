@@ -18,18 +18,19 @@
 namespace Rock.Model
 {
     /// <summary>
-    /// Flag indicating if communication is for all selected segments or any segments
+    /// Represents the view mode of a <see cref="ConnectionType"/>.
     /// </summary>
-    public enum SegmentCriteria
+    [Enums.EnumDomain( "Connection" )]
+    public enum ConnectionTypeViewMode
     {
         /// <summary>
-        /// All
+        /// The <see cref="ConnectionType"/> is viewed as list.
         /// </summary>
-        All = 0,
+        List = 0,
 
         /// <summary>
-        /// Any
+        /// The <see cref="ConnectionType"/> is viewed as a board.
         /// </summary>
-        Any = 1,
+        Board = 1
     }
 }

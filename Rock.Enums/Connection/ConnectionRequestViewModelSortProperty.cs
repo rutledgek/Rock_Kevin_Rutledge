@@ -20,6 +20,7 @@ namespace Rock.Model
     /// <summary>
     /// The sort property
     /// </summary>
+    [Enums.EnumDomain( "Connection" )]
     public enum ConnectionRequestViewModelSortProperty
     {
         /// <summary>

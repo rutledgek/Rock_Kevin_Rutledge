@@ -18,18 +18,29 @@
 namespace Rock.Model
 {
     /// <summary>
-    /// Represents the view mode of a <see cref="ConnectionType"/>.
+    /// The classification of the notification (borrowed from Bootstrap)
     /// </summary>
-    public enum ConnectionTypeViewMode
+    [Enums.EnumDomain( "Communication" )]
+    public enum NotificationClassification
     {
         /// <summary>
-        /// The <see cref="ConnectionType"/> is viewed as list.
+        /// The success
         /// </summary>
-        List = 0,
+        Success,
 
         /// <summary>
-        /// The <see cref="ConnectionType"/> is viewed as a board.
+        /// The information
         /// </summary>
-        Board = 1
+        Info,
+
+        /// <summary>
+        /// The warning
+        /// </summary>
+        Warning,
+
+        /// <summary>
+        /// The danger
+        /// </summary>
+        Danger
     }
 }

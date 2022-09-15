@@ -18,38 +18,24 @@
 namespace Rock.Model
 {
     /// <summary>
-    /// The status of communication being sent to recipient
+    /// Group Requirements Filter
     /// </summary>
-    public enum CommunicationRecipientStatus
+    [Enums.EnumDomain( "Connection" )]
+    public enum GroupRequirementsFilter
     {
         /// <summary>
-        /// Communication has not yet been sent to recipient
+        /// Ignore
         /// </summary>
-        Pending = 0,
+        Ignore = 0,
 
         /// <summary>
-        /// Communication was successfully delivered to recipient's mail server
+        /// Must Meet
         /// </summary>
-        Delivered = 1,
+        MustMeet = 1,
 
         /// <summary>
-        /// Communication failed to be sent to recipient
+        /// Does Not Meet
         /// </summary>
-        Failed = 2,
-
-        /// <summary>
-        /// Communication was cancelled prior to sending to the recipient
-        /// </summary>
-        Cancelled = 3,
-
-        /// <summary>
-        /// Communication was sent and opened (viewed) by the recipient
-        /// </summary>
-        Opened = 4,
-
-        /// <summary>
-        /// Temporary status used while sending ( to prevent transaction and job sending same record )
-        /// </summary>
-        Sending = 5
+        DoesNotMeet = 2,
     }
 }
