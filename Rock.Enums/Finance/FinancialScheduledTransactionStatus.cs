@@ -20,6 +20,7 @@ namespace Rock.Model
     /// <summary>
     /// The status of a Scheduled Transaction
     /// </summary>
+    [Enums.EnumDomain( "Finance" )]
     public enum FinancialScheduledTransactionStatus
     {
         /// <summary>
