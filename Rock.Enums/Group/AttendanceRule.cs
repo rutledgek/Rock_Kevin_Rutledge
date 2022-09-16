@@ -18,38 +18,25 @@
 namespace Rock.Model
 {
     /// <summary>
-    /// Type of workflow trigger
+    /// Represents and indicates the  attendance rule to use when a <see cref="Rock.Model.Person"/> checks in to a <see cref="Rock.Model.Group"/> of this <see cref="Rock.Model.GroupType"/>
     /// </summary>
-    public enum WorkflowTriggerType
+    [Enums.EnumDomain( "Group" )]
+    public enum AttendanceRule
     {
         /// <summary>
-        /// Pre Save
+        /// None, person does not need to belong to the group, and they will not automatically 
+        /// be added to the group
         /// </summary>
-        PreSave = 0,
+        None = 0,
 
         /// <summary>
-        /// Post Save
+        /// Person will be added to the group whenever they check-in
         /// </summary>
-        PostSave = 1,
+        AddOnCheckIn = 1,
 
         /// <summary>
-        /// Pre Delete
+        /// User must already belong to the group before they will be allowed to check-in
         /// </summary>
-        PreDelete = 2,
-
-        /// <summary>
-        /// Post Delete
-        /// </summary>
-        PostDelete = 3,
-
-        /// <summary>
-        /// Immediate Post Save
-        /// </summary>
-        ImmediatePostSave = 4,
-
-        /// <summary>
-        /// Post Add
-        /// </summary>
-        PostAdd = 5,
+        AlreadyBelongs = 2
     }
 }

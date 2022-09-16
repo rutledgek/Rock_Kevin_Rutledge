@@ -18,29 +18,34 @@
 namespace Rock.Model
 {
     /// <summary>
-    /// The level of details to log
+    /// Type of Filter entry
     /// </summary>
-    public enum WorkflowLoggingLevel
+    [Enums.EnumDomain( "Reporting" )]
+    public enum FilterExpressionType
     {
         /// <summary>
-        /// Don't log any details
+        /// Expression filter
         /// </summary>
-        None = 0,
+        Filter = 0,
 
         /// <summary>
-        /// Log workflow events
+        /// A collection of expressions/conditions that must match and should be "and'd" together.
         /// </summary>
-        Workflow = 1,
+        GroupAll = 1,
 
         /// <summary>
-        /// Log workflow and activity events
+        /// A collection of expressions/conditions where at least one condition/expression must match.  Expressions are "or'd" together.
         /// </summary>
-        Activity = 2,
+        GroupAny = 2,
 
         /// <summary>
-        /// Log workflow, activity, and action events
+        /// A collection of expressions/conditions where all conditions must be false.  Expressions are combined using a logical OR and the group result must be FALSE.
         /// </summary>
-        Action = 3
+        GroupAllFalse = 3,
+
+        /// <summary>
+        /// A collection of expressions/conditions where at least one condition must be false.  Expressions are combined using a logical AND and the group result must be FALSE.
+        /// </summary>
+        GroupAnyFalse = 4
     }
 }
-

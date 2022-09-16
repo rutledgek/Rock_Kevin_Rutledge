@@ -18,28 +18,19 @@
 namespace Rock.Model
 {
     /// <summary>
-    /// The type of due date. Immediate, ConfiguredDate, GroupAttribute, or DaysAfterJoining.
+    /// Represents and indicates the participation type or mode used in a Fundraising Opportunity <see cref="Rock.Model.GroupType"/> to determine the way contributions and participants are displayed.
     /// </summary>
-    public enum DueDateType
+    [Enums.EnumDomain( "Group" )]
+    public enum ParticipationType
     {
         /// <summary>
-        /// Immediate
+        /// Participation for this fundraising opportunity is for individuals.
         /// </summary>
-        Immediate = 0,
+        Individual = 1,
 
         /// <summary>
-        /// Configured Date
+        /// Participation for this fundraising opportunity is for families.
         /// </summary>
-        ConfiguredDate = 1,
-
-        /// <summary>
-        /// Group Attribute
-        /// </summary>
-        GroupAttribute = 2,
-
-        /// <summary>
-        /// Days After Joining
-        /// </summary>
-        DaysAfterJoining = 3
+        Family = 2
     }
 }

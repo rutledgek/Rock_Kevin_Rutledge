@@ -18,18 +18,34 @@
 namespace Rock.Model
 {
     /// <summary>
-    /// Represents and indicates the participation type or mode used in a Fundraising Opportunity <see cref="Rock.Model.GroupType"/> to determine the way contributions and participants are displayed.
+    ///
     /// </summary>
-    public enum ParticipationType
+    [Enums.EnumDomain( "Group" )]
+    public enum MeetsGroupRequirement
     {
         /// <summary>
-        /// Participation for this fundraising opportunity is for individuals.
+        ///  Meets requirements
         /// </summary>
-        Individual = 1,
+        Meets,
 
         /// <summary>
-        /// Participation for this fundraising opportunity is for families.
+        /// Doesn't meet requirements
         /// </summary>
-        Family = 2
+        NotMet,
+
+        /// <summary>
+        /// The meets with warning
+        /// </summary>
+        MeetsWithWarning,
+
+        /// <summary>
+        /// The Requirement doesn't apply for the GroupRole we are checking against
+        /// </summary>
+        NotApplicable,
+
+        /// <summary>
+        /// The Requirement calculation resulted in an exception <see cref="GroupRequirementStatus.CalculationException"/>
+        /// </summary>
+        Error
     }
 }

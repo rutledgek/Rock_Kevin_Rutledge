@@ -20,6 +20,7 @@ namespace Rock.Model
     /// <summary>
     /// This is determined by the values for EntityTypeQualifierValue and EntityTypeQualifierValuePrevious
     /// </summary>
+    [Enums.EnumDomain( "Workflow" )]
     public enum WorkflowTriggerValueChangeType
     {
         /// <summary>

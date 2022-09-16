@@ -18,18 +18,24 @@
 namespace Rock.Model
 {
     /// <summary>
-    /// The type of Metric Value that a Metric Value represents
+    /// The unit type for a metric
     /// </summary>
-    public enum MetricValueType
+    [Enums.EnumDomain( "Reporting" )]
+    public enum UnitType
     {
         /// <summary>
-        /// Metric Value represents something that was measured (for example: Fundraising Total)
+        /// Numeric
         /// </summary>
-        Measure = 0,
+        Numeric = 0,
 
         /// <summary>
-        /// Metric Value represents a goal (for example: Fundraising Goal)
+        /// Currency
         /// </summary>
-        Goal = 1
+        Currency = 1,
+
+        /// <summary>
+        /// Percentage
+        /// </summary>
+        Percentage = 2
     }
 }

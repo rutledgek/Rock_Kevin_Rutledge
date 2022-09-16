@@ -18,33 +18,29 @@
 namespace Rock.Model
 {
     /// <summary>
-    ///
+    /// The type of due date. Immediate, ConfiguredDate, GroupAttribute, or DaysAfterJoining.
     /// </summary>
-    public enum MeetsGroupRequirement
+    [Enums.EnumDomain( "Group" )]
+    public enum DueDateType
     {
         /// <summary>
-        ///  Meets requirements
+        /// Immediate
         /// </summary>
-        Meets,
+        Immediate = 0,
 
         /// <summary>
-        /// Doesn't meet requirements
+        /// Configured Date
         /// </summary>
-        NotMet,
+        ConfiguredDate = 1,
 
         /// <summary>
-        /// The meets with warning
+        /// Group Attribute
         /// </summary>
-        MeetsWithWarning,
+        GroupAttribute = 2,
 
         /// <summary>
-        /// The Requirement doesn't apply for the GroupRole we are checking against
+        /// Days After Joining
         /// </summary>
-        NotApplicable,
-
-        /// <summary>
-        /// The Requirement calculation resulted in an exception <see cref="GroupRequirementStatus.CalculationException"/>
-        /// </summary>
-        Error
+        DaysAfterJoining = 3
     }
 }

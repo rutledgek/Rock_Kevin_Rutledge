@@ -14,31 +14,28 @@
 // limitations under the License.
 // </copyright>
 //
-using System.ComponentModel;
 
 namespace Rock.Model
 {
     /// <summary>
-    /// WorkflowActionFormPersonEntryOption Enum
+    /// Represents the status of a <see cref="Rock.Model.GroupMember"/> in a <see cref="Rock.Model.Group"/>.
     /// </summary>
-    public enum WorkflowActionFormPersonEntryOption
+    [Enums.EnumDomain( "Group" )]
+    public enum GroupMemberStatus
     {
         /// <summary>
-        /// Don't show the control
+        /// The <see cref="Rock.Model.GroupMember"/> is not an active member of the <see cref="Rock.Model.Group"/>.
         /// </summary>
-        [Description( "Hide" )]
-        Hidden = 0,
+        Inactive = 0,
 
         /// <summary>
-        /// Control is visible, but a value is not required
+        /// The <see cref="Rock.Model.GroupMember"/> is an active member of the <see cref="Rock.Model.Group"/>.
         /// </summary>
-        [Description( "Optional" )]
-        Optional = 1,
+        Active = 1,
 
         /// <summary>
-        /// Control is visible, and a value is required
+        /// The <see cref="Rock.Model.GroupMember">GroupMember's</see> membership in the <see cref="Rock.Model.Group"/> is pending.
         /// </summary>
-        [Description( "Required" )]
-        Required = 2,
+        Pending = 2
     }
 }

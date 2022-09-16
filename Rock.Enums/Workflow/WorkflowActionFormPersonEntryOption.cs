@@ -14,27 +14,32 @@
 // limitations under the License.
 // </copyright>
 //
+using System.ComponentModel;
 
 namespace Rock.Model
 {
     /// <summary>
-    /// The unit type for a metric
+    /// WorkflowActionFormPersonEntryOption Enum
     /// </summary>
-    public enum UnitType
+    [Enums.EnumDomain( "Workflow" )]
+    public enum WorkflowActionFormPersonEntryOption
     {
         /// <summary>
-        /// Numeric
+        /// Don't show the control
         /// </summary>
-        Numeric = 0,
+        [Description( "Hide" )]
+        Hidden = 0,
 
         /// <summary>
-        /// Currency
+        /// Control is visible, but a value is not required
         /// </summary>
-        Currency = 1,
+        [Description( "Optional" )]
+        Optional = 1,
 
         /// <summary>
-        /// Percentage
+        /// Control is visible, and a value is required
         /// </summary>
-        Percentage = 2
+        [Description( "Required" )]
+        Required = 2,
     }
 }

@@ -18,24 +18,30 @@
 namespace Rock.Model
 {
     /// <summary>
-    /// Represents and indicates the  attendance rule to use when a <see cref="Rock.Model.Person"/> checks in to a <see cref="Rock.Model.Group"/> of this <see cref="Rock.Model.GroupType"/>
+    /// The level of details to log
     /// </summary>
-    public enum AttendanceRule
+    [Enums.EnumDomain( "Workflow" )]
+    public enum WorkflowLoggingLevel
     {
         /// <summary>
-        /// None, person does not need to belong to the group, and they will not automatically 
-        /// be added to the group
+        /// Don't log any details
         /// </summary>
         None = 0,
 
         /// <summary>
-        /// Person will be added to the group whenever they check-in
+        /// Log workflow events
         /// </summary>
-        AddOnCheckIn = 1,
+        Workflow = 1,
 
         /// <summary>
-        /// User must already belong to the group before they will be allowed to check-in
+        /// Log workflow and activity events
         /// </summary>
-        AlreadyBelongs = 2
+        Activity = 2,
+
+        /// <summary>
+        /// Log workflow, activity, and action events
+        /// </summary>
+        Action = 3
     }
 }
+

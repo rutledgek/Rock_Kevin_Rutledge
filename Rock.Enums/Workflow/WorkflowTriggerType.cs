@@ -18,33 +18,39 @@
 namespace Rock.Model
 {
     /// <summary>
-    /// Type of Filter entry
+    /// Type of workflow trigger
     /// </summary>
-    public enum FilterExpressionType
+    [Enums.EnumDomain( "Workflow" )]
+    public enum WorkflowTriggerType
     {
         /// <summary>
-        /// Expression filter
+        /// Pre Save
         /// </summary>
-        Filter = 0,
+        PreSave = 0,
 
         /// <summary>
-        /// A collection of expressions/conditions that must match and should be "and'd" together.
+        /// Post Save
         /// </summary>
-        GroupAll = 1,
+        PostSave = 1,
 
         /// <summary>
-        /// A collection of expressions/conditions where at least one condition/expression must match.  Expressions are "or'd" together.
+        /// Pre Delete
         /// </summary>
-        GroupAny = 2,
+        PreDelete = 2,
 
         /// <summary>
-        /// A collection of expressions/conditions where all conditions must be false.  Expressions are combined using a logical OR and the group result must be FALSE.
+        /// Post Delete
         /// </summary>
-        GroupAllFalse = 3,
+        PostDelete = 3,
 
         /// <summary>
-        /// A collection of expressions/conditions where at least one condition must be false.  Expressions are combined using a logical AND and the group result must be FALSE.
+        /// Immediate Post Save
         /// </summary>
-        GroupAnyFalse = 4
+        ImmediatePostSave = 4,
+
+        /// <summary>
+        /// Post Add
+        /// </summary>
+        PostAdd = 5,
     }
 }

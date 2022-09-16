@@ -14,29 +14,28 @@
 // limitations under the License.
 // </copyright>
 //
-using System.ComponentModel;
 
 namespace Rock.Model
 {
     /// <summary>
-    /// Check-in Requirements for Group Scheduling
+    /// The type of requirement check that is done. Sql, DataView or Manual.
     /// </summary>
-    public enum AttendanceRecordRequiredForCheckIn
+    [Enums.EnumDomain( "Group" )]
+    public enum RequirementCheckType
     {
         /// <summary>
-        /// Person doesn't need to be scheduled
+        /// SQL
         /// </summary>
-        ScheduleNotRequired = 0,
+        Sql = 0,
 
         /// <summary>
-        /// Person doesn't need to be scheduled, but pre-select group if they are scheduled.
+        /// A dataview
         /// </summary>
-        [Description( "Pre-select Group if Scheduled" )]
-        PreSelect = 1,
+        Dataview = 1,
 
         /// <summary>
-        /// Person cannot check into group unless they have been scheduled 
+        /// Manual
         /// </summary>
-        ScheduleRequired = 2,
+        Manual = 2
     }
 }

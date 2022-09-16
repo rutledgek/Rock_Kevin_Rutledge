@@ -18,23 +18,19 @@
 namespace Rock.Model
 {
     /// <summary>
-    /// The gender of a person
+    /// The type of Metric Value that a Metric Value represents
     /// </summary>
-    public enum MetricNumericDataType
+    [Enums.EnumDomain( "Reporting" )]
+    public enum MetricValueType
     {
         /// <summary>
-        /// Integer
+        /// Metric Value represents something that was measured (for example: Fundraising Total)
         /// </summary>
-        Integer = 0,
+        Measure = 0,
 
         /// <summary>
-        /// Decimal
+        /// Metric Value represents a goal (for example: Fundraising Goal)
         /// </summary>
-        Decimal = 1,
-
-        /// <summary>
-        /// Currency
-        /// </summary>
-        Currency = 2
+        Goal = 1
     }
 }

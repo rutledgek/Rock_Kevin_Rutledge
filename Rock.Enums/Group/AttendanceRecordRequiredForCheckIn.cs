@@ -14,27 +14,30 @@
 // limitations under the License.
 // </copyright>
 //
+using System.ComponentModel;
 
 namespace Rock.Model
 {
     /// <summary>
-    /// Represents the status of a <see cref="Rock.Model.GroupMember"/> in a <see cref="Rock.Model.Group"/>.
+    /// Check-in Requirements for Group Scheduling
     /// </summary>
-    public enum GroupMemberStatus
+    [Enums.EnumDomain( "Group" )]
+    public enum AttendanceRecordRequiredForCheckIn
     {
         /// <summary>
-        /// The <see cref="Rock.Model.GroupMember"/> is not an active member of the <see cref="Rock.Model.Group"/>.
+        /// Person doesn't need to be scheduled
         /// </summary>
-        Inactive = 0,
+        ScheduleNotRequired = 0,
 
         /// <summary>
-        /// The <see cref="Rock.Model.GroupMember"/> is an active member of the <see cref="Rock.Model.Group"/>.
+        /// Person doesn't need to be scheduled, but pre-select group if they are scheduled.
         /// </summary>
-        Active = 1,
+        [Description( "Pre-select Group if Scheduled" )]
+        PreSelect = 1,
 
         /// <summary>
-        /// The <see cref="Rock.Model.GroupMember">GroupMember's</see> membership in the <see cref="Rock.Model.Group"/> is pending.
+        /// Person cannot check into group unless they have been scheduled 
         /// </summary>
-        Pending = 2
+        ScheduleRequired = 2,
     }
 }
