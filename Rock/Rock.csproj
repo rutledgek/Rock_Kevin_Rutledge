@@ -1168,12 +1168,10 @@
     <Compile Include="Model\Finance\BenevolenceRequest\BenevolenceRequest.SaveHook.cs" />
     <Compile Include="Model\Finance\BenevolenceType\BenevolenceType.cs" />
     <Compile Include="Model\Finance\BenevolenceWorkflow\BenevolenceWorkflow.cs" />
-    <Compile Include="Model\Finance\BenevolenceWorkflow\BenevolenceWorkflowTriggerType.cs" />
     <Compile Include="Model\Finance\BenevolenceWorkflow\BenevolenceWorkflow.Logic.cs" />
     <Compile Include="Model\Finance\BenevolenceWorkflow\BenevolenceWorkflow.SaveHook.cs" />
     <Compile Include="Model\Finance\BenevolenceWorkflow\BenevolenceWorkflowService.cs" />
     <Compile Include="Model\Finance\FinancialAccount\FinancialAccount.SaveHook.cs" />
-    <Compile Include="Model\Finance\FinancialBatch\BatchStatus.cs" />
     <Compile Include="Model\Finance\FinancialBatch\ControlTotalResult.cs" />
     <Compile Include="Model\Finance\FinancialBatch\FinancialBatch.Logic.cs" />
     <Compile Include="Model\Finance\FinancialGateway\FinancialGateway.Logic.cs" />
@@ -1188,10 +1186,8 @@
     <Compile Include="Model\Finance\FinancialScheduledTransactionDetail\FinancialScheduledTransactionDetail.SaveHook.cs" />
     <Compile Include="Model\Finance\FinancialScheduledTransaction\FinancialScheduledTransaction.Logic.cs" />
     <Compile Include="Model\Finance\FinancialScheduledTransaction\FinancialScheduledTransaction.SaveHook.cs" />
-    <Compile Include="Model\Finance\FinancialScheduledTransaction\FinancialScheduledTransactionStatus.cs" />
     <Compile Include="Model\Finance\FinancialStatementTemplate\FinancialStatementTemplate.Logic.cs" />
     <Compile Include="Model\Finance\FinancialStatementTemplate\FinancialStatementTemplate.SaveHook.cs" />
-    <Compile Include="Model\Finance\FinancialTransactionAlertType\AlertType.cs" />
     <Compile Include="Model\Finance\FinancialTransactionAlertType\FinancialTransactionAlertType.Logic.cs" />
     <Compile Include="Model\Finance\FinancialTransactionAlert\FinancialTransactionAlert.cs" />
     <Compile Include="Model\Finance\FinancialTransactionDetail\FinancialTransactionDetail.Logic.cs" />
@@ -1201,9 +1197,7 @@
     <Compile Include="Model\Finance\FinancialTransaction\FinancialTransaction.SaveHook.cs" />
     <Compile Include="Model\Finance\FinancialTransaction\FinancialTransactionExtensionMethods.cs" />
     <Compile Include="Model\Finance\FinancialTransaction\FinancialTransactionScannedCheck.cs" />
-    <Compile Include="Model\Finance\FinancialTransaction\MICRStatus.cs" />
     <Compile Include="Model\Finance\FinancialTransaction\MonthlyAccountGivingHistory.cs" />
-    <Compile Include="Model\Finance\FinancialTransaction\TransactionGraphBy.cs" />
     <Compile Include="Model\Group\GroupDemographicType\GroupDemographicType.cs" />
     <Compile Include="Model\Group\GroupDemographicValue\GroupDemographicValue.cs" />
     <Compile Include="Model\Group\GroupHistorical\GroupHistorical.cs" />

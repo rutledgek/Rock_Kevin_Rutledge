@@ -18,19 +18,27 @@
 namespace Rock.Model
 {
     /// <summary>
-    /// The MICR Status
+    /// The status of a batch
     /// </summary>
-    public enum MICRStatus
+    [Enums.EnumDomain( "Finance" )]
+    public enum BatchStatus
     {
         /// <summary>
-        /// Success means the scanned MICR contains no invalid read chars ('!' for Canon and '?' for Magtek)
+        /// Pending
+        /// In the process of scanning the checks to it
         /// </summary>
-        Success = 0,
+        Pending = 0,
 
         /// <summary>
-        /// Fail means the scanned MICR contains at least one invalid read char ('!' for Canon and '?' for Magtek)
-        /// but the user chose to Upload it anyway
+        /// Open
+        /// Transactions are all entered and are ready to be matched
         /// </summary>
-        Fail = 1
+        Open = 1,
+
+        /// <summary>
+        /// Closed
+        /// All is well and good
+        /// </summary>
+        Closed = 2
     }
 }

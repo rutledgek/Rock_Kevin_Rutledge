@@ -112,6 +112,12 @@
     <Compile Include="Event\RSVP.cs" />
     <Compile Include="Event\SessionStatus.cs" />
     <Compile Include="Event\SignatureDocumentAction.cs" />
+    <Compile Include="Finance\AlertType.cs" />
+    <Compile Include="Finance\BatchStatus.cs" />
+    <Compile Include="Finance\BenevolenceWorkflowTriggerType.cs" />
+    <Compile Include="Finance\FinancialScheduledTransactionStatus.cs" />
+    <Compile Include="Finance\MICRStatus.cs" />
+    <Compile Include="Finance\TransactionGraphBy.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Reporting\FieldFilterSourceType.cs" />
   </ItemGroup>
@@ -121,5 +127,6 @@
       <Name>Rock.Common</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -79,6 +79,7 @@
     <Folder Include="Framework\Enums\Crm\" />
     <Folder Include="Framework\Enums\Engagement\" />
     <Folder Include="Framework\Enums\Event\" />
+    <Folder Include="Framework\Enums\Finance\" />
     <Folder Include="Framework\Enums\Reporting\" />
     <Folder Include="Framework\Directives\" />
     <Folder Include="Framework\Core\" />
@@ -302,6 +303,12 @@
     <TypeScriptCompile Include="Framework\Enums\Event\rSVP.d.ts" />
     <TypeScriptCompile Include="Framework\Enums\Event\sessionStatus.d.ts" />
     <TypeScriptCompile Include="Framework\Enums\Event\signatureDocumentAction.d.ts" />
+    <TypeScriptCompile Include="Framework\Enums\Finance\alertType.d.ts" />
+    <TypeScriptCompile Include="Framework\Enums\Finance\batchStatus.d.ts" />
+    <TypeScriptCompile Include="Framework\Enums\Finance\benevolenceWorkflowTriggerType.d.ts" />
+    <TypeScriptCompile Include="Framework\Enums\Finance\financialScheduledTransactionStatus.d.ts" />
+    <TypeScriptCompile Include="Framework\Enums\Finance\mICRStatus.d.ts" />
+    <TypeScriptCompile Include="Framework\Enums\Finance\transactionGraphBy.d.ts" />
     <TypeScriptCompile Include="Framework\Enums\Reporting\fieldFilterSourceType.d.ts" />
     <TypeScriptCompile Include="Framework\FieldTypes\fileField.partial.ts" />
     <TypeScriptCompile Include="Framework\FieldTypes\fileFieldComponents.ts" />

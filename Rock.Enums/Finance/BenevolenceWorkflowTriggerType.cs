@@ -14,25 +14,33 @@
 // limitations under the License.
 // </copyright>
 //
-using System.ComponentModel;
 
 namespace Rock.Model
 {
     /// <summary>
-    /// Alert Type
+    /// Type of workflow trigger
     /// </summary>
-    public enum AlertType
+    [Enums.EnumDomain( "Finance" )]
+    public enum BenevolenceWorkflowTriggerType
     {
         /// <summary>
-        /// Gratitude looks for amounts larger than normal, or transactions that are earlier than usual.
+        /// Request Started
         /// </summary>
-        [Description( "Gratitude" )]
-        Gratitude = 0,
+        RequestStarted = 0,
 
         /// <summary>
-        /// Follow Up looks for amounts smaller than normal, or transactions later than usual (or stopped occurring)
+        /// Status Changed
         /// </summary>
-        [Description( "Follow-up" )]
-        FollowUp = 1,
+        StatusChanged = 1,
+
+        /// <summary>
+        /// Caseworker Assigned
+        /// </summary>
+        CaseworkerAssigned = 2,
+
+        /// <summary>
+        /// Manual
+        /// </summary>
+        Manual = 3
     }
 }

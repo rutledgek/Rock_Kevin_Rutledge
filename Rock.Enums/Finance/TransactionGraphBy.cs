@@ -20,6 +20,7 @@ namespace Rock.Model
     /// <summary>
     /// For giving analysis reporting
     /// </summary>
+    [Enums.EnumDomain( "Finance" )]
     public enum TransactionGraphBy
     {
         /// <summary>

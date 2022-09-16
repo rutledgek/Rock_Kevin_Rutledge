@@ -18,28 +18,20 @@
 namespace Rock.Model
 {
     /// <summary>
-    /// Type of workflow trigger
+    /// The MICR Status
     /// </summary>
-    public enum BenevolenceWorkflowTriggerType
+    [Enums.EnumDomain( "Finance" )]
+    public enum MICRStatus
     {
         /// <summary>
-        /// Request Started
+        /// Success means the scanned MICR contains no invalid read chars ('!' for Canon and '?' for Magtek)
         /// </summary>
-        RequestStarted = 0,
+        Success = 0,
 
         /// <summary>
-        /// Status Changed
+        /// Fail means the scanned MICR contains at least one invalid read char ('!' for Canon and '?' for Magtek)
+        /// but the user chose to Upload it anyway
         /// </summary>
-        StatusChanged = 1,
-
-        /// <summary>
-        /// Caseworker Assigned
-        /// </summary>
-        CaseworkerAssigned = 2,
-
-        /// <summary>
-        /// Manual
-        /// </summary>
-        Manual = 3
+        Fail = 1
     }
 }

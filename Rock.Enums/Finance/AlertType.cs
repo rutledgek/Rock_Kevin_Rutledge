@@ -14,30 +14,26 @@
 // limitations under the License.
 // </copyright>
 //
+using System.ComponentModel;
 
 namespace Rock.Model
 {
     /// <summary>
-    /// The status of a batch
+    /// Alert Type
     /// </summary>
-    public enum BatchStatus
+    [Enums.EnumDomain( "Finance" )]
+    public enum AlertType
     {
         /// <summary>
-        /// Pending
-        /// In the process of scanning the checks to it
+        /// Gratitude looks for amounts larger than normal, or transactions that are earlier than usual.
         /// </summary>
-        Pending = 0,
+        [Description( "Gratitude" )]
+        Gratitude = 0,
 
         /// <summary>
-        /// Open
-        /// Transactions are all entered and are ready to be matched
+        /// Follow Up looks for amounts smaller than normal, or transactions later than usual (or stopped occurring)
         /// </summary>
-        Open = 1,
-
-        /// <summary>
-        /// Closed
-        /// All is well and good
-        /// </summary>
-        Closed = 2
+        [Description( "Follow-up" )]
+        FollowUp = 1,
     }
 }
