@@ -13,22 +13,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-//
+
 namespace Rock.Model
 {
     /// <summary>
-    /// Type of authentication service used to authenticate user
+    /// Flag indicating if registrants are typically in the same family
     /// </summary>
-    public enum AuthenticationServiceType
+    [Enums.EnumDomain( "Event" )]
+    public enum RegistrantsSameFamily
     {
         /// <summary>
-        /// An internal authentication service (i.e. Database, Active Directory)
+        /// The no
         /// </summary>
-        Internal = 0,
+        No = 0,
 
         /// <summary>
-        /// An external authentication service (i.e. Facebook, Twitter, Google, etc.)
+        /// The yes
         /// </summary>
-        External = 1,
+        Yes = 1,
+
+        /// <summary>
+        /// The ask
+        /// </summary>
+        Ask = 2,
     }
 }

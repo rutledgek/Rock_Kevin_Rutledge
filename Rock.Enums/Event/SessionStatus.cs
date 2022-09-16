@@ -18,23 +18,24 @@
 namespace Rock.Model
 {
     /// <summary>
-    /// The person's email preference
+    /// The status of the RegistrationSession
     /// </summary>
-    public enum EmailPreference
+    [Enums.EnumDomain( "Event" )]
+    public enum SessionStatus
     {
         /// <summary>
-        /// Emails can be sent to person
+        /// Transient
         /// </summary>
-        EmailAllowed = 0,
+        Transient = 0,
 
         /// <summary>
-        /// No Mass emails should be sent to person
+        /// Payment Pending
         /// </summary>
-        NoMassEmails = 1,
+        PaymentPending = 1,
 
         /// <summary>
-        /// No emails should be sent to person
+        /// Completed
         /// </summary>
-        DoNotEmail = 2
+        Completed = 2
     }
 }

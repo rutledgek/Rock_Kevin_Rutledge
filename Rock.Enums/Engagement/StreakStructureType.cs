@@ -21,6 +21,7 @@ namespace Rock.Model
     /// <summary>
     /// Represents the attendance association of a <see cref="StreakType"/>.
     /// </summary>
+    [Enums.EnumDomain( "Engagement" )]
     public enum StreakStructureType
     {
         /// <summary>

@@ -13,33 +13,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+//
 
 namespace Rock.Model
 {
     /// <summary>
-    /// How registrar information should be collected.
+    /// Represents the personalization type
     /// </summary>
-    public enum RegistrarOption
+    [Enums.EnumDomain( "CRM" )]
+    public enum PersonalizationType
     {
         /// <summary>
-        /// Prompt for registrar
+        /// Personalization type based on <seealso cref="Rock.Model.PersonalizationSegment"/>.
         /// </summary>
-        PromptForRegistrar = 0,
+        Segment = 0,
 
         /// <summary>
-        /// Prefill first registrant
+        /// Personalization type based on <seealso cref="Rock.Model.RequestFilter"/>.
         /// </summary>
-        PrefillFirstRegistrant = 1,
-
-        /// <summary>
-        /// Use first registrant
-        /// </summary>
-        UseFirstRegistrant = 2,
-
-        /// <summary>
-        /// Use the LoggedIn person and keep fields readonly, except for fields that haven't been collected yet
-        /// For example, if EmailAddress wasn't known, Email would be prompted vs readonly.
-        /// </summary>
-        UseLoggedInPerson = 3
+        RequestFilter = 1
     }
 }

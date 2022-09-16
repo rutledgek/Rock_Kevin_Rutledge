@@ -20,6 +20,7 @@ namespace Rock.Model
     /// Gets the status of the Assessment  (i.e. Pending, Complete)
     /// Complete should only be used if the Assessment was actually completed, everything else is pending.
     /// </summary>
+    [Enums.EnumDomain( "CRM" )]
     public enum AssessmentRequestStatus
     {
         /// <summary>

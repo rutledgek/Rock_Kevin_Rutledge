@@ -13,28 +13,38 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-//
 
 namespace Rock.Model
 {
     /// <summary>
-    /// The age classification of a person
+    /// For Attendance Reporting, graph into series partitioned by Total, Group, Campus, or Schedule
     /// </summary>
-    public enum AgeClassification
+    [Enums.EnumDomain( "Event" )]
+    public enum AttendanceGraphBy
     {
         /// <summary>
-        /// Unknown
+        /// Total (one series)
         /// </summary>
-        Unknown = 0,
+        Total = 0,
 
         /// <summary>
-        /// Adult
+        /// Each selected Check-in Group (which is actually a [Group] under the covers) is a series
         /// </summary>
-        Adult = 1,
+        Group = 1,
 
         /// <summary>
-        /// Child
+        /// Each campus (from Attendance.CampusId) is its own series
         /// </summary>
-        Child = 2
+        Campus = 2,
+
+        /// <summary>
+        /// Each schedule (from Attendance.ScheduleId) is its own series
+        /// </summary>
+        Schedule = 3,
+
+        /// <summary>
+        /// Each Location (from Attendance.LocationId) is its own series
+        /// </summary>
+        Location = 4
     }
 }

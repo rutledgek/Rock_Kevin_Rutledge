@@ -15,12 +15,14 @@
 // </copyright>
 
 using System;
+using Rock;
 
 namespace Rock.Model
 {
     /// <summary>
     /// The entity that attribute applies to
     /// </summary>
+    [Enums.EnumDomain( "Event" )]
     public enum RegistrationFieldSource
     {
         /// <summary>

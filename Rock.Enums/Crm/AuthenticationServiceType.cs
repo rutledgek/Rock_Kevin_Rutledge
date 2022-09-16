@@ -14,29 +14,22 @@
 // limitations under the License.
 // </copyright>
 //
-
-/// <summary>
-/// Type of connection state
-/// </summary>
-public enum ConnectionState
+namespace Rock.Model
 {
     /// <summary>
-    /// Active
+    /// Type of authentication service used to authenticate user
     /// </summary>
-    Active = 0,
+    [Enums.EnumDomain( "CRM" )]
+    public enum AuthenticationServiceType
+    {
+        /// <summary>
+        /// An internal authentication service (i.e. Database, Active Directory)
+        /// </summary>
+        Internal = 0,
 
-    /// <summary>
-    /// Inactive
-    /// </summary>
-    Inactive = 1,
-
-    /// <summary>
-    /// Future Follow-up
-    /// </summary>
-    FutureFollowUp = 2,
-
-    /// <summary>
-    /// Connected
-    /// </summary>
-    Connected = 3,
+        /// <summary>
+        /// An external authentication service (i.e. Facebook, Twitter, Google, etc.)
+        /// </summary>
+        External = 1,
+    }
 }

@@ -13,37 +13,35 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+//
 
 namespace Rock.Model
 {
     /// <summary>
-    /// For Attendance Reporting, graph into series partitioned by Total, Group, Campus, or Schedule
+    /// RSVP Response
     /// </summary>
-    public enum AttendanceGraphBy
+    [Enums.EnumDomain( "Event" )]
+    public enum RSVP
     {
         /// <summary>
-        /// Total (one series)
+        /// No
         /// </summary>
-        Total = 0,
+        No = 0,
 
         /// <summary>
-        /// Each selected Check-in Group (which is actually a [Group] under the covers) is a series
+        /// Yes
         /// </summary>
-        Group = 1,
+        Yes = 1,
 
         /// <summary>
-        /// Each campus (from Attendance.CampusId) is its own series
+        /// Here's my number, call me Maybe.
+        /// Not used by Group Scheduler.
         /// </summary>
-        Campus = 2,
+        Maybe = 2,
 
         /// <summary>
-        /// Each schedule (from Attendance.ScheduleId) is its own series
+        /// RSVP not answered yet (or doesn't apply)
         /// </summary>
-        Schedule = 3,
-
-        /// <summary>
-        /// Each Location (from Attendance.LocationId) is its own series
-        /// </summary>
-        Location = 4
+        Unknown = 3
     }
 }

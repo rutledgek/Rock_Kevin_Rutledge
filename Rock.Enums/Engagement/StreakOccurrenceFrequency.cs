@@ -13,22 +13,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-
+//
 namespace Rock.Model
 {
     /// <summary>
-    /// How signature document should be presented to registrant
+    /// Represents the timespan represented by each of the <see cref="StreakType"/> bits.
     /// </summary>
-    public enum SignatureDocumentAction
+    [Enums.EnumDomain( "Engagement" )]
+    public enum StreakOccurrenceFrequency
     {
         /// <summary>
-        /// Email document
+        /// The <see cref="StreakType"/> has bits that represent a day.
         /// </summary>
-        Email = 0,
+        Daily = 0,
 
         /// <summary>
-        /// Embed document in registration
+        /// The <see cref="StreakType"/> has bits that represent a week.
         /// </summary>
-        Embed = 1,
+        Weekly = 1,
+
+        /// <summary>
+        /// The <see cref="StreakType"/> has bits that represent a month.
+        /// </summary>
+        Monthly = 2,
+
+        /// <summary>
+        /// The <see cref="StreakType"/> has bits that represent a year.
+        /// </summary>
+        Yearly = 3
     }
 }

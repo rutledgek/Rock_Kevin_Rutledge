@@ -19,6 +19,7 @@ namespace Rock.Model
     /// <summary>
     /// 
     /// </summary>
+    [Enums.EnumDomain( "Event" )]
     public enum RegistrationPersonFieldType
     {
         /// <summary>

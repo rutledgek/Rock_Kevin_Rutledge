@@ -18,18 +18,19 @@
 namespace Rock.Model
 {
     /// <summary>
-    /// Represents the personalization type
+    /// Flag for how fee items should be displayed/required by user
     /// </summary>
-    public enum PersonalizationType
+    [Enums.EnumDomain( "Event" )]
+    public enum RegistrationFeeType
     {
         /// <summary>
-        /// Personalization type based on <seealso cref="Rock.Model.PersonalizationSegment"/>.
+        /// There is one only one option for this fee
         /// </summary>
-        Segment = 0,
+        Single = 0,
 
         /// <summary>
-        /// Personalization type based on <seealso cref="Rock.Model.RequestFilter"/>.
+        /// There are multiple options available for this fee
         /// </summary>
-        RequestFilter = 1
+        Multiple = 1,
     }
 }

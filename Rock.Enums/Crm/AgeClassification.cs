@@ -18,18 +18,24 @@
 namespace Rock.Model
 {
     /// <summary>
-    /// Flag for how fee items should be displayed/required by user
+    /// The age classification of a person
     /// </summary>
-    public enum RegistrationFeeType
+    [Enums.EnumDomain( "CRM" )]
+    public enum AgeClassification
     {
         /// <summary>
-        /// There is one only one option for this fee
+        /// Unknown
         /// </summary>
-        Single = 0,
+        Unknown = 0,
 
         /// <summary>
-        /// There are multiple options available for this fee
+        /// Adult
         /// </summary>
-        Multiple = 1,
+        Adult = 1,
+
+        /// <summary>
+        /// Child
+        /// </summary>
+        Child = 2
     }
 }

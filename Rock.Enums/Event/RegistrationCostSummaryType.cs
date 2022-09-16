@@ -13,34 +13,34 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-//
 
 namespace Rock.Model
 {
     /// <summary>
-    /// RSVP Response
+    /// 
     /// </summary>
-    public enum RSVP
+    [Enums.EnumDomain( "Event" )]
+    public enum RegistrationCostSummaryType
     {
         /// <summary>
-        /// No
+        /// a cost
+        /// 
         /// </summary>
-        No = 0,
+        Cost,
 
         /// <summary>
-        /// Yes
+        /// a fee
         /// </summary>
-        Yes = 1,
+        Fee,
 
         /// <summary>
-        /// Here's my number, call me Maybe.
-        /// Not used by Group Scheduler.
+        /// The discount
         /// </summary>
-        Maybe = 2,
+        Discount,
 
         /// <summary>
-        /// RSVP not answered yet (or doesn't apply)
+        /// The total
         /// </summary>
-        Unknown = 3
+        Total
     }
 }
