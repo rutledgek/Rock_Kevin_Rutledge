@@ -400,6 +400,31 @@ namespace RockWeb.Blocks.Event
             NavigateToParentPage( qryParams );
         }
 
+        protected void btnCopy_Click( object sender, EventArgs e )
+        {
+            var rockContext = new RockContext();
+            var registrationInstance = new RegistrationInstanceService( rockContext ).Get( hfRegistrationInstanceId.Value.AsInteger() );
+            if ( registrationInstance != null )
+            {
+                // Clone the Registration Instance without the old Id.
+                var newRegistrationInstance = registrationInstance.CloneWithoutIdentity();
+                hfRegistrationInstanceId.Value = newRegistrationInstance.Id.ToString();
+                hfRegistrationTemplateId.Value = newRegistrationInstance.RegistrationTemplateId.ToString();
+                newRegistrationInstance.Name = registrationInstance.Name + " - Copy";
+                newRegistrationInstance.IsActive = true;
+
+                if ( newRegistrationInstance.RegistrationTemplateId > 0 )
+                {
+                    newRegistrationInstance.RegistrationTemplate = new RegistrationTemplateService( rockContext ).Get( newRegistrationInstance.RegistrationTemplateId );
+                }
+
+                registrationInstance.LoadAttributes();
+                newRegistrationInstance.CopyAttributesFrom( registrationInstance );
+
+                ShowEditDetails( newRegistrationInstance, rockContext );
+            }
+        }
+
         #endregion Events
 
         #region Methods
@@ -647,36 +672,5 @@ namespace RockWeb.Blocks.Event
         }
 
         #endregion Methods
-
-        protected void btnCopy_Click( object sender, EventArgs e )
-        {
-            var rockContext = new RockContext();
-            var registrationInstance = new RegistrationInstanceService( rockContext ).Get( hfRegistrationInstanceId.Value.AsInteger() );
-            if ( registrationInstance != null )
-            {
-                // Clone the Registration Instance without the old Id.
-                var newRegistrationInstance = registrationInstance.CloneWithoutIdentity();
-                hfRegistrationInstanceId.Value = newRegistrationInstance.Id.ToString();
-                hfRegistrationTemplateId.Value = newRegistrationInstance.RegistrationTemplateId.ToString();
-                newRegistrationInstance.Name = registrationInstance.Name + " - Copy";
-                newRegistrationInstance.IsActive = true;
-
-                if ( newRegistrationInstance.RegistrationTemplateId > 0 )
-                {
-                    newRegistrationInstance.RegistrationTemplate = new RegistrationTemplateService( rockContext ).Get( newRegistrationInstance.RegistrationTemplateId );
-                }
-
-                //TODO: This might be unneeded.
-                if ( newRegistrationInstance.AccountId.HasValue )
-                {
-                    newRegistrationInstance.Account = new FinancialAccountService( rockContext ).Get( newRegistrationInstance.AccountId.Value );
-                }
-
-                registrationInstance.LoadAttributes();
-                newRegistrationInstance.CopyAttributesFrom( registrationInstance );
-
-                ShowEditDetails( newRegistrationInstance, rockContext );
-            }
-        }
     }
 }
