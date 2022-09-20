@@ -2200,7 +2200,7 @@ namespace RockWeb.Blocks.Examples
                         PersonAliasId = _peopleAliasDictionary[personGuid],
                         Comments = comment,
                         ConnectionStatus = noContact,
-                        ConnectionState = global::ConnectionState.Active,
+                        ConnectionState = ConnectionState.Active,
                         CreatedDateTime = date
                     };
 

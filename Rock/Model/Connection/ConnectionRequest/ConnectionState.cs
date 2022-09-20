@@ -20,7 +20,6 @@ namespace Rock.Model // Added the namespace as it was not present. Verify with D
     /// <summary>
     /// Type of connection state
     /// </summary>
-    [Enums.EnumDomain( "Connection" )]
     public enum ConnectionState
     {
         /// <summary>

@@ -15,11 +15,13 @@
 // </copyright>
 //
 
-using Rock.Model;
-
 namespace Rock.Migrations
 {
+    using System;
     using System.Collections.Generic;
+    using System.Data.Entity.Migrations;
+
+    using Rock.Model;
 
     /// <summary>
     ///

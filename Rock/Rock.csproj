@@ -853,6 +853,8 @@
     <Compile Include="Model\CodeGenerated\InteractiveExperienceScheduleService.CodeGenerated.cs" />
     <Compile Include="Model\CodeGenerated\InteractiveExperienceService.CodeGenerated.cs" />
     <Compile Include="Model\CodeGenerated\PersonalizationSegmentService.CodeGenerated.cs" />
+    <Compile Include="Model\Communication\Communication\CommunicationType.cs" />
+    <Compile Include="Model\Connection\ConnectionRequest\ConnectionState.cs" />
     <Compile Include="Model\Core\AttributeQualifier\AttributeQualifier.SaveHook.cs" />
     <Compile Include="Model\Core\AttributeReferencedEntity\AttributeReferencedEntity.cs" />
     <Compile Include="Model\Core\AttributeValueReferencedEntity\AttributeValueReferencedEntity.cs" />

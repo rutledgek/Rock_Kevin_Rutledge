@@ -49,8 +49,6 @@ namespace Rock.Model
         /// Registration attribute
         /// NOTE: Put obsolete Enums AFTER the one that replaces it so that enum.ConvertToString() returns the non-obsolete name
         /// </summary>
-        [Obsolete( "Use RegistrantAttribute instead", true )]
-        [RockObsolete( "1.9" )]
         RegistrationAttribute = RegistrantAttribute,
     }
 
