@@ -43,14 +43,6 @@ namespace Rock.Model
         /// <summary>
         /// Registrant attribute
         /// </summary>
-        RegistrantAttribute = 4,
-
-        /// <summary>
-        /// Registration attribute
-        /// NOTE: Put obsolete Enums AFTER the one that replaces it so that enum.ConvertToString() returns the non-obsolete name
-        /// </summary>
-        RegistrationAttribute = RegistrantAttribute,
+        RegistrantAttribute = 4
     }
-
-
 }
