@@ -43,6 +43,9 @@ export type WebFarmNodeBag = {
     /** Gets or sets the last seen date time. */
     lastSeenDateTime?: string | null;
 
+    /** Gets or sets the human readable last seen. */
+    humanReadableLastSeen?: string | null;
+
     /** Gets or sets a Node Name. */
     nodeName?: string | null;
 

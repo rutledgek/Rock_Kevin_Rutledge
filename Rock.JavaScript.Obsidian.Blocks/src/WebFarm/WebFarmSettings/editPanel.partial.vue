@@ -105,6 +105,11 @@
         updateRefValue(attributes, props.modelValue.attributes ?? {});
         updateRefValue(attributeValues, props.modelValue.attributeValues ?? {});
         updateRefValue(isActive, props.modelValue.isActive);
+        updateRefValue(webFarmKey, props.modelValue.webFarmKey ?? "");
+        updateRefValue(lowerPollingLimit, props.modelValue.lowerPollingLimit);
+        updateRefValue(upperPollingLimit, props.modelValue.upperPollingLimit);
+        updateRefValue(maxPollingWaitSeconds, props.modelValue.maxPollingWaitSeconds);
+        updateRefValue(minimumPollingDifference, props.modelValue.minimumPollingDifference);
     });
 
     // Determines which values we want to track changes on (defined in the
@@ -120,8 +125,6 @@
             maxPollingWaitSeconds: maxPollingWaitSeconds.value,
             minimumPollingDifference: minimumPollingDifference.value
         };
-
-        console.log(newValue);
         emit("update:modelValue", newValue);
     });
 

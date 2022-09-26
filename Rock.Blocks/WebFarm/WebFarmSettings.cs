@@ -245,6 +245,8 @@ namespace Rock.Blocks.WebFarm
                 } )
                 .ToList();
 
+            nodes.ForEach( n => n.HumanReadableLastSeen = WebFarmNodeService.GetHumanReadablePastTimeDifference( n.LastSeenDateTime ) );
+
             return nodes;
         }
 

@@ -102,8 +102,38 @@
             return valueBuilder.build();
         }
 
+        let nodes = "<div class='row'>";
+
         if (props.modelValue.nodes) {
-            valueBuilder.addTextValue("Nodes", "");
+
+            for (const node of props.modelValue.nodes) {
+                nodes += `
+<div class="col-sm-6 col-md-6 col-lg-4">
+    <div class="card card-node ${!node.isActive ? "bg-disabled" : ""}">
+        <div class="indicator ${node.isActive ? "bg-success" : ""}${node.isUnresponsive ? " bg-danger" : ""}"></div>
+        <div class="card-header">
+            <span class="server-meta" title='Polling Interval: ${node.currentLeadershipPollingIntervalSeconds}'>
+                <i class="fa fa-${node.isActive ? "server" : "exclamation-triangle"}"></i>
+                <span class="node-name text-truncate">
+                    ${node.nodeName}
+                </span>
+            </span>
+            ${node.isLeader ? "<span class='node-type-icon' title='Leader'><i class='fa fa-user-tie'></i></span>" : ""}
+            ${node.isCurrentJobRunner ? "<span class='node-type-icon' title='Job Runner'><i class='fa fa-cog'></i></span>" : ""}
+        </div>
+        <div class="card-body p-0" style="height:88px;">
+            <span id="spanLastSeen" runat="server" class="label label-danger rounded-pill position-absolute m-2" style="bottom:0;right:0;">
+                ${node.humanReadableLastSeen}
+            </span>
+            <!-- Chart goes here -->
+        </div>
+    </div>
+</div>
+`
+            }
+
+            nodes += "</div>"
+            valueBuilder.addHtmlValue("Nodes", nodes);
         }
 
         return valueBuilder.build();
