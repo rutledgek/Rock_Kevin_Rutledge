@@ -54,6 +54,10 @@ export function provideFormState(state: FormState): void {
     provide(formStateSymbol, state);
 }
 
+export function resetSubmitCount(state: FormState): void {
+    state.submitCount = 0;
+}
+
 /**
  * Makes use of the FormState that was previously provided by a parent component.
  *

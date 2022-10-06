@@ -17,6 +17,7 @@
 
 import { Guid } from "@Obsidian/Types";
 import { computed, defineComponent, PropType, ref, watch } from "vue";
+import { useFormState, resetSubmitCount } from "@Obsidian/Utility/form";
 import RockField from "@Obsidian/Controls/rockField";
 import Alert from "@Obsidian/Controls/alert.vue";
 import { ComparisonType } from "@Obsidian/Types/Reporting/comparisonType";
@@ -72,6 +73,11 @@ export default defineComponent({
     },
 
     setup(props) {
+        const formState = useFormState();
+        if (formState) {
+            resetSubmitCount(formState);
+        }
+
         const isVisible = computed(() => {
             switch (props.field.visibilityRuleType) {
                 case FilterExpressionType.GroupAll:
