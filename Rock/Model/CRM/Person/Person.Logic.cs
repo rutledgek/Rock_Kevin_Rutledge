@@ -565,16 +565,17 @@ namespace Rock.Model
                 }
             }
 
-            var today = RockDateTime.Today;
+            // For infants less than an year old
+            var asOfDate = this.DeceasedDate.HasValue ? this.DeceasedDate.Value : RockDateTime.Today;
             if ( BirthYear != null && BirthMonth != null )
             {
-                int months = today.Month - BirthMonth.Value;
-                if ( BirthYear < today.Year )
+                int months = asOfDate.Month - BirthMonth.Value;
+                if ( BirthYear < asOfDate.Year )
                 {
                     months = months + 12;
                 }
 
-                if ( BirthDay > today.Day )
+                if ( BirthDay > asOfDate.Day )
                 {
                     months--;
                 }
@@ -587,7 +588,7 @@ namespace Rock.Model
 
             if ( BirthYear != null && BirthMonth != null && BirthDay != null )
             {
-                int days = today.Day - BirthDay.Value;
+                int days = asOfDate.Day - BirthDay.Value;
                 if ( days < 0 )
                 {
                     // Add the number of days in the birth month
