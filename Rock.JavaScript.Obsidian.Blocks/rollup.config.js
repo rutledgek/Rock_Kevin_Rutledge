@@ -1,5 +1,6 @@
 import commonjs from "@rollup/plugin-commonjs";
 import resolve from "@rollup/plugin-node-resolve";
+import globImport from "rollup-plugin-glob-import";
 import * as process from "process";
 import * as path from "path";
 import * as glob from "glob";
@@ -54,7 +55,19 @@ function generateAutoBundles(srcPath, outPath) {
                 extensions: [".js", ".ts"]
             }),
 
-            commonjs()
+            commonjs(),
+
+            globImport({format: "default", rename: (name, id) => {
+                if (name == null && id.includes(".vue.js")) {
+                    console.log("BASENAME", path.basename(id));
+                    return path.basename(id, ".vue.js");
+                }
+                if (name == null) {
+                    return path.basename(id, ".js");
+                }
+
+                return name;
+            } })
         ]
     };
 }

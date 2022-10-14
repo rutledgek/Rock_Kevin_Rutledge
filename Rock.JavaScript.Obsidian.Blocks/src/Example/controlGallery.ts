@@ -181,6 +181,14 @@ import { RockCacheability } from "@Obsidian/ViewModels/Controls/rockCacheability
 import CacheabilityPicker from "@Obsidian/Controls/cacheabilityPicker.vue";
 import ButtonGroup from "@Obsidian/Controls/buttonGroup.vue";
 import IntervalPicker from "@Obsidian/Controls/intervalPicker.vue";
+import GeoPickerMap from "@Obsidian/Controls/geoPickerMap.vue";
+
+// @ts-ignore
+import * as modules from "./ControlGallery/**/*.js";
+
+console.log("GLOB MODULES", modules);
+
+
 
 // #region Gallery Support
 
