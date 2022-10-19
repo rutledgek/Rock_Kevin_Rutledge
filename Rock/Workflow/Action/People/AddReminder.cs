@@ -75,10 +75,10 @@ namespace Rock.Workflow.Action
     [WorkflowTextOrAttribute( "Reminder Date",
     "Attribute Value",
     Description = "The date to set the reminder for.  <span class='tip tip-lava'></span>",
-    IsRequired = false,
+    IsRequired = true,
     Order = 5,
     Key = AttributeKey.ReminderDate,
-    FieldTypeClassNames = new string[] { "Rock.Field.Types.DateFieldType", "Rock.Field.Types.TextFieldType" } )]
+    FieldTypeClassNames = new string[] { "Rock.Field.Types.DateFieldType", "Rock.Field.Types.DateTimeFieldType", "Rock.Field.Types.TextFieldType" } )]
 
     [WorkflowTextOrAttribute( "Repeat Every (days)",
     "Attribute Value",
