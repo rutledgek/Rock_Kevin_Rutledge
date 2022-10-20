@@ -85,8 +85,9 @@ namespace Rock.Blocks.WebFarm
         #endregion Keys
 
         public override string BlockFileUrl => $"{base.BlockFileUrl}.vue";
-        private static readonly DateTime _chartMaxDate = RockDateTime.Now;
+        private DateTime ChartMaxDate { get => RockDateTime.Now; }
 
+        private DateTime? _chartMinDate = null;
         private DateTime ChartMinDate
         {
             get
@@ -94,13 +95,12 @@ namespace Rock.Blocks.WebFarm
                 if ( !_chartMinDate.HasValue )
                 {
                     var hours = GetAttributeValue( AttributeKey.CpuChartHours ).AsInteger();
-                    _chartMinDate = _chartMaxDate.AddHours( 0 - hours );
+                    _chartMinDate = ChartMaxDate.AddHours( 0 - hours );
                 }
 
                 return _chartMinDate.Value;
             }
         }
-        private DateTime? _chartMinDate = null;
 
         #region Methods
 
@@ -175,17 +175,10 @@ namespace Rock.Blocks.WebFarm
         /// <returns>A <see cref="WebFarmSettingsBag"/> that represents the entity.</returns>
         private WebFarmSettingsBag GetCommonEntityBag()
         {
-            var maskedKey = SystemSettings.GetValue( Rock.SystemKey.SystemSetting.WEBFARM_KEY ).Masked();
-
-            if ( maskedKey.IsNullOrWhiteSpace() )
-            {
-                maskedKey = "None";
-            }
-
             return new WebFarmSettingsBag
             {
                 IsActive = RockWebFarm.IsEnabled(),
-                WebFarmKey = maskedKey,
+                WebFarmKey = SystemSettings.GetValue( Rock.SystemKey.SystemSetting.WEBFARM_KEY ),
                 LowerPollingLimit = RockWebFarm.GetLowerPollingLimitSeconds(),
                 UpperPollingLimit = RockWebFarm.GetUpperPollingLimitSeconds(),
                 MinimumPollingDifference = RockWebFarm.GetMinimumPollingDifferenceSeconds(),
@@ -202,7 +195,9 @@ namespace Rock.Blocks.WebFarm
         private WebFarmSettingsBag GetEntityBagForView( RockContext rockContext )
         {
             var bag = GetCommonEntityBag();
+
             bag.Nodes = GetNodes( rockContext );
+            bag.WebFarmKey = bag.WebFarmKey.Masked();
 
             return bag;
         }
@@ -235,7 +230,7 @@ namespace Rock.Blocks.WebFarm
                         .Where( wfnm =>
                             wfnm.MetricType == WebFarmNodeMetric.TypeOfMetric.CpuUsagePercent &&
                             wfnm.MetricValueDateTime >= ChartMinDate &&
-                            wfnm.MetricValueDateTime <= _chartMaxDate )
+                            wfnm.MetricValueDateTime <= ChartMaxDate )
                         .Select( wfnm => new WebFarmMetricBag
                         {
                             MetricValueDateTime = wfnm.MetricValueDateTime,

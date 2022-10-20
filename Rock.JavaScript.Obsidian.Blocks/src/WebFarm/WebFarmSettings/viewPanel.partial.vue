@@ -73,6 +73,8 @@
 
         if (props.modelValue.webFarmKey) {
             valueBuilder.addTextValue("Key", props.modelValue.webFarmKey)
+        } else {
+            valueBuilder.addTextValue("Key", "None");
         }
 
         if (props.modelValue.lowerPollingLimit) {
