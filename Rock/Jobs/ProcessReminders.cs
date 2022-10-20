@@ -58,7 +58,7 @@ namespace Rock.Jobs
         Order = 2 )]
 
     [DisallowConcurrentExecution]
-    public class ProcessReminders : IJob
+    public class ProcessReminders : RockJob
     {
         /// <summary>
         /// Keys to use for Attributes
@@ -80,18 +80,15 @@ namespace Rock.Jobs
         {
         }
 
-        /// <summary>
-        /// Executes the specified context.
-        /// </summary>
-        /// <param name="context">The context.</param>
-        public void Execute( IJobExecutionContext context )
+        /// <inheritdoc cref="RockJob.Execute()"/>
+        public override void Execute()
         {
             var currentDate = RockDateTime.Now;
             RockLogger.Log.Debug( RockLogDomains.Jobs, $"ProcessReminders job started at {currentDate}." );
 
-            var dataMap = context.JobDetail.JobDataMap;
-            var commandTimeout = dataMap.GetString( AttributeKey.CommandTimeout ).AsIntegerOrNull() ?? 300;
-            var notificationSystemCommunicationGuid = dataMap.GetString( AttributeKey.ReminderNotification ).AsGuidOrNull();
+            //var dataMap = context.JobDetail.JobDataMap;
+            var commandTimeout = GetAttributeValue( AttributeKey.CommandTimeout ).AsIntegerOrNull() ?? 300;
+            var notificationSystemCommunicationGuid = GetAttributeValue( AttributeKey.ReminderNotification ).AsGuidOrNull();
             SystemCommunication notificationSystemCommunication = null;
 
             using ( var rockContext = new RockContext() )
@@ -149,7 +146,9 @@ namespace Rock.Jobs
                 else
                 {
                     // Default to communication.
-                    var result = SendReminderCommunication( activeReminder, notificationSystemCommunication );
+                    var reminderEntity = new EntityTypeService( rockContext )
+                        .GetEntity( activeReminder.ReminderType.EntityTypeId, activeReminder.EntityId );
+                    var result = SendReminderCommunication( activeReminder, notificationSystemCommunication, reminderEntity );
                     notified = ( result.MessagesSent > 0 );
                 }
 
@@ -199,8 +198,9 @@ namespace Rock.Jobs
         /// </summary>
         /// <param name="reminder"></param>
         /// <param name="notificationSystemCommunication"></param>
+        /// <param name="reminderEntity"></param>
         /// <returns></returns>
-        private SendMessageResult SendReminderCommunication( Reminder reminder, SystemCommunication notificationSystemCommunication )
+        private SendMessageResult SendReminderCommunication( Reminder reminder, SystemCommunication notificationSystemCommunication, IEntity reminderEntity )
         {
             if ( notificationSystemCommunication == null )
             {
@@ -217,7 +217,7 @@ namespace Rock.Jobs
                 mergeFields.Add( "Reminder", reminder );
                 mergeFields.Add( "ReminderType", reminder.ReminderType );
                 mergeFields.Add( "Person", person );
-                mergeFields.Add( "EntityName", reminder.EntityId ); // BUG:  FIX THIS!
+                mergeFields.Add( "EntityName", reminderEntity.ToString() );
 
                 var mediumType = Model.Communication.DetermineMediumEntityTypeId(
                     ( int ) CommunicationType.Email,
