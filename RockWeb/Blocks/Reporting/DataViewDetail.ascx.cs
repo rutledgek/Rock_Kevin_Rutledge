@@ -1062,11 +1062,9 @@ $(document).ready(function() {
             try
             {
                 gPreview.CreatePreviewColumns( dataviewEntityTypeType );
-                var dbContext = dataView.GetDbContext();
                 var dataViewGetQueryArgs = new DataViewGetQueryArgs
                 {
                     SortProperty = gPreview.SortProperty,
-                    DbContext = dbContext,
                     DatabaseTimeoutSeconds = GetAttributeValue( AttributeKey.DatabaseTimeoutSeconds ).AsIntegerOrNull() ?? 180,
                     DataViewFilterOverrides = new DataViewFilterOverrides
                     {

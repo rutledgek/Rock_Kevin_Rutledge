@@ -112,13 +112,6 @@ namespace Rock.Model
             if ( dbContext == null )
             {
                 dbContext = this.GetDbContext();
-                //TO-DO the below logic won't be reached as the GetDbContext will not return a null anymore.
-                //if ( dbContext == null )
-                //{
-                //    // this could happen if the EntityTypeId id refers to an assembly/type that doesn't exist anymore
-                //    // we'll just default to new RockContext(), but it'll likely fail when we try to get a ServiceInstance below if the entityType doesn't exist in an assembly
-                //    dbContext = new RockContext();
-                //}
             }
 
             IService serviceInstance = this.GetServiceInstance( dbContext );
