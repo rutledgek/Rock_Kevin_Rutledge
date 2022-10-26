@@ -49,6 +49,7 @@ namespace RockWeb.Blocks.Core
         Version _installedVersion = new Version( "0.0.0" );
         private bool _isOkToProceed = false;
         private bool _hasSqlServer14OrHigher = false;
+        private bool _hasSqlServer16OrHigher = false;
         #endregion
 
         #region Properties
@@ -151,6 +152,13 @@ namespace RockWeb.Blocks.Core
                 if ( !_hasSqlServer14OrHigher )
                 {
                     nbSqlServerVersionIssue.Visible = true;
+                }
+
+                _hasSqlServer16OrHigher = VersionValidationHelper.CheckSqlServerVersion( 17 );
+
+                if ( !_hasSqlServer16OrHigher )
+                {
+                    nbSqlServer2016Issue.Visible = true;
                 }
 
                 _releases = GetOrderedReleaseList( rockUpdateService, _installedVersion );

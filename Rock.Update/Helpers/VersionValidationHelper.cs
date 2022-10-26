@@ -121,6 +121,7 @@ namespace Rock.Update.Helpers
             }
 
             var hasSqlServer2012OrGreater = CheckSqlServerVersionGreaterThenSqlServer2012();
+            var hasSqlServer2016OrGreater = CheckSqlServerVersion( 13 );
             if ( requiresNet472 )
             {
                 var result = CheckFrameworkVersion();
@@ -134,6 +135,11 @@ namespace Rock.Update.Helpers
             {
                 throw new VersionValidationException( $"Version {targetVersion} requires Microsoft Sql Server 2012 or greater." );
             }
+
+            if ( !hasSqlServer2016OrGreater )
+            {
+                throw new VersionValidationException( $"Version {targetVersion} requires Microsoft Sql Server 2016 or greater." );
+            }
         }
 
         /// <summary>
@@ -143,6 +149,38 @@ namespace Rock.Update.Helpers
         public static Version GetInstalledVersion()
         {
             return new Version( VersionInfo.VersionInfo.GetRockSemanticVersionNumber() );
+        }
+
+        /// <summary>
+        /// Checks the SQL server version and returns false if not at the needed
+        /// level to proceed.
+        /// </summary>
+        /// <param name="majorVersionNumber">The major version number required to pass the check.</param>
+        /// <returns></returns>
+        public static bool CheckSqlServerVersion( int majorVersionNumber )
+        {
+            var isOk = false;
+            var sqlVersion = string.Empty;
+
+            try
+            {
+                sqlVersion = DbService.ExecuteScaler( "SELECT SERVERPROPERTY('productversion')" ).ToString();
+                var versionParts = sqlVersion.Split( '.' );
+
+                int.TryParse( versionParts[0], out var majorVersion );
+
+                if ( majorVersion > majorVersionNumber )
+                {
+                    isOk = true;
+                }
+            }
+            catch
+            {
+                // This would be pretty bad, but regardless we'll just
+                // return the isOk (not) and let the caller proceed.
+            }
+
+            return isOk;
         }
     }
 }

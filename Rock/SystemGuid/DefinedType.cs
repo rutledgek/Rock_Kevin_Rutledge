@@ -464,6 +464,11 @@ namespace Rock.SystemGuid
         public const string PERSON_ETHNICITY = "79C8AA9A-507C-454B-AFC8-7A9464298A6E";
 
         /// <summary>
+        /// Lists checklist items to be completed by the administrator after installs and updates.
+        /// </summary>
+        public const string ADMINISTRATOR_CHECKLIST = "4BF34677-37E9-4E71-BD03-252B66C9373D";
+
+        /// <summary>
         /// The statement generator lava template (Legacy)
         /// </summary>
         [Obsolete("Use FinancialStatementTemplate instead")]
