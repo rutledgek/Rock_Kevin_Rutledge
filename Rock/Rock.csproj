@@ -959,6 +959,11 @@
       <DependentUpon>HotFixMigrationResource.resx</DependentUpon>
     </Compile>
     <Compile Include="RealTime\AspNet\AspNetEngineStartup.cs" />
+    <Compile Include="RealTime\EngineConnectionState.cs" />
+    <Compile Include="RealTime\IContextExtensions.cs" />
+    <Compile Include="RealTime\IContextInternal.cs" />
+    <Compile Include="RealTime\ITopicExtensions.cs" />
+    <Compile Include="RealTime\RealTimeException.cs" />
     <Compile Include="Reporting\DataFilter\Person\GivingAlertsFilter.cs" />
     <Compile Include="RealTime\Context.cs" />
     <Compile Include="RealTime\Engine.cs" />
@@ -1839,12 +1844,14 @@
     <Compile Include="Web\UI\Controls\PDFViewer.cs" />
     <Compile Include="Web\UI\Controls\Pickers\AccountTreeViewItem.cs" />
     <Compile Include="Web\UI\Controls\Pickers\CacheabilityPicker.cs" />
+    <Compile Include="Web\UI\Controls\Pickers\EthnicityPicker.cs" />
     <Compile Include="Web\UI\Controls\Pickers\FinancialStatementTemplatePicker.cs" />
     <Compile Include="Web\UI\Controls\Pickers\IntervalPicker.cs" />
     <Compile Include="Plugin\HotFixes\118_FixFailedPaymentCommunicationTemplate.cs" />
     <Compile Include="Web\UI\Controls\Pickers\MediaElementPicker.cs" />
     <Compile Include="Web\UI\Controls\GroupMemberRequirementCard.cs" />
     <Compile Include="Web\UI\Controls\GroupMemberRequirementsContainer.cs" />
+    <Compile Include="Web\UI\Controls\Pickers\RacePicker.cs" />
     <Compile Include="Web\UI\Controls\TagLiteral.cs" />
     <Compile Include="Web\UI\Controls\Pickers\CategorizedValuePicker.cs" />
     <Compile Include="Web\UI\Controls\TaskActivityProgressReporter.cs" />
