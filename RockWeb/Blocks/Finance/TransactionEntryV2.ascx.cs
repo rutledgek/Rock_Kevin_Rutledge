@@ -190,7 +190,7 @@ namespace RockWeb.Blocks.Finance
         Description = "The Lava template to use to provide the cover the fees prompt to the individual. <span class='tip tip-lava'></span>",
         EditorMode = CodeEditorMode.Lava,
         Key = AttributeKey.FeeCoverageMessage,
-        DefaultValue = @"Make my gift go further. Please increase my gift by {%if IsPercentage %} {{ Percentage }}% ({{ AmountHTML }}) {% else %} {{ AmountHTML }} {% endif %} to help cover the electronic transaction fees.",
+        DefaultValue = "Make my gift go further. Please increase my gift by {%if IsPercentage %} {{ Percentage }}% ({{ AmountHTML }}) {% else %} {{ AmountHTML }} {% endif %} to help cover the electronic transaction fees.",
         Order = 28 )]
 
     #region Scheduled Transactions
@@ -1245,7 +1245,6 @@ mission. We are so grateful for your commitment.</p>
             cbGetPaymentInfoCoverTheFeeACH.Checked = feeCoverageDefaultState;
             cbGetPaymentInfoCoverTheFeeCreditCard.Checked = feeCoverageDefaultState;
 
-
             var feeCoverageMessageTemplate = this.GetAttributeValue( AttributeKey.FeeCoverageMessage );
             var feeCoverageMergeFields = Rock.Lava.LavaHelper.GetCommonMergeFields( this.RockPage );
 
@@ -1695,9 +1694,7 @@ mission. We are so grateful for your commitment.</p>
 
             if ( pnlCreateLogin.Visible )
             {
-                string errorTitle = null;
-                string errorMessage = null;
-                if ( !UserLoginService.IsValidNewUserLogin( tbUserName.Text, tbPassword.Text, tbPasswordConfirm.Text, out errorTitle, out errorMessage ) )
+                if ( !UserLoginService.IsValidNewUserLogin( tbUserName.Text, tbPassword.Text, tbPasswordConfirm.Text, out string errorTitle, out string errorMessage ) )
                 {
                     nbSaveAccountError.Title = errorTitle;
                     nbSaveAccountError.Text = errorMessage;
@@ -2378,7 +2375,6 @@ mission. We are so grateful for your commitment.</p>
         private Person _createPersonOrBusiness( bool createBusiness, string firstName, string lastName, string email )
         {
             var rockContext = new RockContext();
-            var personService = new PersonService( rockContext );
             DefinedValueCache dvcConnectionStatus = DefinedValueCache.Get( GetAttributeValue( AttributeKey.PersonConnectionStatus ).AsGuid() );
             DefinedValueCache dvcRecordStatus = DefinedValueCache.Get( GetAttributeValue( AttributeKey.PersonRecordStatus ).AsGuid() );
 
@@ -3086,8 +3082,6 @@ mission. We are so grateful for your commitment.</p>
         /// <summary>
         /// Shows the transaction summary.
         /// </summary>
-        /// <param name="financialTransaction">The financial transaction.</param>
-        /// <param name="paymentInfo">The payment information.</param>
         protected void ShowTransactionSummary()
         {
             var rockContext = new RockContext();
@@ -3152,7 +3146,7 @@ mission. We are so grateful for your commitment.</p>
         /// <summary>
         /// Saves the transaction.
         /// </summary>
-        /// <param name="person">The person.</param>
+        /// <param name="personId">The person identifier.</param>
         /// <param name="paymentInfo">The payment information.</param>
         /// <param name="transaction">The transaction.</param>
         private void SaveTransaction( int personId, PaymentInfo paymentInfo, FinancialTransaction transaction )
