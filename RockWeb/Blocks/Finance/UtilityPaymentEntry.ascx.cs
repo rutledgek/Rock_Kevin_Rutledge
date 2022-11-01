@@ -40,9 +40,8 @@ using Rock.Web.UI.Controls;
 namespace RockWeb.Blocks.Finance
 {
     /// <summary>
-    /// Add a new one-time or scheduled transaction
     /// </summary>
-    [DisplayName( "Utility Payment Entry " )]
+    [DisplayName( "Utility Payment Entry" )]
     [Category( "Finance" )]
     [Description( "Creates a new financial transaction or scheduled transaction." )]
 
@@ -84,13 +83,52 @@ namespace RockWeb.Blocks.Finance
         DefaultValue = Rock.SystemGuid.DefinedValue.FINANCIAL_SOURCE_TYPE_WEBSITE,
         Order = 4 )]
 
+    [BooleanField(
+        "Ask for Campus if Known",
+        Key = AttributeKey.AskForCampusIfKnown,
+        Description = "If the campus for the person is already known, should the campus still be prompted for?",
+        DefaultBooleanValue = true,
+        Order = 5 )]
+
+    [BooleanField(
+        "Include Inactive Campuses",
+        Key = AttributeKey.IncludeInactiveCampuses,
+        Description = "Set this to true to include inactive campuses",
+        DefaultBooleanValue = false,
+        Order = 6 )]
+
+    [DefinedValueField(
+        "Campus Types",
+        Key = AttributeKey.IncludedCampusTypes,
+        DefinedTypeGuid = Rock.SystemGuid.DefinedType.CAMPUS_TYPE,
+        AllowMultiple = true,
+        IsRequired = false,
+        Description = "Set this to limit campuses by campus type.",
+        Order = 7 )]
+
+    [DefinedValueField(
+        "Campus Statuses",
+        Key = AttributeKey.IncludedCampusStatuses,
+        DefinedTypeGuid = Rock.SystemGuid.DefinedType.CAMPUS_STATUS,
+        AllowMultiple = true,
+        IsRequired = false,
+        Description = "Set this to limit campuses by campus status.",
+        Order = 8 )]
+
+    [BooleanField(
+        "Enable Multi-Account",
+        Key = AttributeKey.EnableMultiAccount,
+        Description = "Should the person be able specify amounts for more than one account?",
+        DefaultBooleanValue = true,
+        Order = 9 )]
+
     [BooleanField( "Impersonation",
         Key = AttributeKey.Impersonation,
         Description = "Should the current user be able to view and edit other people's transactions?  IMPORTANT: This should only be enabled on an internal page that is secured to trusted users.",
         TrueText = "Allow (only use on an internal page used by staff)",
         FalseText = "Don't Allow",
         DefaultBooleanValue = false,
-        Order = 5 )]
+        Order = 10 )]
 
     [CustomDropdownListField( "Layout Style",
         Key = AttributeKey.LayoutStyle,
@@ -98,7 +136,7 @@ namespace RockWeb.Blocks.Finance
         ListSource = "Vertical,Fluid",
         IsRequired = false,
         DefaultValue = "Vertical",
-        Order = 6 )]
+        Order = 11 )]
 
     [CodeEditorField( "Account Header Template",
         Key = AttributeKey.AccountHeaderTemplate,
@@ -108,22 +146,24 @@ namespace RockWeb.Blocks.Finance
         EditorHeight = 50,
         IsRequired = true,
         DefaultValue = "{{ Account.PublicName }}",
-        Order = 7 )]
+        Order = 12 )]
 
     [AccountsField( "Accounts",
-        Key = AttributeKey.Accounts,
-        Description = "The accounts to display.  By default all active accounts with a Public Name will be displayed.",
-        IsRequired = false,
-        DefaultValue = "",
-        Order = 8 )]
+        Key = AttributeKey.AccountsToDisplay,
+        Description = "The accounts to display. If Account Campus mapping logic is enabled and the account has a child account for the selected campus, the child account for that campus will be used.",
+        Order = 13 )]
 
-    [BooleanField( "Additional Accounts",
-        Key = AttributeKey.AdditionalAccounts,
-        Description = "Should users be allowed to select additional accounts?  If so, any active account with a Public Name value will be available.",
-        TrueText = "Display option for selecting additional accounts",
-        FalseText = "Don't display option",
-        DefaultBooleanValue = true,
-        Order = 9 )]
+    [BooleanField(
+        "Use Account Campus mapping logic.",
+        Description = @"If enabled, the accounts will be determined as follows:
+        <ul>
+          <li>If the selected account is not associated with a campus, the Selected Account will be the first matching active child account that is associated with the selected campus.</li>
+          <li>If the selected account is not associated with a campus, but there are no active child accounts for the selected campus, the parent account (the one the user sees) will be returned.</li>
+          <li>If the selected account is associated with a campus, that account will be returned regardless of campus selection (and it won't use the child account logic)</li>
+        <ul>",
+        Key = AttributeKey.UseAccountCampusMappingLogic,
+        DefaultBooleanValue = false,
+        Order = 14 )]
 
     [BooleanField( "Scheduled Transactions",
         Key = AttributeKey.AllowScheduled,
@@ -131,19 +171,19 @@ namespace RockWeb.Blocks.Finance
         TrueText = "Allow",
         FalseText = "Don't Allow",
         DefaultBooleanValue = true,
-        Order = 10 )]
+        Order = 15 )]
 
     [BooleanField( "Prompt for Phone",
         Key = AttributeKey.DisplayPhone,
         Description = "Should the user be prompted for their phone number?",
         DefaultBooleanValue = false,
-        Order = 11 )]
+        Order = 16 )]
 
     [BooleanField( "Prompt for Email",
         Key = AttributeKey.DisplayEmail,
         Description = "Should the user be prompted for their email address?",
         DefaultBooleanValue = true,
-        Order = 12 )]
+        Order = 17 )]
 
     [GroupLocationTypeField( "Address Type",
         Key = AttributeKey.AddressType,
@@ -151,7 +191,7 @@ namespace RockWeb.Blocks.Finance
         GroupTypeGuid = Rock.SystemGuid.GroupType.GROUPTYPE_FAMILY,
         IsRequired = false,
         DefaultValue = Rock.SystemGuid.DefinedValue.GROUP_LOCATION_TYPE_HOME,
-        Order = 13 )]
+        Order = 18 )]
 
     [DefinedValueField( "Connection Status",
         Key = AttributeKey.ConnectionStatus,
@@ -160,7 +200,7 @@ namespace RockWeb.Blocks.Finance
         IsRequired = true,
         AllowMultiple = false,
         DefaultValue = Rock.SystemGuid.DefinedValue.PERSON_CONNECTION_STATUS_PROSPECT,
-        Order = 14 )]
+        Order = 19 )]
 
     [DefinedValueField( "Record Status",
         Key = AttributeKey.RecordStatus,
@@ -169,32 +209,32 @@ namespace RockWeb.Blocks.Finance
         IsRequired = true,
         AllowMultiple = false,
         DefaultValue = Rock.SystemGuid.DefinedValue.PERSON_RECORD_STATUS_PENDING,
-        Order = 15 )]
+        Order = 20 )]
 
     [BooleanField( "Enable Comment Entry",
         Key = AttributeKey.EnableCommentEntry,
         Description = "Allows the guest to enter the value that's put into the comment field (will be appended to the 'Payment Comment Template' setting)",
         DefaultBooleanValue = false,
-        Order = 16 )]
+        Order = 21 )]
 
     [TextField( "Comment Entry Label",
         Key = AttributeKey.CommentEntryLabel,
         Description = "The label to use on the comment edit field (e.g. Trip Name to give to a specific trip).",
         IsRequired = false,
         DefaultValue = "Comment",
-        Order = 17 )]
+        Order = 22 )]
 
     [BooleanField( "Enable Business Giving",
         Key = AttributeKey.EnableBusinessGiving,
         Description = "Should the option to give as a business be displayed?",
         DefaultBooleanValue = true,
-        Order = 18 )]
+        Order = 23 )]
 
     [BooleanField( "Enable Anonymous Giving",
         Key = AttributeKey.EnableAnonymousGiving,
         Description = "Should the option to give anonymously be displayed. Giving anonymously will display the transaction as 'Anonymous' in places where it is shown publicly, for example, on a list of fundraising contributors.",
         DefaultBooleanValue = false,
-        Order = 19 )]
+        Order = 24 )]
 
     #endregion Default Category
 
@@ -234,14 +274,6 @@ namespace RockWeb.Blocks.Finance
         DefaultValue = "Contribution Information",
         Category = CategoryKey.TextOptions,
         Order = 2 )]
-
-    [TextField( "Add Account Text",
-        Key = AttributeKey.AddAccountText,
-        Description = "The button text to display for adding an additional account",
-        IsRequired = false,
-        DefaultValue = "Add Another Account",
-        Category = CategoryKey.TextOptions,
-        Order = 3 )]
 
     [TextField( "Personal Info Title",
         Key = AttributeKey.PersonalInfoTitle,
@@ -289,22 +321,12 @@ namespace RockWeb.Blocks.Finance
         Category = CategoryKey.TextOptions,
         Order = 8 )]
 
-    [TextField( "Success Title",
-        Key = AttributeKey.SuccessTitle,
-        Description = "The text to display as heading of section for displaying details of gift.",
-        IsRequired = false,
-        DefaultValue = "Gift Information",
-        Category = CategoryKey.TextOptions,
-        Order = 9 )]
-
-    [CodeEditorField( "Success Header",
-        Key = AttributeKey.SuccessHeader,
-        Description = "The text (HTML) to display at the top of the success section. <span class='tip tip-lava'></span> <span class='tip tip-html'></span>",
-        EditorMode = CodeEditorMode.Html,
-        EditorTheme = CodeEditorTheme.Rock,
-        EditorHeight = 200,
-        IsRequired = true,
-        DefaultValue = AttributeString.SuccessHeader,
+    [CodeEditorField(
+        "Finish Lava Template",
+        Key = AttributeKey.FinishLavaTemplate,
+        EditorMode = CodeEditorMode.Lava,
+        Description = "The text (HTML) to display on the success page. <span class='tip tip-lava'></span>",
+        DefaultValue = DefaultFinishLavaTemplate,
         Category = CategoryKey.TextOptions,
         Order = 10 )]
 
@@ -349,8 +371,9 @@ namespace RockWeb.Blocks.Finance
 
     #region Advanced
 
-    [BooleanField( "Allow Account Options In URL",
-        Key = AttributeKey.AllowAccountsInURL,
+    [BooleanField(
+        "Allow Account Options In URL",
+        Key = AttributeKey.AllowAccountOptionsInURL,
         Description = "Set to true to allow account options to be set via URL. To simply set allowed accounts, the allowed accounts can be specified as a comma-delimited list of AccountIds or AccountGlCodes. Example: ?AccountIds=1,2,3 or ?AccountGlCodes=40100,40110. The default amount for each account and whether it is editable can also be specified. Example:?AccountIds=1^50.00^false,2^25.50^false,3^35.00^true or ?AccountGlCodes=40100^50.00^false,40110^42.25^true",
         DefaultBooleanValue = false,
         Category = CategoryKey.Advanced,
@@ -438,11 +461,68 @@ namespace RockWeb.Blocks.Finance
 
     #endregion Advanced
 
+   
+
     #endregion Block Attributes
 
     [Rock.SystemGuid.BlockTypeGuid( "4CCC45A5-4AB9-4A36-BF8D-A6E316790004" )]
     public partial class UtilityPaymentEntry : Rock.Web.UI.RockBlock
     {
+        private const string DefaultFinishLavaTemplate = @"
+{% if Transaction.ScheduledTransactionDetails %}
+    {% assign transactionDetails = Transaction.ScheduledTransactionDetails %}
+{% else %}
+    {% assign transactionDetails = Transaction.TransactionDetails %}
+{% endif %}
+
+<h1>Thank You!</h1>
+
+<p>Your support is helping {{ 'Global' | Attribute:'OrganizationName' }} actively achieve our
+mission. We are so grateful for your commitment.</p>
+
+<dl>
+    <dt>Confirmation Code</dt>
+    <dd>{{ Transaction.TransactionCode }}</dd>
+    <dd></dd>
+
+    <dt>Name</dt>
+    <dd>{{ Person.FullName }}</dd>
+    <dd></dd>
+    <dd>{{ Person.Email }}</dd>
+    <dd>{{ BillingLocation.Street }} {{ BillingLocation.City }}, {{ BillingLocation.State }} {{ BillingLocation.PostalCode }}</dd>
+</dl>
+
+<dl class='dl-horizontal'>
+    {% for transactionDetail in transactionDetails %}
+        <dt>{{ transactionDetail.Account.PublicName }}</dt>
+        <dd>{{ transactionDetail.Amount | Minus: transactionDetail.FeeCoverageAmount | FormatAsCurrency }}</dd>
+    {% endfor %}
+    {% if Transaction.TotalFeeCoverageAmount %}
+        <dt>Fee Coverage</dt>
+        <dd>{{ Transaction.TotalFeeCoverageAmount | FormatAsCurrency }}</dd>
+    {% endif %}
+    <dd></dd>
+
+    <dt>Payment Method</dt>
+    <dd>{{ PaymentDetail.CurrencyTypeValue.Description}}</dd>
+
+    {% if PaymentDetail.AccountNumberMasked  != '' %}
+        <dt>Account Number</dt>
+        <dd>{{ PaymentDetail.AccountNumberMasked }}</dd>
+    {% endif %}
+
+    <dt>When<dt>
+    <dd>
+
+    {% if Transaction.TransactionFrequencyValue %}
+        {{ Transaction.TransactionFrequencyValue.Value }} starting on {{ Transaction.NextPaymentDate | Date:'sd' }}
+    {% else %}
+        Today
+    {% endif %}
+    </dd>
+</dl>
+";
+
         #region Block Keys
 
         private static class CategoryKey
@@ -463,8 +543,6 @@ namespace RockWeb.Blocks.Finance
             public const string Impersonation = "Impersonation";
             public const string LayoutStyle = "LayoutStyle";
             public const string AccountHeaderTemplate = "AccountHeaderTemplate";
-            public const string Accounts = "Accounts";
-            public const string AdditionalAccounts = "AdditionalAccounts";
             public const string AllowScheduled = "AllowScheduled";
             public const string DisplayPhone = "DisplayPhone";
             public const string DisplayEmail = "DisplayEmail";
@@ -483,24 +561,20 @@ namespace RockWeb.Blocks.Finance
             // Text Options Category
             public const string PanelTitle = "PanelTitle";
             public const string ContributionInfoTitle = "ContributionInfoTitle";
-            public const string AddAccountText = "AddAccountText";
             public const string PersonalInfoTitle = "PersonalInfoTitle";
             public const string PaymentInfoTitle = "PaymentInfoTitle";
             public const string ConfirmationTitle = "ConfirmationTitle";
-            public const string SuccessTitle = "SuccessTitle";
             public const string SaveAccountTitle = "SaveAccountTitle";
             public const string ConfirmationHeader = "ConfirmationHeader";
             public const string ConfirmationFooter = "ConfirmationFooter";
-            public const string SuccessHeader = "SuccessHeader";
+            public const string FinishLavaTemplate = "FinishLavaTemplate";
             public const string SuccessFooter = "SuccessFooter";
-
-            // Keep this as "PaymentComment" for backwords compatibility 
-            public const string PaymentCommentTemplate = "PaymentComment";
-
+            public const string PaymentCommentTemplate = "PaymentCommentTemplate";
             public const string AnonymousGivingTooltip = "AnonymousGivingTooltip";
 
             // Advanced Category
-            public const string AllowAccountsInURL = "AllowAccountsInURL";
+            public const string AllowAccountOptionsInURL = "AllowAccountOptionsInURL";
+            public const string InvalidAccountInURLMessage = "InvalidAccountInURLMessage";
             public const string OnlyPublicAccountsInURL = "OnlyPublicAccountsInURL";
             public const string InvalidAccountMessage = "InvalidAccountMessage";
             public const string AccountCampusContext = "AccountCampusContext";
@@ -510,6 +584,13 @@ namespace RockWeb.Blocks.Finance
             public const string EntityIdParam = "EntityIdParam";
             public const string TransactionHeader = "TransactionHeader";
             public const string EnableInitialBackbutton = "EnableInitialBackbutton";
+            public const string AccountsToDisplay = "AccountsToDisplay";
+            public const string UseAccountCampusMappingLogic = "UseAccountCampusMappingLogic";
+            public const string AskForCampusIfKnown = "AskForCampusIfKnown";
+            public const string IncludeInactiveCampuses = "IncludeInactiveCampuses";
+            public const string IncludedCampusTypes = "IncludedCampusTypes";
+            public const string IncludedCampusStatuses = "IncludedCampusStatuses";
+            public const string EnableMultiAccount = "EnableMultiAccount";
         }
 
         private static class AttributeString
@@ -540,8 +621,8 @@ namespace RockWeb.Blocks.Finance
 
         private static class PageParameterKey
         {
-            public const string AccountGlCodes = "AccountGlCodes";
-            public const string AccountIds = "AccountIds";
+            public const string AccountIdsOptions = "AccountIds";
+            public const string AccountGlCodesOptions = "AccountGlCodes";
             public const string AmountLimit = "AmountLimit";
             public const string AttributePrefix = "Attribute_";
             public const string Frequency = "Frequency";
@@ -555,8 +636,6 @@ namespace RockWeb.Blocks.Finance
         private static class ViewStateKey
         {
             public const string GroupLocationId = "GroupLocationId";
-            public const string SelectedAccountsJSON = "SelectedAccountsJSON";
-            public const string AvailableAccountsJSON = "AvailableAccountsJSON";
             public const string TransactionCode = "TransactionCode";
             public const string CreditCardTypeValueId = "CreditCardTypeValueId";
             public const string ScheduleId = "ScheduleId";
@@ -577,12 +656,6 @@ namespace RockWeb.Blocks.Finance
                 return GetAttributeValue( AttributeKey.LayoutStyle ) == "Fluid";
             }
         }
-
-        private List<ParameterAccount> _parameterAccounts = new List<ParameterAccount>();
-        private bool _allowAccountsInUrl = false;
-        private bool _onlyPublicAccountsInUrl = true;
-        private int _accountCampusContextFilter = -1;
-        private int _currentCampusContextId = -1;
 
         /// <summary>
         /// The scheduled transaction to be transferred.  This will get set if the
@@ -605,40 +678,6 @@ namespace RockWeb.Blocks.Finance
             get { return ViewState[ViewStateKey.GroupLocationId] as int?; }
             set { ViewState[ViewStateKey.GroupLocationId] = value; }
         }
-
-        /// <summary>
-        /// Saves any user control view-state changes that have occurred since the last page postback.
-        /// </summary>
-        /// <returns>
-        /// Returns the user control's current view state. If there is no view state associated with the control, it returns <see langword="null" />.
-        /// </returns>
-        protected override object SaveViewState()
-        {
-            ViewState[ViewStateKey.SelectedAccountsJSON] = SelectedAccounts.ToJson();
-            ViewState[ViewStateKey.AvailableAccountsJSON] = AvailableAccounts.ToJson();
-            return base.SaveViewState();
-        }
-
-        /// <summary>
-        /// Restores the view-state information from a previous user control request that was saved by the <see cref="M:System.Web.UI.UserControl.SaveViewState" /> method.
-        /// </summary>
-        /// <param name="savedState">An <see cref="T:System.Object" /> that represents the user control state to be restored.</param>
-        protected override void LoadViewState( object savedState )
-        {
-            base.LoadViewState( savedState );
-            AvailableAccounts = ( ViewState[ViewStateKey.AvailableAccountsJSON] as string ).FromJsonOrNull<List<AccountItem>>() ?? new List<AccountItem>();
-            SelectedAccounts = ( ViewState[ViewStateKey.SelectedAccountsJSON] as string ).FromJsonOrNull<List<AccountItem>>() ?? new List<AccountItem>();
-        }
-
-        /// <summary>
-        /// Gets or sets the accounts that are available for user to add to the list.
-        /// </summary>
-        protected List<AccountItem> AvailableAccounts { get; set; }
-
-        /// <summary>
-        /// Gets or sets the accounts that are currently displayed to the user
-        /// </summary>
-        protected List<AccountItem> SelectedAccounts { get; set; }
 
         /// <summary>
         /// Gets or sets the payment transaction code.
@@ -769,9 +808,6 @@ namespace RockWeb.Blocks.Finance
 
             this.BlockUpdated += TransactionEntry_BlockUpdated;
 
-            _allowAccountsInUrl = GetAttributeValue( AttributeKey.AllowAccountsInURL ).AsBoolean( false );
-            _onlyPublicAccountsInUrl = GetAttributeValue( AttributeKey.OnlyPublicAccountsInURL ).AsBoolean( true );
-
             // Add handler for page navigation
             RockPage page = Page as RockPage;
             if ( page != null )
@@ -784,28 +820,6 @@ namespace RockWeb.Blocks.Finance
                 SetTargetPerson( rockContext );
                 SetGatewayOptions();
                 BindSavedAccounts();
-            }
-
-            // Determine account campus context mode
-            _accountCampusContextFilter = GetAttributeValue( AttributeKey.AccountCampusContext ).AsType<int>();
-            if ( _accountCampusContextFilter > -1 )
-            {
-                var campusEntity = RockPage.GetCurrentContext( EntityTypeCache.Get( typeof( Campus ) ) );
-                if ( campusEntity != null )
-                {
-                    _currentCampusContextId = campusEntity.Id;
-                }
-            }
-
-            // Determine account campus context mode
-            _accountCampusContextFilter = GetAttributeValue( AttributeKey.AccountCampusContext ).AsType<int>();
-            if ( _accountCampusContextFilter > -1 )
-            {
-                var campusEntity = RockPage.GetCurrentContext( EntityTypeCache.Get( typeof( Campus ) ) );
-                if ( campusEntity != null )
-                {
-                    _currentCampusContextId = campusEntity.Id;
-                }
             }
 
             RegisterScript();
@@ -885,95 +899,6 @@ namespace RockWeb.Blocks.Finance
             pnlDupWarning.Visible = false;
             nbSaveAccount.Visible = false;
 
-            if ( _allowAccountsInUrl )
-            {
-                string accountParameterType = string.Empty;
-                using ( var rockContext = new RockContext() )
-                {
-                    if ( !string.IsNullOrWhiteSpace( PageParameter( PageParameterKey.AccountIds ) ) )
-                    {
-                        var accountIds = Server.UrlDecode( PageParameter( PageParameterKey.AccountIds ) );
-                        var financialAccountService = new FinancialAccountService( rockContext );
-
-                        accountParameterType = "invalid";
-
-                        foreach ( string account in accountIds.Split( ',' ) )
-                        {
-                            var parameterAccount = new ParameterAccount();
-                            var accountValues = account.Split( '^' );
-                            var accountId = accountValues[0].AsInteger();
-
-                            parameterAccount.Account = financialAccountService.Queryable()
-                                .Where( a =>
-                                    a.Id == accountId &&
-                                    a.IsActive &&
-                                    ( _onlyPublicAccountsInUrl ? ( a.IsPublic ?? false ) : true ) &&
-                                    ( a.StartDate == null || a.StartDate <= RockDateTime.Today ) &&
-                                    ( a.EndDate == null || a.EndDate >= RockDateTime.Today ) )
-                                    .FirstOrDefault();
-
-                            if ( parameterAccount.Account != null )
-                            {
-                                parameterAccount.Amount = accountValues.Length >= 2 ? accountValues[1].AsDecimal() : 0;
-                                parameterAccount.Enabled = accountValues.Length >= 3 ? accountValues[2].AsBoolean( true ) : true;
-
-                                _parameterAccounts.Add( parameterAccount );
-                            }
-                        }
-
-                        if ( _parameterAccounts.Count > 0 )
-                        {
-                            accountParameterType = "valid";
-                        }
-                    }
-
-                    if ( !string.IsNullOrWhiteSpace( PageParameter( PageParameterKey.AccountGlCodes ) ) )
-                    {
-                        var accountCodes = Server.UrlDecode( PageParameter( PageParameterKey.AccountGlCodes ) );
-                        var financialAccountService = new FinancialAccountService( rockContext );
-
-                        Dictionary<string, decimal> glAccountParameter = new Dictionary<string, decimal>();
-                        accountParameterType = "invalid";
-
-                        foreach ( string account in accountCodes.Split( ',' ) )
-                        {
-                            var parameterAccount = new ParameterAccount();
-                            var accountValues = account.Split( '^' );
-                            var accountGlCode = accountValues[0];
-
-                            parameterAccount.Account = financialAccountService.Queryable()
-                                .Where( a =>
-                                    a.GlCode == accountGlCode &&
-                                    a.IsActive &&
-                                    ( _onlyPublicAccountsInUrl ? ( a.IsPublic ?? false ) : true ) &&
-                                    ( a.StartDate == null || a.StartDate <= RockDateTime.Today ) &&
-                                    ( a.EndDate == null || a.EndDate >= RockDateTime.Today ) )
-                                    .FirstOrDefault();
-
-                            if ( parameterAccount.Account != null )
-                            {
-                                parameterAccount.Amount = accountValues.Length >= 2 ? accountValues[1].AsDecimal() : 0;
-                                parameterAccount.Enabled = accountValues.Length >= 3 ? accountValues[2].AsBoolean( true ) : true;
-
-                                _parameterAccounts.Add( parameterAccount );
-                            }
-                        }
-
-                        if ( _parameterAccounts.Count > 0 )
-                        {
-                            accountParameterType = "valid";
-                        }
-                    }
-                }
-
-                if ( accountParameterType == "invalid" )
-                {
-                    SetPage( 0 );
-                    ShowMessage( NotificationBoxType.Danger, "Invalid Account Provided", GetAttributeValue( AttributeKey.InvalidAccountMessage ) );
-                    return;
-                }
-            }
-
             if ( !LoadGatewayOptions() )
             {
                 return;
@@ -1018,28 +943,8 @@ namespace RockWeb.Blocks.Finance
                     pnlSelection.Visible = false;
                 }
 
-                // Get the list of accounts that can be used
-                GetAccounts();
-                BindAccounts();
+                ConfigureCampusAccountAmountPicker();
             }
-            else
-            {
-                // Save amounts from controls to the viewstate list
-                foreach ( RepeaterItem item in rptAccountList.Items )
-                {
-                    var accountAmount = item.FindControl( "txtAccountAmount" ) as CurrencyBox;
-                    if ( accountAmount != null )
-                    {
-                        if ( SelectedAccounts.Count > item.ItemIndex )
-                        {
-                            SelectedAccounts[item.ItemIndex].Amount = accountAmount.Value ?? 0.0M;
-                        }
-                    }
-                }
-            }
-
-            // Update the total amount
-            lblTotalAmount.Text = SelectedAccounts.Sum( f => f.Amount ).FormatAsCurrency();
 
             // Set the frequency date label based on if 'One Time' is selected or not
             if ( btnFrequency.Items.Count > 0 )
@@ -1055,6 +960,163 @@ namespace RockWeb.Blocks.Finance
             divSaveAccount.Style[HtmlTextWriterStyle.Display] = cbSaveAccount.Checked ? "block" : "none";
 
             ResolveHeaderFooterTemplates();
+        }
+
+        /// <summary>
+        /// Configures the campus account amount picker.
+        /// </summary>
+        private void ConfigureCampusAccountAmountPicker()
+        {
+            var allowAccountsInUrl = this.GetAttributeValue( AttributeKey.AllowAccountOptionsInURL ).AsBoolean();
+            var rockContext = new RockContext();
+            List<int> selectableAccountIds = new FinancialAccountService( rockContext ).GetByGuids( this.GetAttributeValues( AttributeKey.AccountsToDisplay ).AsGuidList() ).Select( a => a.Id ).ToList();
+            CampusAccountAmountPicker.AccountIdAmount[] accountAmounts = null;
+
+            bool enableMultiAccount = this.GetAttributeValue( AttributeKey.EnableMultiAccount ).AsBoolean();
+            if ( enableMultiAccount )
+            {
+                caapPromptForAccountAmounts.AmountEntryMode = CampusAccountAmountPicker.AccountAmountEntryMode.MultipleAccounts;
+            }
+            else
+            {
+                caapPromptForAccountAmounts.AmountEntryMode = CampusAccountAmountPicker.AccountAmountEntryMode.SingleAccount;
+            }
+
+            caapPromptForAccountAmounts.UseAccountCampusMappingLogic = this.GetAttributeValue( AttributeKey.UseAccountCampusMappingLogic ).AsBooleanOrNull() ?? false;
+            caapPromptForAccountAmounts.AskForCampusIfKnown = this.GetAttributeValue( AttributeKey.AskForCampusIfKnown ).AsBoolean();
+            caapPromptForAccountAmounts.IncludeInactiveCampuses = this.GetAttributeValue( AttributeKey.IncludeInactiveCampuses ).AsBoolean();
+            var includedCampusStatusIds = this.GetAttributeValues( AttributeKey.IncludedCampusStatuses )
+                .ToList()
+                .AsGuidList()
+                .Select( a => DefinedValueCache.Get( a ) )
+                .Where( a => a != null )
+                .Select( a => a.Id ).ToArray();
+
+            caapPromptForAccountAmounts.IncludedCampusStatusIds = includedCampusStatusIds;
+
+            var includedCampusTypeIds = this.GetAttributeValues( AttributeKey.IncludedCampusTypes )
+                .ToList()
+                .AsGuidList()
+                .Select( a => DefinedValueCache.Get( a ) )
+                .Where( a => a != null )
+                .Select( a => a.Id ).ToArray();
+
+            caapPromptForAccountAmounts.IncludedCampusTypeIds = includedCampusTypeIds;
+
+            if ( allowAccountsInUrl )
+            {
+                List<ParameterAccountOption> parameterAccountOptions = ParseAccountUrlOptions();
+                if ( parameterAccountOptions.Any() )
+                {
+                    selectableAccountIds = parameterAccountOptions.Select( a => a.AccountId ).ToList();
+                    string invalidAccountInURLMessage = this.GetAttributeValue( AttributeKey.InvalidAccountInURLMessage );
+                    if ( invalidAccountInURLMessage.IsNotNullOrWhiteSpace() )
+                    {
+                        var validAccountUrlIdsQuery = new FinancialAccountService( rockContext ).GetByIds( selectableAccountIds )
+                            .Where( a =>
+                                 a.IsActive &&
+                                 ( a.StartDate == null || a.StartDate <= RockDateTime.Today ) &&
+                                 ( a.EndDate == null || a.EndDate >= RockDateTime.Today ) );
+
+                        if ( this.GetAttributeValue( AttributeKey.OnlyPublicAccountsInURL ).AsBooleanOrNull() ?? true )
+                        {
+                            validAccountUrlIdsQuery = validAccountUrlIdsQuery.Where( a => a.IsPublic == true );
+                        }
+
+                        var validAccountIds = validAccountUrlIdsQuery.Select( a => a.Id ).ToList();
+
+                        if ( selectableAccountIds.Where( a => !validAccountIds.Contains( a ) ).Any() )
+                        {
+                            nbConfigurationNotification.Text = invalidAccountInURLMessage;
+                            nbConfigurationNotification.NotificationBoxType = NotificationBoxType.Validation;
+                            nbConfigurationNotification.Visible = true;
+                        }
+                    }
+
+                    var parameterAccountAmounts = parameterAccountOptions.Select( a => new CampusAccountAmountPicker.AccountIdAmount( a.AccountId, a.Amount ) { ReadOnly = !a.Enabled } );
+                    accountAmounts = parameterAccountAmounts.ToArray();
+                }
+            }
+
+            caapPromptForAccountAmounts.SelectableAccountIds = selectableAccountIds.ToArray();
+
+            if ( accountAmounts != null )
+            {
+                caapPromptForAccountAmounts.AccountAmounts = accountAmounts;
+            }
+        }
+
+        /// <summary>
+        /// Parses the account URL options.
+        /// </summary>
+        /// <returns></returns>
+        private List<ParameterAccountOption> ParseAccountUrlOptions()
+        {
+            List<ParameterAccountOption> result = new List<ParameterAccountOption>();
+            result.AddRange( ParseAccountUrlOptionsParameter( this.PageParameter( PageParameterKey.AccountIdsOptions ), false ) );
+            result.AddRange( ParseAccountUrlOptionsParameter( this.PageParameter( PageParameterKey.AccountGlCodesOptions ), true ) );
+            return result;
+        }
+
+        /// <summary>
+        /// Parses the account URL options parameter.
+        /// </summary>
+        /// <param name="accountOptionsParameterValue">The account options parameter value.</param>
+        /// <param name="parseAsAccountGLCode">if set to <c>true</c> [parse as account gl code].</param>
+        /// <returns></returns>
+        private List<ParameterAccountOption> ParseAccountUrlOptionsParameter( string accountOptionsParameterValue, bool parseAsAccountGLCode )
+        {
+            List<ParameterAccountOption> result = new List<ParameterAccountOption>();
+            if ( accountOptionsParameterValue.IsNullOrWhiteSpace() )
+            {
+                return result;
+            }
+
+            var onlyPublicAccountsInURL = this.GetAttributeValue( AttributeKey.OnlyPublicAccountsInURL ).AsBoolean();
+
+            var accountOptions = Server.UrlDecode( accountOptionsParameterValue ).Split( ',' );
+
+            foreach ( var accountOption in accountOptions )
+            {
+                ParameterAccountOption parameterAccountOption = new ParameterAccountOption();
+                var accountOptionParts = accountOption.Split( '^' ).ToList();
+                if ( accountOptionParts.Count > 0 )
+                {
+                    while ( accountOptionParts.Count < 3 )
+                    {
+                        accountOptionParts.Add( null );
+                    }
+
+                    if ( parseAsAccountGLCode )
+                    {
+                        var accountGLCode = accountOptionParts[0];
+                        if ( accountGLCode.IsNotNullOrWhiteSpace() )
+                        {
+                            using ( var rockContext = new RockContext() )
+                            {
+                                parameterAccountOption.AccountId = new FinancialAccountService( rockContext )
+                                    .Queryable()
+                                    .Where( a => a.GlCode == accountGLCode &&
+                                    a.IsActive &&
+                                    ( onlyPublicAccountsInURL ? ( a.IsPublic ?? false ) : true ) &&
+                                    ( a.StartDate == null || a.StartDate <= RockDateTime.Today ) &&
+                                    ( a.EndDate == null || a.EndDate >= RockDateTime.Today ) )
+                                    .Select( a => a.Id ).FirstOrDefault();
+                            }
+                        }
+                    }
+                    else
+                    {
+                        parameterAccountOption.AccountId = accountOptionParts[0].AsInteger();
+                    }
+
+                    parameterAccountOption.Amount = accountOptionParts[1].AsDecimalOrNull();
+                    parameterAccountOption.Enabled = accountOptionParts[2].AsBooleanOrNull() ?? true;
+                    result.Add( parameterAccountOption );
+                }
+            }
+
+            return result;
         }
 
         #endregion
@@ -1207,20 +1269,6 @@ namespace RockWeb.Blocks.Finance
             {
                 SetPage( pageId );
             }
-        }
-
-        /// <summary>
-        /// Handles the SelectionChanged event of the btnAddAccount control.
-        /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        protected void btnAddAccount_SelectionChanged( object sender, EventArgs e )
-        {
-            var selected = AvailableAccounts.Where( a => a.Id == ( btnAddAccount.SelectedValueAsId() ?? 0 ) ).ToList();
-            AvailableAccounts = AvailableAccounts.Except( selected ).ToList();
-            SelectedAccounts.AddRange( selected );
-
-            BindAccounts();
         }
 
         protected void btnFrequency_SelectionChanged( object sender, EventArgs e )
@@ -1870,7 +1918,6 @@ namespace RockWeb.Blocks.Finance
                 lTransactionHeader.Text = GetAttributeValue( AttributeKey.TransactionHeader ).ResolveMergeFields( mergeFields );
                 lConfirmationHeader.Text = GetAttributeValue( AttributeKey.ConfirmationHeader ).ResolveMergeFields( mergeFields );
                 lConfirmationFooter.Text = GetAttributeValue( AttributeKey.ConfirmationFooter ).ResolveMergeFields( mergeFields );
-                lSuccessHeader.Text = GetAttributeValue( AttributeKey.SuccessHeader ).ResolveMergeFields( mergeFields );
                 lSuccessFooter.Text = GetAttributeValue( AttributeKey.SuccessFooter ).ResolveMergeFields( mergeFields );
             }
         }
@@ -1887,23 +1934,17 @@ namespace RockWeb.Blocks.Finance
             lPersonalInfoTitle.Text = GetAttributeValue( AttributeKey.PersonalInfoTitle );
             lPaymentInfoTitle.Text = GetAttributeValue( AttributeKey.PaymentInfoTitle );
             lConfirmationTitle.Text = GetAttributeValue( AttributeKey.ConfirmationTitle );
-            lSuccessTitle.Text = GetAttributeValue( AttributeKey.SuccessTitle );
             lSaveAccountTitle.Text = GetAttributeValue( AttributeKey.SaveAccountTitle );
-
-            btnAddAccount.Title = GetAttributeValue( AttributeKey.AddAccountText );
-
             divRepeatingPayments.Visible = btnFrequency.Items.Count > 0;
 
             bool displayEmail = GetAttributeValue( AttributeKey.DisplayEmail ).AsBoolean();
             txtEmail.Visible = displayEmail;
             tdEmailConfirm.Visible = displayEmail;
-            tdEmailReceipt.Visible = displayEmail;
 
             DisplayPhone = GetAttributeValue( AttributeKey.DisplayPhone ).AsBoolean();
             pnbPhone.Visible = DisplayPhone;
             pnbBusinessContactPhone.Visible = DisplayPhone;
             tdPhoneConfirm.Visible = DisplayPhone;
-            tdPhoneReceipt.Visible = DisplayPhone;
 
             var person = GetPerson( false );
             ShowPersonal( person );
@@ -1934,120 +1975,6 @@ namespace RockWeb.Blocks.Finance
         #endregion
 
         #region Methods for the Payment Info Page (panel)
-
-        /// <summary>
-        /// Gets the accounts.
-        /// </summary>
-        private void GetAccounts()
-        {
-            var rockContext = new RockContext();
-            var selectedGuids = GetAttributeValues( AttributeKey.Accounts ).Select( Guid.Parse ).ToList();
-            bool showAll = !selectedGuids.Any();
-
-            bool additionalAccounts = GetAttributeValue( AttributeKey.AdditionalAccounts ).AsBoolean( true );
-
-            SelectedAccounts = new List<AccountItem>();
-            AvailableAccounts = new List<AccountItem>();
-
-            // Limit selections to accounts passed through URL
-            if ( _allowAccountsInUrl && _parameterAccounts.Count > 0 )
-            {
-                foreach ( var acct in _parameterAccounts )
-                {
-                    var accountItem = new AccountItem( acct.Account.Id, acct.Account.Order, acct.Account.Name, acct.Account.CampusId, acct.Account.PublicName, acct.Amount, acct.Enabled );
-                    SelectedAccounts.Add( accountItem );
-                }
-            }
-            else
-            {
-                // Enumerate through all active accounts that are public
-                foreach ( var account in new FinancialAccountService( rockContext ).Queryable()
-                .Where( f =>
-                    f.IsActive &&
-                    f.IsPublic.HasValue &&
-                    f.IsPublic.Value &&
-                    ( f.StartDate == null || f.StartDate <= RockDateTime.Today ) &&
-                    ( f.EndDate == null || f.EndDate >= RockDateTime.Today ) )
-                .OrderBy( f => f.Order ) )
-                {
-                    var accountItem = new AccountItem( account.Id, account.Order, account.Name, account.CampusId, account.PublicName );
-
-                    if ( showAll )
-                    {
-                        SelectedAccounts.Add( accountItem );
-                    }
-                    else
-                    {
-                        if ( selectedGuids.Contains( account.Guid ) )
-                        {
-                            SelectedAccounts.Add( accountItem );
-                        }
-                        else
-                        {
-                            if ( additionalAccounts )
-                            {
-                                AvailableAccounts.Add( accountItem );
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Set account item *amounts* using the existing transaction
-            if ( _scheduledTransactionToBeTransferred != null )
-            {
-                foreach ( var item in _scheduledTransactionToBeTransferred.ScheduledTransactionDetails )
-                {
-                    // Find a matching account
-                    var account = SelectedAccounts.Where( a => a.Id == item.AccountId ).FirstOrDefault();
-
-                    // if not in the selected list, try the available list
-                    if ( account == null )
-                    {
-                        account = AvailableAccounts.Where( a => a.Id == item.AccountId ).FirstOrDefault();
-                        if ( account != null )
-                        {
-                            AvailableAccounts = AvailableAccounts.Except( new List<AccountItem>() { account } ).ToList();
-                            SelectedAccounts.AddRange( new List<AccountItem>() { account } );
-                        }
-                    }
-
-                    // if still not found, just use the first account
-                    if ( account == null )
-                    {
-                        account = SelectedAccounts.First();
-                    }
-
-                    account.Amount += item.Amount;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Binds the accounts.
-        /// </summary>
-        private void BindAccounts()
-        {
-            if ( _currentCampusContextId > -1 )
-            {
-                SelectedAccounts.RemoveAll( a => ( _accountCampusContextFilter == 0 && a.CampusId != _currentCampusContextId ) || ( _accountCampusContextFilter == 1 && ( a.CampusId != null && a.CampusId != _currentCampusContextId ) ) );
-            }
-
-            rptAccountList.DataSource = SelectedAccounts.ToList();
-            rptAccountList.DataBind();
-
-            lblTotalAmount.Visible = SelectedAccounts.Count > 1;
-            lblTotalAmountLabel.Visible = lblTotalAmount.Visible;
-
-            if ( _currentCampusContextId > -1 )
-            {
-                AvailableAccounts.RemoveAll( a => ( _accountCampusContextFilter == 0 && a.CampusId != _currentCampusContextId ) || ( _accountCampusContextFilter == 1 && ( a.CampusId != null && a.CampusId != _currentCampusContextId ) ) );
-            }
-
-            btnAddAccount.Visible = AvailableAccounts.Any();
-            btnAddAccount.DataSource = AvailableAccounts;
-            btnAddAccount.DataBind();
-        }
 
         /// <summary>
         /// Sets the give as options.
@@ -2594,22 +2521,34 @@ namespace RockWeb.Blocks.Finance
 
             bool givingAsBusiness = GetAttributeValue( AttributeKey.EnableBusinessGiving ).AsBoolean() && !tglGiveAsOption.Checked;
 
-            // Validate that an amount was entered
-            if ( SelectedAccounts.Sum( a => a.Amount ) <= 0 )
+            if ( caapPromptForAccountAmounts.IsValidAmountSelected() )
             {
-                errorMessages.Add( "Make sure you've entered an amount for at least one account" );
+                // get the accountId(s) that have an amount specified
+                var amountAccountIds = caapPromptForAccountAmounts.AccountAmounts
+                    .Where( a => a.Amount.HasValue && a.Amount != 0.00M ).Select( a => a.AccountId )
+                    .ToList();
+
+                var accounts = new FinancialAccountService( new RockContext() ).GetByIds( amountAccountIds ).ToList();
+                var amountSummaryMergeFields = LavaHelper.GetCommonMergeFields( this.RockPage, this.CurrentPerson );
+                amountSummaryMergeFields.Add( "Accounts", accounts );
+
+                if ( caapPromptForAccountAmounts.CampusId.HasValue )
+                {
+                    amountSummaryMergeFields.Add( "Campus", CampusCache.Get( caapPromptForAccountAmounts.CampusId.Value ) );
+                }
+            }
+            else
+            {
+                errorMessages.Add( "Please specify an amount" );
             }
 
             var amountLimit = this.PageParameter( PageParameterKey.AmountLimit ).AsDecimalOrNull();
-            if ( amountLimit.HasValue && SelectedAccounts.Sum( a => a.Amount ) > amountLimit.Value )
+            if ( amountLimit.HasValue )
             {
-                errorMessages.Add( string.Format( "The maximum amount it limited to {0}", amountLimit.FormatAsCurrency() ) );
-            }
-
-            // Validate that no negative amounts were entered
-            if ( SelectedAccounts.Any( a => a.Amount < 0 ) )
-            {
-                errorMessages.Add( "Make sure the amount you've entered for each account is a positive amount" );
+                if ( caapPromptForAccountAmounts.AccountAmounts.Sum( a => a.Amount ) > amountLimit.Value )
+                {
+                    errorMessages.Add( string.Format( "The maximum amount it limited to {0}", amountLimit.FormatAsCurrency() ) );
+                }
             }
 
             // Get the payment schedule
@@ -2725,22 +2664,6 @@ namespace RockWeb.Blocks.Finance
                 tdNameConfirm.Description = paymentInfo.FullName.Trim();
             }
 
-            tdPhoneConfirm.Description = paymentInfo.Phone;
-            tdEmailConfirm.Description = paymentInfo.Email;
-            tdAddressConfirm.Description = string.Format( "{0} {1}, {2} {3}", paymentInfo.Street1, paymentInfo.City, paymentInfo.State, paymentInfo.PostalCode );
-
-            rptAccountListConfirmation.DataSource = SelectedAccounts.Where( a => a.Amount != 0 );
-            rptAccountListConfirmation.DataBind();
-
-            tdTotalConfirm.Description = paymentInfo.Amount.FormatAsCurrency();
-
-            // TODO
-            tdPaymentMethodConfirm.Description = paymentInfo.CurrencyTypeValue?.Description;
-
-            tdAccountNumberConfirm.Description = paymentInfo.MaskedNumber;
-            tdAccountNumberConfirm.Visible = !string.IsNullOrWhiteSpace( paymentInfo.MaskedNumber );
-            tdWhenConfirm.Description = schedule != null ? schedule.ToString() : "Today";
-
             btnConfirmationPrev.Visible = true;
 
             return true;
@@ -2749,7 +2672,6 @@ namespace RockWeb.Blocks.Finance
         /// <summary>
         /// Gets the payment information.
         /// </summary>
-        /// <returns></returns>
         private ReferencePaymentInfo GetPaymentInfo()
         {
             ReferencePaymentInfo paymentInfo;
@@ -2765,7 +2687,7 @@ namespace RockWeb.Blocks.Finance
                 financialGatewayComponent.UpdatePaymentInfoFromPaymentControl( this.FinancialGateway, _hostedPaymentInfoControl, paymentInfo, out _ );
             }
 
-            paymentInfo.Amount = SelectedAccounts.Sum( a => a.Amount );
+            paymentInfo.Amount = caapPromptForAccountAmounts.AccountAmounts.Where( a => a.Amount.HasValue ).Sum( a => a.Amount.Value );
             paymentInfo.Email = txtEmail.Text;
             paymentInfo.Phone = PhoneNumber.FormattedNumber( pnbPhone.CountryCode, pnbPhone.Number, true );
             paymentInfo.Street1 = acAddress.Street1;
@@ -2785,7 +2707,6 @@ namespace RockWeb.Blocks.Finance
         /// Gets the reference information.
         /// </summary>
         /// <param name="savedAccountId">The saved account unique identifier.</param>
-        /// <returns></returns>
         private ReferencePaymentInfo GetReferenceInfo( int savedAccountId )
         {
             var savedAccount = new FinancialPersonSavedAccountService( new RockContext() ).Get( savedAccountId );
@@ -2800,7 +2721,6 @@ namespace RockWeb.Blocks.Finance
         /// <summary>
         /// Gets the payment schedule.
         /// </summary>
-        /// <returns></returns>
         private PaymentSchedule GetSchedule()
         {
             // Figure out if this is a one-time transaction or a future scheduled transaction
@@ -2839,7 +2759,6 @@ namespace RockWeb.Blocks.Finance
         /// Processes the confirmation.
         /// </summary>
         /// <param name="errorMessage">The error message.</param>
-        /// <returns></returns>
         private bool ProcessConfirmation( out string errorMessage )
         {
             var rockContext = new RockContext();
@@ -3015,20 +2934,7 @@ namespace RockWeb.Blocks.Finance
 
             var transactionEntity = this.GetTransactionEntity();
 
-            foreach ( var account in SelectedAccounts.Where( a => a.Amount > 0 ) )
-            {
-                var transactionDetail = new FinancialScheduledTransactionDetail();
-                transactionDetail.Amount = account.Amount;
-                transactionDetail.AccountId = account.Id;
-
-                if ( transactionEntity != null )
-                {
-                    transactionDetail.EntityTypeId = transactionEntity.TypeId;
-                    transactionDetail.EntityId = transactionEntity.Id;
-                }
-
-                scheduledTransaction.ScheduledTransactionDetails.Add( transactionDetail );
-            }
+            PopulateTransactionDetails( scheduledTransaction.ScheduledTransactionDetails );
 
             scheduledTransaction.Summary = paymentInfo.Comment1;
 
@@ -3108,19 +3014,7 @@ namespace RockWeb.Blocks.Finance
 
             var transactionEntity = this.GetTransactionEntity();
 
-            foreach ( var account in SelectedAccounts.Where( a => a.Amount > 0 ) )
-            {
-                var transactionDetail = new FinancialTransactionDetail();
-                transactionDetail.Amount = account.Amount;
-                transactionDetail.AccountId = account.Id;
-                if ( transactionEntity != null )
-                {
-                    transactionDetail.EntityTypeId = transactionEntity.TypeId;
-                    transactionDetail.EntityId = transactionEntity.Id;
-                }
-
-                transaction.TransactionDetails.Add( transactionDetail );
-            }
+            PopulateTransactionDetails( transaction.TransactionDetails );
 
             var batchService = new FinancialBatchService( rockContext );
 
@@ -3189,54 +3083,79 @@ namespace RockWeb.Blocks.Finance
             TransactionCode = transaction.TransactionCode;
         }
 
+        /// <summary>
+        /// Populates the transaction details for a FinancialTransaction or ScheduledFinancialTransaction
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="transactionDetails">The transaction details.</param>
+        private void PopulateTransactionDetails<T>( ICollection<T> transactionDetails ) where T : ITransactionDetail, new()
+        {
+            var transactionEntity = this.GetTransactionEntity();
+            var selectedAccountAmounts = caapPromptForAccountAmounts.AccountAmounts.Where( a => a.Amount.HasValue && a.Amount != 0 ).ToArray();
+
+            var totalSelectedAmounts = selectedAccountAmounts.Sum( a => a.Amount.Value );
+
+            foreach ( var selectedAccountAmount in selectedAccountAmounts )
+            {
+                var transactionDetail = new T();
+
+                transactionDetail.AccountId = selectedAccountAmount.AccountId;
+                transactionDetail.Amount = selectedAccountAmount.Amount.Value;
+
+                if ( transactionEntity != null )
+                {
+                    transactionDetail.EntityTypeId = transactionEntity.TypeId;
+                    transactionDetail.EntityId = transactionEntity.Id;
+                }
+
+                transactionDetails.Add( transactionDetail );
+            }
+        }
+
         private void ShowSuccess( IHostedGatewayComponent gatewayComponent, Person person, ReferencePaymentInfo paymentInfo, PaymentSchedule schedule, FinancialPaymentDetail paymentDetail, RockContext rockContext )
         {
-            tdTransactionCodeReceipt.Description = TransactionCode;
-            tdTransactionCodeReceipt.Visible = !string.IsNullOrWhiteSpace( TransactionCode );
 
-            if ( ScheduleId.HasValue )
+            var mergeFields = LavaHelper.GetCommonMergeFields( this.RockPage, this.CurrentPerson, new CommonMergeFieldsOptions { GetLegacyGlobalMergeFields = false } );
+            var finishLavaTemplate = this.GetAttributeValue( AttributeKey.FinishLavaTemplate );
+            IEntity transactionEntity = GetTransactionEntity();
+            mergeFields.Add( "TransactionEntity", transactionEntity );
+
+            var transactionGuid = hfTransactionGuid.Value.AsGuid();
+
+            // the transactionGuid is either for a FinancialTransaction or a FinancialScheduledTransaction
+            int? financialPaymentDetailId;
+            FinancialPaymentDetail financialPaymentDetail;
+            FinancialTransaction financialTransaction = new FinancialTransactionService( rockContext ).Get( transactionGuid );
+            if ( financialTransaction != null )
             {
-                var scheduledTxn = new FinancialScheduledTransactionService( rockContext ).Get( ScheduleId.Value );
-                if ( scheduledTxn != null && !string.IsNullOrWhiteSpace( scheduledTxn.GatewayScheduleId ) )
-                {
-                    tdScheduleId.Description = scheduledTxn.GatewayScheduleId;
-                    tdScheduleId.Visible = true;
-                }
-                else
-                {
-                    tdScheduleId.Visible = false;
-                }
+                mergeFields.Add( "Transaction", financialTransaction );
+                mergeFields.Add( "Person", financialTransaction.AuthorizedPersonAlias.Person );
+                financialPaymentDetail = financialTransaction.FinancialPaymentDetail;
+                financialPaymentDetailId = financialTransaction.FinancialGatewayId;
             }
             else
             {
-                tdScheduleId.Visible = false;
+                FinancialScheduledTransaction financialScheduledTransaction = new FinancialScheduledTransactionService( rockContext ).Get( transactionGuid );
+                mergeFields.Add( "Transaction", financialScheduledTransaction );
+                mergeFields.Add( "Person", financialScheduledTransaction.AuthorizedPersonAlias.Person );
+                financialPaymentDetail = financialScheduledTransaction.FinancialPaymentDetail;
+                financialPaymentDetailId = financialScheduledTransaction.FinancialGatewayId;
             }
 
-            tdNameReceipt.Description = paymentInfo.FullName;
-            tdPhoneReceipt.Description = paymentInfo.Phone;
-            tdEmailReceipt.Description = paymentInfo.Email;
-            tdAddressReceipt.Description = string.Format( "{0} {1}, {2} {3}", paymentInfo.Street1, paymentInfo.City, paymentInfo.State, paymentInfo.PostalCode );
-
-            rptAccountListReceipt.DataSource = SelectedAccounts.Where( a => a.Amount != 0 );
-            rptAccountListReceipt.DataBind();
-
-            tdTotalReceipt.Description = paymentInfo.Amount.FormatAsCurrency();
-
-            if ( paymentDetail.CurrencyTypeValueId.HasValue )
+            if ( financialPaymentDetail != null || financialPaymentDetailId.HasValue )
             {
-                tdPaymentMethodReceipt.Description = DefinedValueCache.Get( paymentDetail.CurrencyTypeValueId.Value )?.Value;
+                financialPaymentDetail = financialPaymentDetail ?? new FinancialPaymentDetailService( rockContext ).GetNoTracking( financialPaymentDetailId.Value );
+                mergeFields.Add( "PaymentDetail", financialPaymentDetail );
+
+                if ( financialPaymentDetail.BillingLocation != null || financialPaymentDetail.BillingLocationId.HasValue )
+                {
+                    var billingLocation = financialPaymentDetail.BillingLocation ?? new LocationService( rockContext ).GetNoTracking( financialPaymentDetail.BillingLocationId.Value );
+                    mergeFields.Add( "BillingLocation", billingLocation );
+                }
             }
 
-            string acctNumber = paymentInfo.MaskedNumber;
-            if ( string.IsNullOrWhiteSpace( acctNumber ) && paymentDetail != null && !string.IsNullOrWhiteSpace( paymentDetail.AccountNumberMasked ) )
-            {
-                acctNumber = paymentDetail.AccountNumberMasked;
-            }
+            lTransactionSummaryHTML.Text = finishLavaTemplate.ResolveMergeFields( mergeFields );
 
-            tdAccountNumberReceipt.Description = acctNumber;
-            tdAccountNumberReceipt.Visible = !string.IsNullOrWhiteSpace( acctNumber );
-
-            tdWhenReceipt.Description = schedule != null ? schedule.ToString() : "Today";
             bool isSavedAccount = rblSavedAccount.SelectedValue.AsInteger() > 0;
 
             // If there was a transaction code returned and this was not already created from a previous saved account,
@@ -3419,11 +3338,6 @@ namespace RockWeb.Blocks.Finance
             }
         }
 
-        /// <summary>
-        /// Sets the comment field for a payment, incorporating the Lava template specified in the block settings if appropriate.
-        /// </summary>
-        /// <param name="paymentInfo"></param>
-        /// <param name="userComment"></param>
         private void SetPaymentComment( PaymentInfo paymentInfo, string userComment )
         {
             // Create a payment comment using the Lava template specified in this block.
@@ -3435,10 +3349,46 @@ namespace RockWeb.Blocks.Finance
                 mergeFields.Add( "CurrencyType", paymentInfo.CurrencyTypeValue );
             }
 
-            if ( SelectedAccounts != null )
+            var accountDetails = caapPromptForAccountAmounts.AccountAmounts.Where( a => a.Amount.HasValue && a.Amount.Value != 0 );
+            mergeFields.Add( "TransactionAccountDetails", accountDetails );
+
+            var paymentComment = GetAttributeValue( AttributeKey.PaymentCommentTemplate ).ResolveMergeFields( mergeFields );
+
+            if ( GetAttributeValue( AttributeKey.EnableCommentEntry ).AsBoolean() )
             {
-                mergeFields.Add( "TransactionAccountDetails", SelectedAccounts.Where( a => a.Amount != 0 ).ToList() );
+                if ( paymentComment.IsNotNullOrWhiteSpace() )
+                {
+                    // Append user comments to the block-specified payment comment.
+                    paymentInfo.Comment1 = string.Format( "{0}: {1}", paymentComment, userComment );
+                }
+                else
+                {
+                    paymentInfo.Comment1 = userComment;
+                }
             }
+            else
+            {
+                paymentInfo.Comment1 = paymentComment;
+            }
+        }
+
+        /// <summary>
+        /// Sets the comment field for a payment, incorporating the Lava template specified in the block settings if appropriate.
+        /// </summary>
+        /// <param name="paymentInfo"></param>
+        /// <param name="userComment"></param>
+        private void SetPaymentComment( PaymentInfo paymentInfo, List<FinancialTransactionDetail> commentTransactionAccountDetails, string userComment )
+        {
+            // Create a payment comment using the Lava template specified in this block.
+            var mergeFields = Rock.Lava.LavaHelper.GetCommonMergeFields( this.RockPage, this.CurrentPerson );
+            mergeFields.Add( "TransactionDateTime", RockDateTime.Now );
+
+            if ( paymentInfo != null )
+            {
+                mergeFields.Add( "CurrencyType", paymentInfo.CurrencyTypeValue );
+            }
+
+            mergeFields.Add( "TransactionAccountDetails", commentTransactionAccountDetails.Where( a => a.Amount != 0 ).ToList() );
 
             var paymentComment = GetAttributeValue( AttributeKey.PaymentCommentTemplate ).ResolveMergeFields( mergeFields );
 
@@ -3514,13 +3464,13 @@ namespace RockWeb.Blocks.Finance
         }
 
         /// <summary>
-        /// Helper object for data passed via the request string.
+        /// Helper object for account options passed via the request string using <see cref="AttributeKey.AllowAccountOptionsInURL"/>
         /// </summary>
-        protected class ParameterAccount
+        private class ParameterAccountOption
         {
-            public FinancialAccount Account { get; set; }
+            public int AccountId { get; set; }
 
-            public decimal Amount { get; set; }
+            public decimal? Amount { get; set; }
 
             public bool Enabled { get; set; }
         }

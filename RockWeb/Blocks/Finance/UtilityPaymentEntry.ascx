@@ -63,21 +63,7 @@
                                     </div>
                                     <div class="panel-body">
                                         <fieldset>
-
-                                            <asp:Repeater ID="rptAccountList" runat="server" OnItemDataBound="rptAccountList_ItemDataBound">
-                                                <ItemTemplate>
-                                                    <Rock:RockLiteral ID="txtAccountAmountLiteral" runat="server" Visible="false" />
-                                                    <Rock:CurrencyBox ID="txtAccountAmount" runat="server" CssClass="account-amount" />
-                                                </ItemTemplate>
-                                            </asp:Repeater>
-
-                                            <Rock:ButtonDropDownList ID="btnAddAccount" runat="server" Visible="false" Label=" "
-                                                DataTextField="PublicName" DataValueField="Id" OnSelectionChanged="btnAddAccount_SelectionChanged" />
-
-                                            <div class="form-group">
-                                                <label runat="server" id="lblTotalAmountLabel">Total</label>
-                                                <asp:Label ID="lblTotalAmount" runat="server" CssClass="form-control-static total-amount" />
-                                            </div>
+                                            <Rock:CampusAccountAmountPicker ID="caapPromptForAccountAmounts" runat="server" />
 
                                             <div id="divRepeatingPayments" runat="server" visible="false">
                                                 <Rock:RockLiteral ID="txtFrequency" runat="server" Label="Frequency" Visible="false" />
@@ -274,35 +260,7 @@
 
             <asp:Panel ID="pnlSuccess" runat="server" Visible="false">
 
-                <div class="well">
-                    <legend>
-                        <asp:Literal ID="lSuccessTitle" runat="server" /></legend>
-                    <asp:Literal ID="lSuccessHeader" runat="server"></asp:Literal>
-                    <dl class="dl-horizontal gift-success">
-                        <Rock:TermDescription ID="tdScheduleId" runat="server" Term="Payment Schedule ID" />
-                        <Rock:TermDescription ID="tdTransactionCodeReceipt" runat="server" Term="Confirmation Code" />
-                        <Rock:TermDescription runat="server" />
-                        <Rock:TermDescription ID="tdNameReceipt" runat="server" Term="Name" />
-                        <Rock:TermDescription ID="tdPhoneReceipt" runat="server" Term="Phone" />
-                        <Rock:TermDescription ID="tdEmailReceipt" runat="server" Term="Email" />
-                        <Rock:TermDescription ID="tdAddressReceipt" runat="server" Term="Address" />
-                        <Rock:TermDescription runat="server" />
-                        <asp:Repeater ID="rptAccountListReceipt" runat="server">
-                            <ItemTemplate>
-                                <Rock:TermDescription ID="tdAccountAmountReceipt" runat="server" Term='<%# Eval("PublicName") %>' Description='<%# Eval("AmountFormatted") %>' />
-                            </ItemTemplate>
-                        </asp:Repeater>
-                        <Rock:TermDescription ID="tdTotalReceipt" runat="server" Term="Total" />
-                        <Rock:TermDescription runat="server" />
-                        <Rock:TermDescription ID="tdPaymentMethodReceipt" runat="server" Term="Payment Method" />
-                        <Rock:TermDescription ID="tdAccountNumberReceipt" runat="server" Term="Account Number" />
-                        <Rock:TermDescription ID="tdWhenReceipt" runat="server" Term="When" />
-                    </dl>
-
-
-                    <dl class="dl-horizontal gift-confirmation margin-b-md">
-                    </dl>
-                </div>
+                <asp:Literal ID="lTransactionSummaryHTML" runat="server" />
 
                 <asp:Panel ID="pnlSaveAccount" runat="server" Visible="false">
                     <div class="well">
