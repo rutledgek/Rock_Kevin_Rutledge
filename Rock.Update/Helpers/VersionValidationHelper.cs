@@ -18,6 +18,7 @@ using System;
 using Rock.Data;
 using Rock.Update.Enum;
 using Rock.Update.Exceptions;
+using Rock.Utility.Settings;
 
 namespace Rock.Update.Helpers
 {
@@ -138,7 +139,7 @@ namespace Rock.Update.Helpers
 
             if ( !hasSqlServer2016OrGreater )
             {
-                throw new VersionValidationException( $"Version {targetVersion} requires Microsoft Sql Server 2016 or greater." );
+                throw new VersionValidationException( $"Version {targetVersion} requires Microsoft SQL Azure or Microsoft Sql Server 2016 or greater." );
             }
         }
 
@@ -159,25 +160,25 @@ namespace Rock.Update.Helpers
         /// <returns></returns>
         public static bool CheckSqlServerVersion( int majorVersionNumber )
         {
-            var isOk = false;
-            var sqlVersion = string.Empty;
+            var isOk = RockInstanceConfig.Database.Platform == RockInstanceDatabaseConfiguration.PlatformSpecifier.AzureSql;
 
-            try
+            if ( !isOk )
             {
-                sqlVersion = DbService.ExecuteScaler( "SELECT SERVERPROPERTY('productversion')" ).ToString();
-                var versionParts = sqlVersion.Split( '.' );
-
-                int.TryParse( versionParts[0], out var majorVersion );
-
-                if ( majorVersion > majorVersionNumber )
+                try
                 {
-                    isOk = true;
+                    var versionParts = RockInstanceConfig.Database.VersionNumber.Split( '.' );
+                    int.TryParse( versionParts[0], out var majorVersion );
+
+                    if ( majorVersion > majorVersionNumber )
+                    {
+                        isOk = true;
+                    }
                 }
-            }
-            catch
-            {
-                // This would be pretty bad, but regardless we'll just
-                // return the isOk (not) and let the caller proceed.
+                catch
+                {
+                    // This would be pretty bad, but regardless we'll just
+                    // return the isOk (not) and let the caller proceed.
+                }
             }
 
             return isOk;

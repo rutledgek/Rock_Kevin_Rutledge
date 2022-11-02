@@ -154,7 +154,7 @@ namespace RockWeb.Blocks.Core
                     nbSqlServerVersionIssue.Visible = true;
                 }
 
-                _hasSqlServer16OrHigher = VersionValidationHelper.CheckSqlServerVersion( 17 );
+                _hasSqlServer16OrHigher = VersionValidationHelper.CheckSqlServerVersion( 13 );
 
                 if ( !_hasSqlServer16OrHigher )
                 {
