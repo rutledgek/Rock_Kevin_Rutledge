@@ -164,6 +164,16 @@ namespace Rock.Communication.SmsActions
         Category = "Response",
         Key = AttributeKeys.RefundSuccessResponse )]
 
+    [CodeEditorField( "Missing Amount Response",
+        EditorMode = CodeEditorMode.Lava,
+        EditorTheme = CodeEditorTheme.Rock,
+        Description = "The response that will be sent if the amount is missing. <span class='tip tip-lava'></span> Use {{ Lava | Debug }} to see all available fields.",
+        IsRequired = true,
+        DefaultValue = "To give, simply respond with a gift amount. For example, '$100' or '$200'.",
+        Order = 14,
+        Category = "Response",
+        Key = AttributeKeys.MissingAmountResponse )]
+
     #endregion Attributes
 
     [Rock.SystemGuid.EntityTypeGuid( "EFB22EDF-49E5-46C9-B204-AD99876E44D6" )]
@@ -194,6 +204,7 @@ namespace Rock.Communication.SmsActions
             public const string SuccessResponse = "SuccessResponse";
             public const string RefundSuccessResponse = "RefundSuccessResponse";
             public const string RefundFailureResponse = "RefundFailureResponse";
+            public const string MissingAmountResponse = "MissingAmountResponse";
         }
 
         /// <summary>
@@ -364,7 +375,7 @@ namespace Rock.Communication.SmsActions
             // "help" response
             if ( !giftAmountNullable.HasValue || giftAmountNullable.Value < 1m )
             {
-                return GetResolvedSmsResponse( AttributeKeys.HelpResponse, context );
+                return GetResolvedSmsResponse( AttributeKeys.MissingAmountResponse, context );
             }
 
             // If the gift amount exceeds the max amount, send the "max amount" response
