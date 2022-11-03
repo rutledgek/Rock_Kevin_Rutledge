@@ -188,7 +188,7 @@
                         <div class="actions clearfix">
                             <a id="lHistoryBackButton" runat="server" class="btn btn-link" href="javascript: window.history.back();">Previous</a>
                              
-                            <Rock:BootstrapButton ID="btnSavedAccountPaymentInfoNext" runat="server" Text="Next" CssClass="btn btn-primary pull-right" DataLoadingText="Processing..." OnClick="btnSavedAccountPaymentInfoNext_Click" />
+                            <Rock:BootstrapButton ID="btnSavedAccountPaymentInfoNext" runat="server" Text="Next" CssClass="btn btn-primary pull-right" DataLoadingText="Processing..." Visible="false" OnClick="btnSavedAccountPaymentInfoNext_Click" />
 
                             <%-- NOTE: btnHostedPaymentInfoNext ends up telling the HostedPaymentControl (via the js-submit-hostedpaymentinfo hook) to request a token, which will cause the _hostedPaymentInfoControl_TokenReceived postback
                                	Even though this is a LinkButton, btnHostedPaymentInfoNext won't autopostback  (see $('.js-submit-hostedpaymentinfo').off().on('click').. ) unless a saved account is selected
@@ -241,14 +241,14 @@
                                     You have already submitted a similar transaction that has been processed.  Are you sure you want
                                 to submit another possible duplicate transaction?
                                 </p>
-                                <asp:LinkButton ID="btnConfirm" runat="server" Text="Yes, submit another transaction" CssClass="btn btn-danger margin-t-sm" OnClick="btnConfirm_Click" />
+                                <asp:LinkButton ID="btnConfirmDuplicateTransaction" runat="server" Text="Yes, submit another transaction" CssClass="btn btn-danger margin-t-sm" OnClick="btnConfirmDuplicateTransaction_Click" />
                             </asp:Panel>
 
                             <Rock:NotificationBox ID="nbConfirmationMessage" runat="server" Visible="false"></Rock:NotificationBox>
 
                             <div class="actions clearfix">
                                 <asp:LinkButton ID="btnConfirmationPrev" runat="server" Text="Previous" CssClass="btn btn-link" OnClick="btnConfirmationPrev_Click" Visible="false" />
-                                <Rock:BootstrapButton ID="btnConfirmationNext" runat="server" Text="Finish" CssClass="btn btn-primary pull-right" OnClick="btnConfirmationNext_Click" />
+                                <Rock:BootstrapButton ID="btnProcessTransactionFromConfirmationPage" runat="server" Text="Finish" CssClass="btn btn-primary pull-right" OnClick="btnProcessTransactionFromConfirmationPage_Click" />
                             </div>
                         </div>
                     </div>

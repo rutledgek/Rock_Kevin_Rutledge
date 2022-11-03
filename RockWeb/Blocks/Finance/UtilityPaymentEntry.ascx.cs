@@ -291,13 +291,20 @@ namespace RockWeb.Blocks.Finance
         Category = CategoryKey.TextOptions,
         Order = 5 )]
 
+    [BooleanField( "Show Confirmation Page",
+        Key = AttributeKey.ShowConfirmationPage,
+        Description = "Show a confirmation page before processing the transaction.",
+        DefaultBooleanValue = true,
+        Category = CategoryKey.TextOptions,
+        Order = 7 )]
+
     [TextField( "Confirmation Title",
         Key = AttributeKey.ConfirmationTitle,
         Description = "The text to display as heading of section for confirming information entered.",
         IsRequired = false,
         DefaultValue = "Confirm Information",
         Category = CategoryKey.TextOptions,
-        Order = 6 )]
+        Order = 8 )]
 
     [CodeEditorField( "Confirmation Header",
         Key = AttributeKey.ConfirmationHeader,
@@ -308,7 +315,7 @@ namespace RockWeb.Blocks.Finance
         IsRequired = true,
         DefaultValue = AttributeString.ConfirmationHeader,
         Category = CategoryKey.TextOptions,
-        Order = 7 )]
+        Order = 9 )]
 
     [CodeEditorField( "Confirmation Footer",
         Key = AttributeKey.ConfirmationFooter,
@@ -319,7 +326,7 @@ namespace RockWeb.Blocks.Finance
         IsRequired = true,
         DefaultValue = AttributeString.ConfirmationFooter,
         Category = CategoryKey.TextOptions,
-        Order = 8 )]
+        Order = 10 )]
 
     [CodeEditorField(
         "Finish Lava Template",
@@ -328,7 +335,7 @@ namespace RockWeb.Blocks.Finance
         Description = "The text (HTML) to display on the success page. <span class='tip tip-lava'></span>",
         DefaultValue = DefaultFinishLavaTemplate,
         Category = CategoryKey.TextOptions,
-        Order = 10 )]
+        Order = 11 )]
 
     [CodeEditorField( "Success Footer",
         Key = AttributeKey.SuccessFooter,
@@ -339,7 +346,7 @@ namespace RockWeb.Blocks.Finance
         IsRequired = false,
         DefaultValue = @"",
         Category = CategoryKey.TextOptions,
-        Order = 11 )]
+        Order = 12 )]
 
     [TextField( "Save Account Title",
         Key = AttributeKey.SaveAccountTitle,
@@ -347,7 +354,7 @@ namespace RockWeb.Blocks.Finance
         IsRequired = false,
         DefaultValue = "Make Giving Even Easier",
         Category = CategoryKey.TextOptions,
-        Order = 12 )]
+        Order = 13 )]
 
     [CodeEditorField( "Payment Comment Template",
         Key = AttributeKey.PaymentCommentTemplate,
@@ -357,7 +364,7 @@ namespace RockWeb.Blocks.Finance
         EditorHeight = 100,
         IsRequired = false,
         Category = CategoryKey.TextOptions,
-        Order = 13 )]
+        Order = 14 )]
 
     [TextField( "Anonymous Giving Tooltip",
         Key = AttributeKey.AnonymousGivingTooltip,
@@ -365,7 +372,7 @@ namespace RockWeb.Blocks.Finance
         IsRequired = false,
         DefaultValue = "",
         Category = CategoryKey.TextOptions,
-        Order = 14 )]
+        Order = 15 )]
 
     #endregion Text Options
 
@@ -460,8 +467,6 @@ namespace RockWeb.Blocks.Finance
         Order = 10 )]
 
     #endregion Advanced
-
-   
 
     #endregion Block Attributes
 
@@ -584,6 +589,7 @@ mission. We are so grateful for your commitment.</p>
             public const string EntityIdParam = "EntityIdParam";
             public const string TransactionHeader = "TransactionHeader";
             public const string EnableInitialBackbutton = "EnableInitialBackbutton";
+            public const string ShowConfirmationPage = "ShowConfirmationPage";
             public const string AccountsToDisplay = "AccountsToDisplay";
             public const string UseAccountCampusMappingLogic = "UseAccountCampusMappingLogic";
             public const string AskForCampusIfKnown = "AskForCampusIfKnown";
@@ -689,15 +695,6 @@ mission. We are so grateful for your commitment.</p>
         }
 
         /// <summary>
-        /// Gets or sets the currency type value identifier.
-        /// </summary>
-        protected int? CreditCardTypeValueId
-        {
-            get { return ViewState[ViewStateKey.CreditCardTypeValueId] as int?; }
-            set { ViewState[ViewStateKey.CreditCardTypeValueId] = value; }
-        }
-
-        /// <summary>
         /// Gets or sets the payment schedule id.
         /// </summary>
         protected int? ScheduleId
@@ -723,6 +720,20 @@ mission. We are so grateful for your commitment.</p>
             }
         }
         #endregion
+
+        #region enums
+
+        /// <summary>
+        ///
+        /// </summary>
+        private enum EntryStep
+        {
+            PromptForAmount = 1,
+            ShowConfirmation = 2,
+            ShowTransactionSummary = 3
+        }
+
+        #endregion enums
 
         #region fields
 
@@ -935,7 +946,7 @@ mission. We are so grateful for your commitment.</p>
                     }
                 }
 
-                SetPage( 1 );
+                SetPage( EntryStep.PromptForAmount );
 
                 // If an invalid PersonToken was specified, hide everything except for the error message
                 if ( nbInvalidPersonWarning.Visible )
@@ -1264,13 +1275,18 @@ mission. We are so grateful for your commitment.</p>
         /// <param name="e">The <see cref="HistoryEventArgs"/> instance containing the event data.</param>
         protected void page_PageNavigate( object sender, HistoryEventArgs e )
         {
-            int pageId = e.State["GivingDetail"].AsInteger();
-            if ( pageId > 0 )
+            EntryStep? entryStep = e.State["GivingDetail"].ConvertToEnumOrNull<EntryStep>();
+            if ( entryStep.HasValue )
             {
-                SetPage( pageId );
+                SetPage( entryStep.Value );
             }
         }
 
+        /// <summary>
+        /// Handles the SelectionChanged event of the btnFrequency control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         protected void btnFrequency_SelectionChanged( object sender, EventArgs e )
         {
             int oneTimeFrequencyId = DefinedValueCache.Get( Rock.SystemGuid.DefinedValue.TRANSACTION_FREQUENCY_ONE_TIME ).Id;
@@ -1288,7 +1304,7 @@ mission. We are so grateful for your commitment.</p>
 
             BindSavedAccounts();
 
-            SetPage( 1 );
+            SetPage( EntryStep.PromptForAmount );
         }
 
         /// <summary>
@@ -1339,6 +1355,9 @@ mission. We are so grateful for your commitment.</p>
             HandlePaymentInfoNextButton();
         }
 
+        /// <summary>
+        /// Handles the payment information next button.
+        /// </summary>
         private void HandlePaymentInfoNextButton()
         {
             if ( tbRockFullName.Text.IsNotNullOrWhiteSpace() )
@@ -1353,16 +1372,25 @@ mission. We are so grateful for your commitment.</p>
                 return;
             }
 
-            string errorMessage;
-            if ( ProcessPaymentInfo( out errorMessage ) )
+            if ( ValidatePaymentInfo( out string errorMessage ) )
             {
+                SetConfirmationText();
                 if ( this.PartialPostbacksAllowed )
                 {
-                    this.AddHistory( "GivingDetail", "1", null );
+                    this.AddHistory( "GivingDetail", EntryStep.PromptForAmount.ConvertToString( false ), null );
                 }
 
-                SetPage( 3 );
-                pnlConfirmation.Focus();
+                bool showConfirmationPage = this.GetAttributeValue( AttributeKey.ShowConfirmationPage ).AsBoolean();
+                if ( showConfirmationPage )
+                {
+                    SetPage( EntryStep.ShowConfirmation );
+                    pnlConfirmation.Focus();
+                }
+                else
+                {
+                    // Skip displaying the confirmation page, and process the transaction.
+                    btnProcessTransactionFromConfirmationPage_Click( null, null );
+                }
             }
             else
             {
@@ -1377,27 +1405,25 @@ mission. We are so grateful for your commitment.</p>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         protected void btnConfirmationPrev_Click( object sender, EventArgs e )
         {
-            SetPage( 1 );
+            SetPage( EntryStep.PromptForAmount );
             pnlSelection.Focus();
         }
 
         /// <summary>
-        /// Handles the Click event of the btnConfirmationNext control.
+        /// Handles the Click event of the btnProcessTransactionFromConfirmationPage control.
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        protected void btnConfirmationNext_Click( object sender, EventArgs e )
+        protected void btnProcessTransactionFromConfirmationPage_Click( object sender, EventArgs e )
         {
-            string errorMessage = string.Empty;
-
-            if ( ProcessConfirmation( out errorMessage ) )
+            if ( ProcessTransaction( out string errorMessage ) )
             {
                 if ( this.PartialPostbacksAllowed )
                 {
-                    this.AddHistory( "GivingDetail", "2", null );
+                    this.AddHistory( "GivingDetail", EntryStep.ShowConfirmation.ConvertToString( false ), null );
                 }
 
-                SetPage( 4 );
+                SetPage( EntryStep.ShowTransactionSummary );
                 pnlSuccess.Focus();
             }
             else
@@ -1407,20 +1433,20 @@ mission. We are so grateful for your commitment.</p>
         }
 
         /// <summary>
-        /// Handles the Click event of the btnConfirm control.
+        /// Handles the Click event of the btnConfirmDuplicateTransaction control.
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        protected void btnConfirm_Click( object sender, EventArgs e )
+        protected void btnConfirmDuplicateTransaction_Click( object sender, EventArgs e )
         {
             // They are hitting Confirm on the "Possible Duplicate" warning, so reset the TransactionCode and Transaction.Guid which would have preventing them from doing a duplicate
             TransactionCode = string.Empty;
             hfTransactionGuid.Value = Guid.NewGuid().ToString();
 
             string errorMessage = string.Empty;
-            if ( ProcessConfirmation( out errorMessage ) )
+            if ( ProcessTransaction( out errorMessage ) )
             {
-                SetPage( 4 );
+                SetPage( EntryStep.ShowTransactionSummary );
                 pnlSuccess.Focus();
             }
             else
@@ -1970,6 +1996,18 @@ mission. We are so grateful for your commitment.</p>
             // Evaluate if comment entry box should be displayed
             txtCommentEntry.Label = GetAttributeValue( AttributeKey.CommentEntryLabel );
             txtCommentEntry.Visible = GetAttributeValue( AttributeKey.EnableCommentEntry ).AsBoolean();
+
+            bool showConfirmationPage = this.GetAttributeValue( AttributeKey.ShowConfirmationPage ).AsBoolean();
+            if ( showConfirmationPage )
+            {
+                btnSavedAccountPaymentInfoNext.Text = "Next";
+                btnHostedPaymentInfoNext.Text = "Next";
+            }
+            else
+            {
+                btnSavedAccountPaymentInfoNext.Text = "Finish";
+                btnHostedPaymentInfoNext.Text = "Finish";
+            }
         }
 
         #endregion
@@ -2277,7 +2315,7 @@ mission. We are so grateful for your commitment.</p>
                         familyGroup,
                         GetAttributeValue( AttributeKey.AddressType ),
                         acAddress.Street1, acAddress.Street2, acAddress.City, acAddress.State, acAddress.PostalCode, acAddress.Country,
-                        true );
+                        true);
                 }
             }
 
@@ -2458,7 +2496,7 @@ mission. We are so grateful for your commitment.</p>
                         familyGroup,
                         Rock.SystemGuid.DefinedValue.GROUP_LOCATION_TYPE_WORK,
                         acAddress.Street1, acAddress.Street2, acAddress.City, acAddress.State, acAddress.PostalCode, acAddress.Country,
-                        false );
+                        true );
                 }
 
                 return business;
@@ -2509,11 +2547,11 @@ mission. We are so grateful for your commitment.</p>
         }
 
         /// <summary>
-        /// Processes the payment information.
+        /// Validates the payment information.
         /// </summary>
         /// <param name="errorMessage">The error message.</param>
         /// <returns></returns>
-        private bool ProcessPaymentInfo( out string errorMessage )
+        private bool ValidatePaymentInfo( out string errorMessage )
         {
             errorMessage = string.Empty;
 
@@ -2631,7 +2669,15 @@ mission. We are so grateful for your commitment.</p>
                 return false;
             }
 
+            btnConfirmationPrev.Visible = true;
+
+            return true;
+        }
+
+        private void SetConfirmationText()
+        {
             ReferencePaymentInfo paymentInfo = GetPaymentInfo();
+            bool givingAsBusiness = GetAttributeValue( AttributeKey.EnableBusinessGiving ).AsBoolean() && !tglGiveAsOption.Checked;
 
             if ( !givingAsBusiness )
             {
@@ -2664,9 +2710,30 @@ mission. We are so grateful for your commitment.</p>
                 tdNameConfirm.Description = paymentInfo.FullName.Trim();
             }
 
-            btnConfirmationPrev.Visible = true;
+            tdPhoneConfirm.Description = paymentInfo.Phone;
+            tdEmailConfirm.Description = paymentInfo.Email;
+            tdAddressConfirm.Description = string.Format( "{0} {1}, {2} {3}", paymentInfo.Street1, paymentInfo.City, paymentInfo.State, paymentInfo.PostalCode );
 
-            return true;
+            List<AccountItem> accountList = caapPromptForAccountAmounts.AccountAmounts
+                .Where( a => a.Amount.HasValue )
+                .Select( a =>
+                    new AccountItem
+                    {
+                        PublicName = FinancialAccountCache.Get( a.AccountId )?.PublicName,
+                        AmountFormatted = a.Amount.FormatAsCurrency()
+                    } )
+                .ToList();
+
+            rptAccountListConfirmation.DataSource = accountList;
+            rptAccountListConfirmation.DataBind();
+
+            tdTotalConfirm.Description = paymentInfo.Amount.FormatAsCurrency();
+            tdPaymentMethodConfirm.Description = paymentInfo.CurrencyTypeValue?.Description;
+            tdAccountNumberConfirm.Description = paymentInfo.MaskedNumber;
+            tdAccountNumberConfirm.Visible = !string.IsNullOrWhiteSpace( paymentInfo.MaskedNumber );
+
+            PaymentSchedule schedule = GetSchedule();
+            tdWhenConfirm.Description = schedule != null ? schedule.ToString() : "Today";
         }
 
         /// <summary>
@@ -2756,10 +2823,10 @@ mission. We are so grateful for your commitment.</p>
         #region Methods for the confirmation Page (panel)
 
         /// <summary>
-        /// Processes the confirmation.
+        /// Processes the transaction.
         /// </summary>
         /// <param name="errorMessage">The error message.</param>
-        private bool ProcessConfirmation( out string errorMessage )
+        private bool ProcessTransaction( out string errorMessage )
         {
             var rockContext = new RockContext();
             if ( string.IsNullOrWhiteSpace( TransactionCode ) )
@@ -2816,7 +2883,7 @@ mission. We are so grateful for your commitment.</p>
                     if ( scheduledTransactionAlreadyExists != null )
                     {
                         // Hopefully shouldn't happen, but just in case the scheduledtransaction already went through, show the success screen.
-                        ShowSuccess( gateway, person, paymentInfo, schedule, scheduledTransactionAlreadyExists.FinancialPaymentDetail, rockContext );
+                        ShowSuccess( gateway, person, paymentInfo );
                         return true;
                     }
 
@@ -2838,7 +2905,7 @@ mission. We are so grateful for your commitment.</p>
                     if ( transactionAlreadyExists != null )
                     {
                         // hopefully shouldn't happen, but just in case the transaction already went thru, show the success screen
-                        ShowSuccess( gateway, person, paymentInfo, null, transactionAlreadyExists.FinancialPaymentDetail, rockContext );
+                        ShowSuccess( gateway, person, paymentInfo );
                         return true;
                     }
 
@@ -2855,7 +2922,7 @@ mission. We are so grateful for your commitment.</p>
                     paymentDetail = transaction.FinancialPaymentDetail.Clone( false );
                 }
 
-                ShowSuccess( gateway, person, paymentInfo, schedule, paymentDetail, rockContext );
+                ShowSuccess( gateway, person, paymentInfo );
 
                 return true;
             }
@@ -2879,11 +2946,6 @@ mission. We are so grateful for your commitment.</p>
             {
                 paymentInfo.FirstName = person.FirstName;
                 paymentInfo.LastName = person.LastName;
-            }
-
-            if ( paymentInfo.CreditCardTypeValue != null )
-            {
-                CreditCardTypeValueId = paymentInfo.CreditCardTypeValue.Id;
             }
 
             if ( paymentInfo.GatewayPersonIdentifier.IsNullOrWhiteSpace() )
@@ -3112,9 +3174,8 @@ mission. We are so grateful for your commitment.</p>
             }
         }
 
-        private void ShowSuccess( IHostedGatewayComponent gatewayComponent, Person person, ReferencePaymentInfo paymentInfo, PaymentSchedule schedule, FinancialPaymentDetail paymentDetail, RockContext rockContext )
+        private void ShowSuccess( IHostedGatewayComponent gatewayComponent, Person person, ReferencePaymentInfo paymentInfo )
         {
-
             var mergeFields = LavaHelper.GetCommonMergeFields( this.RockPage, this.CurrentPerson, new CommonMergeFieldsOptions { GetLegacyGlobalMergeFields = false } );
             var finishLavaTemplate = this.GetAttributeValue( AttributeKey.FinishLavaTemplate );
             IEntity transactionEntity = GetTransactionEntity();
@@ -3122,14 +3183,17 @@ mission. We are so grateful for your commitment.</p>
 
             var transactionGuid = hfTransactionGuid.Value.AsGuid();
 
+            var rockContext = new RockContext();
+
             // the transactionGuid is either for a FinancialTransaction or a FinancialScheduledTransaction
             int? financialPaymentDetailId;
             FinancialPaymentDetail financialPaymentDetail;
             FinancialTransaction financialTransaction = new FinancialTransactionService( rockContext ).Get( transactionGuid );
+            int? transactionPersonAliasId;
             if ( financialTransaction != null )
             {
                 mergeFields.Add( "Transaction", financialTransaction );
-                mergeFields.Add( "Person", financialTransaction.AuthorizedPersonAlias.Person );
+                transactionPersonAliasId = financialTransaction.AuthorizedPersonAliasId;
                 financialPaymentDetail = financialTransaction.FinancialPaymentDetail;
                 financialPaymentDetailId = financialTransaction.FinancialGatewayId;
             }
@@ -3137,9 +3201,15 @@ mission. We are so grateful for your commitment.</p>
             {
                 FinancialScheduledTransaction financialScheduledTransaction = new FinancialScheduledTransactionService( rockContext ).Get( transactionGuid );
                 mergeFields.Add( "Transaction", financialScheduledTransaction );
-                mergeFields.Add( "Person", financialScheduledTransaction.AuthorizedPersonAlias.Person );
+                transactionPersonAliasId = financialScheduledTransaction.AuthorizedPersonAliasId;
                 financialPaymentDetail = financialScheduledTransaction.FinancialPaymentDetail;
                 financialPaymentDetailId = financialScheduledTransaction.FinancialGatewayId;
+            }
+
+            if ( transactionPersonAliasId.HasValue )
+            {
+                var transactionPerson = new PersonAliasService( rockContext ).GetPerson( transactionPersonAliasId.Value );
+                mergeFields.Add( "Person", transactionPerson );
             }
 
             if ( financialPaymentDetail != null || financialPaymentDetailId.HasValue )
@@ -3202,23 +3272,18 @@ mission. We are so grateful for your commitment.</p>
         /// Sets the page.
         /// </summary>
         /// <param name="page">The page.</param>
-        private void SetPage( int page )
+        private void SetPage( EntryStep page )
         {
-            // Page 0 = Only message box is displayed
-            // Page 1 = Selection
-            // Page 2 = (not used)
-            // Page 3 = Confirmation
-            // Page 4 = Success
-            pnlSelection.Visible = page == 1;
-            pnlContributionInfo.Visible = page == 1;
+            pnlSelection.Visible = page == EntryStep.PromptForAmount;
+            pnlContributionInfo.Visible = page == EntryStep.PromptForAmount;
 
             // only show the History back button if the previous URL was able to be determined and they have the EnableInitialBackbutton enabled;
-            lHistoryBackButton.Visible = GetAttributeValue( AttributeKey.EnableInitialBackbutton ).AsBoolean() && lHistoryBackButton.HRef != "#" && page == 1;
+            lHistoryBackButton.Visible = GetAttributeValue( AttributeKey.EnableInitialBackbutton ).AsBoolean() && lHistoryBackButton.HRef != "#" && page == EntryStep.PromptForAmount;
 
-            pnlConfirmation.Visible = page == 3;
-            pnlSuccess.Visible = page == 4;
+            pnlConfirmation.Visible = page == EntryStep.ShowConfirmation;
+            pnlSuccess.Visible = page == EntryStep.ShowTransactionSummary;
 
-            hfCurrentPage.Value = page.ToString();
+            hfCurrentPage.Value = page.ConvertToString(false);
         }
 
         /// <summary>
@@ -3232,18 +3297,16 @@ mission. We are so grateful for your commitment.</p>
             if ( !string.IsNullOrWhiteSpace( text ) )
             {
                 NotificationBox nb = nbMessage;
-                switch ( hfCurrentPage.Value.AsInteger() )
+                var entryStep = hfCurrentPage.Value.ConvertToEnumOrNull<EntryStep>() ?? EntryStep.PromptForAmount;
+                switch ( entryStep )
                 {
-                    case 1:
+                    case EntryStep.PromptForAmount:
                         nb = nbSelectionMessage;
                         break;
-                    case 2:
-                        nb = nbSelectionMessage;
-                        break;
-                    case 3:
+                    case EntryStep.ShowConfirmation:
                         nb = nbConfirmationMessage;
                         break;
-                    case 4:
+                    case EntryStep.ShowTransactionSummary:
                         nb = nbSuccessMessage;
                         break;
                 }
@@ -3298,44 +3361,6 @@ mission. We are so grateful for your commitment.</p>
     }});
 ";
             ScriptManager.RegisterStartupScript( upPayment, this.GetType(), "giving-profile", script, true );
-        }
-
-        /// <summary>
-        /// Handles the ItemDataBound event of the rptAccountList control.
-        /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="RepeaterItemEventArgs"/> instance containing the event data.</param>
-        protected void rptAccountList_ItemDataBound( object sender, RepeaterItemEventArgs e )
-        {
-            var accountItem = e.Item.DataItem as AccountItem;
-            CurrencyBox txtAccountAmount = e.Item.FindControl( "txtAccountAmount" ) as CurrencyBox;
-            RockLiteral txtAccountAmountLiteral = e.Item.FindControl( "txtAccountAmountLiteral" ) as RockLiteral;
-
-            if ( accountItem != null && txtAccountAmount != null )
-            {
-                string accountHeaderTemplate = this.GetAttributeValue( AttributeKey.AccountHeaderTemplate );
-                var mergeFields = LavaHelper.GetCommonMergeFields( this.RockPage, this.CurrentPerson, new CommonMergeFieldsOptions { GetLegacyGlobalMergeFields = false } );
-                var account = FinancialAccountCache.Get( accountItem.Id );
-                mergeFields.Add( "Account", account );
-                txtAccountAmount.Label = accountHeaderTemplate.ResolveMergeFields( mergeFields );
-
-                if ( accountItem.Amount != 0 )
-                {
-                    txtAccountAmount.Value = accountItem.Amount;
-                }
-
-                if ( !accountItem.Enabled )
-                {
-                    txtAccountAmountLiteral.Visible = true;
-                    txtAccountAmountLiteral.Label = txtAccountAmount.Label;
-                    txtAccountAmountLiteral.Text = txtAccountAmount.Value.FormatAsCurrency();
-
-                    // Javascript  needs the textbox, so disable it and hide it with CSS.
-                    txtAccountAmount.Label = string.Empty;
-                    txtAccountAmount.Enabled = false;
-                    txtAccountAmount.AddCssClass( "hidden" );
-                }
-            }
         }
 
         private void SetPaymentComment( PaymentInfo paymentInfo, string userComment )
@@ -3419,48 +3444,9 @@ mission. We are so grateful for your commitment.</p>
         /// </summary>
         protected class AccountItem
         {
-            public int Id { get; set; }
-
-            public int Order { get; set; }
-
-            public string Name { get; set; }
-
-            public int? CampusId { get; set; }
-
-            public decimal Amount { get; set; }
-
-            public bool Enabled { get; set; }
-
             public string PublicName { get; set; }
 
-            public string AmountFormatted
-            {
-                get
-                {
-                    return Amount > 0 ? Amount.FormatAsCurrency() : string.Empty;
-                }
-            }
-
-            public AccountItem()
-            {
-            }
-
-            public AccountItem( int id, int order, string name, int? campusId, string publicName )
-            {
-                Id = id;
-                Order = order;
-                Name = name;
-                CampusId = campusId;
-                PublicName = publicName;
-                Enabled = true;
-            }
-
-            public AccountItem( int id, int order, string name, int? campusId, string publicName, decimal amount, bool enabled )
-                : this( id, order, name, campusId, publicName )
-            {
-                Amount = amount;
-                Enabled = enabled;
-            }
+            public string AmountFormatted { get; set; }
         }
 
         /// <summary>
