@@ -1,4 +1,4 @@
-// <copyright>
+﻿// <copyright>
 // Copyright by the Spark Development Network
 //
 // Licensed under the Rock Community License (the "License");
@@ -22,6 +22,7 @@ using System.Data.Entity;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
+
 using Rock;
 using Rock.Attribute;
 using Rock.Data;
@@ -50,135 +51,122 @@ namespace Rock.Communication.SmsActions
 
     #region Attributes
 
-    [TextField(
-        name: "Give Keyword",
-        description: @"The case-insensitive keywords that will be expected at the beginning of the message. Separate multiple values with commas like ""give, giving, gift"".",
-        required: true,
-        defaultValue: "GIVE",
-        order: 1,
-        category: "Giving",
-        key: AttributeKeys.GivingKeywords )]
+    [TextField( "Give Keyword",
+        Description = @"The case-insensitive keywords that will be expected at the beginning of the message. Separate multiple values with commas like ""give, giving, gift"".",
+        IsRequired = true,
+        DefaultValue = "GIVE",
+        Order = 1,
+        Category = "Giving",
+        Key = AttributeKeys.GivingKeywords )]
 
-    [TextField(
-        name: "Setup Keyword",
-        description: @"The case-insensitive keyword that will be expected at the beginning of the message. Separate multiple values with commas like ""setup, edit, config"".",
-        required: true,
-        defaultValue: "SETUP",
-        order: 2,
-        category: "Giving",
-        key: AttributeKeys.SetupKeywords )]
+    [TextField( "Setup Keyword",
+        Description = @"The case-insensitive keyword that will be expected at the beginning of the message. Separate multiple values with commas like ""setup, edit, config"".",
+        IsRequired = true,
+        DefaultValue = "SETUP",
+        Order = 2,
+        Category = "Giving",
+        Key = AttributeKeys.SetupKeywords )]
 
-    [CurrencyField(
-        name: "Maximum Gift Amount",
-        description: "Leave blank to allow gifts of any size.",
-        required: false,
-        order: 3,
-        category: "Giving",
-        key: AttributeKeys.MaxAmount )]
+    [CurrencyField( "Maximum Gift Amount",
+        Description = "Leave blank to allow gifts of any size.",
+        IsRequired = false,
+        Order = 3,
+        Category = "Giving",
+        Key = AttributeKeys.MaxAmount )]
 
-    [AccountField(
-        name: "Financial Account",
-        description: "The financial account to designate gifts toward. Leave blank to use the person's default giving designation.",
-        required: false,
-        category: "Giving",
-        order: 4,
-        key: AttributeKeys.FinancialAccount )]
+    [AccountField( "Financial Account",
+        Description = "The financial account to designate gifts toward. Leave blank to use the person's default giving designation.",
+        IsRequired = false,
+        Category = "Giving",
+        Order = 4,
+        Key = AttributeKeys.FinancialAccount )]
 
-    [LinkedPage(
-        name: "Setup Page",
-        description: "The page to link with a token for the person to setup their SMS giving",
-        required: false,
-        category: "Giving",
-        order: 5,
-        key: AttributeKeys.SetupPage )]
+    [LinkedPage( "Setup Page",
+        Description = "The page to link with a token for the person to setup their SMS giving",
+        IsRequired = false,
+        Category = "Giving",
+        Order = 5,
+        Key = AttributeKeys.SetupPage )]
 
-    [TextField(
-        name: "Refund Keyword",
-        description: @"The case-insensitive keyword that is expected to trigger the refund. Leave blank to disable SMS refunds. Separate multiple values with commas like ""refund, undo, oops"".",
-        required: false,
-        defaultValue: "REFUND",
-        order: 6,
-        category: "Refund",
-        key: AttributeKeys.RefundKeywords )]
+    [TextField( "Refund Keyword",
+        Description = @"The case-insensitive keyword that is expected to trigger the refund. Leave blank to disable SMS refunds. Separate multiple values with commas like ""refund, undo, oops"".",
+        IsRequired = false,
+        DefaultValue = "REFUND",
+        Order = 6,
+        Category = "Refund",
+        Key = AttributeKeys.RefundKeywords )]
 
-    [IntegerField(
-        name: "Processing Delay Minutes",
-        description: "The number of minutes to delay processing the gifts and allow refunds (if the refund keyword is set). Delaying allows SMS requested refunds to completely bypass the financial gateway. Set to zero or leave blank to process gifts immediately and disallow refunds.",
-        required: false,
-        defaultValue: 30,
-        order: 7,
-        category: "Refund",
-        key: AttributeKeys.ProcessingDelayMinutes )]
+    [IntegerField( "Processing Delay Minutes",
+        Description = "The number of minutes to delay processing the gifts and allow refunds (if the refund keyword is set). Delaying allows SMS requested refunds to completely bypass the financial gateway. Set to zero or leave blank to process gifts immediately and disallow refunds.",
+        IsRequired = false,
+        DefaultIntegerValue = 30,
+        Order = 7,
+        Category = "Refund",
+        Key = AttributeKeys.ProcessingDelayMinutes )]
 
-    [CodeEditorField(
-        mode: CodeEditorMode.Lava,
-        theme: CodeEditorTheme.Rock,
-        name: "Help Response",
-        description: "The response that will be sent if the sender's message doesn't make sense, there is missing information, or an error occurs. <span class='tip tip-lava'></span> Use {{ Lava | Debug }} to see all available fields.",
-        required: true,
-        defaultValue: "Something went wrong. To give, simply text ‘{{ Keyword }} 100’ or ‘{{ Keyword }} $123.45’. Please contact us if you need help.",
-        order: 8,
-        category: "Response",
-        key: AttributeKeys.HelpResponse )]
+    [CodeEditorField( "Help Response",
+        EditorMode = CodeEditorMode.Lava,
+        EditorTheme = CodeEditorTheme.Rock,
+        Description = "The response that will be sent if the sender's message doesn't make sense, there is missing information, or an error occurs. <span class='tip tip-lava'></span> Use {{ Lava | Debug }} to see all available fields.",
+        IsRequired = true,
+        DefaultValue = "Something went wrong. To give, simply text ‘{{ Keyword }} 100’ or ‘{{ Keyword }} $123.45’. Please contact us if you need help.",
+        Order = 8,
+        Category = "Response",
+        Key = AttributeKeys.HelpResponse )]
 
-    [CodeEditorField(
-        mode: CodeEditorMode.Lava,
-        theme: CodeEditorTheme.Rock,
-        name: "Max Amount Response",
-        description: "The response that will be sent if the sender is trying to give more than the max amount (if configured). <span class='tip tip-lava'></span> Use {{ Lava | Debug }} to see all available fields.",
-        required: false,
-        defaultValue: "Thank you for your generosity but our mobile giving solution cannot process a gift this large. Please give using our website.",
-        order: 9,
-        category: "Response",
-        key: AttributeKeys.MaxAmountResponse )]
+    [CodeEditorField( "Max Amount Response",
+        EditorMode = CodeEditorMode.Lava,
+        EditorTheme = CodeEditorTheme.Rock,
+        Description = "The response that will be sent if the sender is trying to give more than the max amount (if configured). <span class='tip tip-lava'></span> Use {{ Lava | Debug }} to see all available fields.",
+        IsRequired = false,
+        DefaultValue = "Thank you for your generosity but our mobile giving solution cannot process a gift this large. Please give using our website.",
+        Order = 9,
+        Category = "Response",
+        Key = AttributeKeys.MaxAmountResponse )]
 
-    [CodeEditorField(
-        mode: CodeEditorMode.Lava,
-        theme: CodeEditorTheme.Rock,
-        name: "Setup Response",
-        description: "The response that will be sent if the sender is unknown, does not have a saved account, or requests to edit their giving profile. <span class='tip tip-lava'></span> Use {{ Lava | Debug }} to see all available fields.",
-        required: true,
-        defaultValue: "Welcome! Let's set up your device to securely give using this link: {% if SetupLink and SetupLink != empty %}{{ SetupLink | CreateShortLink }}{% endif %}",
-        order: 10,
-        category: "Response",
-        key: AttributeKeys.SetupResponse )]
+    [CodeEditorField( "Setup Response",
+        EditorMode = CodeEditorMode.Lava,
+        EditorTheme = CodeEditorTheme.Rock,
+        Description = "The response that will be sent if the sender is unknown, does not have a saved account, or requests to edit their giving profile. <span class='tip tip-lava'></span> Use {{ Lava | Debug }} to see all available fields.",
+        IsRequired = true,
+        DefaultValue = "Welcome! Let's set up your device to securely give using this link: {% if SetupLink and SetupLink != empty %}{{ SetupLink | CreateShortLink }}{% endif %}",
+        Order = 10,
+        Category = "Response",
+        Key = AttributeKeys.SetupResponse )]
 
-    [CodeEditorField(
-        mode: CodeEditorMode.Lava,
-        theme: CodeEditorTheme.Rock,
-        name: "Success Response",
-        description: "The response that will be sent if the payment is successful. <span class='tip tip-lava'></span> Use {{ Lava | Debug }} to see all available fields.",
-        required: true,
-        defaultValue: "Thank you! We received your gift of {{ 'Global' | Attribute:'CurrencySymbol' }}{{ Amount | Format:'#,##0.00' }} to the {{ AccountName }}.",
-        order: 11,
-        category: "Response",
-        key: AttributeKeys.SuccessResponse )]
+    [CodeEditorField( "Success Response",
+        EditorMode = CodeEditorMode.Lava,
+        EditorTheme = CodeEditorTheme.Rock,
+        Description = "The response that will be sent if the payment is successful. <span class='tip tip-lava'></span> Use {{ Lava | Debug }} to see all available fields.",
+        IsRequired = true,
+        DefaultValue = "Thank you! We received your gift of {{ 'Global' | Attribute:'CurrencySymbol' }}{{ Amount | Format:'#,##0.00' }} to the {{ AccountName }}.",
+        Order = 11,
+        Category = "Response",
+        Key = AttributeKeys.SuccessResponse )]
 
-    [CodeEditorField(
-        mode: CodeEditorMode.Lava,
-        theme: CodeEditorTheme.Rock,
-        name: "Refund Failure Response",
-        description: "The response that will be sent if the sender's gift cannot be refunded. <span class='tip tip-lava'></span> Use {{ Lava | Debug }} to see all available fields.",
-        required: true,
-        defaultValue: "We are unable to process a refund for your last gift. Please contact us for assistance.",
-        order: 12,
-        category: "Response",
-        key: AttributeKeys.RefundFailureResponse )]
+    [CodeEditorField( "Refund Failure Response",
+        EditorMode = CodeEditorMode.Lava,
+        EditorTheme = CodeEditorTheme.Rock,
+        Description = "The response that will be sent if the sender's gift cannot be refunded. <span class='tip tip-lava'></span> Use {{ Lava | Debug }} to see all available fields.",
+        IsRequired = true,
+        DefaultValue = "We are unable to process a refund for your last gift. Please contact us for assistance.",
+        Order = 12,
+        Category = "Response",
+        Key = AttributeKeys.RefundFailureResponse )]
 
-    [CodeEditorField(
-        mode: CodeEditorMode.Lava,
-        theme: CodeEditorTheme.Rock,
-        name: "Refund Success Response",
-        description: "The response that will be sent if the refund is successful. <span class='tip tip-lava'></span> Use {{ Lava | Debug }} to see all available fields.",
-        required: true,
-        defaultValue: "Your gift for {{ 'Global' | Attribute:'CurrencySymbol' }}{{ Amount | Format:'#,##0.00' }} to the {{ AccountName }} has been refunded.",
-        order: 13,
-        category: "Response",
-        key: AttributeKeys.RefundSuccessResponse )]
+    [CodeEditorField( "Refund Success Response",
+        EditorMode = CodeEditorMode.Lava,
+        EditorTheme = CodeEditorTheme.Rock,
+        Description = "The response that will be sent if the refund is successful. <span class='tip tip-lava'></span> Use {{ Lava | Debug }} to see all available fields.",
+        IsRequired = true,
+        DefaultValue = "Your gift for {{ 'Global' | Attribute:'CurrencySymbol' }}{{ Amount | Format:'#,##0.00' }} to the {{ AccountName }} has been refunded.",
+        Order = 13,
+        Category = "Response",
+        Key = AttributeKeys.RefundSuccessResponse )]
 
     #endregion Attributes
 
-    [Rock.SystemGuid.EntityTypeGuid( "EFB22EDF-49E5-46C9-B204-AD99876E44D6")]
+    [Rock.SystemGuid.EntityTypeGuid( "EFB22EDF-49E5-46C9-B204-AD99876E44D6" )]
     public class SmsActionGive : SmsActionComponent
     {
         #region Keys
@@ -794,7 +782,7 @@ namespace Rock.Communication.SmsActions
             /// <param name="smsMessage"></param>
             public SmsGiveContext( SmsActionCache smsActionCache, SmsMessage smsMessage )
             {
-                SmsActionCache = smsActionCache ?? throw new ArgumentNullException( "smsActionCache" );
+                SmsActionId = smsActionCache?.Id ?? throw new ArgumentNullException( "smsActionCache" );
                 SmsMessage = smsMessage ?? throw new ArgumentNullException( "smsMessage" );
 
                 MessageText = ( smsMessage.Message ?? string.Empty ).Trim();
@@ -818,7 +806,9 @@ namespace Rock.Communication.SmsActions
             /// <summary>
             /// The SMS action that is handling the SMS processing
             /// </summary>
-            public SmsActionCache SmsActionCache { get; private set; }
+            public SmsActionCache SmsActionCache => SmsActionCache.Get( SmsActionId );
+
+            private int SmsActionId { get; set; }
 
             /// <summary>
             /// The object representing the SMS
