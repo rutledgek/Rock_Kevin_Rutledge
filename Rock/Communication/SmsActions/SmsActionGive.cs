@@ -215,9 +215,11 @@ namespace Rock.Communication.SmsActions
             public const string Message = "Message";
             public const string Keyword = "Keyword";
             public const string Amount = "Amount";
+            public const string AccountId = "AccountId";
             public const string AccountName = "AccountName";
             public const string SetupLink = "SetupLink";
             public const string PersonToken = "PersonToken";
+            public const string PersonActionIdentifier = "PersonActionIdentifier";
         }
 
         #endregion Keys
@@ -335,7 +337,7 @@ namespace Rock.Communication.SmsActions
             errorMessage = string.Empty;
 
             CreatePersonRecordIfNeeded( context );
-            SetPersonToken( context );
+            SetPersonIdentifier( context );
             SetSetupPageLink( context );
 
             return GetResolvedSmsResponse( AttributeKeys.SetupResponse, context );
@@ -360,8 +362,9 @@ namespace Rock.Communication.SmsActions
             CreatePersonRecordIfNeeded( context );
             var defaultSavedAccount = GetDefaultSavedAccount( context );
             var financialAccount = GetFinancialAccount( context );
+            context.LavaMergeFields[LavaMergeFieldKeys.AccountId] = financialAccount?.Id;
 
-            SetPersonToken( context );
+            SetPersonIdentifier( context );
             SetSetupPageLink( context );
 
             // If the person doesn't have a configured account designation, or the person
@@ -461,7 +464,7 @@ namespace Rock.Communication.SmsActions
             errorMessage = string.Empty;
             var service = new FinancialTransactionService( context.RockContext );
             var futureTransactionToDelete = GetMostRecentFutureTransactionToDelete( context, service );
-            SetPersonToken( context );
+            SetPersonIdentifier( context );
 
             if ( futureTransactionToDelete == null )
             {
@@ -518,6 +521,7 @@ namespace Rock.Communication.SmsActions
             // Set the merge fields and then return the transaction
             context.LavaMergeFields[LavaMergeFieldKeys.Amount] = futureTransactionToDelete.TotalAmount;
             var firstDetail = futureTransactionToDelete.TransactionDetails.FirstOrDefault();
+            context.LavaMergeFields[LavaMergeFieldKeys.AccountId] = firstDetail.AccountId;
             context.LavaMergeFields[LavaMergeFieldKeys.AccountName] = firstDetail.Account?.PublicName ?? string.Empty;
 
             return futureTransactionToDelete;
@@ -563,10 +567,17 @@ namespace Rock.Communication.SmsActions
                 return null;
             }
 
-            return new FinancialPersonSavedAccountService( context.RockContext )
-                .GetByPersonId( context.SmsMessage.FromPerson.Id )
-                .AsNoTracking()
-                .FirstOrDefault( sa => sa.IsDefault && sa.FinancialGatewayId.HasValue );
+            var personSavedAccountsQry = new FinancialPersonSavedAccountService( context.RockContext )
+                .GetByPersonId( context.SmsMessage.FromPerson.Id ).Where( a => a.FinancialGatewayId.HasValue );
+
+            var defaultAccount = personSavedAccountsQry.Where( sa => sa.IsDefault ).FirstOrDefault();
+            if ( defaultAccount == null )
+            {
+                // If a specific default account is not set, just use the first one.
+                defaultAccount = personSavedAccountsQry.FirstOrDefault();
+            }
+
+            return defaultAccount;
         }
 
         #endregion Model Helpers
@@ -690,6 +701,7 @@ namespace Rock.Communication.SmsActions
                 financialAccount = financialAccountService.Get( rootAccountGuid.Value );
             }
 
+            context.LavaMergeFields[LavaMergeFieldKeys.AccountId] = financialAccount.Id;
             context.LavaMergeFields[LavaMergeFieldKeys.AccountName] = financialAccount?.PublicName ?? string.Empty;
             return financialAccount;
         }
@@ -721,7 +733,23 @@ namespace Rock.Communication.SmsActions
                 setupPage.Parameters["Person"] = personToken;
             }
 
-            // TODO - A null ref exception is occurring within this BuildUrl call for Life.Church and I haven't been able to reproduce the issue
+            var personActionIdentifier = context.LavaMergeFields.GetValueOrNull( LavaMergeFieldKeys.PersonActionIdentifier ).ToStringSafe();
+            if ( !personToken.IsNullOrWhiteSpace() )
+            {
+                setupPage.Parameters["rckid"] = personActionIdentifier;
+            }
+
+            // AccountIds is in the format AccountId^Amount^Enabled, where Enabled indicates if the amount can be changed or is presented as readonly
+            var accountId = context.LavaMergeFields.GetValueOrNull( LavaMergeFieldKeys.AccountId ).ToStringSafe()?.AsIntegerOrNull();
+            if ( accountId.HasValue && FinancialAccountCache.Get( accountId.Value ) != null )
+            {
+                var amount = context.LavaMergeFields.GetValueOrNull( LavaMergeFieldKeys.Amount ).ToStringSafe();
+                setupPage.Parameters["AccountIds"] = $"{accountId}^{amount}^{false}";
+            }
+
+            // If BuildUrl() throws an exception, it could be because we are in an async task and
+            // there is no HttpContext.Current. If so, make sure the caller sets HttpContext.Current before launching the task.
+            // Or fix setupPage.BuildUrl so it doesn't require HttpContext.Current.
             try
             {
                 context.LavaMergeFields[LavaMergeFieldKeys.SetupLink] = setupPage.BuildUrl();
@@ -736,7 +764,7 @@ namespace Rock.Communication.SmsActions
         /// Set the person token on the context
         /// </summary>
         /// <param name="context"></param>
-        private void SetPersonToken( SmsGiveContext context )
+        private void SetPersonIdentifier( SmsGiveContext context )
         {
             var person = context.SmsMessage.FromPerson;
 
@@ -750,7 +778,6 @@ namespace Rock.Communication.SmsActions
             const int expiresInMinutes = 30;
             var expiresDateTime = RockDateTime.Now.AddMinutes( expiresInMinutes );
             var personKey = person.GetImpersonationToken( expiresDateTime, null, null );
-
             if ( !personKey.IsNullOrWhiteSpace() )
             {
                 context.LavaMergeFields[LavaMergeFieldKeys.PersonToken] = personKey;
@@ -758,6 +785,18 @@ namespace Rock.Communication.SmsActions
             else
             {
                 context.LavaMergeFields[LavaMergeFieldKeys.PersonToken] = string.Empty;
+            }
+
+            // We'll also need a personActionIdentifier for blocks that use that instead.
+            var personActionIdentifier = person.GetPersonActionIdentifier( "transaction" );
+
+            if ( !personActionIdentifier.IsNullOrWhiteSpace() )
+            {
+                context.LavaMergeFields[LavaMergeFieldKeys.PersonActionIdentifier] = personActionIdentifier;
+            }
+            else
+            {
+                context.LavaMergeFields[LavaMergeFieldKeys.PersonActionIdentifier] = string.Empty;
             }
         }
 
@@ -808,8 +847,10 @@ namespace Rock.Communication.SmsActions
                     { LavaMergeFieldKeys.Message, SmsMessage },
                     { LavaMergeFieldKeys.Keyword, PrimaryKeyword },
                     { LavaMergeFieldKeys.Amount, string.Empty },
+                    { LavaMergeFieldKeys.AccountId, string.Empty },
                     { LavaMergeFieldKeys.AccountName, string.Empty },
                     { LavaMergeFieldKeys.SetupLink, string.Empty },
+                    { LavaMergeFieldKeys.PersonActionIdentifier, string.Empty },
                     { LavaMergeFieldKeys.PersonToken, string.Empty }
                 };
             }
