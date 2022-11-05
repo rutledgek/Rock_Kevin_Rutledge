@@ -907,7 +907,10 @@ namespace Rock.Communication.SmsActions
             /// </summary>
             public bool IsGiveMessage
             {
-                get => !MatchingGiveKeyword.IsNullOrWhiteSpace();
+                // If they provided a GIVE keyword, that indicates a GIVE message,
+                // but also magically treat a simple text starting with $ as a GIVE.
+                // For example: $150 should give $150
+                get => !MatchingGiveKeyword.IsNullOrWhiteSpace() || MessageText.StartsWith( "$" );
             }
 
             /// <summary>
