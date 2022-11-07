@@ -16,9 +16,7 @@
 //
 namespace Rock.Migrations
 {
-    using System;
-    using System.Data.Entity.Migrations;
-    using Rock.Data;
+    using Rock.Utility.Settings;
 
     /// <summary>
     ///
@@ -47,24 +45,25 @@ namespace Rock.Migrations
 
         public static bool CheckSqlServerVersionGreaterThanSqlServer2016()
         {
-            var isOk = false;
+            var isOk = RockInstanceConfig.Database.Platform == RockInstanceDatabaseConfiguration.PlatformSpecifier.AzureSql;
 
-            try
+            if ( !isOk )
             {
-                var sqlVersion = DbService.ExecuteScaler( "SELECT SERVERPROPERTY('productversion')" ).ToString();
-                var versionParts = sqlVersion.Split( '.' );
-
-                int.TryParse( versionParts[0], out var majorVersion );
-
-                if ( majorVersion > 13 )
+                try
                 {
-                    isOk = true;
+                    var versionParts = RockInstanceConfig.Database.VersionNumber.Split( '.' );
+                    int.TryParse( versionParts[0], out var majorVersion );
+
+                    if ( majorVersion > 13 )
+                    {
+                        isOk = true;
+                    }
                 }
-            }
-            catch
-            {
-                // This would be pretty bad, but regardless we'll just
-                // return the isOk (not) and let the caller proceed.
+                catch
+                {
+                    // This would be pretty bad, but regardless we'll just
+                    // return the isOk (not) and let the caller proceed.
+                }
             }
 
             return isOk;

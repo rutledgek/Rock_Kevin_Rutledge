@@ -76,6 +76,8 @@ namespace Rock.Update.Helpers
         /// level to proceed.
         /// </summary>
         /// <returns></returns>
+        [Obsolete( "No longer required after successful update to v1.11.0" )]
+        [RockObsolete( "1.11.1" )]
         public static bool CheckSqlServerVersionGreaterThenSqlServer2012()
         {
             var isOk = false;
@@ -121,8 +123,6 @@ namespace Rock.Update.Helpers
                 return;
             }
 
-            var hasSqlServer2012OrGreater = CheckSqlServerVersionGreaterThenSqlServer2012();
-            var hasSqlServer2016OrGreater = CheckSqlServerVersion( 13 );
             if ( requiresNet472 )
             {
                 var result = CheckFrameworkVersion();
@@ -132,12 +132,9 @@ namespace Rock.Update.Helpers
                 }
             }
 
-            if ( !hasSqlServer2012OrGreater )
-            {
-                throw new VersionValidationException( $"Version {targetVersion} requires Microsoft Sql Server 2012 or greater." );
-            }
-
-            if ( !hasSqlServer2016OrGreater )
+            var requiresSqlServer16OrHigher = targetVersion.Major > 1 || targetVersion.Minor > 14;
+            var hasSqlServer2016OrGreater = CheckSqlServerVersion( 13 );
+            if ( !hasSqlServer2016OrGreater && requiresSqlServer16OrHigher )
             {
                 throw new VersionValidationException( $"Version {targetVersion} requires Microsoft SQL Azure or Microsoft Sql Server 2016 or greater." );
             }

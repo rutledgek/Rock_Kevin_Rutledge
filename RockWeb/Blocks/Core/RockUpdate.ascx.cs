@@ -147,13 +147,6 @@ namespace RockWeb.Blocks.Core
                     nbBackupMessage.Visible = false;
                 }
 
-                _hasSqlServer14OrHigher = VersionValidationHelper.CheckSqlServerVersionGreaterThenSqlServer2012();
-
-                if ( !_hasSqlServer14OrHigher )
-                {
-                    nbSqlServerVersionIssue.Visible = true;
-                }
-
                 _hasSqlServer16OrHigher = VersionValidationHelper.CheckSqlServerVersion( 13 );
 
                 if ( !_hasSqlServer16OrHigher )
@@ -169,6 +162,12 @@ namespace RockWeb.Blocks.Core
                     {
                         // if VersionIssue is visible, and they are updating to v13 or later, show the version Warning as an Danger instead.
                         nbVersionIssue.NotificationBoxType = Rock.Web.UI.Controls.NotificationBoxType.Danger;
+                    }
+
+                    if ( !_hasSqlServer16OrHigher && new Version( _releases.Last().SemanticVersion ) >= new Version( "1.15.0" ) )
+                    {
+                        // if SqlServer2016Issue is visible, and they are updating to v15 or later, show the version Warning as an Danger instead.
+                        nbSqlServer2016Issue.NotificationBoxType = Rock.Web.UI.Controls.NotificationBoxType.Danger;
                     }
 
                     pnlUpdatesAvailable.Visible = true;

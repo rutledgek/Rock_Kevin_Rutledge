@@ -32,7 +32,7 @@
                         You will need to upgrade your database in order to proceed with that update.
                     </p>
                 </Rock:NotificationBox>
-                <Rock:NotificationBox ID="nbSqlServer2016Issue" runat="server" NotificationBoxType="Danger" Visible="false">
+                <Rock:NotificationBox ID="nbSqlServer2016Issue" runat="server" NotificationBoxType="Warning" Visible="false">
                     <h2><i class="fa fa-exclamation-triangle"></i> Microsoft SQL Server Update Required</h2>
                     <p>
                         As of Rock McKinley v15, Rock requires Microsoft SQL Azure or SQL Server 2016 or greater.
