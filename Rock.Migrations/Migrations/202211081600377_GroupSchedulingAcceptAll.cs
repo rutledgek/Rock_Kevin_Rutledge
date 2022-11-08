@@ -18,7 +18,7 @@ namespace Rock.Migrations
 {
     using System;
     using System.Data.Entity.Migrations;
-    
+
     /// <summary>
     ///
     /// </summary>
@@ -179,7 +179,7 @@ WHERE
 	[Guid] = 'F8E4CE07-68F5-4169-A865-ECE915CF421C'
 " );
         }
-        
+
         /// <summary>
         /// Operations to be performed during the downgrade process.
         /// </summary>

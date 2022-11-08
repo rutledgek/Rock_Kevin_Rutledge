@@ -68,9 +68,9 @@
     <Compile Include="Migrations\202209221552523_AddAbbreviatedNameToSchedule.designer.cs">
       <DependentUpon>202209221552523_AddAbbreviatedNameToSchedule.cs</DependentUpon>
     </Compile>
-    <Compile Include="Migrations\202210041623479_GroupSchedulingAcceptAll.cs" />
-    <Compile Include="Migrations\202210041623479_GroupSchedulingAcceptAll.designer.cs">
-      <DependentUpon>202210041623479_GroupSchedulingAcceptAll.cs</DependentUpon>
+    <Compile Include="Migrations\202211081600377_GroupSchedulingAcceptAll.cs" />
+    <Compile Include="Migrations\202211081600377_GroupSchedulingAcceptAll.designer.cs">
+      <DependentUpon>202211081600377_GroupSchedulingAcceptAll.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Version 14.0\Version 1.14.0\202209091915177_PersonNoteColors.cs" />
     <Compile Include="Migrations\Version 14.0\Version 1.14.0\202209091915177_PersonNoteColors.designer.cs">
@@ -1329,8 +1329,8 @@
     <EmbeddedResource Include="Migrations\202209221552523_AddAbbreviatedNameToSchedule.resx">
       <DependentUpon>202209221552523_AddAbbreviatedNameToSchedule.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\202210041623479_GroupSchedulingAcceptAll.resx">
-      <DependentUpon>202210041623479_GroupSchedulingAcceptAll.cs</DependentUpon>
+    <EmbeddedResource Include="Migrations\202211081600377_GroupSchedulingAcceptAll.resx">
+      <DependentUpon>202211081600377_GroupSchedulingAcceptAll.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\Version 14.0\Version 1.14.0\202209091915177_PersonNoteColors.resx">
       <DependentUpon>202209091915177_PersonNoteColors.cs</DependentUpon>
