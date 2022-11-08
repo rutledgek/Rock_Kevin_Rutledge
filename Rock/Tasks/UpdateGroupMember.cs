@@ -36,6 +36,7 @@ namespace Rock.Tasks
         /// <param name="message"></param>
         public override void Execute( Message message )
         {
+            Rock.Logging.RockLogger.Log.Debug( Rock.Logging.RockLogDomains.Crm, $"UpdateGroupMember.Execute starting for Group.Id = {message.GroupId} and GroupMember.GUID = {message.GroupMemberGuid} and Person.Id = {message.PersonId}" );
             // if a GroupMember is getting added, call CalculateRequirements to make sure that group member requirements are calculated (if the group has requirements)
             if ( message.State == EntityContextState.Added || ( message.PreviousIsArchived && message.IsArchived != message.PreviousIsArchived ) )
             {
@@ -166,6 +167,7 @@ namespace Rock.Tasks
                     }
                 }
             }
+            Rock.Logging.RockLogger.Log.Debug( Rock.Logging.RockLogDomains.Crm, $"UpdateGroupMember.Execute ending for Group.Id = {message.GroupId} and GroupMember.GUID = {message.GroupMemberGuid} and Person.Id = {message.PersonId}" );
         }
 
         private bool QualifiersMatch( RockContext rockContext, GroupMemberWorkflowTrigger workflowTrigger, GroupMemberStatus prevStatus, GroupMemberStatus status, int prevRoleId, int roleId )
