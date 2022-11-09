@@ -14,24 +14,21 @@
 // limitations under the License.
 // </copyright>
 //
+using Rock.Attribute;
+using Rock.Data;
+using Rock.Model;
+using Rock.Web.Cache;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Composition;
 using System.Data.Entity;
 using System.Linq;
-using Mono.CSharp;
-using Rock.Attribute;
-using Rock.Common.Mobile.Blocks.Core.Notes;
-using Rock.Data;
-using Rock.Field.Types;
-using Rock.Model;
-using Rock.Web.Cache;
 
 namespace Rock.Workflow.Action
 {
     // <summary>
-    // Adds a reminder to a person's list
+    // Adds a reminder to a person's list.
     // </summary>
     [ActionCategory( "People" )]
     [Description( "Adds a reminder to a person's list of reminders." )]
@@ -96,12 +93,14 @@ namespace Rock.Workflow.Action
     Key = AttributeKey.NumberOfTimesToRepeat,
     FieldTypeClassNames = new string[] { "Rock.Field.Types.IntegerFieldType", "Rock.Field.Types.TextFieldType" } )]
 
-
     #endregion Workflow Attributes
 
     [Rock.SystemGuid.EntityTypeGuid( "3AC6CAF2-6827-44E2-B405-ED943C0CC580" )]
     public class ReminderAdd : ActionComponent
     {
+        /// <summary>
+        /// Keys for the attributes
+        /// </summary>
         private static class AttributeKey
         {
             public const string Person = "Person";
@@ -125,29 +124,26 @@ namespace Rock.Workflow.Action
         {
             errorMessages = new List<string>();
 
-            var person = GetPersonAliasFromActionAttribute( AttributeKey.Person, rockContext, action, errorMessages );
+            var person = GetPersonFromActionAttribute( AttributeKey.Person, rockContext, action, errorMessages );
             if ( person == null )
             {
                 errorMessages.Add( "No person was provided for the reminder." );
             }
+
             if ( !person.PrimaryAliasId.HasValue )
             {
                 errorMessages.Add( $"{person.FullName} does not have a primary alias identifier." );
-                return false;
+            }
+
+            ReminderTypeService reminderTypeService = new ReminderTypeService( rockContext );
+            var reminderType = reminderTypeService.Get( GetAttributeValue( action, AttributeKey.ReminderType ).AsGuid() );
+
+            if ( reminderType == null )
+            {
+                errorMessages.Add( $"{action.ActionType.Name} does not have a valid reminder type." );
             }
 
             var mergeFields = GetMergeFields( action );
-
-            ReminderService reminderService = new ReminderService( rockContext );
-            ReminderTypeService reminderTypeService = new ReminderTypeService( rockContext );
-
-            Reminder reminder = new Reminder();
-            var reminderType = reminderTypeService.Get( GetAttributeValue( action, AttributeKey.ReminderType ).AsGuid() );
-            if ( reminderType != null )
-            {
-                reminder.ReminderTypeId = reminderType.Id;
-            }
-            reminder.PersonAliasId = person.PrimaryAliasId.Value;
 
             // Get the entity from the reminder.
             EntityTypeService entityTypeService = new EntityTypeService( rockContext );
@@ -176,14 +172,26 @@ namespace Rock.Workflow.Action
             if ( entityObject == null )
             {
                 errorMessages.Add( string.Format( "Entity could not be found for selected value ('{0}')!", entityIdGuidString ) );
+            }
+
+            if ( errorMessages.Any() )
+            {
+                errorMessages.ForEach( m => action.AddLogEntry( m, true ) );
                 return false;
             }
 
-            var entityWithAttributes = entityObject as Attribute.IHasAttributes;
-            if ( entityWithAttributes == null )
+            ReminderService reminderService = new ReminderService( rockContext );
+
+            Reminder reminder = new Reminder
             {
-                errorMessages.Add( string.Format( "Entity does not support attributes ('{0}')!", entityIdGuidString ) );
-                return false;
+                ReminderTypeId = reminderType.Id,
+
+                PersonAliasId = person.PrimaryAliasId.Value
+            };
+
+            if ( reminder.PersonAlias == null )
+            {
+                reminder.PersonAlias = new PersonAliasService( rockContext ).Get( person.PrimaryAliasId.Value );
             }
 
             reminder.EntityId = entityObject.Id;
@@ -197,13 +205,10 @@ namespace Rock.Workflow.Action
             reminderService.Add( reminder );
             rockContext.SaveChanges();
 
-            //TO-DO make sure this is run for the early outs?
-            errorMessages.ForEach( m => action.AddLogEntry( m, true ) );
-
             return true;
         }
 
-        private Person GetPersonAliasFromActionAttribute( string key, RockContext rockContext, WorkflowAction action, List<string> errorMessages )
+        private Person GetPersonFromActionAttribute( string key, RockContext rockContext, WorkflowAction action, List<string> errorMessages )
         {
             string value = GetAttributeValue( action, key );
             Guid guidPersonAttribute = value.AsGuid();
@@ -237,11 +242,9 @@ namespace Rock.Workflow.Action
                 return null;
             }
 
-            PersonAliasService personAliasService = new PersonAliasService( rockContext );
-            return personAliasService.Queryable().AsNoTracking()
+            return new PersonAliasService( rockContext ).Queryable().AsNoTracking()
                 .Where( a => a.Guid.Equals( personAliasGuid ) )
-                .Select( a => a.Person )
-                .FirstOrDefault();
+                .Select( a => a.Person ).FirstOrDefault();
         }
     }
 }
