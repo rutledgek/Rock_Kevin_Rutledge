@@ -38,7 +38,6 @@ namespace Rock.Model
             /// </summary>
             protected override void PreSave()
             {
-                Rock.Logging.RockLogger.Log.Debug( Rock.Logging.RockLogDomains.Crm, $"Starting Person.PreSave() for Person.Id {this.Entity.Id}" );
                 var rockContext = ( RockContext ) this.RockContext;
 
                 var inactiveStatus = DefinedValueCache.Get( Rock.SystemGuid.DefinedValue.PERSON_RECORD_STATUS_INACTIVE.AsGuid() );
@@ -64,8 +63,6 @@ namespace Rock.Model
 
                         if ( oldRecordStatusValueId != Entity.RecordStatusValueId )
                         {
-                            Rock.Logging.RockLogger.Log.Debug( Rock.Logging.RockLogDomains.Crm, $"Person.PreSave() setting Inactive logic for Person.Id {this.Entity.Id}" );
-                        
                             // If person was just inactivated, update the group member status for all their group memberships to be inactive
                             foreach ( var groupMember in new GroupMemberService( rockContext )
                                 .Queryable()
@@ -74,7 +71,6 @@ namespace Rock.Model
                                     m.GroupMemberStatus != GroupMemberStatus.Inactive &&
                                     !m.Group.GroupType.IgnorePersonInactivated ) )
                             {
-                                Rock.Logging.RockLogger.Log.Debug( Rock.Logging.RockLogDomains.Crm, $"Person.PreSave() setting groupMember Inactive for Person.Id {this.Entity.Id} Group.Id = {groupMember.GroupId} and GroupMember.Id = {groupMember.Id}" );
                                 groupMember.GroupMemberStatus = GroupMemberStatus.Inactive;
                             }
 
@@ -332,7 +328,6 @@ namespace Rock.Model
                         }
                 }
                 base.PreSave();
-                Rock.Logging.RockLogger.Log.Debug( Rock.Logging.RockLogDomains.Crm, $"Ending Person.PreSave() for Person.Id {this.Entity.Id}" );
             }
 
             /// <summary>
@@ -344,7 +339,6 @@ namespace Rock.Model
             /// </remarks>
             protected override void PostSave()
             {
-                Rock.Logging.RockLogger.Log.Debug( Rock.Logging.RockLogDomains.Crm, $"Starting Person.PostSave() for Person.Id {this.Entity.Id}" );
                 if ( HistoryChanges?.Any() == true )
                 {
                     HistoryService.SaveChanges(
@@ -373,8 +367,6 @@ namespace Rock.Model
                 PersonService.UpdatePrimaryFamily( this.Entity.Id, RockContext );
                 PersonService.UpdateGivingLeaderId( this.Entity.Id, RockContext );
                 PersonService.UpdateGroupSalutations( this.Entity.Id, RockContext );
-
-                Rock.Logging.RockLogger.Log.Debug( Rock.Logging.RockLogDomains.Crm, $"Ending Person.PostSave() for Person.Id {this.Entity.Id}" );
             }
         }
     }

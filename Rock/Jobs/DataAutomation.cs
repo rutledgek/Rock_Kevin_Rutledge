@@ -415,7 +415,6 @@ Update Family Status: {updateFamilyStatus}
         /// </exception>
         private string InactivatePeople( IJobExecutionContext context )
         {
-            Rock.Logging.RockLogger.Log.Debug( Rock.Logging.RockLogDomains.Crm, "DataAutomation Job. Starting InactivatePeople" );
             try
             {
                 context.UpdateLastStatusMessage( $"Processing person inactivate." );
@@ -525,7 +524,6 @@ Update Family Status: {updateFamilyStatus}
                 // Loop through each person
                 foreach ( var personId in personIds )
                 {
-                    Rock.Logging.RockLogger.Log.Debug( Rock.Logging.RockLogDomains.Crm, $"DataAutomation Job. Starting Inactivating Person.Id = {personId}" );
                     // Update the status on every 100th record
                     if ( recordsProcessed % 100 == 0 )
                     {
@@ -547,7 +545,7 @@ Update Family Status: {updateFamilyStatus}
                                 person.RecordStatusReasonValueId = inactiveReason.Id;
                                 person.InactiveReasonNote = $"Inactivated by the Data Automation Job on {dateStamp}";
                                 rockContext.SaveChanges();
-                                Rock.Logging.RockLogger.Log.Debug( Rock.Logging.RockLogDomains.Crm, $"DataAutomation Job. Finished Inactivating Person.Id = {personId}" );
+                                
                                 recordsUpdated++;
                             }
                         }
