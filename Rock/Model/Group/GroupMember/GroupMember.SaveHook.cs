@@ -43,7 +43,6 @@ namespace Rock.Model
             /// </summary>
             protected override void PreSave()
             {
-                Rock.Logging.RockLogger.Log.Debug( Rock.Logging.RockLogDomains.Crm, $"GroupMember.PreSave() starting for Group.Id = {this.Entity.GroupId} and GroupMember.Id = {this.Entity.Id}" );
                 var rockContext = ( RockContext ) this.RockContext;
                 string errorMessage;
                 if ( this.State != EntityContextState.Deleted
@@ -248,24 +247,22 @@ namespace Rock.Model
                     }
 
                     // process universal search indexing if required
-                    var groupType = GroupTypeCache.Get( group.GroupTypeId );
-                    if ( groupType != null && groupType.IsIndexEnabled )
-                    {
-                        int groupEntityTypeId = EntityTypeCache.GetId<Rock.Model.Group>().Value;
-                        var processEntityTypeIndexMsg = new ProcessEntityTypeIndex.Message
-                        {
-                            EntityTypeId = groupEntityTypeId,
-                            EntityId = group.Id
-                        };
+                    //var groupType = GroupTypeCache.Get( group.GroupTypeId );
+                    //if ( groupType != null && groupType.IsIndexEnabled )
+                    //{
+                    //    var processEntityTypeIndexMsg = new ProcessEntityTypeIndex.Message
+                    //    {
+                    //        EntityTypeId = groupType.Id,
+                    //        EntityId = group.Id
+                    //    };
 
-                        processEntityTypeIndexMsg.SendWhen( this.RockContext.WrappedTransactionCompletedTask );
-                    }
+                    //    processEntityTypeIndexMsg.Send();
+                    //}
                 }
 
                 _preSaveChangesOldGroupId = oldGroupId;
 
                 base.PreSave();
-                Rock.Logging.RockLogger.Log.Debug( Rock.Logging.RockLogDomains.Crm, $"GroupMember.PreSave() completed for Group.Id = {this.Entity.GroupId} and GroupMember.Id = {this.Entity.Id}" );
             }
 
             private int? _preSaveChangesOldGroupId = null;
@@ -279,7 +276,6 @@ namespace Rock.Model
             /// </remarks>
             protected override void PostSave()
             {
-                Rock.Logging.RockLogger.Log.Debug( Rock.Logging.RockLogDomains.Crm, $"GroupMember.PostSave() starting for Group.Id = {this.Entity.GroupId} and GroupMember.Id = {this.Entity.Id}" );
                 var rockContext = ( RockContext ) this.RockContext;
                 if ( HistoryChanges != null )
                 {
@@ -415,8 +411,20 @@ namespace Rock.Model
                     }
                 }
 
+                // process universal search indexing if required
+                var groupType = GroupTypeCache.Get( this.Entity.GroupTypeId );
+                if ( groupType != null && groupType.IsIndexEnabled )
+                {
+                    var processEntityTypeIndexMsg = new ProcessEntityTypeIndex.Message
+                    {
+                        EntityTypeId = groupType.Id,
+                        EntityId = this.Entity.Id
+                    };
+
+                    processEntityTypeIndexMsg.Send();
+                }
+
                 SendUpdateGroupMemberMessage();
-                Rock.Logging.RockLogger.Log.Debug( Rock.Logging.RockLogDomains.Crm, $"GroupMember.PostSave() completed for Group.Id = {this.Entity.GroupId} and GroupMember.Id = {this.Entity.Id}" );
             }
 
             /// <summary>
@@ -425,8 +433,6 @@ namespace Rock.Model
             /// </summary>
             private void SendUpdateGroupMemberMessage()
             {
-                Rock.Logging.RockLogger.Log.Debug( Rock.Logging.RockLogDomains.Crm, $"GroupMember.SendUpdateGroupMemberMessage starting for Group.Id = {this.Entity.GroupId} and GroupMember.Id = {this.Entity.Id}" );
-
                 var updateGroupMemberMsg = new UpdateGroupMember.Message
                 {
                     State = State,
@@ -457,7 +463,6 @@ namespace Rock.Model
                 }
 
                 updateGroupMemberMsg.Send();
-                Rock.Logging.RockLogger.Log.Debug( Rock.Logging.RockLogDomains.Crm, $"GroupMember.SendUpdateGroupMemberMessage ending for Group.Id = {this.Entity.GroupId} and GroupMember.Id = {this.Entity.Id}" );
             }
         }
     }
