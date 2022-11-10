@@ -24,6 +24,7 @@ using Humanizer;
 
 using Rock.Data;
 using Rock.Tasks;
+using Rock.Transactions;
 using Rock.Web.Cache;
 
 namespace Rock.Model
@@ -413,12 +414,13 @@ namespace Rock.Model
 
                 // process universal search indexing if required
                 var groupType = GroupTypeCache.Get( this.Entity.GroupTypeId );
-                if ( groupType != null && groupType.IsIndexEnabled )
+                if ( groupType != null && groupType.IsIndexEnabled && this.Entity.Group.IsActive )
                 {
-                    var processEntityTypeIndexMsg = new ProcessEntityTypeIndex.Message
+                    int groupEntityTypeId = EntityTypeCache.GetId<Rock.Model.Group>().Value;
+                        var processEntityTypeIndexMsg = new ProcessEntityTypeIndex.Message
                     {
-                        EntityTypeId = groupType.Id,
-                        EntityId = this.Entity.Id
+                        EntityTypeId = groupEntityTypeId,
+                        EntityId = this.Entity.GroupId
                     };
 
                     processEntityTypeIndexMsg.Send();
