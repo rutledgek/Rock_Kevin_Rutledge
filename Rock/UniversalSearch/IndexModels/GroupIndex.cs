@@ -119,8 +119,13 @@ namespace Rock.UniversalSearch.IndexModels
         /// </summary>
         /// <param name="group">The group.</param>
         /// <returns></returns>
-        public static GroupIndex LoadByModel( Group group )
+        public static GroupIndex LoadByModel( Group groupArg )
         {
+            var rockContext = new Rock.Data.RockContext();
+            var groupService = new GroupService( rockContext );
+            var group = groupService.GetNoTracking( groupArg.Id );
+
+            Rock.Logging.RockLogger.Log.Debug( Rock.Logging.RockLogDomains.Crm, $"GroupIndex.LoadByModel() Group: {group.Name} Id: {group.Id} Start" );
             var groupIndex = new GroupIndex();
             groupIndex.SourceIndexModel = "Rock.Model.Group";
 
@@ -138,14 +143,22 @@ namespace Rock.UniversalSearch.IndexModels
                 groupIndex.GroupTypeName = group.GroupType.Name;
             }
 
-            if (group.Members != null )
+            Rock.Logging.RockLogger.Log.Debug( Rock.Logging.RockLogDomains.Crm, $"GroupIndex.LoadByModel() Right before checking group.Members.Any()" );
+            var hasMembers = group.Members.Any();
+            
+            if ( hasMembers )
             {
-                groupIndex.MemberList = string.Join( ", ", group.Members.Where( m => m.GroupRole.IsLeader != true ).Select( m => m.Person.FullName ) );
-                groupIndex.LeaderList = string.Join( ", ", group.Members.Where( m => m.GroupRole.IsLeader == true ).Select( m => m.Person.FullName ) );
+                Rock.Logging.RockLogger.Log.Debug( Rock.Logging.RockLogDomains.Crm, $"GroupIndex.LoadByModel() GroupMember raw Count: {group.Members.Count}" );
+                var activeMembers = group.Members.Where( m => m.GroupMemberStatus == GroupMemberStatus.Active ).ToList();
+                Rock.Logging.RockLogger.Log.Debug( Rock.Logging.RockLogDomains.Crm, $"GroupIndex.LoadByModel() GroupMember activeMembers Count: {activeMembers.Count}" );
+                groupIndex.MemberList = string.Join( ", ", activeMembers.Where( m => m.GroupRole.IsLeader != true ).Select( m => m.Person.FullName ) );
+                groupIndex.LeaderList = string.Join( ", ", activeMembers.Where( m => m.GroupRole.IsLeader == true ).Select( m => m.Person.FullName ) );
             }
-
+            
+            Rock.Logging.RockLogger.Log.Debug( Rock.Logging.RockLogDomains.Crm, $"GroupIndex.LoadByModel() Before AddIndexableAttributes" );
             AddIndexableAttributes( groupIndex, group );
-
+            Rock.Logging.RockLogger.Log.Debug( Rock.Logging.RockLogDomains.Crm, $"GroupIndex.LoadByModel() After AddIndexableAttributes" );
+            Rock.Logging.RockLogger.Log.Debug( Rock.Logging.RockLogDomains.Crm, $"GroupIndex.LoadByModel() Group: {group.Name} Id: {group.Id} End" );
             return groupIndex;
         }
 
