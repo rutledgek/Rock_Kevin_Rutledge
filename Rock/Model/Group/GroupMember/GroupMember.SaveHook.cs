@@ -416,14 +416,18 @@ namespace Rock.Model
                 var groupType = GroupTypeCache.Get( this.Entity.GroupTypeId );
                 if ( groupType != null && groupType.IsIndexEnabled && this.Entity.Group.IsActive )
                 {
-                    int groupEntityTypeId = EntityTypeCache.GetId<Rock.Model.Group>().Value;
-                        var processEntityTypeIndexMsg = new ProcessEntityTypeIndex.Message
-                    {
-                        EntityTypeId = groupEntityTypeId,
-                        EntityId = this.Entity.GroupId
-                    };
+                    //System.Diagnostics.Debug.WriteLine( "GroupMember.PostSave() GroupIndexTransaction.Enqueue" );
+                    var groupIndexTransaction = new GroupIndexTransaction( new GroupIndexInfo() { GroupId = this.Entity.GroupId, GroupTypeId = groupType.Id } );
+                    groupIndexTransaction.Enqueue();
 
-                    processEntityTypeIndexMsg.Send();
+                    //int groupEntityTypeId = EntityTypeCache.GetId<Rock.Model.Group>().Value;
+                    //    var processEntityTypeIndexMsg = new ProcessEntityTypeIndex.Message
+                    //{
+                    //    EntityTypeId = groupEntityTypeId,
+                    //    EntityId = this.Entity.GroupId
+                    //};
+
+                    //processEntityTypeIndexMsg.Send();
                 }
 
                 SendUpdateGroupMemberMessage();

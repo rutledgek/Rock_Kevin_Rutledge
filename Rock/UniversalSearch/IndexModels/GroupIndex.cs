@@ -15,8 +15,9 @@
 // </copyright>
 //
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
-
+using System.Text;
 using Rock.Model;
 using Rock.UniversalSearch.IndexModels.Attributes;
 
@@ -119,23 +120,19 @@ namespace Rock.UniversalSearch.IndexModels
         /// </summary>
         /// <param name="group">The group.</param>
         /// <returns></returns>
-        public static GroupIndex LoadByModel( Group groupArg )
+        public static GroupIndex LoadByModel( Group group )
         {
-            var rockContext = new Rock.Data.RockContext();
-            var groupService = new GroupService( rockContext );
-            var group = groupService.GetNoTracking( groupArg.Id );
-
-            Rock.Logging.RockLogger.Log.Debug( Rock.Logging.RockLogDomains.Crm, $"GroupIndex.LoadByModel() Group: {group.Name} Id: {group.Id} Start" );
-            var groupIndex = new GroupIndex();
-            groupIndex.SourceIndexModel = "Rock.Model.Group";
-
-            groupIndex.Id = group.Id;
-            groupIndex.Name = group.Name;
-            groupIndex.Description = group.Description;
-            groupIndex.GroupTypeId = group.GroupTypeId;
-            groupIndex.DocumentName = group.Name;
-
-            groupIndex.ModelOrder = 5;
+            System.Diagnostics.Debug.WriteLine( $"GroupIndex.LoadByModel() Group: {group.Name} Id: {group.Id} Start" );
+            var groupIndex = new GroupIndex
+            {
+                SourceIndexModel = "Rock.Model.Group",
+                Id = group.Id,
+                Name = group.Name,
+                Description = group.Description,
+                GroupTypeId = group.GroupTypeId,
+                DocumentName = group.Name,
+                ModelOrder = 5
+            };
 
             if ( group.GroupType != null )
             {
@@ -143,22 +140,71 @@ namespace Rock.UniversalSearch.IndexModels
                 groupIndex.GroupTypeName = group.GroupType.Name;
             }
 
-            Rock.Logging.RockLogger.Log.Debug( Rock.Logging.RockLogDomains.Crm, $"GroupIndex.LoadByModel() Right before checking group.Members.Any()" );
-            var hasMembers = group.Members.Any();
+            var stopWatch = System.Diagnostics.Stopwatch.StartNew();
+
+            var rockContext = new Rock.Data.RockContext();
+            rockContext.Configuration.AutoDetectChangesEnabled = false;
             
+            var groupMemberService = new GroupMemberService( rockContext );
+            var groupMembers = groupMemberService
+                .Queryable()
+                .AsNoTracking()
+                .Where( gm => gm.GroupId == group.Id
+                    && gm.IsArchived == false
+                    && gm.GroupMemberStatus == GroupMemberStatus.Active );
+
+            System.Diagnostics.Debug.WriteLine( $"GroupIndex.LoadByModel() Getting GroupMembers IDs using GroupMemberService took {stopWatch.ElapsedMilliseconds}ms" );
+            
+            var hasMembers = groupMembers.Any();
             if ( hasMembers )
             {
-                Rock.Logging.RockLogger.Log.Debug( Rock.Logging.RockLogDomains.Crm, $"GroupIndex.LoadByModel() GroupMember raw Count: {group.Members.Count}" );
-                var activeMembers = group.Members.Where( m => m.GroupMemberStatus == GroupMemberStatus.Active ).ToList();
-                Rock.Logging.RockLogger.Log.Debug( Rock.Logging.RockLogDomains.Crm, $"GroupIndex.LoadByModel() GroupMember activeMembers Count: {activeMembers.Count}" );
-                groupIndex.MemberList = string.Join( ", ", activeMembers.Where( m => m.GroupRole.IsLeader != true ).Select( m => m.Person.FullName ) );
-                groupIndex.LeaderList = string.Join( ", ", activeMembers.Where( m => m.GroupRole.IsLeader == true ).Select( m => m.Person.FullName ) );
+                var memberListStringBuilder = new StringBuilder();
+                var leaderListStringBuilder = new StringBuilder();
+                var i = 0;
+
+                foreach( var groupMember in groupMembers )
+                {
+                    i++;
+                    if ( groupMember.GroupRole.IsLeader != true )
+                    {
+                        memberListStringBuilder.Append( $"{groupMember.Person.FullName}," );
+                    }
+                    else
+                    {
+                        leaderListStringBuilder.Append( $"{groupMember.Person.FullName}," );
+                    }
+
+                    if ( i % 10000 == 0 )
+                    {
+                        stopWatch.Stop();
+                        System.Diagnostics.Debug.WriteLine( $"Iteration {i}, ElapsedMilliseconds: {stopWatch.ElapsedMilliseconds}ms, Memory: {System.GC.GetTotalMemory( false ) / 1000000}MB" );
+                        stopWatch.Start();
+                    }
+                }
+
+                // Trim the trailing commas from the string builders
+                if ( memberListStringBuilder.Length > 0 )
+                {
+                    memberListStringBuilder.Length--;
+                }
+
+                if ( leaderListStringBuilder.Length > 0 )
+                {
+                    leaderListStringBuilder.Length--;
+                }
+
+                groupIndex.MemberList = memberListStringBuilder.ToString();
+                groupIndex.LeaderList = leaderListStringBuilder.ToString();
             }
             
-            Rock.Logging.RockLogger.Log.Debug( Rock.Logging.RockLogDomains.Crm, $"GroupIndex.LoadByModel() Before AddIndexableAttributes" );
+            System.Diagnostics.Debug.WriteLine( $"GroupIndex.LoadByModel() Before AddIndexableAttributes, ElapsedMilliseconds: {stopWatch.ElapsedMilliseconds}ms" );
+
             AddIndexableAttributes( groupIndex, group );
-            Rock.Logging.RockLogger.Log.Debug( Rock.Logging.RockLogDomains.Crm, $"GroupIndex.LoadByModel() After AddIndexableAttributes" );
-            Rock.Logging.RockLogger.Log.Debug( Rock.Logging.RockLogDomains.Crm, $"GroupIndex.LoadByModel() Group: {group.Name} Id: {group.Id} End" );
+
+            System.Diagnostics.Debug.WriteLine( $"GroupIndex.LoadByModel() After AddIndexableAttributes, ElapsedMilliseconds: {stopWatch.ElapsedMilliseconds}ms" );
+            stopWatch.Stop();
+            System.Diagnostics.Debug.WriteLine( $"GroupIndex.LoadByModel() Group: {group.Name} Id: {group.Id} End took {stopWatch.ElapsedMilliseconds}ms" );
+
             return groupIndex;
         }
 
