@@ -50,8 +50,8 @@ namespace Rock.Model
                      && Entity.IsArchived == false
                      && Entity.GroupMemberStatus != GroupMemberStatus.Inactive )
                 {
-                    var previousIsArchived = this.State == EntityContextState.Modified && OriginalValues[nameof( GroupMember.IsArchived )].ToStringSafe().AsBoolean();
                     // Bypass Group Member requirement check when group member is unarchived instead we will show 'does not meet' symbol in group member list.
+                    var previousIsArchived = this.State == EntityContextState.Modified && OriginalValues[nameof( GroupMember.IsArchived )].ToStringSafe().AsBoolean();
                     if ( !previousIsArchived )
                     {
                         if ( !Entity.ValidateGroupMembership( rockContext, out errorMessage ) )
@@ -246,19 +246,6 @@ namespace Rock.Model
 
                         historyItem.GroupMemberHistoryChangeList.AddChange( History.HistoryVerb.RemovedFromGroup, History.HistoryChangeType.Record, $"{deletedMemberPerson?.FullName}" ).SetCaption( $"{deletedMemberPerson?.FullName}" );
                     }
-
-                    // process universal search indexing if required
-                    //var groupType = GroupTypeCache.Get( group.GroupTypeId );
-                    //if ( groupType != null && groupType.IsIndexEnabled )
-                    //{
-                    //    var processEntityTypeIndexMsg = new ProcessEntityTypeIndex.Message
-                    //    {
-                    //        EntityTypeId = groupType.Id,
-                    //        EntityId = group.Id
-                    //    };
-
-                    //    processEntityTypeIndexMsg.Send();
-                    //}
                 }
 
                 _preSaveChangesOldGroupId = oldGroupId;
@@ -368,7 +355,6 @@ namespace Rock.Model
                         PersonService.UpdatePrimaryFamily( Entity.PersonId, rockContext );
                         PersonService.UpdateGivingLeaderId( Entity.PersonId, rockContext );
 
-
                         GroupService.UpdateGroupSalutations( Entity.GroupId, rockContext );
 
                         if ( _preSaveChangesOldGroupId.HasValue && _preSaveChangesOldGroupId.Value != Entity.GroupId )
@@ -416,18 +402,8 @@ namespace Rock.Model
                 var groupType = GroupTypeCache.Get( this.Entity.GroupTypeId );
                 if ( groupType != null && groupType.IsIndexEnabled && this.Entity.Group.IsActive )
                 {
-                    //System.Diagnostics.Debug.WriteLine( "GroupMember.PostSave() GroupIndexTransaction.Enqueue" );
                     var groupIndexTransaction = new GroupIndexTransaction( new GroupIndexInfo() { GroupId = this.Entity.GroupId, GroupTypeId = groupType.Id } );
                     groupIndexTransaction.Enqueue();
-
-                    //int groupEntityTypeId = EntityTypeCache.GetId<Rock.Model.Group>().Value;
-                    //    var processEntityTypeIndexMsg = new ProcessEntityTypeIndex.Message
-                    //{
-                    //    EntityTypeId = groupEntityTypeId,
-                    //    EntityId = this.Entity.GroupId
-                    //};
-
-                    //processEntityTypeIndexMsg.Send();
                 }
 
                 SendUpdateGroupMemberMessage();

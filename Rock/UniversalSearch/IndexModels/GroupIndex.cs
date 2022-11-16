@@ -13,11 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-//
+
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
 using System.Text;
+
 using Rock.Model;
 using Rock.UniversalSearch.IndexModels.Attributes;
 
@@ -70,14 +71,17 @@ namespace Rock.UniversalSearch.IndexModels
                 {
                     return "fa fa-users";
                 }
+
                 return _iconCssClass;
             }
+
             set
             {
                 _iconCssClass = value;
             }
         }
-        private string _iconCssClass = "";
+
+        private string _iconCssClass = string.Empty;
 
         /// <summary>
         /// Gets or sets the name.
@@ -122,7 +126,6 @@ namespace Rock.UniversalSearch.IndexModels
         /// <returns></returns>
         public static GroupIndex LoadByModel( Group group )
         {
-            System.Diagnostics.Debug.WriteLine( $"GroupIndex.LoadByModel() Group: {group.Name} Id: {group.Id} Start" );
             var groupIndex = new GroupIndex
             {
                 SourceIndexModel = "Rock.Model.Group",
@@ -140,8 +143,6 @@ namespace Rock.UniversalSearch.IndexModels
                 groupIndex.GroupTypeName = group.GroupType.Name;
             }
 
-            var stopWatch = System.Diagnostics.Stopwatch.StartNew();
-
             var rockContext = new Rock.Data.RockContext();
             rockContext.Configuration.AutoDetectChangesEnabled = false;
             
@@ -153,18 +154,18 @@ namespace Rock.UniversalSearch.IndexModels
                     && gm.IsArchived == false
                     && gm.GroupMemberStatus == GroupMemberStatus.Active );
 
-            System.Diagnostics.Debug.WriteLine( $"GroupIndex.LoadByModel() Getting GroupMembers IDs using GroupMemberService took {stopWatch.ElapsedMilliseconds}ms" );
-            
-            var hasMembers = groupMembers.Any();
-            if ( hasMembers )
+            var groupMemberCount = rockContext.GroupMembers.Count( gm => gm.GroupId == group.Id && gm.IsArchived == false && gm.GroupMemberStatus == GroupMemberStatus.Active );
+            if ( groupMemberCount > 10000 )
+            {
+                Rock.Logging.RockLogger.Log.Debug( Logging.RockLogDomains.Bus, $"Skipping universal search index of Group {group.Name} becauses the number of active users {groupMemberCount} exceeds the limit of 10K." );
+            }
+            else if ( groupMemberCount > 0 )
             {
                 var memberListStringBuilder = new StringBuilder();
                 var leaderListStringBuilder = new StringBuilder();
-                var i = 0;
 
-                foreach( var groupMember in groupMembers )
+                foreach ( var groupMember in groupMembers )
                 {
-                    i++;
                     if ( groupMember.GroupRole.IsLeader != true )
                     {
                         memberListStringBuilder.Append( $"{groupMember.Person.FullName}," );
@@ -172,13 +173,6 @@ namespace Rock.UniversalSearch.IndexModels
                     else
                     {
                         leaderListStringBuilder.Append( $"{groupMember.Person.FullName}," );
-                    }
-
-                    if ( i % 10000 == 0 )
-                    {
-                        stopWatch.Stop();
-                        System.Diagnostics.Debug.WriteLine( $"Iteration {i}, ElapsedMilliseconds: {stopWatch.ElapsedMilliseconds}ms, Memory: {System.GC.GetTotalMemory( false ) / 1000000}MB" );
-                        stopWatch.Start();
                     }
                 }
 
@@ -197,13 +191,7 @@ namespace Rock.UniversalSearch.IndexModels
                 groupIndex.LeaderList = leaderListStringBuilder.ToString();
             }
             
-            System.Diagnostics.Debug.WriteLine( $"GroupIndex.LoadByModel() Before AddIndexableAttributes, ElapsedMilliseconds: {stopWatch.ElapsedMilliseconds}ms" );
-
             AddIndexableAttributes( groupIndex, group );
-
-            System.Diagnostics.Debug.WriteLine( $"GroupIndex.LoadByModel() After AddIndexableAttributes, ElapsedMilliseconds: {stopWatch.ElapsedMilliseconds}ms" );
-            stopWatch.Stop();
-            System.Diagnostics.Debug.WriteLine( $"GroupIndex.LoadByModel() Group: {group.Name} Id: {group.Id} End took {stopWatch.ElapsedMilliseconds}ms" );
 
             return groupIndex;
         }

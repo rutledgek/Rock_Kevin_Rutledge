@@ -13,20 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-//
-using System;
+
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using System.Web;
 
-using Rock;
 using Rock.Data;
 using Rock.Model;
 using Rock.UniversalSearch;
 using Rock.Web.Cache;
-using Rock.Web.UI;
 
 namespace Rock.Transactions
 {
@@ -43,17 +38,23 @@ namespace Rock.Transactions
         /// </summary>
         private static readonly ConcurrentQueue<GroupIndexInfo> GroupIndexInfoQueue = new ConcurrentQueue<GroupIndexInfo>();
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="GroupIndexTransaction"/> class.
+        /// </summary>
+        /// <param name="groupIndexInfo">The group index information.</param>
         public GroupIndexTransaction( GroupIndexInfo groupIndexInfo )
         {
             GroupIndexInfoQueue.Enqueue( groupIndexInfo );
         }
 
+        /// <summary>
+        /// Executes this instance.
+        /// </summary>
         public void Execute()
         {
             // Dequeue any group index requests that have been queued and not processed up to this point.
             var groupIndexInfos = new List<GroupIndexInfo>();
 
-            System.Diagnostics.Debug.WriteLine( $"Queue Count: {GroupIndexInfoQueue.Count}" );
             while ( GroupIndexInfoQueue.TryDequeue( out GroupIndexInfo interactionTransactionInfo ) )
             {
                 groupIndexInfos.Add( interactionTransactionInfo );
@@ -69,9 +70,7 @@ namespace Rock.Transactions
             // Get a distinct list of the Groups. This is to prevent mutliple reindex requests being processed if multiple group members have their status changed
             groupIndexInfos = groupIndexInfos.GroupBy( i => i.GroupId ).Select( i => i.FirstOrDefault() ).ToList();
 
-            System.Diagnostics.Debug.WriteLine( $"Distinct Queue Count: {groupIndexInfos.Count}" );
-            
-            foreach( var groupIndexInfo in groupIndexInfos )
+            foreach ( var groupIndexInfo in groupIndexInfos )
             {
                 var groupType = GroupTypeCache.Get( groupIndexInfo.GroupTypeId );
                 var group = new GroupService( new RockContext() ).Get( groupIndexInfo.GroupId );
@@ -79,18 +78,33 @@ namespace Rock.Transactions
                 {
                     var indexItem = Rock.UniversalSearch.IndexModels.GroupIndex.LoadByModel( group );
                     IndexContainer.IndexDocument( indexItem );
-                    System.Diagnostics.Debug.WriteLine( $"Index completed for group {group.Name}" );
                 }
             }
         }
     }
 
+    /// <summary>
+    /// Class GroupIndexInfo.
+    /// </summary>
     public class GroupIndexInfo
     {
+        /// <summary>
+        /// Gets or sets the group type identifier.
+        /// </summary>
+        /// <value>The group type identifier.</value>
         public int GroupTypeId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the group identifier.
+        /// </summary>
+        /// <value>The group identifier.</value>
         public int GroupId { get; set; }
 
-        public string ToString()
+        /// <summary>
+        /// Returns a <see cref="System.String" /> that represents this instance.
+        /// </summary>
+        /// <returns>A <see cref="System.String" /> that represents this instance.</returns>
+        public override string ToString()
         {
             return $"GroupTypeId: {GroupTypeId}, GroupId: {GroupId}";
         }
