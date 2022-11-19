@@ -168,9 +168,11 @@ namespace RockWeb.Blocks.Event
                 // limit results
                 int maxItems = GetAttributeValue( "MaxOccurrences" ).AsInteger();
                 itemOccurrences = itemOccurrences.OrderBy( i => i.NextStartDateTime ).Take( maxItems ).ToList();
-                
-                // load event item
+
+                // Get the EventItem object, and ensure that the items available in the EventItemOccurrences and EventItem.EventItemOccurrences
+                // collections are consistent with the current filters.
                 var eventItem = new EventItemService( rockContext ).Get( eventItemGuid );
+                eventItem.EventItemOccurrences = itemOccurrences;
 
                 // make lava merge fields
                 var mergeFields = new Dictionary<string, object>();
