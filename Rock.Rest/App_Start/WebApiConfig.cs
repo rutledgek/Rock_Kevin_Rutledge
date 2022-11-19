@@ -95,6 +95,14 @@ namespace Rock.Rest
                } );
 
             config.Routes.MapHttpRoute(
+               name: "DynamicQueryApi",
+               routeTemplate: "api/{controller}/DynamicQuery",
+               defaults: new
+               {
+                   action = "DynamicQuery"
+               } );
+
+            config.Routes.MapHttpRoute(
                 name: "InDataViewApi",
                 routeTemplate: "api/{controller}/InDataView/{dataViewId}/{entityId}",
                 defaults: new

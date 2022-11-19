@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
@@ -731,6 +732,40 @@ namespace Rock.Rest
             }
 
             throw new HttpResponseException( new HttpResponseMessage( HttpStatusCode.BadRequest ) { ReasonPhrase = "either personId or personAliasId must be specified" } );
+        }
+
+        /// <summary>
+        /// Dynamics the query.
+        /// </summary>
+        /// <returns></returns>
+        [Authenticate, Secured]
+        [ActionName( "DynamicQuery" )]
+        [HttpGet]
+        public List<dynamic> DynamicQuery( string where = "", string select = "", bool loadAttributes = false )
+        {
+            var rockContext = Service.Context as RockContext;
+            var queryable = Service
+                .Queryable()
+                .AsNoTracking();
+
+            List<dynamic> results = null;
+
+            if ( where.IsNotNullOrWhiteSpace() )
+            {
+                where = where.Replace( " and ", " && " ).Replace( " or ", " || " );
+                queryable = queryable.Where( where );
+            }
+
+            if (select.IsNotNullOrWhiteSpace())
+            {
+                results = queryable.Select( select ).ToDynamicList();
+            }
+            else
+            {
+                results = queryable.ToDynamicList();
+            }
+
+            return results;
         }
 
         /// <summary>
