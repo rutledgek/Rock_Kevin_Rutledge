@@ -27,6 +27,16 @@ namespace Rock.Update.Helpers
     /// </summary>
     public static class VersionValidationHelper
     {
+        public static class SqlServerVersion
+        {
+            public const int v2022 = 16;
+            public const int v2019 = 15;
+            public const int v2017 = 14;
+            public const int v2016 = 13;
+            public const int v2014 = 12;
+            public const int v2012 = 11;
+        }
+
         /// <summary>
         /// Checks the .NET Framework version and returns Pass, Fail, or Unknown which can be
         /// used to determine if it's safe to proceed.
@@ -133,7 +143,7 @@ namespace Rock.Update.Helpers
             }
 
             var requiresSqlServer16OrHigher = targetVersion.Major > 1 || targetVersion.Minor > 14;
-            var hasSqlServer2016OrGreater = CheckSqlServerVersion( 13 );
+            var hasSqlServer2016OrGreater = CheckSqlServerVersion( SqlServerVersion.v2016 );
             if ( !hasSqlServer2016OrGreater && requiresSqlServer16OrHigher )
             {
                 throw new VersionValidationException( $"Version {targetVersion} requires Microsoft SQL Azure or Microsoft Sql Server 2016 or greater." );

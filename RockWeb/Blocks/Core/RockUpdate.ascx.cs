@@ -47,8 +47,6 @@ namespace RockWeb.Blocks.Core
         private bool _isEarlyAccessOrganization = false;
         private List<RockRelease> _releases = new List<RockRelease>();
         Version _installedVersion = new Version( "0.0.0" );
-        private bool _isOkToProceed = false;
-        private bool _hasSqlServer14OrHigher = false;
         private bool _hasSqlServer16OrHigher = false;
         #endregion
 
@@ -129,8 +127,6 @@ namespace RockWeb.Blocks.Core
 
                 var checkFrameworkVersionResultResult = VersionValidationHelper.CheckFrameworkVersion();
 
-                _isOkToProceed = true;
-
                 if ( checkFrameworkVersionResultResult == DotNetVersionCheckResult.Fail )
                 {
                     // Starting with v13, .NET 4.7.2 is required. So, show a warning if they haven't updated yet.
@@ -147,7 +143,7 @@ namespace RockWeb.Blocks.Core
                     nbBackupMessage.Visible = false;
                 }
 
-                _hasSqlServer16OrHigher = VersionValidationHelper.CheckSqlServerVersion( 13 );
+                _hasSqlServer16OrHigher = VersionValidationHelper.CheckSqlServerVersion( VersionValidationHelper.SqlServerVersion.v2016 );
 
                 if ( !_hasSqlServer16OrHigher )
                 {
@@ -278,7 +274,7 @@ namespace RockWeb.Blocks.Core
                         divPanel.AddCssClass( "panel-block" );
                     }
 
-                    if ( !_isOkToProceed || !VersionValidationHelper.CanInstallVersion( new Version( package.SemanticVersion ) ) )
+                    if ( !VersionValidationHelper.CanInstallVersion( new Version( package.SemanticVersion ) ) )
                     {
                         lbInstall.Enabled = false;
                         lbInstall.AddCssClass( "btn-danger" );
