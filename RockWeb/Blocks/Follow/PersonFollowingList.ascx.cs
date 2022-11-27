@@ -184,21 +184,16 @@ namespace RockWeb.Blocks.Follow
             if ( CurrentPersonAlias != null )
             {
                 var rockContext = new RockContext();
+                var followingService = new FollowingService( rockContext );
 
-                int personAliasEntityTypeId = EntityTypeCache.Get( "Rock.Model.PersonAlias" ).Id;
-                var personAliasIds = new FollowingService( rockContext ).Queryable()
-                    .Where( f =>
-                        f.EntityTypeId == personAliasEntityTypeId &&
-                        string.IsNullOrEmpty( f.PurposeKey ) &&
-                        f.PersonAliasId == CurrentPersonAlias.Id )
-                    .Select( f => f.EntityId )
-                    .Distinct()
-                    .ToList();
+                var personEntityTypeId = EntityTypeCache.GetId( typeof(Rock.Model.Person) ).GetValueOrDefault();
 
-                var qry = new PersonAliasService( rockContext ).Queryable()
-                    .Where( p => personAliasIds.Contains( p.Id ) )
-                    .Select( p => p.Person )
-                    .Distinct();
+                var qryFollowedItems = followingService.GetFollowedItems( personEntityTypeId, CurrentPersonAlias.PersonId )
+                    .Select( p => p.Id );
+
+                var qry = new PersonService( rockContext )
+                    .Queryable()
+                    .Where( p => qryFollowedItems.Contains( p.Id ) );
 
                 // Sort
                 SortProperty sortProperty = gFollowings.SortProperty;

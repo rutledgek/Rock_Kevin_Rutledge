@@ -138,7 +138,11 @@ namespace Rock.Model
         /// </summary>
         /// <param name="entityTypeId">The entity type identifier.</param>
         /// <param name="personId">The person identifier.</param>
-        /// <param name="purposeKey">A purpose that defines how this following will be used.</param>
+        /// <param name="purposeKey">
+        /// A key that identifies the specific purpose of the following.
+        /// If this parameter is not specified, all followings without a defined purpose key will be returned;
+        /// this includes most followings, such as user favourites and followed people.
+        /// </param>
         /// <returns></returns>
         public IQueryable<IEntity> GetFollowedItems( int entityTypeId, int personId, string purposeKey )
         {
@@ -169,9 +173,12 @@ namespace Rock.Model
                     int personEntityTypeId = EntityTypeCache.Get<Rock.Model.Person>().Id;
                     int personAliasEntityTypeId = EntityTypeCache.Get<Rock.Model.PersonAlias>().Id;
 
-                    // if requesting persons that the person is following, it is probably recorded as the PersonAlias records that the person is following, so get Person from that
+                    // If the request is for followed people, the followed entity may be either a Person or PersonAlias.
+                    // In that case, we need to combine the followings for both entity types.
                     if ( entityTypeId == personEntityTypeId )
                     {
+                        // The followed items are a set of Person records, so add the Person records
+                        // associated with any followed PersonAlias records.
                         var followedItemsPersonAliasQry = this.Queryable().Where( a => a.PersonAlias.PersonId == personId && a.EntityTypeId == personAliasEntityTypeId );
                         var entityPersonAliasQry = new PersonAliasService( rockContext ).Queryable();
 
@@ -181,7 +188,23 @@ namespace Rock.Model
                             e => e.Id,
                             ( f, e ) => e ).Select( a => a.Person );
 
-                        entityQry = entityQry.Union( entityFollowedPersons as IQueryable<IEntity> );
+                        entityQry = entityQry.Union( entityFollowedPersons );
+                    }
+                    else if ( entityTypeId == personAliasEntityTypeId )
+                    {
+                        // The followed items are a set of PersonAlias records, so add the PersonAlias records
+                        // associated with any followed Person records.
+                        var followedItemsPersonQry = this.Queryable()
+                            .Where( a => a.PersonAlias.PersonId == personId && a.EntityTypeId == personEntityTypeId );
+                        var entityPersonAliasQry = new PersonAliasService( rockContext ).Queryable();
+
+                        var entityFollowedPersonAliases = followedItemsPersonQry.Join(
+                            entityPersonAliasQry,
+                            f => f.EntityId,
+                            e => e.PersonId,
+                            ( f, e ) => e ).Select( pa => pa );
+
+                        entityQry = entityQry.Union( entityFollowedPersonAliases );
                     }
 
                     return entityQry;
