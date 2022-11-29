@@ -116,7 +116,7 @@ namespace Rock.Model
         /// <returns></returns>
         public System.Data.Entity.DbContext GetDbContext()
         {
-            if (this.DisableUseOfReadOnlyContext)
+            if ( this.DisableUseOfReadOnlyContext )
             {
                 return new RockContext();
             }
