@@ -386,7 +386,12 @@ namespace RockWeb.Blocks.Reporting
 
             try
             {
-                // If there is a dataview for the report, use its DbContext.
+                /*
+
+                    11/30/2022 - CWR
+                    If there is a dataview for the report, use its DbContext.  This null check is necessary because a report does not require a dataview.
+                    
+                 */
                 if ( report.DataView != null )
                 {
                     bindGridOptions.ReportDbContext = report.DataView.GetDbContext();
