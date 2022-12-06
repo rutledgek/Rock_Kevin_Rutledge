@@ -6198,9 +6198,6 @@ const geoPickerGallery = defineComponent({
     components: {
         GalleryAndResult,
         GeoPicker,
-        DropDownList,
-        CheckBox,
-        TextBox,
         Toggle
     },
     setup() {
@@ -6451,23 +6448,19 @@ const wordCloudGallery = defineComponent({
 </GalleryAndResult>`
 });
 
-/** Demonstrates EventCalendar Picker */
+/** Demonstrates Event Calendar Picker */
 const eventCalendarPickerGallery = defineComponent({
     name: "EventCalendarPickerGallery",
     components: {
         GalleryAndResult,
-        EventCalendarPicker,
-        DropDownList,
-        CheckBox,
-        TextBox,
-        Toggle
+        EventCalendarPicker
     },
     setup() {
 
         return {
             value: ref(null),
             importCode: getSfcControlImportPath("eventCalendarPicker"),
-            exampleCode: `<EventCalendarPicker v-model="value" />`
+            exampleCode: `<EventCalendarPicker label="Event Calendar" v-model="value" />`
         };
     },
     template: `
@@ -6477,7 +6470,7 @@ const eventCalendarPickerGallery = defineComponent({
     :exampleCode="exampleCode"
     enableReflection >
 
-    <EventCalendarPicker label="Event Calendar Picker" v-model="value" />
+    <EventCalendarPicker label="Event Calendar" v-model="value" />
 
     <template #settings>
         <p class="text-semibold font-italic">Not all options have been implemented yet.</p>
