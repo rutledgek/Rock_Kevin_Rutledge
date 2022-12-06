@@ -68,13 +68,15 @@ namespace Rock.Security.Authentication
         public override bool Authenticate( UserLogin user, string password )
         {
             string username = user.UserName;
+            Rock.Model.ExceptionLogService.LogException( $"Rock.Security.Authentication.ActiveDirectory.Authenticate() for user: {username}" );
             if ( !String.IsNullOrWhiteSpace( GetAttributeValue( "Domain" ) ) )
             {
                 username = string.Format( @"{0}\{1}", GetAttributeValue( "Domain" ), username );
+                Rock.Model.ExceptionLogService.LogException( $"Rock.Security.Authentication.ActiveDirectory.Authenticate() FQDN: {username}" );
             }
 
             var serverName = GetAttributeValue( "Server" );
-
+            Rock.Model.ExceptionLogService.LogException( $"Rock.Security.Authentication.ActiveDirectory.Authenticate() Server: {serverName}" );
             var context = new PrincipalContext( ContextType.Domain, serverName );
             using ( context )
             {
@@ -95,6 +97,7 @@ namespace Rock.Security.Authentication
                 var validateCredentials = context.ValidateCredentials( username, password );
                 if ( !validateCredentials )
                 {
+                    Rock.Model.ExceptionLogService.LogException( "Login failed PrincipalContext.ValidateCredentails()" );
                     // Definitely an invalid username/password, so we can safely return false here.
                     return false;
                 }
@@ -115,8 +118,15 @@ namespace Rock.Security.Authentication
                     var findByIdentityContext = new PrincipalContext( ContextType.Domain, serverName, username, password );
                     userPrincipal = UserPrincipal.FindByIdentity( findByIdentityContext, username );
                 }
-                catch ( Exception )
+                catch ( Exception ex )
                 {
+                    Rock.Model.ExceptionLogService.LogException( ex );
+                    Rock.Model.ExceptionLogService.LogException( @"In the case of possible False-Positive on ValidateCredentials:
+- UserName/Password is valid: FindByIdentity finds the user/   
+- Username/Password is invalid: FindByIdentity will throw 'Incorrect Username/Password exception'/
+- UserName doesn't exist: FindByIdentity will throw 'Account Directory not available'/
+- UserName/Password is valid, but account is disabled: FindByIdentity will throw 'Account Directory not available'." );
+
                     /* 10/3/2022 MDP
 
                     In the case of possible False-Positive on ValidateCredentials:
@@ -134,11 +144,13 @@ namespace Rock.Security.Authentication
 
                 if ( userPrincipal != null )
                 {
+                    Rock.Model.ExceptionLogService.LogException( $"Rock.Security.Authentication.ActiveDirectory.Authenticate() {username} authenticated successfully." );
                     // User exists, and password is valid, so return true.
                     return true;
                 }
                 else
                 {
+                    Rock.Model.ExceptionLogService.LogException( $"Rock.Security.Authentication.ActiveDirectory.Authenticate() {username} invalid credintials." );
                     // FindByIdentity either discovered that password is actually invalid, or that the user doesn't exist, so return false.
                     return false;
                 }
