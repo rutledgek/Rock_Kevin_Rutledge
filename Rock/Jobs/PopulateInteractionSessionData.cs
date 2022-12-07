@@ -362,7 +362,7 @@ namespace Rock.Jobs
         /// </summary>
         /// <param name="jobContext">The job context.</param>
         /// <returns></returns>
-        private string ProcessInteractionSessionForIP( IJobExecutionContext jobContext )
+        internal string ProcessInteractionSessionForIP( IJobExecutionContext jobContext )
         {
             // This portion of the job looks for interaction sessions tied to interaction channels whose websites
             // have geo tracking enabled. The logic is broken into two parts:
@@ -393,6 +393,15 @@ namespace Rock.Jobs
             if ( provider == null )
             {
                 return $"<i class='fa fa-circle text-info'></i> No IP Address lookup service active.";
+            }
+
+            // If the lookup provider is not ready to process, exit early to avoid the relatively expensive operation of
+            // querying the database for unresolved interaction sessions.
+            var canProcess = provider.VerifyCanProcess( out var statusMessage );
+            if ( !canProcess )
+            {
+                return $"<i class='fa fa-circle text-warn'></i> IP Address lookup service is unavailable."
+                    + ( statusMessage.IsNullOrWhiteSpace() ? "" : $" ({statusMessage})" );
             }
 
             // This collection will be used to store IP address that need to be processed using the lookup provider
@@ -536,7 +545,7 @@ namespace Rock.Jobs
         /// </summary>
         /// <param name="configuredProvider">The configured provider.</param>
         /// <returns></returns>
-        private IpAddressLookupComponent GetLookupComponent( string configuredProvider )
+        internal virtual IpAddressLookupComponent GetLookupComponent( string configuredProvider )
         {
             // Get the configured component from the job settings
             if ( configuredProvider.AsGuidOrNull().HasValue )
