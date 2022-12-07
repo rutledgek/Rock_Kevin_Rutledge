@@ -448,6 +448,8 @@ namespace Rock.Jobs
                     // Update the job progress
                     jobContext.UpdateLastStatusMessage( $"Processing Interaction Session for IP : {maxRecordsToReturn} IP's are being processed currently. Total {recordsUpdated} Interaction Session{( recordsUpdated < 2 ? "" : "s" )} are processed till now. " );
 
+                    LogDebugInfo( "Process Interaction Sessions", $"BatchSize={ interactionSessions.Count }, SessionId={ interactionSessions.Min( s => s.Id ) } --> { interactionSessions.Max( s => s.Id ) }." );
+
                     foreach ( var interactionSession in interactionSessions )
                     {
                         totalRecordsProcessed += 1;
@@ -537,7 +539,7 @@ namespace Rock.Jobs
                 return string.Empty;
             }
 
-            return $"<i class='fa fa-circle text-success'></i> Updated IP location on {recordsUpdated} {"interaction session".PluralizeIf( recordsUpdated != 1 )} with {totalRecordsProcessed} unique IP addresses using {ipAddressSessionKeyValue.Count} lookup credits (others were found in the database) in {stopwatch.Elapsed.TotalSeconds} secs. {warningMsg}";
+            return $"<i class='fa fa-circle text-success'></i> Updated IP location on {recordsUpdated} {"interaction session".PluralizeIf( recordsUpdated != 1 )} with {totalRecordsProcessed} unique IP addresses using {ipAddressSessionKeyValue.Count} lookup credits (others were found in the database) in {stopwatch.Elapsed.TotalSeconds:0.00}s. {warningMsg}";
         }
 
         /// <summary>
@@ -601,7 +603,10 @@ namespace Rock.Jobs
             try
             {
                 // Get the IP locations for the selected IP addresses
-                var lookupResults = provider.BulkLookup( new List<string>( ipAddressSessionKeyValue.Keys ), out errorMessage );
+                var ipAddressList = new List<string>( ipAddressSessionKeyValue.Keys );
+
+                LogDebugInfo( "Process IP Lookups", $"BatchSize={ ipAddressList.Count }, Data={ ipAddressList.Take(5).JoinStrings(",") }..." );
+                var lookupResults = provider.BulkLookup( ipAddressList, out errorMessage );
 
                 // Create Interaction Session Locations and update Sessions
                 IpLocationUtilities.UpdateInteractionSessionLocations( lookupResults, ipAddressSessionKeyValue );
@@ -626,6 +631,10 @@ namespace Rock.Jobs
 
                 return -1;
             }
+        }
+        private void LogDebugInfo( string taskName, string message )
+        {
+            RockLogger.Log.Debug( RockLogDomains.Jobs, "{0} ({1}): {2}", nameof( PopulateInteractionSessionData ), taskName, message );
         }
 
         private class PopulateInteractionSessionDataJobSettings
