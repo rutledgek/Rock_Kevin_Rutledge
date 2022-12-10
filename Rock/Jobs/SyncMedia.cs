@@ -63,7 +63,7 @@ namespace Rock.Jobs
         /// <inheritdoc cref="RockJob.Execute()"/>
         public override void Execute()
         {
-                        var limitFullSync = GetAttributeValue( AttributeKey.LimitFullSyncToOnceADay ).AsBoolean( true );
+            var limitFullSync = GetAttributeValue( AttributeKey.LimitFullSyncToOnceADay ).AsBoolean( true );
 
             // Start a task that will let us run the Async methods in order.
             var task = Task.Run( () => ProcessAllAccounts( limitFullSync ) );
@@ -118,11 +118,23 @@ namespace Rock.Jobs
                     tasks.Add( task );
                 }
 
+
                 // Wait for all operational tasks to complete and then
                 // aggregate the results.
                 var results = await Task.WhenAll( tasks );
-
                 var message = string.Join( Environment.NewLine, results.Select( a => a.Message ) );
+
+                // Sync the media folders and content channels 
+                var contentChannelCount = mediaAccounts
+                                .SelectMany( ma => ma.MediaFolders )
+                                .Select( mf => Task.Run( () => MediaFolderService.AddMissingSyncedContentChannelItem( mf.Id ) ).Result )
+                                .Sum();
+
+                if ( contentChannelCount > 0 )
+                {
+                    var syncedContentChannelCountMessage = $"Synced {contentChannelCount} {"content channel type".PluralizeIf( contentChannelCount > 1 )}.";
+                    message += $"\n{syncedContentChannelCountMessage}";
+                }
 
                 return new OperationResult( message, results.SelectMany( a => a.Errors ) );
             }
