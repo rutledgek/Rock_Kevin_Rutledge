@@ -2270,6 +2270,7 @@ namespace Rock.Model
                 if ( scheduledAttendance.RSVP == RSVP.No )
                 {
                     scheduledAttendance.RSVP = RSVP.Unknown;
+                    scheduledAttendance.DeclineReasonValueId = null;
                 }
             }
 
@@ -2315,6 +2316,7 @@ namespace Rock.Model
             scheduledAttendance.ScheduledToAttend = false;
             scheduledAttendance.RequestedToAttend = false;
             scheduledAttendance.RSVP = RSVP.Unknown;
+            scheduledAttendance.DeclineReasonValueId = null;
         }
 
         /// <summary>
@@ -2333,6 +2335,7 @@ namespace Rock.Model
             scheduledAttendance.ScheduledToAttend = true;
             scheduledAttendance.RSVPDateTime = RockDateTime.Now;
             scheduledAttendance.RSVP = RSVP.Yes;
+            scheduledAttendance.DeclineReasonValueId = null;
         }
 
         /// <summary>
@@ -2369,6 +2372,7 @@ namespace Rock.Model
             scheduledAttendance.RequestedToAttend = true;
             scheduledAttendance.ScheduledToAttend = false;
             scheduledAttendance.RSVP = RSVP.Unknown;
+            scheduledAttendance.DeclineReasonValueId = null;
         }
 
         /// <summary>
@@ -2385,9 +2389,9 @@ namespace Rock.Model
                 return;
             }
 
-            scheduledAttendance.DeclineReasonValueId = declineReasonValueId;
             scheduledAttendance.RSVPDateTime = RockDateTime.Now;
             scheduledAttendance.RSVP = RSVP.No;
+            scheduledAttendance.DeclineReasonValueId = declineReasonValueId;
         }
 
         /// <summary>
