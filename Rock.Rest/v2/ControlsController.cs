@@ -2286,6 +2286,64 @@ namespace Rock.Rest.v2
 
         #endregion
 
+        #region Location Address Picker
+
+        /// <summary>
+        /// Validates the given address and returns the string representation of the address
+        /// </summary>
+        /// <param name="options">Address details to validate</param>
+        /// <returns>Validation information and a single string representation of the address</returns>
+        [HttpPost]
+        [System.Web.Http.Route( "LocationAddressPickerValidateAddress" )]
+        [Rock.SystemGuid.RestActionGuid( "ff879ea7-07dd-43ec-a5de-26f55e9f073a" )]
+        public IHttpActionResult LocationAddressPickerValidateAddress( [FromBody] LocationAddressPickerValidateAddressOptionsBag options )
+        {
+            var editedLocation = new Location();
+            string errorMessage = null;
+            string addressString = null;
+
+            editedLocation.Street1 = options.Street1;
+            editedLocation.Street2 = options.Street2;
+            editedLocation.City = options.City;
+            editedLocation.State = options.State;
+            editedLocation.PostalCode = options.PostalCode;
+            editedLocation.Country = options.Country.IsNotNullOrWhiteSpace() ? options.Country : "US";
+
+            var locationService = new LocationService( new RockContext() );
+
+            string validationMessage;
+
+            var isValid = LocationService.ValidateLocationAddressRequirements( editedLocation, out validationMessage );
+
+            if ( !isValid )
+            {
+                errorMessage = validationMessage;
+            }
+            else
+            {
+                editedLocation = locationService.Get( editedLocation.Street1, editedLocation.Street2, editedLocation.City, editedLocation.State, editedLocation.County, editedLocation.PostalCode, editedLocation.Country, null );
+                addressString = editedLocation.GetFullStreetAddress().ConvertCrLfToHtmlBr();
+            }
+
+            return Ok( new
+            {
+                ErrorMessage = errorMessage,
+                IsValid = isValid,
+                AddressString = addressString,
+                Address = new AddressControlBag
+                {
+                    Street1 = editedLocation.Street1,
+                    Street2 = editedLocation.Street2,
+                    City = editedLocation.City,
+                    State = editedLocation.State,
+                    PostalCode = editedLocation.PostalCode,
+                    Country = editedLocation.Country
+                }
+            } );
+        }
+
+        #endregion
+
         #region Location Item Picker
 
         /// <summary>
@@ -2370,60 +2428,70 @@ namespace Rock.Rest.v2
 
         #endregion
 
-        #region Location Address Picker
+        #region Location List
 
         /// <summary>
-        /// Validates the given address and returns the string representation of the address
+        /// Gets the child locations, excluding inactive items.
         /// </summary>
-        /// <param name="options">Address details to validate</param>
-        /// <returns>Validation information and a single string representation of the address</returns>
+        /// <param name="options">The options that describe which child locations to retrieve.</param>
+        /// <returns>A collection of <see cref="TreeItemBag"/> objects that represent the child locations.</returns>
+        [Authenticate, Secured]
         [HttpPost]
-        [System.Web.Http.Route( "LocationAddressPickerValidateAddress" )]
-        [Rock.SystemGuid.RestActionGuid( "ff879ea7-07dd-43ec-a5de-26f55e9f073a" )]
-        public IHttpActionResult LocationAddressPickerValidateAddress( [FromBody] LocationAddressPickerValidateAddressOptionsBag options )
+        [System.Web.Http.Route( "LocationListGetLocations" )]
+        [Rock.SystemGuid.RestActionGuid( "E57312EC-92A7-464C-AA7E-5320DDFAEF3D" )]
+        public IHttpActionResult LocationListGetLocations( [FromBody] LocationListGetLocationsOptionsBag options )
         {
-            var editedLocation = new Location();
-            string errorMessage = null;
-            string addressString = null;
-
-            editedLocation.Street1 = options.Street1;
-            editedLocation.Street2 = options.Street2;
-            editedLocation.City = options.City;
-            editedLocation.State = options.State;
-            editedLocation.PostalCode = options.PostalCode;
-            editedLocation.Country = options.Country.IsNotNullOrWhiteSpace() ? options.Country : "US";
-
-            var locationService = new LocationService( new RockContext() );
-
-            string validationMessage;
-
-            var isValid = LocationService.ValidateLocationAddressRequirements( editedLocation, out validationMessage );
-
-            if ( !isValid )
+            using ( var rockContext = new RockContext() )
             {
-                errorMessage = validationMessage;
-            }
-            else
-            {
-                editedLocation = locationService.Get( editedLocation.Street1, editedLocation.Street2, editedLocation.City, editedLocation.State, editedLocation.County, editedLocation.PostalCode, editedLocation.Country, null );
-                addressString = editedLocation.GetFullStreetAddress().ConvertCrLfToHtmlBr();
-            }
+                List<ListItemBag> locations = null;
+                var locationService = new LocationService( rockContext );
+                int parentLocationId = 0;
+                int locationTypeValueId = 0;
 
-            return Ok( new
-            {
-                ErrorMessage = errorMessage,
-                IsValid = isValid,
-                AddressString = addressString,
-                Address = new AddressControlBag
+                if (options.ParentLocationGuid != null)
                 {
-                    Street1 = editedLocation.Street1,
-                    Street2 = editedLocation.Street2,
-                    City = editedLocation.City,
-                    State = editedLocation.State,
-                    PostalCode = editedLocation.PostalCode,
-                    Country = editedLocation.Country
+                    var parentLocation = locationService.Get( options.ParentLocationGuid );
+                    parentLocationId = parentLocation == null ? 0 : parentLocation.Id;
                 }
-            } );
+
+                if (options.LocationTypeValueGuid != null)
+                {
+                    var locationTypeDefinedType = DefinedTypeCache.Get( Rock.SystemGuid.DefinedType.LOCATION_TYPE.AsGuid() );
+                    var locationTypeValue = DefinedValueCache.Get( options.LocationTypeValueGuid );
+
+                    // Verify the given GUID is a LocationType GUID
+                    if ( locationTypeValue != null && locationTypeDefinedType.Equals(locationTypeValue.DefinedType))
+                    {
+                        locationTypeValueId = locationTypeValue.Id;
+                    }
+                }
+
+                var locationQuery = locationService
+                    .Queryable()
+                    .AsNoTracking()
+                    .Where( l => l.IsActive )
+                    .Where( l => locationTypeValueId == 0 || l.LocationTypeValueId == locationTypeValueId )
+                    .Where( l => parentLocationId == 0 || l.ParentLocationId == parentLocationId )
+                    .Select( l => new { l.Name, l.City, l.State, l.Guid } )
+                    .ToList()
+                    .OrderBy( l => l.Name );
+
+                if ( options.ShowCityState )
+                {
+                    locations = locationQuery
+                        .Select( l => new ListItemBag { Text = $"{l.Name} ({l.City}, {l.State})", Value = l.Guid.ToString() } )
+                        .ToList();
+                }
+                else
+                {
+                    locations = locationQuery
+                        .Select( l => new ListItemBag { Text = $"{l.Name}", Value = l.Guid.ToString() } )
+                        .ToList();
+                }
+
+                return Ok( locations );
+            }
+
         }
 
         #endregion

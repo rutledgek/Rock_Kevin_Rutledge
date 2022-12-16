@@ -51,6 +51,9 @@
     <Content Include="Framework\Controls\intervalPicker.vue" />
     <Content Include="Framework\Controls\kpi.vue" />
     <Content Include="Framework\Controls\locationAddressPicker.vue" />
+    <Content Include="Framework\Controls\LocationList.vue">
+      <SubType>Code</SubType>
+    </Content>
     <Content Include="Framework\Controls\monthDayPicker.vue" />
     <Content Include="Framework\Controls\monthYearPicker.vue" />
     <Content Include="Framework\Controls\scheduleBuilder.vue" />
@@ -923,6 +926,7 @@
     <TypeScriptCompile Include="Framework\ViewModels\Rest\Controls\locationAddressPickerValidateAddressOptionsBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Rest\Controls\locationAddressPickerValidateAddressResultsBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Rest\Controls\locationItemPickerGetActiveChildrenOptionsBag.d.ts" />
+    <TypeScriptCompile Include="Framework\ViewModels\Rest\Controls\locationListGetLocationsOptionsBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Rest\Controls\mergeTemplatePickerGetMergeTemplatesOptionsBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Rest\Controls\metricCategoryPickerGetChildrenOptionsBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Rest\Controls\metricItemPickerGetChildrenOptionsBag.d.ts" />
