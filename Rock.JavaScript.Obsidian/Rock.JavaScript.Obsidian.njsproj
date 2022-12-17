@@ -51,9 +51,8 @@
     <Content Include="Framework\Controls\intervalPicker.vue" />
     <Content Include="Framework\Controls\kpi.vue" />
     <Content Include="Framework\Controls\locationAddressPicker.vue" />
-    <Content Include="Framework\Controls\LocationList.vue">
-      <SubType>Code</SubType>
-    </Content>
+    <Content Include="Framework\Controls\locationList.vue" />
+    <Content Include="Framework\Controls\locationPicker.vue" />
     <Content Include="Framework\Controls\monthDayPicker.vue" />
     <Content Include="Framework\Controls\monthYearPicker.vue" />
     <Content Include="Framework\Controls\scheduleBuilder.vue" />

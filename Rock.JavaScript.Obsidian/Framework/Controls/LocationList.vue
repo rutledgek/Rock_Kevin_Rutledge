@@ -66,12 +66,12 @@
 
         locationTypeValueGuid: {
             type: String as PropType<Guid>,
-            default: false
+            default: ""
         },
 
         parentLocationGuid: {
             type: String as PropType<Guid>,
-            default: false
+            default: ""
         },
 
         showCityState: {
@@ -102,10 +102,17 @@
 
     async function loadItems(): Promise<ListItemBag[]> {
         const options: Partial<LocationListGetLocationsOptionsBag> = {
-            parentLocationGuid: props.parentLocationGuid,
-            locationTypeValueGuid: props.locationTypeValueGuid,
+            showCityState: props.showCityState,
             securityGrantToken: securityGrantToken.value
         };
+
+        if (props.parentLocationGuid) {
+            options.parentLocationGuid = props.parentLocationGuid;
+        }
+
+        if (props.locationTypeValueGuid) {
+            options.locationTypeValueGuid = props.locationTypeValueGuid;
+        }
 
         //var locationTypeValueGuid = "C0D7AE35-7901-4396-870E-3AAF472AAE88";
         const url = "/api/v2/Controls/LocationListGetLocations";
@@ -124,7 +131,7 @@
         itemsSource.value = () => loadItems();
     }
 
-    watch(() => [props.locationTypeValueGuid, props.parentLocationGuid], fetchValues);
+    watch(() => [props.locationTypeValueGuid, props.parentLocationGuid, props.showCityState], fetchValues);
 
     fetchValues();
 
@@ -148,7 +155,7 @@
             saveError.value = false;
 
             const options: Partial<DefinedValuePickerGetAttributesOptionsBag> = {
-                definedTypeGuid: props.definedTypeGuid,
+                // definedTypeGuid: props.definedTypeGuid,
                 securityGrantToken: securityGrantToken.value
             };
             const url = "/api/v2/Controls/DefinedValuePickerGetAttributes";
@@ -180,7 +187,7 @@
         saveError.value = false;
 
         const options: Partial<DefinedValuePickerSaveNewValueOptionsBag> = {
-            definedTypeGuid: props.definedTypeGuid,
+            // definedTypeGuid: props.definedTypeGuid,
             securityGrantToken: securityGrantToken.value,
             value: newValue.value,
             description: newDescription.value,

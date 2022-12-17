@@ -185,13 +185,13 @@ import CacheabilityPicker from "@Obsidian/Controls/cacheabilityPicker.vue";
 import ButtonGroup from "@Obsidian/Controls/buttonGroup.vue";
 import IntervalPicker from "@Obsidian/Controls/intervalPicker.vue";
 import GeoPicker from "@Obsidian/Controls/geoPicker.vue";
-import GeoPickerMap from "@Obsidian/Controls/geoPickerMap.vue";
 import ContentDropDownPicker from "@Obsidian/Controls/contentDropDownPicker.vue";
 import WordCloud from "@Obsidian/Controls/wordCloud.vue";
 import EventCalendarPicker from "@Obsidian/Controls/eventCalendarPicker.vue";
 import GroupTypePicker from "@Obsidian/Controls/groupTypePicker.vue";
 import LocationAddressPicker from "@Obsidian/Controls/locationAddressPicker.vue";
 import LocationPicker from "@Obsidian/Controls/locationPicker.vue";
+import LocationList from "@Obsidian/Controls/locationList.vue";
 
 // #region Gallery Support
 
@@ -2462,7 +2462,7 @@ const definedValuePickerGallery = defineComponent({
     :exampleCode="exampleCode"
     enableReflection >
 
-    <DefinedValuePicker rules="required" label="Defined Value" v-model="value" :definedTypeGuid="definedTypeGuid" :multiple="multiple" :enhanceForLongLists="enhanceForLongLists" :allowAdd="allowAdd" :displayStyle="displayStyle" />
+    <DefinedValuePicker label="Defined Value" v-model="value" :definedTypeGuid="definedTypeGuid" :multiple="multiple" :enhanceForLongLists="enhanceForLongLists" :allowAdd="allowAdd" :displayStyle="displayStyle" />
 
     <template #settings>
         <div class="row">
@@ -6613,6 +6613,62 @@ const locationPickerGallery = defineComponent({
 </GalleryAndResult>`
 });
 
+
+/** Demonstrates location list */
+const locationListGallery = defineComponent({
+    name: "LocationListGallery",
+    components: {
+        GalleryAndResult,
+        CheckBox,
+        TextBox,
+        DefinedValuePicker,
+        LocationList
+    },
+    setup() {
+        return {
+            value: ref(null),
+            locationType: ref(""),
+            parentLocation: ref(""),
+            showCityState: ref(false),
+            multiple: ref(false),
+            allowAdd: ref(false),
+            showBlankItem: ref(false),
+            importCode: getControlImportPath("locationList"),
+            exampleCode: `<LocationList label="Location" v-model="value" :multiple="false" />`
+        };
+    },
+    template: `
+<GalleryAndResult
+    :value="value"
+    :importCode="importCode"
+    :exampleCode="exampleCode"
+    enableReflection >
+
+    <LocationList label="Location" v-model="value" :multiple="multiple" :locationTypeValueGuid="locationType?.value" :allowAdd="allowAdd" :showCityState="showCityState" :showBlankItem="showBlankItem" />
+
+    <template #settings>
+        <div class="row">
+            <div class="col-md-3">
+                <CheckBox v-model="showCityState" label="Show City/State" />
+            </div>
+            <div class="col-md-3">
+                <CheckBox v-model="multiple" label="Multiple" />
+            </div>
+            <div class="col-md-3">
+                <CheckBox v-model="allowAdd" label="Allow Adding Values" />
+            </div>
+            <div class="col-md-3">
+                <CheckBox v-model="showBlankItem" label="Show Blank Item" />
+            </div>
+            <div class="col-md-3">
+                <DefinedValuePicker v-model="locationType" label="Location Type" definedTypeGuid="3285DCEF-FAA4-43B9-9338-983F4A384ABA" showBlankItem />
+            </div>
+        </div>
+        <p class="text-semibold font-italic">Not all options have been implemented yet.</p>
+    </template>
+</GalleryAndResult>`
+});
+
 const controlGalleryComponents: Record<string, Component> = [
     alertGallery,
     attributeValuesContainerGallery,
@@ -6737,6 +6793,7 @@ const controlGalleryComponents: Record<string, Component> = [
     groupTypePickerGallery,
     locationAddressPickerGallery,
     locationPickerGallery,
+    locationListGallery,
 ]
     // Sort list by component name
     .sort((a, b) => a.name.localeCompare(b.name))

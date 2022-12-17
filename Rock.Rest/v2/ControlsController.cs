@@ -2485,6 +2485,7 @@ namespace Rock.Rest.v2
                 else
                 {
                     locations = locationQuery
+                        .Where( l => l.Name.IsNotNullOrWhiteSpace() )
                         .Select( l => new ListItemBag { Text = $"{l.Name}", Value = l.Guid.ToString() } )
                         .ToList();
                 }

@@ -38,7 +38,7 @@ namespace Rock.ViewModels.Rest.Controls
         /// <summary>
         /// Whether to include city and state in the name of the location in the list
         /// </summary>
-        public bool ShowCityState { get; set; } = true;
+        public bool ShowCityState { get; set; } = false;
 
         /// <summary>
         /// The security grant token to use when performing authorization checks.
