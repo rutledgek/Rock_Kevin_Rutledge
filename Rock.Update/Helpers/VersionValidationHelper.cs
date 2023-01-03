@@ -142,7 +142,7 @@ namespace Rock.Update.Helpers
                 }
             }
 
-            var requiresSqlServer16OrHigher = targetVersion.Major > 1 || targetVersion.Minor > 14;
+            var requiresSqlServer16OrHigher = targetVersion.Major > 1 || targetVersion.Minor > 15;
             var hasSqlServer2016OrGreater = CheckSqlServerVersion( SqlServerVersion.v2016 );
             if ( !hasSqlServer2016OrGreater && requiresSqlServer16OrHigher )
             {
