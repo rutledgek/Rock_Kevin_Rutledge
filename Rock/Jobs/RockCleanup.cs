@@ -259,9 +259,6 @@ namespace Rock.Jobs
             // Search for locations with no country and assign USA or Canada if it match any of the country's states
             RunCleanupTask( "location", () => LocationCleanup( dataMap ) );
 
-            // Does any cleanup on AttributeValue, such as making sure as ValueAsNumeric column has the correct value
-            RunCleanupTask( "attribute value", () => CleanupAttributeValues( dataMap ) );
-
             RunCleanupTask( "merge streak data", () => MergeStreaks() );
 
             RunCleanupTask( "refresh streak data", () => RefreshStreaksDenormalizedData() );
@@ -291,6 +288,8 @@ namespace Rock.Jobs
             RunCleanupTask( "upcoming event date", () => UpdateEventNextOccurrenceDates() );
 
             RunCleanupTask( "stale anonymous visitor", () => RemoveStaleAnonymousVisitorRecord( dataMap ) );
+
+            RunCleanupTask( "older chrome engines", () => RemoveOlderChromeEngines() );
 
             /*
              * 21-APR-2022 DMV
@@ -980,7 +979,7 @@ namespace Rock.Jobs
             var workflowService = new WorkflowService( workflowContext );
 
             var toBeMarkedCompletedWorkflows = workflowService.Queryable()
-                .Where( w => w.WorkflowType.MaxWorkflowAgeDays.HasValue && w.ActivatedDateTime.HasValue && !w.CompletedDateTime.HasValue && RockDateTime.Now > DbFunctions.AddDays( w.ModifiedDateTime, w.WorkflowType.MaxWorkflowAgeDays ) )
+                .Where( w => w.WorkflowType.MaxWorkflowAgeDays.HasValue && w.ActivatedDateTime.HasValue && !w.CompletedDateTime.HasValue && RockDateTime.Now > DbFunctions.AddDays( w.ActivatedDateTime, w.WorkflowType.MaxWorkflowAgeDays ) )
                 .Take( batchAmount )
                 .ToList();
 
@@ -1667,48 +1666,6 @@ namespace Rock.Jobs
         }
 
         /// <summary>
-        /// Does cleanup of Attribute Values
-        /// </summary>
-        /// <param name="dataMap">The data map.</param>
-        private int CleanupAttributeValues( JobDataMap dataMap )
-        {
-            AttributeValueCleanup( commandTimeout );
-
-            return 0;
-        }
-
-        /// <summary>
-        /// Does cleanup of Attribute Values
-        /// </summary>
-        /// <param name="commandTimeout">The command timeout.</param>
-        internal static void AttributeValueCleanup( int commandTimeout )
-        {
-            using ( var rockContext = new Rock.Data.RockContext() )
-            {
-                // Ensure AttributeValue.ValueAsNumeric is in sync with AttributeValue.Value, just in case Value got updated without also updating ValueAsNumeric
-                rockContext.Database.CommandTimeout = commandTimeout;
-                rockContext.Database.ExecuteSqlCommand( @"
-UPDATE AttributeValue
-SET ValueAsNumeric = CASE
-		WHEN LEN([value]) < (100)
-			THEN CASE
-					WHEN ISNUMERIC([value]) = (1)
-						AND NOT [value] LIKE '%[^-0-9.]%'
-						THEN TRY_CAST([value] AS [decimal](18, 2))
-					END
-		END
-where ISNULL(ValueAsNumeric, 0) != ISNULL((case WHEN LEN([value]) < (100)
-			THEN CASE
-					WHEN ISNUMERIC([value]) = (1)
-						AND NOT [value] LIKE '%[^-0-9.]%'
-						THEN TRY_CAST([value] AS [decimal](18, 2))
-					END
-		END), 0)
-" );
-            }
-        }
-
-        /// <summary>
         /// Does cleanup of Locations
         /// </summary>
         /// <param name="dataMap">The data map.</param>
@@ -2363,6 +2320,29 @@ SELECT @@ROWCOUNT
             }
 
             return updateCount;
+        }
+
+        /// <summary>
+        /// Removes older unused versions of the chrome engine
+        /// </summary>
+        /// <returns></returns>
+        private int RemoveOlderChromeEngines()
+        {
+            var options = new PuppeteerSharp.BrowserFetcherOptions()
+            {
+                Product = PuppeteerSharp.Product.Chrome,
+                Path = System.Web.Hosting.HostingEnvironment.MapPath( "~/App_Data/ChromeEngine" )
+            };
+
+            var browserFetcher = new PuppeteerSharp.BrowserFetcher( options );
+            var olderVersions = browserFetcher.LocalRevisions().Where( r => r != PuppeteerSharp.BrowserFetcher.DefaultChromiumRevision );
+
+            foreach ( var version in olderVersions )
+            {
+                browserFetcher.Remove( version );
+            }
+
+            return olderVersions.Count();
         }
 
         /// <summary>

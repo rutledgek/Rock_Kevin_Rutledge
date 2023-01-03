@@ -317,7 +317,7 @@ export default defineComponent({
 
         /** Copy the values that are to have current values used */
         copyValuesFromFamilyMember(): void {
-            if (!this.familyMember) {
+            if (!this.familyMember || this.registrationEntryState.navBack) {
                 // Nothing to copy
                 return;
             }
@@ -388,7 +388,7 @@ export default defineComponent({
             <ItemsWithPreAndPostHtml :items="prePostHtmlItems">
                 <template v-for="field in currentFormFields" :key="field.guid" v-slot:[field.guid]>
                     <RegistrantPersonField v-if="field.fieldSource === fieldSources.personField" :field="field" :fieldValues="currentRegistrant.fieldValues" :isKnownFamilyMember="!!currentRegistrant.personGuid" />
-                    <RegistrantAttributeField v-else-if="field.fieldSource === fieldSources.registrantAttribute || field.fieldSource === fieldSources.personAttribute" :field="field" :fieldValues="currentRegistrant.fieldValues" />
+                    <RegistrantAttributeField v-else-if="field.fieldSource === fieldSources.registrantAttribute || field.fieldSource === fieldSources.personAttribute" :field="field" :fieldValues="currentRegistrant.fieldValues" :formFields="currentFormFields" />
                     <Alert alertType="danger" v-else>Could not resolve field source {{field.fieldSource}}</Alert>
                 </template>
             </ItemsWithPreAndPostHtml>

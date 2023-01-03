@@ -1097,11 +1097,91 @@ namespace Rock.Migrations.Migrations {
         ///   Looks up a localized string similar to UPDATE [LavaShortcode] SET [Description]=N&apos;Adding dynamic charts to a page can be difficult, even for an experienced Javascript developer. The chart shortcode allows anyone to create charts with just a few lines of Lava.&apos;, [Documentation]=N&apos;&lt;p&gt;
         ///    Adding dynamic charts to a page can be difficult, even for an experienced Javascript developer. The 
         ///    chart shortcode allows anyone to create charts with just a few lines of Lava. There are two modes for 
-        ///    creating a chart. The first ‘simple’ mode creates a [rest of string was truncated]&quot;;.
+        ///    creating a chart. The first ‘simple’ mode create [rest of string was truncated]&quot;;.
         /// </summary>
         public static string _202209291606147_Rollup_20220929_AddChartGridlinecolorProperty {
             get {
                 return ResourceManager.GetString("_202209291606147_Rollup_20220929_AddChartGridlinecolorProperty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to UPDATE [LavaShortcode] SET [Documentation]=N&apos;&lt;p&gt;
+        ///    Adding dynamic charts to a page can be difficult, even for an experienced Javascript developer. The 
+        ///    chart shortcode allows anyone to create charts with just a few lines of Lava. There are two modes for 
+        ///    creating a chart. The first ‘simple’ mode creates a chart with a single series. This option will suffice 
+        ///    for most of your charting needs. The second ‘series’ option allows you to create charts with multiple 
+        ///    series. Let’s look at eac [rest of string was truncated]&quot;;.
+        /// </summary>
+        public static string _202211031956456_Rollup_20221103_AxisLabelsOnChartShortcode {
+            get {
+                return ResourceManager.GetString("_202211031956456_Rollup_20221103_AxisLabelsOnChartShortcode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to /*
+        ///&lt;doc&gt;
+        ///	&lt;summary&gt;
+        ///		This procedure merges the data from the non-primary person to the primary person.  It
+        ///		is used when merging people in Rock and should never be used outside of that process. 
+        ///	&lt;/summary&gt;
+        ///
+        ///	&lt;returns&gt;
+        ///	&lt;/returns&gt;
+        ///	&lt;param name=&quot;Old Id&quot; datatype=&quot;int&quot;&gt;The person id of the non-primary Person being merged&lt;/param&gt;
+        ///	&lt;param name=&quot;New Id&quot; datatype=&quot;int&quot;&gt;The person id of the primary Person being merged&lt;/param&gt;
+        ///	&lt;remarks&gt;	
+        ///		Uses the following constants:
+        ///			* Group Type - Family: 790E [rest of string was truncated]&quot;;.
+        /// </summary>
+        public static string _202211072054502_UpdateValueAsAttributeValueColumns_spCrm_PersonMerge {
+            get {
+                return ResourceManager.GetString("_202211072054502_UpdateValueAsAttributeValueColumns_spCrm_PersonMerge", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to UPDATE [LavaShortcode] SET [Markup]=N&apos;{% javascript url:&apos;&apos;~/Scripts/moment.min.js&apos;&apos; id:&apos;&apos;moment&apos;&apos;%}{% endjavascript %}
+        ///{% javascript url:&apos;&apos;~/Scripts/Chartjs/Chart.min.js&apos;&apos; id:&apos;&apos;chartjs&apos;&apos;%}{% endjavascript %}
+        ///
+        ///{%- if type == &apos;&apos;gauge&apos;&apos; or type == &apos;&apos;tsgauge&apos;&apos; -%}
+        ///    {%- assign type = &apos;&apos;tsgauge&apos;&apos; -%}
+        ///    {% javascript url:&apos;&apos;~/Scripts/Chartjs/Gauge.js&apos;&apos; id:&apos;&apos;gaugejs&apos;&apos;%}{% endjavascript %}
+        ///{%- endif -%}
+        ///
+        ///{%- if type == &apos;&apos;stackedbar&apos;&apos; -%}
+        ///    {%- assign type = &apos;&apos;bar&apos;&apos; -%}
+        ///    {%- assign xaxistype = &apos;&apos;stacked&apos;&apos; -% [rest of string was truncated]&quot;;.
+        /// </summary>
+        public static string _202212011956416_Rollup_20221201_chartupdate {
+            get {
+                return ResourceManager.GetString("_202212011956416_Rollup_20221201_chartupdate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to USE [RockRMS_v1141]
+        ///GO
+        ////****** Object:  StoredProcedure [dbo].[spAnalytics_ETL_Family]    Script Date: 18-11-2022 22:24:40 ******/
+        ///SET ANSI_NULLS ON
+        ///GO
+        ///SET QUOTED_IDENTIFIER ON
+        ///GO
+        ///-- EXECUTE [dbo].[spAnalytics_ETL_Family] 
+        ///ALTER PROCEDURE [dbo].[spAnalytics_ETL_Family]
+        ///AS
+        ///BEGIN
+        ///    DECLARE @EtlDate DATE = convert(DATE, SysDateTime())
+        ///        ,@MaxExpireDate DATE = DateFromParts(9999, 1, 1)
+        ///        ,@RecordStatusActiveId INT = (
+        ///            SELECT TOP 1 Id
+        ///            FROM DefinedValue
+        ///       [rest of string was truncated]&quot;;.
+        /// </summary>
+        public static string _202212011956416_Rollup_20221201_Update_spAnalytics_ETL_Family_11182022 {
+            get {
+                return ResourceManager.GetString("_202212011956416_Rollup_20221201_Update_spAnalytics_ETL_Family_11182022", resourceCulture);
             }
         }
     }
