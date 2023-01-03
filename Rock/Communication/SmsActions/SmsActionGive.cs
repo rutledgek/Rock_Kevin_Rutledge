@@ -54,7 +54,7 @@ namespace Rock.Communication.SmsActions
     [TextField( "Give Keyword",
         Description = @"The case-insensitive keywords that will be expected at the beginning of the message. Separate multiple values with commas like ""give, giving, gift"".",
         IsRequired = true,
-        DefaultValue = "GIVE",
+        DefaultValue = "GIVE,TITHE,GIVING,GIFT",
         Order = 1,
         Category = "Giving",
         Key = AttributeKeys.GivingKeywords )]
@@ -83,9 +83,10 @@ namespace Rock.Communication.SmsActions
 
     [LinkedPage( "Setup Page",
         Description = "The page to link with a token for the person to setup their SMS giving",
-        IsRequired = false,
+        IsRequired = true,
         Category = "Giving",
         Order = 5,
+        DefaultValue = "42ceee52-adec-48bb-af90-496db2b272c7,a5de71c3-5c98-40d1-bd27-32b298ac4577",
         Key = AttributeKeys.SetupPage )]
 
     [TextField( "Refund Keyword",
@@ -109,7 +110,7 @@ namespace Rock.Communication.SmsActions
         EditorTheme = CodeEditorTheme.Rock,
         Description = "The response that will be sent if the sender's message doesn't make sense, there is missing information, or an error occurs. <span class='tip tip-lava'></span> Use {{ Lava | Debug }} to see all available fields.",
         IsRequired = true,
-        DefaultValue = "Something went wrong. To give, simply text ‘{{ Keyword }} 100’ or ‘{{ Keyword }} $123.45’. Please contact us if you need help.",
+        DefaultValue = "To give, text GIVE & amount. Example: GIVE $250. To update amount text EDIT. More help at XXXXXXXXXX. Msg & data rates may apply. Reply STOP to cancel.",
         Order = 8,
         Category = "Response",
         Key = AttributeKeys.HelpResponse )]
@@ -129,7 +130,7 @@ namespace Rock.Communication.SmsActions
         EditorTheme = CodeEditorTheme.Rock,
         Description = "The response that will be sent if the sender is unknown, does not have a saved account, or requests to edit their giving profile. <span class='tip tip-lava'></span> Use {{ Lava | Debug }} to see all available fields.",
         IsRequired = true,
-        DefaultValue = "Welcome! Let's set up your device to securely give using this link: {% if SetupLink and SetupLink != empty %}{{ SetupLink | CreateShortLink }}{% endif %}",
+        DefaultValue = @"{{ 'Global' | Attribute:'OrganizationName'}} text giving alerts: Register here: {% if SetupLink and SetupLink != empty %}{{ SetupLink | CreateShortLink }}{% endif %} Msg & data rates may apply. 1 msg/gift. Reply HELP for help, STOP to cancel",
         Order = 10,
         Category = "Response",
         Key = AttributeKeys.SetupResponse )]
@@ -139,7 +140,7 @@ namespace Rock.Communication.SmsActions
         EditorTheme = CodeEditorTheme.Rock,
         Description = "The response that will be sent if the payment is successful. <span class='tip tip-lava'></span> Use {{ Lava | Debug }} to see all available fields.",
         IsRequired = true,
-        DefaultValue = "Thank you! We received your gift of {{ 'Global' | Attribute:'CurrencySymbol' }}{{ Amount | Format:'#,##0.00' }} to the {{ AccountName }}.",
+        DefaultValue = "Thank you! Your {{ 'Global' | Attribute:'OrganizationName'}} text gift of ${{ Amount | Format:'#,##0.00' }} has been received. A confirmation has been sent to the email address you provided.",
         Order = 11,
         Category = "Response",
         Key = AttributeKeys.SuccessResponse )]
@@ -159,7 +160,7 @@ namespace Rock.Communication.SmsActions
         EditorTheme = CodeEditorTheme.Rock,
         Description = "The response that will be sent if the refund is successful. <span class='tip tip-lava'></span> Use {{ Lava | Debug }} to see all available fields.",
         IsRequired = true,
-        DefaultValue = "Your gift for {{ 'Global' | Attribute:'CurrencySymbol' }}{{ Amount | Format:'#,##0.00' }} to the {{ AccountName }} has been refunded.",
+        DefaultValue = "Your gift for ${{ Amount | Format:'#,##0.00' }} to the {{ AccountName }} has been refunded.",
         Order = 13,
         Category = "Response",
         Key = AttributeKeys.RefundSuccessResponse )]
@@ -167,7 +168,7 @@ namespace Rock.Communication.SmsActions
     [CodeEditorField( "Missing Amount Response",
         EditorMode = CodeEditorMode.Lava,
         EditorTheme = CodeEditorTheme.Rock,
-        Description = "The response that will be sent if the amount is missing. <span class='tip tip-lava'></span> Use {{ Lava | Debug }} to see all available fields.",
+        Description = "The response that will be sent if the amount value is missing from the sender's message. <span class='tip tip-lava'></span> Use {{ Lava | Debug }} to see all available fields.",
         IsRequired = true,
         DefaultValue = "To give, simply respond with a gift amount. For example, '$100' or '$200'.",
         Order = 14,
@@ -593,8 +594,7 @@ namespace Rock.Communication.SmsActions
         {
             var messageText = context.MessageText;
             var keyword = context.MatchingGiveKeyword;
-
-            var textWithoutKeyword = Regex.Replace( messageText, keyword, string.Empty, RegexOptions.IgnoreCase ).Trim();
+            var textWithoutKeyword = keyword.IsNullOrWhiteSpace() ? messageText : Regex.Replace( messageText, keyword, string.Empty, RegexOptions.IgnoreCase ).Trim();
 
             // First try to parse a decimal like "1123.56"
             var successfulParse = decimal.TryParse( textWithoutKeyword, out var parsedValue );

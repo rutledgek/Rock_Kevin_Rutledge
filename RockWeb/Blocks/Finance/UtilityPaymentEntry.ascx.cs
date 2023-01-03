@@ -333,7 +333,7 @@ namespace RockWeb.Blocks.Finance
         Key = AttributeKey.FinishLavaTemplate,
         EditorMode = CodeEditorMode.Lava,
         Description = "The text (HTML) to display on the success page. <span class='tip tip-lava'></span>",
-        DefaultValue = DefaultFinishLavaTemplate,
+        DefaultValue = AttributeString.DefaultFinishLavaTemplate,
         Category = CategoryKey.TextOptions,
         Order = 11 )]
 
@@ -466,6 +466,20 @@ namespace RockWeb.Blocks.Finance
         Category = CategoryKey.Advanced,
         Order = 10 )]
 
+    [BooleanField( "Show Panel Headings",
+        Key = AttributeKey.ShowPanelHeadings,
+        Description = "Show the text headings at the top of the block and in panel sections.",
+        DefaultBooleanValue = true,
+        Category = CategoryKey.Advanced,
+        Order = 11 )]
+
+    [BooleanField( "Enable Text To Give Setup",
+        Key = AttributeKey.EnableTextToGiveSetup,
+        Description = "This setting enables specific behavior for setting up Text To Give accounts.",
+        DefaultBooleanValue = false,
+        Category = CategoryKey.Advanced,
+        Order = 12 )]
+
     #endregion Advanced
 
     #endregion Block Attributes
@@ -473,61 +487,6 @@ namespace RockWeb.Blocks.Finance
     [Rock.SystemGuid.BlockTypeGuid( "4CCC45A5-4AB9-4A36-BF8D-A6E316790004" )]
     public partial class UtilityPaymentEntry : Rock.Web.UI.RockBlock
     {
-        private const string DefaultFinishLavaTemplate = @"
-{% if Transaction.ScheduledTransactionDetails %}
-    {% assign transactionDetails = Transaction.ScheduledTransactionDetails %}
-{% else %}
-    {% assign transactionDetails = Transaction.TransactionDetails %}
-{% endif %}
-
-<h1>Thank You!</h1>
-
-<p>Your support is helping {{ 'Global' | Attribute:'OrganizationName' }} actively achieve our
-mission. We are so grateful for your commitment.</p>
-
-<dl>
-    <dt>Confirmation Code</dt>
-    <dd>{{ Transaction.TransactionCode }}</dd>
-    <dd></dd>
-
-    <dt>Name</dt>
-    <dd>{{ Person.FullName }}</dd>
-    <dd></dd>
-    <dd>{{ Person.Email }}</dd>
-    <dd>{{ BillingLocation.Street }} {{ BillingLocation.City }}, {{ BillingLocation.State }} {{ BillingLocation.PostalCode }}</dd>
-</dl>
-
-<dl class='dl-horizontal'>
-    {% for transactionDetail in transactionDetails %}
-        <dt>{{ transactionDetail.Account.PublicName }}</dt>
-        <dd>{{ transactionDetail.Amount | Minus: transactionDetail.FeeCoverageAmount | FormatAsCurrency }}</dd>
-    {% endfor %}
-    {% if Transaction.TotalFeeCoverageAmount %}
-        <dt>Fee Coverage</dt>
-        <dd>{{ Transaction.TotalFeeCoverageAmount | FormatAsCurrency }}</dd>
-    {% endif %}
-    <dd></dd>
-
-    <dt>Payment Method</dt>
-    <dd>{{ PaymentDetail.CurrencyTypeValue.Description}}</dd>
-
-    {% if PaymentDetail.AccountNumberMasked  != '' %}
-        <dt>Account Number</dt>
-        <dd>{{ PaymentDetail.AccountNumberMasked }}</dd>
-    {% endif %}
-
-    <dt>When<dt>
-    <dd>
-
-    {% if Transaction.TransactionFrequencyValue %}
-        {{ Transaction.TransactionFrequencyValue.Value }} starting on {{ Transaction.NextPaymentDate | Date:'sd' }}
-    {% else %}
-        Today
-    {% endif %}
-    </dd>
-</dl>
-";
-
         #region Block Keys
 
         private static class CategoryKey
@@ -597,10 +556,66 @@ mission. We are so grateful for your commitment.</p>
             public const string IncludedCampusTypes = "IncludedCampusTypes";
             public const string IncludedCampusStatuses = "IncludedCampusStatuses";
             public const string EnableMultiAccount = "EnableMultiAccount";
+            public const string ShowPanelHeadings = "ShowPanelHeadings";
+            public const string EnableTextToGiveSetup = "EnableTextToGiveSetup";
         }
 
         private static class AttributeString
         {
+            public const string DefaultFinishLavaTemplate = @"
+{% if Transaction.ScheduledTransactionDetails %}
+    {% assign transactionDetails = Transaction.ScheduledTransactionDetails %}
+{% else %}
+    {% assign transactionDetails = Transaction.TransactionDetails %}
+{% endif %}
+
+<h1>Thank You!</h1>
+
+<p>Your support is helping {{ 'Global' | Attribute:'OrganizationName' }} actively achieve our
+mission. We are so grateful for your commitment.</p>
+
+<dl>
+    <dt>Confirmation Code</dt>
+    <dd>{{ Transaction.TransactionCode }}</dd>
+    <dd></dd>
+
+    <dt>Name</dt>
+    <dd>{{ Person.FullName }}</dd>
+    <dd></dd>
+    <dd>{{ Person.Email }}</dd>
+    <dd>{{ BillingLocation.Street }} {{ BillingLocation.City }}, {{ BillingLocation.State }} {{ BillingLocation.PostalCode }}</dd>
+</dl>
+
+<dl class='dl-horizontal'>
+    {% for transactionDetail in transactionDetails %}
+        <dt>{{ transactionDetail.Account.PublicName }}</dt>
+        <dd>{{ transactionDetail.Amount | Minus: transactionDetail.FeeCoverageAmount | FormatAsCurrency }}</dd>
+    {% endfor %}
+    {% if Transaction.TotalFeeCoverageAmount %}
+        <dt>Fee Coverage</dt>
+        <dd>{{ Transaction.TotalFeeCoverageAmount | FormatAsCurrency }}</dd>
+    {% endif %}
+    <dd></dd>
+
+    <dt>Payment Method</dt>
+    <dd>{{ PaymentDetail.CurrencyTypeValue.Description}}</dd>
+
+    {% if PaymentDetail.AccountNumberMasked  != '' %}
+        <dt>Account Number</dt>
+        <dd>{{ PaymentDetail.AccountNumberMasked }}</dd>
+    {% endif %}
+
+    <dt>When<dt>
+    <dd>
+
+    {% if Transaction.TransactionFrequencyValue %}
+        {{ Transaction.TransactionFrequencyValue.Value }} starting on {{ Transaction.NextPaymentDate | Date:'sd' }}
+    {% else %}
+        Today
+    {% endif %}
+    </dd>
+</dl>
+";
             public const string ConfirmationHeader = @"
 <p>
     Please confirm the information below. Once you have confirmed that the information is
@@ -649,6 +664,7 @@ mission. We are so grateful for your commitment.</p>
             public const string PersonId = "PersonId";
             public const string HostPaymentInfoSubmitScript = "HostPaymentInfoSubmitScript";
         }
+
         #endregion Block Keys
 
         #region Fields
@@ -1512,131 +1528,7 @@ mission. We are so grateful for your commitment.</p>
 
                 if ( !string.IsNullOrWhiteSpace( txtSaveAccount.Text ) )
                 {
-                    var gateway = this.FinancialGatewayComponent;
-                    var financialGateway = this.FinancialGateway;
-
-                    if ( gateway != null )
-                    {
-                        string errorMessage = string.Empty;
-
-                        var person = GetPerson( false );
-                        string referenceNumber = string.Empty;
-                        FinancialPaymentDetail paymentDetail = null;
-
-                        if ( !ScheduleId.HasValue )
-                        {
-                            var transaction = new FinancialTransactionService( rockContext ).GetByTransactionCode( ( financialGateway != null ? financialGateway.Id : ( int? ) null ), TransactionCode );
-                            if ( transaction != null && transaction.AuthorizedPersonAlias != null )
-                            {
-                                if ( transaction.FinancialGateway != null )
-                                {
-                                    transaction.FinancialGateway.LoadAttributes( rockContext );
-                                }
-
-                                referenceNumber = gateway.GetReferenceNumber( transaction, out errorMessage );
-                                paymentDetail = transaction.FinancialPaymentDetail;
-                            }
-                        }
-                        else
-                        {
-                            var scheduledTransaction = new FinancialScheduledTransactionService( rockContext ).Get( ScheduleId.Value );
-                            if ( scheduledTransaction != null )
-                            {
-                                if ( scheduledTransaction.FinancialGateway != null )
-                                {
-                                    scheduledTransaction.FinancialGateway.LoadAttributes( rockContext );
-                                }
-
-                                referenceNumber = gateway.GetReferenceNumber( scheduledTransaction, out errorMessage );
-                                paymentDetail = scheduledTransaction.FinancialPaymentDetail;
-                            }
-                        }
-
-                        if ( person != null && paymentDetail != null )
-                        {
-                            if ( phCreateLogin.Visible )
-                            {
-                                var user = UserLoginService.Create(
-                                    rockContext,
-                                    person,
-                                    Rock.Model.AuthenticationServiceType.Internal,
-                                    EntityTypeCache.Get( Rock.SystemGuid.EntityType.AUTHENTICATION_DATABASE.AsGuid() ).Id,
-                                    txtUserName.Text,
-                                    txtPassword.Text,
-                                    false );
-
-                                var mergeFields = Rock.Lava.LavaHelper.GetCommonMergeFields( this.RockPage, this.CurrentPerson );
-                                mergeFields.Add( "ConfirmAccountUrl", RootPath + "ConfirmAccount" );
-                                mergeFields.Add( "Person", person );
-                                mergeFields.Add( "User", user );
-
-                                var emailMessage = new RockEmailMessage( GetAttributeValue( AttributeKey.ConfirmAccountTemplate ).AsGuid() );
-                                emailMessage.AddRecipient( new RockEmailMessageRecipient( person, mergeFields ) );
-                                emailMessage.AppRoot = ResolveRockUrl( "~/" );
-                                emailMessage.ThemeRoot = ResolveRockUrl( "~~/" );
-                                emailMessage.CreateCommunicationRecord = false;
-                                emailMessage.Send();
-                            }
-
-                            if ( errorMessage.Any() )
-                            {
-                                nbSaveAccount.Title = "Invalid Transaction";
-                                nbSaveAccount.Text = "Sorry, the account information cannot be saved. " + errorMessage;
-                                nbSaveAccount.NotificationBoxType = NotificationBoxType.Danger;
-                                nbSaveAccount.Visible = true;
-                            }
-                            else
-                            {
-                                var savedAccount = new FinancialPersonSavedAccount();
-                                savedAccount.PersonAliasId = person.PrimaryAliasId;
-                                savedAccount.ReferenceNumber = referenceNumber;
-                                savedAccount.Name = txtSaveAccount.Text;
-                                savedAccount.TransactionCode = TransactionCode;
-                                savedAccount.GatewayPersonIdentifier = paymentDetail.GatewayPersonIdentifier;
-                                savedAccount.FinancialGatewayId = financialGateway.Id;
-                                savedAccount.FinancialPaymentDetail = new FinancialPaymentDetail();
-                                savedAccount.FinancialPaymentDetail.AccountNumberMasked = paymentDetail.AccountNumberMasked;
-                                savedAccount.FinancialPaymentDetail.CurrencyTypeValueId = paymentDetail.CurrencyTypeValueId;
-                                savedAccount.FinancialPaymentDetail.CreditCardTypeValueId = paymentDetail.CreditCardTypeValueId;
-                                savedAccount.FinancialPaymentDetail.NameOnCard = paymentDetail.NameOnCard;
-                                savedAccount.FinancialPaymentDetail.ExpirationMonth = paymentDetail.ExpirationMonth;
-                                savedAccount.FinancialPaymentDetail.ExpirationYear = paymentDetail.ExpirationYear;
-                                savedAccount.FinancialPaymentDetail.BillingLocationId = paymentDetail.BillingLocationId;
-
-                                var savedAccountService = new FinancialPersonSavedAccountService( rockContext );
-                                savedAccountService.Add( savedAccount );
-                                rockContext.SaveChanges();
-
-                                // If we created a new saved account, update the transaction to say it that is used this saved account.
-                                paymentDetail.FinancialPersonSavedAccountId = savedAccount.Id;
-                                rockContext.SaveChanges();
-
-                                cbSaveAccount.Visible = false;
-                                txtSaveAccount.Visible = false;
-                                phCreateLogin.Visible = false;
-                                divSaveActions.Visible = false;
-
-                                nbSaveAccount.Title = "Success";
-                                nbSaveAccount.Text = "The account has been saved for future use";
-                                nbSaveAccount.NotificationBoxType = NotificationBoxType.Success;
-                                nbSaveAccount.Visible = true;
-                            }
-                        }
-                        else
-                        {
-                            nbSaveAccount.Title = "Invalid Transaction";
-                            nbSaveAccount.Text = "Sorry, the account information cannot be saved as there's not a valid transaction code to reference.";
-                            nbSaveAccount.NotificationBoxType = NotificationBoxType.Danger;
-                            nbSaveAccount.Visible = true;
-                        }
-                    }
-                    else
-                    {
-                        nbSaveAccount.Title = "Invalid Gateway";
-                        nbSaveAccount.Text = "Sorry, the financial gateway information for this type of transaction is not valid.";
-                        nbSaveAccount.NotificationBoxType = NotificationBoxType.Danger;
-                        nbSaveAccount.Visible = true;
-                    }
+                    CreateSavedAccount( txtSaveAccount.Text, rockContext );
                 }
                 else
                 {
@@ -1684,7 +1576,8 @@ mission. We are so grateful for your commitment.</p>
 
         private void SetTargetPerson( RockContext rockContext )
         {
-            var allowImpersonation = GetAttributeValue( AttributeKey.Impersonation ).AsBooleanOrNull() ?? false;
+            var enableTextToGiveSetup = GetAttributeValue( AttributeKey.EnableTextToGiveSetup ).AsBoolean(); // Must allow impersonation if setting up text to give.
+            var allowImpersonation = enableTextToGiveSetup || ( GetAttributeValue( AttributeKey.Impersonation ).AsBooleanOrNull() ?? false );
             string personActionId = PageParameter( PageParameterKey.PersonActionIdentifier );
 
             if ( personActionId.IsNotNullOrWhiteSpace() )
@@ -1953,6 +1846,15 @@ mission. We are so grateful for your commitment.</p>
         /// </summary>
         private void SetControlOptions()
         {
+            // Set heading visibility
+            var showPanelHeadings = GetAttributeValue( AttributeKey.ShowPanelHeadings ).AsBoolean();
+            pnlHeading1.Visible = showPanelHeadings;
+            pnlHeading2.Visible = showPanelHeadings;
+            pnlHeading3.Visible = showPanelHeadings;
+            pnlHeading4.Visible = showPanelHeadings;
+            pnlHeading5.Visible = showPanelHeadings;
+            pnlHeading6.Visible = showPanelHeadings;
+
             // Set page/panel titles
             lPanelTitle1.Text = GetAttributeValue( AttributeKey.PanelTitle );
             lPanelTitle2.Text = GetAttributeValue( AttributeKey.PanelTitle );
@@ -1976,9 +1878,12 @@ mission. We are so grateful for your commitment.</p>
             ShowPersonal( person );
 
             // Set personal display
-            txtCurrentName.Visible = person != null;
-            txtFirstName.Visible = person == null;
-            txtLastName.Visible = person == null;
+
+            // If a record is created by the Give SMS action, it will not have a name assigned and the user needs to enter one.
+            var nameEntryEnabled = ( person == null || person.IsNameless() );
+            txtCurrentName.Visible = !nameEntryEnabled;
+            txtFirstName.Visible = nameEntryEnabled;
+            txtLastName.Visible = nameEntryEnabled;
 
             cbGiveAnonymously.Visible = GetAttributeValue( AttributeKey.EnableAnonymousGiving ).AsBoolean();
             cbGiveAnonymously.ToolTip = GetAttributeValue( AttributeKey.AnonymousGivingTooltip );
@@ -2005,8 +1910,17 @@ mission. We are so grateful for your commitment.</p>
             }
             else
             {
-                btnSavedAccountPaymentInfoNext.Text = "Finish";
-                btnHostedPaymentInfoNext.Text = "Finish";
+                var enableTextToGiveSetup = GetAttributeValue( AttributeKey.EnableTextToGiveSetup ).AsBoolean();
+                if ( enableTextToGiveSetup  )
+                {
+                    btnSavedAccountPaymentInfoNext.Text = "Give";
+                    btnHostedPaymentInfoNext.Text = "Give";
+                }
+                else
+                {
+                    btnSavedAccountPaymentInfoNext.Text = "Finish";
+                    btnHostedPaymentInfoNext.Text = "Finish";
+                }
             }
         }
 
@@ -2228,6 +2142,14 @@ mission. We are so grateful for your commitment.</p>
             bool givingAsBusiness = GetAttributeValue( AttributeKey.EnableBusinessGiving ).AsBoolean() && !tglGiveAsOption.Checked;
             if ( create && !givingAsBusiness )
             {
+                // If this is a nameless person, we need to make a new person record and merge it.
+                Person namelessPerson = null;
+                if ( person.IsNameless() )
+                {
+                    namelessPerson = person;
+                    person = null;
+                }
+
                 if ( person == null )
                 {
                     // Check to see if there's only one person with same email, first name, and last name
@@ -2264,6 +2186,11 @@ mission. We are so grateful for your commitment.</p>
 
                         // Create Person/Family
                         familyGroup = PersonService.SaveNewPerson( person, rockContext, null, false );
+                    }
+
+                    if ( namelessPerson != null )
+                    {
+                        personService.MergeNamelessPersonToExistingPerson( namelessPerson, person );
                     }
 
                     ViewState[ViewStateKey.PersonId] = person != null ? person.Id : 0;
@@ -2585,7 +2512,7 @@ mission. We are so grateful for your commitment.</p>
             {
                 if ( caapPromptForAccountAmounts.AccountAmounts.Sum( a => a.Amount ) > amountLimit.Value )
                 {
-                    errorMessages.Add( string.Format( "The maximum amount it limited to {0}", amountLimit.FormatAsCurrency() ) );
+                    errorMessages.Add( string.Format( "The maximum amount is limited to {0}", amountLimit.FormatAsCurrency() ) );
                 }
             }
 
@@ -3190,8 +3117,10 @@ mission. We are so grateful for your commitment.</p>
             FinancialPaymentDetail financialPaymentDetail;
             FinancialTransaction financialTransaction = new FinancialTransactionService( rockContext ).Get( transactionGuid );
             int? transactionPersonAliasId;
+            int? textToGiveContributionAccountId = null;
             if ( financialTransaction != null )
             {
+                textToGiveContributionAccountId = financialTransaction.TransactionDetails.FirstOrDefault()?.AccountId;
                 mergeFields.Add( "Transaction", financialTransaction );
                 transactionPersonAliasId = financialTransaction.AuthorizedPersonAliasId;
                 financialPaymentDetail = financialTransaction.FinancialPaymentDetail;
@@ -3200,6 +3129,7 @@ mission. We are so grateful for your commitment.</p>
             else
             {
                 FinancialScheduledTransaction financialScheduledTransaction = new FinancialScheduledTransactionService( rockContext ).Get( transactionGuid );
+                textToGiveContributionAccountId = financialScheduledTransaction?.ScheduledTransactionDetails.FirstOrDefault()?.AccountId;
                 mergeFields.Add( "Transaction", financialScheduledTransaction );
                 transactionPersonAliasId = financialScheduledTransaction.AuthorizedPersonAliasId;
                 financialPaymentDetail = financialScheduledTransaction.FinancialPaymentDetail;
@@ -3226,11 +3156,29 @@ mission. We are so grateful for your commitment.</p>
 
             lTransactionSummaryHTML.Text = finishLavaTemplate.ResolveMergeFields( mergeFields );
 
-            bool isSavedAccount = rblSavedAccount.SelectedValue.AsInteger() > 0;
+            var savedAccountId = rblSavedAccount.SelectedValue.AsInteger();
+            bool isSavedAccount = savedAccountId > 0;
+            var enableTextToGiveSetup = GetAttributeValue( AttributeKey.EnableTextToGiveSetup ).AsBoolean();
 
             // If there was a transaction code returned and this was not already created from a previous saved account,
             // show the option to save the account.
-            if ( !isSavedAccount && !string.IsNullOrWhiteSpace( TransactionCode ) && gatewayComponent.SupportsSavedAccount( paymentInfo.CurrencyTypeValue ) )
+            if ( enableTextToGiveSetup && !string.IsNullOrWhiteSpace( TransactionCode ) )
+            {
+                if ( isSavedAccount )
+                {
+                    new PersonService( rockContext ).ConfigureTextToGive( person.Id, textToGiveContributionAccountId, savedAccountId, out _ );
+                    rockContext.SaveChanges();
+                }
+                else
+                {
+                    string cardType = financialPaymentDetail?.CreditCardTypeValue?.Value;
+                    string accountNumber = financialPaymentDetail?.AccountNumberMasked;
+                    string last4 = accountNumber.Right( 4 );
+                    var accountTitle = $"Text To Give - {cardType} (ending in {last4})";
+                    CreateSavedAccount( accountTitle, rockContext, true );
+                }
+            }
+            else if ( !isSavedAccount && !string.IsNullOrWhiteSpace( TransactionCode ) && gatewayComponent.SupportsSavedAccount( paymentInfo.CurrencyTypeValue ) )
             {
                 cbSaveAccount.Visible = true;
                 pnlSaveAccount.Visible = true;
@@ -3262,6 +3210,141 @@ mission. We are so grateful for your commitment.</p>
 
                 sendPaymentReceiptsTask.Send();
             }
+        }
+
+        private void CreateSavedAccount( string AccountTitle, RockContext rockContext, bool enableTextToGiveSetup = false )
+        {
+            var gateway = this.FinancialGatewayComponent;
+            var financialGateway = this.FinancialGateway;
+
+            if ( gateway == null )
+            {
+                nbSaveAccount.Title = "Invalid Gateway";
+                nbSaveAccount.Text = "Sorry, the financial gateway information for this type of transaction is not valid.";
+                nbSaveAccount.NotificationBoxType = NotificationBoxType.Danger;
+                nbSaveAccount.Visible = true;
+                return;
+            }
+
+            string errorMessage = string.Empty;
+
+            var person = GetPerson( false );
+            string referenceNumber = string.Empty;
+            FinancialPaymentDetail paymentDetail = null;
+            int? textToGiveContributionAccountId = null;
+
+            if ( !ScheduleId.HasValue )
+            {
+                var transaction = new FinancialTransactionService( rockContext ).GetByTransactionCode( ( financialGateway != null ? financialGateway.Id : ( int? ) null ), TransactionCode );
+                if ( transaction != null && transaction.AuthorizedPersonAlias != null )
+                {
+                    if ( transaction.FinancialGateway != null )
+                    {
+                        transaction.FinancialGateway.LoadAttributes( rockContext );
+                    }
+
+                    referenceNumber = gateway.GetReferenceNumber( transaction, out errorMessage );
+                    paymentDetail = transaction.FinancialPaymentDetail;
+                    textToGiveContributionAccountId = transaction.TransactionDetails.FirstOrDefault().AccountId;
+                }
+            }
+            else
+            {
+                var scheduledTransaction = new FinancialScheduledTransactionService( rockContext ).Get( ScheduleId.Value );
+                if ( scheduledTransaction != null )
+                {
+                    if ( scheduledTransaction.FinancialGateway != null )
+                    {
+                        scheduledTransaction.FinancialGateway.LoadAttributes( rockContext );
+                    }
+
+                    referenceNumber = gateway.GetReferenceNumber( scheduledTransaction, out errorMessage );
+                    paymentDetail = scheduledTransaction.FinancialPaymentDetail;
+                    textToGiveContributionAccountId = scheduledTransaction.ScheduledTransactionDetails.FirstOrDefault().AccountId;
+                }
+            }
+
+            if ( person == null || paymentDetail == null )
+            {
+                nbSaveAccount.Title = "Invalid Transaction";
+                nbSaveAccount.Text = "Sorry, the account information cannot be saved as there's not a valid transaction code to reference.";
+                nbSaveAccount.NotificationBoxType = NotificationBoxType.Danger;
+                nbSaveAccount.Visible = true;
+                return;
+            }
+
+            if ( errorMessage.Any() )
+            {
+                nbSaveAccount.Title = "Invalid Transaction";
+                nbSaveAccount.Text = "Sorry, the account information cannot be saved. " + errorMessage;
+                nbSaveAccount.NotificationBoxType = NotificationBoxType.Danger;
+                nbSaveAccount.Visible = true;
+                return;
+            }
+
+            if ( phCreateLogin.Visible )
+            {
+                var user = UserLoginService.Create(
+                    rockContext,
+                    person,
+                    Rock.Model.AuthenticationServiceType.Internal,
+                    EntityTypeCache.Get( Rock.SystemGuid.EntityType.AUTHENTICATION_DATABASE.AsGuid() ).Id,
+                    txtUserName.Text,
+                    txtPassword.Text,
+                    false );
+
+                var mergeFields = Rock.Lava.LavaHelper.GetCommonMergeFields( this.RockPage, this.CurrentPerson );
+                mergeFields.Add( "ConfirmAccountUrl", RootPath + "ConfirmAccount" );
+                mergeFields.Add( "Person", person );
+                mergeFields.Add( "User", user );
+
+                var emailMessage = new RockEmailMessage( GetAttributeValue( AttributeKey.ConfirmAccountTemplate ).AsGuid() );
+                emailMessage.AddRecipient( new RockEmailMessageRecipient( person, mergeFields ) );
+                emailMessage.AppRoot = ResolveRockUrl( "~/" );
+                emailMessage.ThemeRoot = ResolveRockUrl( "~~/" );
+                emailMessage.CreateCommunicationRecord = false;
+                emailMessage.Send();
+            }
+
+            var savedAccount = new FinancialPersonSavedAccount();
+            savedAccount.PersonAliasId = person.PrimaryAliasId;
+            savedAccount.ReferenceNumber = referenceNumber;
+            savedAccount.Name = AccountTitle;
+            savedAccount.TransactionCode = TransactionCode;
+            savedAccount.GatewayPersonIdentifier = paymentDetail.GatewayPersonIdentifier;
+            savedAccount.FinancialGatewayId = financialGateway.Id;
+            savedAccount.FinancialPaymentDetail = new FinancialPaymentDetail();
+            savedAccount.FinancialPaymentDetail.AccountNumberMasked = paymentDetail.AccountNumberMasked;
+            savedAccount.FinancialPaymentDetail.CurrencyTypeValueId = paymentDetail.CurrencyTypeValueId;
+            savedAccount.FinancialPaymentDetail.CreditCardTypeValueId = paymentDetail.CreditCardTypeValueId;
+            savedAccount.FinancialPaymentDetail.NameOnCard = paymentDetail.NameOnCard;
+            savedAccount.FinancialPaymentDetail.ExpirationMonth = paymentDetail.ExpirationMonth;
+            savedAccount.FinancialPaymentDetail.ExpirationYear = paymentDetail.ExpirationYear;
+            savedAccount.FinancialPaymentDetail.BillingLocationId = paymentDetail.BillingLocationId;
+
+            var savedAccountService = new FinancialPersonSavedAccountService( rockContext );
+            savedAccountService.Add( savedAccount );
+            rockContext.SaveChanges();
+
+            // If we created a new saved account, update the transaction to say it that is used this saved account.
+            paymentDetail.FinancialPersonSavedAccountId = savedAccount.Id;
+            rockContext.SaveChanges();
+
+            if ( enableTextToGiveSetup )
+            {
+                new PersonService( rockContext ).ConfigureTextToGive( person.Id, textToGiveContributionAccountId, savedAccount.Id, out errorMessage );
+                rockContext.SaveChanges();
+            }
+
+            cbSaveAccount.Visible = false;
+            txtSaveAccount.Visible = false;
+            phCreateLogin.Visible = false;
+            divSaveActions.Visible = false;
+
+            nbSaveAccount.Title = "Success";
+            nbSaveAccount.Text = "The account has been saved for future use";
+            nbSaveAccount.NotificationBoxType = NotificationBoxType.Success;
+            nbSaveAccount.Visible = true;
         }
 
         #endregion
