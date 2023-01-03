@@ -231,6 +231,60 @@ namespace Rock.Rest.v2
             } );
         }
 
+        /// <summary>
+        /// Validates the given address and returns the string representation of the address
+        /// </summary>
+        /// <param name="options">Address details to validate</param>
+        /// <returns>Validation information and a single string representation of the address</returns>
+        [HttpPost]
+        [System.Web.Http.Route( "AddressControlValidateAddress" )]
+        [Rock.SystemGuid.RestActionGuid( "ff879ea7-07dd-43ec-a5de-26f55e9f073a" )]
+        public IHttpActionResult AddressControlValidateAddress( [FromBody] AddressControlValidateAddressOptionsBag options )
+        {
+            var editedLocation = new Location();
+            string errorMessage = null;
+            string addressString = null;
+
+            editedLocation.Street1 = options.Street1;
+            editedLocation.Street2 = options.Street2;
+            editedLocation.City = options.City;
+            editedLocation.State = options.State;
+            editedLocation.PostalCode = options.PostalCode;
+            editedLocation.Country = options.Country.IsNotNullOrWhiteSpace() ? options.Country : "US";
+
+            var locationService = new LocationService( new RockContext() );
+
+            string validationMessage;
+
+            var isValid = LocationService.ValidateLocationAddressRequirements( editedLocation, out validationMessage );
+
+            if ( !isValid )
+            {
+                errorMessage = validationMessage;
+            }
+            else
+            {
+                editedLocation = locationService.Get( editedLocation.Street1, editedLocation.Street2, editedLocation.City, editedLocation.State, editedLocation.County, editedLocation.PostalCode, editedLocation.Country, null );
+                addressString = editedLocation.GetFullStreetAddress().ConvertCrLfToHtmlBr();
+            }
+
+            return Ok( new AddressControlValidateAddressResultsBag
+            {
+                ErrorMessage = errorMessage,
+                IsValid = isValid,
+                AddressString = addressString,
+                Address = new AddressControlBag
+                {
+                    Street1 = editedLocation.Street1,
+                    Street2 = editedLocation.Street2,
+                    City = editedLocation.City,
+                    State = editedLocation.State,
+                    PostalCode = editedLocation.PostalCode,
+                    Country = editedLocation.Country
+                }
+            } );
+        }
+
         #endregion
 
         #region Assessment Type Picker
@@ -2282,64 +2336,6 @@ namespace Rock.Rest.v2
             }
 
             return Ok( items );
-        }
-
-        #endregion
-
-        #region Location Address Picker
-
-        /// <summary>
-        /// Validates the given address and returns the string representation of the address
-        /// </summary>
-        /// <param name="options">Address details to validate</param>
-        /// <returns>Validation information and a single string representation of the address</returns>
-        [HttpPost]
-        [System.Web.Http.Route( "LocationAddressPickerValidateAddress" )]
-        [Rock.SystemGuid.RestActionGuid( "ff879ea7-07dd-43ec-a5de-26f55e9f073a" )]
-        public IHttpActionResult LocationAddressPickerValidateAddress( [FromBody] LocationAddressPickerValidateAddressOptionsBag options )
-        {
-            var editedLocation = new Location();
-            string errorMessage = null;
-            string addressString = null;
-
-            editedLocation.Street1 = options.Street1;
-            editedLocation.Street2 = options.Street2;
-            editedLocation.City = options.City;
-            editedLocation.State = options.State;
-            editedLocation.PostalCode = options.PostalCode;
-            editedLocation.Country = options.Country.IsNotNullOrWhiteSpace() ? options.Country : "US";
-
-            var locationService = new LocationService( new RockContext() );
-
-            string validationMessage;
-
-            var isValid = LocationService.ValidateLocationAddressRequirements( editedLocation, out validationMessage );
-
-            if ( !isValid )
-            {
-                errorMessage = validationMessage;
-            }
-            else
-            {
-                editedLocation = locationService.Get( editedLocation.Street1, editedLocation.Street2, editedLocation.City, editedLocation.State, editedLocation.County, editedLocation.PostalCode, editedLocation.Country, null );
-                addressString = editedLocation.GetFullStreetAddress().ConvertCrLfToHtmlBr();
-            }
-
-            return Ok( new
-            {
-                ErrorMessage = errorMessage,
-                IsValid = isValid,
-                AddressString = addressString,
-                Address = new AddressControlBag
-                {
-                    Street1 = editedLocation.Street1,
-                    Street2 = editedLocation.Street2,
-                    City = editedLocation.City,
-                    State = editedLocation.State,
-                    PostalCode = editedLocation.PostalCode,
-                    Country = editedLocation.Country
-                }
-            } );
         }
 
         #endregion

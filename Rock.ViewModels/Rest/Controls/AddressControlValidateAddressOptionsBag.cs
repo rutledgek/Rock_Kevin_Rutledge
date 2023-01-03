@@ -23,7 +23,7 @@ namespace Rock.ViewModels.Rest.Controls
     /// The options that can be passed to the ValidateAddress API action of
     /// the LocationAddressPicker control.
     /// </summary>
-    public class LocationAddressPickerValidateAddressOptionsBag
+    public class AddressControlValidateAddressOptionsBag
     {
         /// <summary>
         /// Gets or sets the street1.

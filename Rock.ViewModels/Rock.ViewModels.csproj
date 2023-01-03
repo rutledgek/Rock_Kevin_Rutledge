@@ -401,8 +401,8 @@
     <Compile Include="Rest\Controls\GeoPickerSettingsBag.cs" />
     <Compile Include="Rest\Controls\GeoPickerGoogleMapSettingsBag.cs" />
     <Compile Include="Rest\Controls\GeoPickerGetGoogleMapSettingsOptionsBag.cs" />
-    <Compile Include="Rest\Controls\LocationAddressPickerValidateAddressResultsBag.cs" />
-    <Compile Include="Rest\Controls\LocationAddressPickerValidateAddressOptionsBag.cs" />
+    <Compile Include="Rest\Controls\AddressControlValidateAddressResultsBag.cs" />
+    <Compile Include="Rest\Controls\AddressControlValidateAddressOptionsBag.cs" />
     <Compile Include="Rest\Controls\LocationItemPickerGetActiveChildrenOptionsBag.cs" />
     <Compile Include="Rest\Controls\WorkflowActionTypePickerGetChildrenOptionsBag.cs" />
     <Compile Include="Rest\Controls\SchedulePickerGetChildrenOptionsBag.cs" />

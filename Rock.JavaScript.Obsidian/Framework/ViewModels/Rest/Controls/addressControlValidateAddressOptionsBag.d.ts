@@ -25,7 +25,7 @@
  * The options that can be passed to the ValidateAddress API action of
  * the LocationAddressPicker control.
  */
-export type LocationAddressPickerValidateAddressOptionsBag = {
+export type AddressControlValidateAddressOptionsBag = {
     /** Gets or sets the city. */
     city?: string | null;
 

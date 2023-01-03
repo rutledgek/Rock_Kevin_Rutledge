@@ -23,7 +23,7 @@ namespace Rock.ViewModels.Rest.Controls
     /// <summary>
     /// The results from the ValidateAddress API action of the LocationAddressPicker control.
     /// </summary>
-    public class LocationAddressPickerValidateAddressResultsBag
+    public class AddressControlValidateAddressResultsBag
     {
         /// <summary>
         /// If invalid, this is the message stating what is wrong with the given address

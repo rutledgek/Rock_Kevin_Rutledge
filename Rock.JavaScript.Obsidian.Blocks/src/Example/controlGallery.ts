@@ -6663,6 +6663,9 @@ const locationListGallery = defineComponent({
             <div class="col-md-3">
                 <DefinedValuePicker v-model="locationType" label="Location Type" definedTypeGuid="3285DCEF-FAA4-43B9-9338-983F4A384ABA" showBlankItem />
             </div>
+            <div class="col-md-3">
+                <CheckBox v-model="showBlankItem" label="Show Blank Item" />
+            </div>
         </div>
         <p class="text-semibold font-italic">Not all options have been implemented yet.</p>
     </template>
