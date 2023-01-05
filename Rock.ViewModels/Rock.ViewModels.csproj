@@ -114,6 +114,7 @@
     <Compile Include="Event\InteractiveExperiences\VisualizerRenderConfigurationBag.cs" />
     <Compile Include="Rest\Controls\GroupTypePickerGetGroupTypesOptionsBag.cs" />
     <Compile Include="Rest\Controls\LocationListGetLocationsOptionsBag.cs" />
+    <Compile Include="Rest\Controls\LocationListSaveNewLocationOptionsBag.cs" />
     <Compile Include="Utility\IValidPropertiesBox.cs" />
     <Compile Include="Blocks\WorkFlow\FormBuilder\CampusSetFrom.cs" />
     <Compile Include="Blocks\WorkFlow\FormBuilder\FormBuilderDetailViewModel.cs" />

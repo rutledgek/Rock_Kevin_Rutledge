@@ -7,14 +7,17 @@
             <Alert v-else-if="saveError" alertType="danger">Error: {{ saveError }}</Alert>
 
             <RockForm v-else @submit="saveNewValue">
-                <TextBox label="Value" v-model="newValue" rules="required" />
-                <TextBox label="Description" v-model="newDescription" textMode="multiline" />
+                <RockValidation :errors="validationErrors" />
+                <TextBox label="Location Name" v-model="newLocationName" />
+                <AddressControl label="Address" v-model="newLocationAddress" :rules="addressRules" disableFrontEndValidation />
                 <AttributeValuesContainer v-if="attributes != null" v-model="attributeValues" :attributes="attributes" isEditMode :showCategoryLabel="false" />
-                <RockButton type="submit" :btnType="saveButtonType" :btnSize="formButtonSize">Add</RockButton>
-                <RockButton :btnType="cancelButtonType" :btnSize="formButtonSize" @click="hideAddForm">Cancel</RockButton>
+                <RockButton type="submit" :btnType="BtnType.Primary" :btnSize="BtnSize.ExtraSmall" :disabled="isValidating">
+                    <Loading :isLoading="isValidating">Add</Loading>
+                </RockButton>
+                <RockButton :btnType="BtnType.Link" :btnSize="BtnSize.ExtraSmall" @click="hideAddForm">Cancel</RockButton>
             </RockForm>
 
-            <RockButton v-if="fetchError || saveError" :btnType="cancelButtonType" :btnSize="formButtonSize" @click="hideAddForm">Cancel</RockButton>
+            <RockButton v-if="fetchError || saveError" :btnType="BtnType.Link" :btnSize="BtnSize.ExtraSmall" @click="hideAddForm">Cancel</RockButton>
         </Loading>
     </template>
 
@@ -22,11 +25,11 @@
         <BaseAsyncPicker v-model="internalValue" v-bind="standardProps" :items="itemsSource">
             <template #inputGroupAppend v-if="allowAdd">
                 <span class="input-group-btn">
-                    <RockButton @click="showAddForm" :btnType="plusButtonType" aria-label="Add Item"><i class="fa fa-plus" aria-hidden></i></RockButton>
+                    <RockButton @click="showAddForm" :btnType="BtnType.Default" aria-label="Add Item"><i class="fa fa-plus" aria-hidden></i></RockButton>
                 </span>
             </template>
             <template #append="{ isInputGroupSupported }" v-if="allowAdd">
-                <RockButton v-if="!isInputGroupSupported" @click="showAddForm" :btnType="addItemButtonType">Add Item</RockButton>
+                <RockButton v-if="!isInputGroupSupported" @click="showAddForm" :btnType="BtnType.Link">Add Item</RockButton>
             </template>
         </BaseAsyncPicker>
     </template>
@@ -38,10 +41,9 @@
     import { standardAsyncPickerProps, useStandardAsyncPickerProps, useVModelPassthrough } from "@Obsidian/Utility/component";
     import { useHttp } from "@Obsidian/Utility/http";
     import { LocationListGetLocationsOptionsBag } from "@Obsidian/ViewModels/Rest/Controls/locationListGetLocationsOptionsBag";
-    import { DefinedValuePickerSaveNewValueOptionsBag } from "@Obsidian/ViewModels/Rest/Controls/definedValuePickerSaveNewValueOptionsBag";
-    import { DefinedValuePickerGetAttributesOptionsBag } from "@Obsidian/ViewModels/Rest/Controls/definedValuePickerGetAttributesOptionsBag";
+    import { LocationListSaveNewLocationOptionsBag } from "@Obsidian/ViewModels/Rest/Controls/locationListSaveNewLocationOptionsBag";
     import { ListItemBag } from "@Obsidian/ViewModels/Utility/listItemBag";
-    import { PropType, ref, watch } from "vue";
+    import { computed, PropType, ref, watch } from "vue";
     import BaseAsyncPicker from "./baseAsyncPicker";
     import RockLabel from "./rockLabel";
     import RockForm from "./rockForm";
@@ -49,9 +51,15 @@
     import TextBox from "./textBox";
     import RockButton from "./rockButton";
     import Loading from "./loading";
-    import Alert from "./alert.vue";
-    import { BtnSize, BtnType } from "@Obsidian/Enums/Controls/buttonOptions";
+    import Alert from "./alert.obs";
+    import { BtnSize } from "@Obsidian/Enums/Controls/btnSize";
+    import { BtnType } from "@Obsidian/Enums/Controls/btnType";
     import { PublicAttributeBag } from "@Obsidian/ViewModels/Utility/publicAttributeBag";
+    import AddressControl from "./addressControl.obs";
+    import { AddressControlBag } from "@Obsidian/ViewModels/Controls/addressControlBag";
+    import { validateAddress } from "@Obsidian/Utility/address";
+    import { FormError } from "@Obsidian/Utility/form";
+    import RockValidation from "./rockValidation";
 
     const props = defineProps({
         modelValue: {
@@ -141,8 +149,10 @@
 
     const isShowingAddForm = ref(false);
     const isLoading = ref(false);
+    const isValidating = ref(false);
     const fetchError = ref<false | string>(false);
     const saveError = ref<false | string>(false);
+    const validationErrors = ref<FormError[]>([]);
 
     async function showAddForm(): Promise<void> {
         if (!props.allowAdd) return;
@@ -154,12 +164,8 @@
             fetchError.value = false;
             saveError.value = false;
 
-            const options: Partial<DefinedValuePickerGetAttributesOptionsBag> = {
-                // definedTypeGuid: props.definedTypeGuid,
-                securityGrantToken: securityGrantToken.value
-            };
-            const url = "/api/v2/Controls/DefinedValuePickerGetAttributes";
-            const result = await http.post<PublicAttributeBag[]>(url, undefined, options);
+            const url = "/api/v2/Controls/LocationListGetAttributes";
+            const result = await http.post<PublicAttributeBag[]>(url);
 
             if (result.isSuccess && result.data) {
                 attributes.value = result.data.reduce(function (acc, val) {
@@ -183,17 +189,54 @@
     }
 
     async function saveNewValue(): Promise<void> {
-        isLoading.value = true;
         saveError.value = false;
 
-        const options: Partial<DefinedValuePickerSaveNewValueOptionsBag> = {
-            // definedTypeGuid: props.definedTypeGuid,
+        if (newLocationAddress.value.street1 || props.isAddressRequired) {
+            isValidating.value = true;
+            const response = await validateAddress({ ...newLocationAddress.value });
+
+            if (response.isSuccess && response.data) {
+                if (response.data.isValid) {
+                    validationErrors.value = [];
+                    newLocationAddress.value = { ...response.data.address } as AddressControlBag;
+                }
+                else {
+                    validationErrors.value = [{ name: "Invalid", text: response.data.errorMessage ?? "Please enter a valid address." }];
+                    isValidating.value = false;
+                    return;
+                }
+            }
+            else {
+                console.error(response.errorMessage ?? "Unknown error while validating address.");
+                validationErrors.value = [{ name: "Server", text: response.errorMessage ?? "An unknown error occurred. Please try again." }];
+                isValidating.value = false;
+                return;
+            }
+        }
+
+        isValidating.value = false;
+        isLoading.value = true;
+
+        const options: Partial<LocationListSaveNewLocationOptionsBag> = {
             securityGrantToken: securityGrantToken.value,
-            value: newValue.value,
-            description: newDescription.value,
+            name: newLocationName.value,
+            showCityState: props.showCityState,
             attributeValues: attributeValues.value
         };
-        const url = "/api/v2/Controls/DefinedValuePickerSaveNewValue";
+
+        if (newLocationAddress.value.street1 || props.isAddressRequired) {
+            options.address = newLocationAddress.value;
+        }
+
+        if (props.parentLocationGuid) {
+            options.parentLocationGuid = props.parentLocationGuid;
+        }
+
+        if (props.locationTypeValueGuid) {
+            options.locationTypeValueGuid = props.locationTypeValueGuid;
+        }
+
+        const url = "/api/v2/Controls/LocationListSaveNewLocation";
         const result = await http.post<ListItemBag>(url, undefined, options);
 
         if (result.isSuccess && result.data) {
@@ -212,12 +255,12 @@
             }
 
             hideAddForm();
-            newValue.value = "";
-            newDescription.value = "";
+            newLocationName.value = "";
+            newLocationAddress.value = {};
             attributeValues.value = {};
         }
         else {
-            saveError.value = "Unable to save new Defined Value.";
+            saveError.value = "Unable to save new Location.";
         }
 
         isLoading.value = false;
@@ -226,14 +269,11 @@
 
     const attributes = ref<Record<string, PublicAttributeBag> | null>(null);
     const attributeValues = ref<Record<string, string>>({});
-    const newValue = ref("");
-    const newDescription = ref("");
-
-    const saveButtonType = BtnType.Primary;
-    const cancelButtonType = BtnType.Link;
-    const formButtonSize = BtnSize.ExtraSmall;
-    const plusButtonType = BtnType.Default;
-    const addItemButtonType = BtnType.Link;
+    const newLocationName = ref("");
+    const newLocationAddress = ref<AddressControlBag>({});
+    const addressRules = computed(() => {
+        return props.isAddressRequired ? "required" : "";
+    });
 
     // #endregion
 </script>

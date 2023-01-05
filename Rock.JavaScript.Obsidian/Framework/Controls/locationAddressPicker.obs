@@ -45,11 +45,8 @@
     import ContentDropDownPicker from "./contentDropDownPicker.obs";
     import AddressControl from "./addressControl.obs";
     import { AddressControlBag } from "@Obsidian/ViewModels/Controls/addressControlBag";
-    import { post } from "@Obsidian/Utility/http";
     import { FormError } from "@Obsidian/Utility/form";
     import RockValidation from "./rockValidation";
-    import { AddressControlValidateAddressOptionsBag } from "@Obsidian/ViewModels/Rest/Controls/AddressControlValidateAddressOptionsBag";
-    import { AddressControlValidateAddressResultsBag } from "@Obsidian/ViewModels/Rest/Controls/AddressControlValidateAddressResultsBag";
     import { validateAddress } from "@Obsidian/Utility/address";
     import Loading from "./loading";
 

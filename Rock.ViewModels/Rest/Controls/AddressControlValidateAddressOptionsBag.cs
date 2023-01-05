@@ -50,6 +50,14 @@ namespace Rock.ViewModels.Rest.Controls
         public string City { get; set; }
 
         /// <summary>
+        /// Gets or sets the locality.
+        /// </summary>
+        /// <value>
+        /// The locality/county.
+        /// </value>
+        public string Locality { get; set; }
+
+        /// <summary>
         /// Gets or sets the state.
         /// </summary>
         /// <value>

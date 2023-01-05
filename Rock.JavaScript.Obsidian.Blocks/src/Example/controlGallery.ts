@@ -194,9 +194,9 @@ import ContentDropDownPicker from "@Obsidian/Controls/contentDropDownPicker.obs"
 import WordCloud from "@Obsidian/Controls/wordCloud.obs";
 import EventCalendarPicker from "@Obsidian/Controls/eventCalendarPicker.obs";
 import GroupTypePicker from "@Obsidian/Controls/groupTypePicker.obs";
-import LocationAddressPicker from "@Obsidian/Controls/locationAddressPicker.vue";
-import LocationPicker from "@Obsidian/Controls/locationPicker.vue";
-import LocationList from "@Obsidian/Controls/locationList.vue";
+import LocationAddressPicker from "@Obsidian/Controls/locationAddressPicker.obs";
+import LocationPicker from "@Obsidian/Controls/locationPicker.obs";
+import LocationList from "@Obsidian/Controls/locationList.obs";
 
 // #region Gallery Support
 
@@ -6638,6 +6638,8 @@ const locationListGallery = defineComponent({
             multiple: ref(false),
             allowAdd: ref(false),
             showBlankItem: ref(false),
+            isAddressRequired: ref(false),
+            parentLocationGuid: ref("e0545b4d-4f97-43b0-971f-94b593ae2134"),
             importCode: getControlImportPath("locationList"),
             exampleCode: `<LocationList label="Location" v-model="value" :multiple="false" />`
         };
@@ -6649,7 +6651,7 @@ const locationListGallery = defineComponent({
     :exampleCode="exampleCode"
     enableReflection >
 
-    <LocationList label="Location" v-model="value" :multiple="multiple" :locationTypeValueGuid="locationType?.value" :allowAdd="allowAdd" :showCityState="showCityState" :showBlankItem="showBlankItem" />
+    <LocationList label="Location" v-model="value" :multiple="multiple" :locationTypeValueGuid="locationType?.value" :allowAdd="allowAdd" :showCityState="showCityState" :showBlankItem="showBlankItem" :isAddressRequired="isAddressRequired" :parentLocationGuid="parentLocationGuid" />
 
     <template #settings>
         <div class="row">
@@ -6666,10 +6668,13 @@ const locationListGallery = defineComponent({
                 <CheckBox v-model="showBlankItem" label="Show Blank Item" />
             </div>
             <div class="col-md-3">
-                <DefinedValuePicker v-model="locationType" label="Location Type" definedTypeGuid="3285DCEF-FAA4-43B9-9338-983F4A384ABA" showBlankItem />
+                <CheckBox v-model="isAddressRequired" label="Require Address" help="Only applies when adding a new location." />
             </div>
             <div class="col-md-3">
-                <CheckBox v-model="showBlankItem" label="Show Blank Item" />
+                <TextBox v-model="parentLocationGuid" label="Parent Location Guid" />
+            </div>
+            <div class="col-md-3">
+                <DefinedValuePicker v-model="locationType" label="Location Type" definedTypeGuid="3285DCEF-FAA4-43B9-9338-983F4A384ABA" showBlankItem />
             </div>
         </div>
         <p class="text-semibold font-italic">Not all options have been implemented yet.</p>

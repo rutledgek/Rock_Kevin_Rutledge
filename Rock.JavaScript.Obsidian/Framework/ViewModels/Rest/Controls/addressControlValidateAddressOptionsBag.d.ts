@@ -32,6 +32,9 @@ export type AddressControlValidateAddressOptionsBag = {
     /** Gets or sets the country. */
     country?: string | null;
 
+    /** Gets or sets the locality. */
+    locality?: string | null;
+
     /** Gets or sets the postal code. */
     postalCode?: string | null;
 
