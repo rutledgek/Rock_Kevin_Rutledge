@@ -2509,6 +2509,119 @@ namespace Rock.Rest.v2
 
         #endregion
 
+        #region Media Element Picker
+
+        /// <summary>
+        /// Gets the media accounts that match the options sent in the request body.
+        /// This endpoint returns items formatted for use in a tree view control.
+        /// </summary>
+        /// <param name="options">The options that describe which media accounts to load.</param>
+        /// <returns>A List of <see cref="TreeItemBag"/> objects that represent media accounts.</returns>
+        [HttpPost]
+        [System.Web.Http.Route( "MediaElementPickerGetMediaAccounts" )]
+        [Authenticate]
+        [Rock.SystemGuid.RestActionGuid( "849e3ac3-f1e1-4efa-b0c8-1a79c4a666c7" )]
+        public IHttpActionResult MediaElementPickerGetMediaAccounts( /* [FromBody] MediaElementPickerGetMediaAccountsOptionsBag options */ )
+        {
+            using ( var rockContext = new RockContext() )
+            {
+                var mediaAccountService = new Rock.Model.MediaAccountService( rockContext );
+
+                // Get all media accounts that are active.
+                var mediaAccounts = mediaAccountService.Queryable()
+                    .Where( ma => ma.IsActive )
+                    .OrderBy( ma => ma.Name )
+                    .Select( ma => new ListItemBag { Text = ma.Name, Value = ma.Guid.ToString() } )
+                    .ToList();
+
+                return Ok( mediaAccounts );
+            }
+        }
+
+        /// <summary>
+        /// Gets the media folders that match the options sent in the request body.
+        /// This endpoint returns items formatted for use in a tree view control.
+        /// </summary>
+        /// <param name="options">The options that describe which media folders to load.</param>
+        /// <returns>A List of <see cref="TreeItemBag"/> objects that represent media folders.</returns>
+        [HttpPost]
+        [System.Web.Http.Route( "MediaElementPickerGetMediaFolders" )]
+        [Authenticate]
+        [Rock.SystemGuid.RestActionGuid( "a68493aa-8f41-404f-90dd-fbb2df0309a0" )]
+        public IHttpActionResult MediaElementPickerGetMediaFolders( [FromBody] MediaElementPickerGetMediaFoldersOptionsBag options )
+        {
+            using ( var rockContext = new RockContext() )
+            {
+                // Get the media account from the given GUID so we can filter folders by account
+                var mediaAccountService = new Rock.Model.MediaAccountService( rockContext );
+                var mediaAccount = mediaAccountService.Queryable()
+                    .Where( a => a.Guid == options.MediaAccountGuid )
+                    .First();
+
+                if (mediaAccount != null)
+                {
+                    // Get all media folders
+                    var mediaFolderService = new Rock.Model.MediaFolderService( rockContext );
+                    var mediaFolders = mediaFolderService.Queryable()
+                        .Where( mf => mf.MediaAccountId == mediaAccount.Id )
+                        .OrderBy( mf => mf.Name )
+                        .Select( mf => new ListItemBag
+                        {
+                            Text = mf.Name,
+                            Value = mf.Guid.ToString()
+                        } )
+                        .ToList();
+
+                    return Ok( mediaFolders );
+                }
+
+                return NotFound();
+            }
+        }
+
+        /// <summary>
+        /// Gets the media elements that match the options sent in the request body.
+        /// This endpoint returns items formatted for use in a tree view control.
+        /// </summary>
+        /// <param name="options">The options that describe which media elements to load.</param>
+        /// <returns>A List of <see cref="TreeItemBag"/> objects that represent media elements.</returns>
+        [HttpPost]
+        [System.Web.Http.Route( "MediaElementPickerGetMediaElements" )]
+        [Authenticate]
+        [Rock.SystemGuid.RestActionGuid( "9b922b7e-95b4-4ecf-a6ec-f61b45f5e210" )]
+        public IHttpActionResult MediaElementPickerGetMediaElements( [FromBody] MediaElementPickerGetMediaElementsOptionsBag options )
+        {
+            using ( var rockContext = new RockContext() )
+            {
+                // Get the media folder from the given GUID so we can filter elements by folder
+                var mediaFolderService = new Rock.Model.MediaFolderService( rockContext );
+                var mediaFolder = mediaFolderService.Queryable()
+                    .Where( a => a.Guid == options.MediaFolderGuid )
+                    .First();
+
+                if ( mediaFolder != null )
+                {
+                    // Get all media elements
+                    var mediaElementService = new Rock.Model.MediaElementService( rockContext );
+                    var mediaElements = mediaElementService.Queryable()
+                        .Where( me => me.MediaFolderId == mediaFolder.Id )
+                        .OrderBy( me => me.Name )
+                        .Select( me => new ListItemBag
+                        {
+                            Text = me.Name,
+                            Value = me.Guid.ToString()
+                        } )
+                        .ToList();
+
+                    return Ok( mediaElements );
+                }
+
+                return NotFound();
+            }
+        }
+
+        #endregion
+
         #region Merge Template Picker
 
         /// <summary>
@@ -2526,7 +2639,7 @@ namespace Rock.Rest.v2
             List<Guid> include = null;
             List<Guid> exclude = null;
 
-            if (options.MergeTemplateOwnership == Rock.Enums.Controls.MergeTemplateOwnership.Global)
+            if ( options.MergeTemplateOwnership == Rock.Enums.Controls.MergeTemplateOwnership.Global )
             {
                 exclude = new List<Guid>();
                 exclude.Add( Rock.SystemGuid.Category.PERSONAL_MERGE_TEMPLATE.AsGuid() );

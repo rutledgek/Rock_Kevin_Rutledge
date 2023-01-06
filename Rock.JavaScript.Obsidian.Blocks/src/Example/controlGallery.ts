@@ -197,6 +197,7 @@ import GroupTypePicker from "@Obsidian/Controls/groupTypePicker.obs";
 import LocationAddressPicker from "@Obsidian/Controls/locationAddressPicker.obs";
 import LocationPicker from "@Obsidian/Controls/locationPicker.obs";
 import LocationList from "@Obsidian/Controls/locationList.obs";
+import MediaElementPicker from "@Obsidian/Controls/mediaElementPicker.obs";
 
 // #region Gallery Support
 
@@ -6599,7 +6600,7 @@ const locationPickerGallery = defineComponent({
     setup() {
         return {
             value: ref(null),
-            importCode: getControlImportPath("locationPicker"),
+            importCode: getSfcControlImportPath("locationPicker"),
             exampleCode: `<LocationPicker label="Location" v-model="value" :multiple="false" />`
         };
     },
@@ -6640,7 +6641,7 @@ const locationListGallery = defineComponent({
             showBlankItem: ref(false),
             isAddressRequired: ref(false),
             parentLocationGuid: ref("e0545b4d-4f97-43b0-971f-94b593ae2134"),
-            importCode: getControlImportPath("locationList"),
+            importCode: getSfcControlImportPath("locationList"),
             exampleCode: `<LocationList label="Location" v-model="value" :multiple="false" />`
         };
     },
@@ -6675,6 +6676,73 @@ const locationListGallery = defineComponent({
             </div>
             <div class="col-md-3">
                 <DefinedValuePicker v-model="locationType" label="Location Type" definedTypeGuid="3285DCEF-FAA4-43B9-9338-983F4A384ABA" showBlankItem />
+            </div>
+        </div>
+        <p class="text-semibold font-italic">Not all options have been implemented yet.</p>
+    </template>
+</GalleryAndResult>`
+});
+
+
+/** Demonstrates media element picker */
+const mediaElementPickerGallery = defineComponent({
+    name: "MediaElementPickerGallery",
+    components: {
+        GalleryAndResult,
+        CheckBox,
+        TextBox,
+        DefinedValuePicker,
+        MediaElementPicker
+    },
+    setup() {
+        return {
+            value: ref(null),
+            account: ref(null),
+            folder: ref(null),
+            multiple: ref(false),
+            showBlankItem: ref(false),
+            hideRefresh: ref(false),
+            required: ref(false),
+            hideAccountPicker: ref(false),
+            hideFolderPicker: ref(false),
+            hideMediaPicker: ref(false),
+            importCode: getSfcControlImportPath("mediaElementPicker"),
+            exampleCode: `<MediaElementPicker label="Media" v-model="value" :multiple="false" />`
+        };
+    },
+    template: `
+<GalleryAndResult
+    :value="{modelValue: value, account, folder}"
+    hasMultipleValues
+    :importCode="importCode"
+    :exampleCode="exampleCode"
+    enableReflection >
+
+    <MediaElementPicker label="Media Element" v-model="value" v-model:account="account" v-model:folder="folder" :multiple="multiple" :showBlankItem="showBlankItem" :isRefreshDisallowed="hideRefresh" :rules="required ? 'required' : ''"
+        :hideAccountPicker="hideAccountPicker"
+        :hideFolderPicker="hideFolderPicker"
+        :hideMediaPicker="hideMediaPicker"
+    />
+
+    <template #settings>
+        <div class="row">
+            <div class="col-md-3">
+                <CheckBox v-model="multiple" label="Multiple" />
+            </div>
+            <div class="col-md-3">
+                <CheckBox v-model="hideRefresh" label="Hide Refresh Buttons" />
+            </div>
+            <div class="col-md-3">
+                <CheckBox v-model="required" label="Required" />
+            </div>
+            <div class="col-md-3">
+                <CheckBox v-model="hideAccountPicker" label="Hide Account Picker" />
+            </div>
+            <div class="col-md-3">
+                <CheckBox v-model="hideFolderPicker" label="Hide Folder Picker" />
+            </div>
+            <div class="col-md-3">
+                <CheckBox v-model="hideMediaPicker" label="Hide Media Picker" />
             </div>
         </div>
         <p class="text-semibold font-italic">Not all options have been implemented yet.</p>
@@ -6807,6 +6875,7 @@ const controlGalleryComponents: Record<string, Component> = [
     locationAddressPickerGallery,
     locationPickerGallery,
     locationListGallery,
+    mediaElementPickerGallery,
 ]
     // Sort list by component name
     .sort((a, b) => a.name.localeCompare(b.name))
