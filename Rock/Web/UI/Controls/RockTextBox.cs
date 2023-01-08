@@ -500,10 +500,7 @@ namespace Rock.Web.UI.Controls
                 this.CssClass = cssClass;
             }
 
-            if ( _regexValidator != null )
-            {
-                RenderDataValidator( writer );
-            }
+            RenderDataValidator( writer );
 
             if ( this.MaxLength != 0 && this.ShowCountDown )
             {
@@ -518,24 +515,26 @@ namespace Rock.Web.UI.Controls
         /// <param name="writer">The writer.</param>
         protected virtual void RenderDataValidator( HtmlTextWriter writer )
         {
-            if ( this.MaxLength != 0 && this.TextMode == TextBoxMode.MultiLine )
-            {
-                _regexValidator.Enabled = true;
-                _regexValidator.ValidationExpression = @"^((.|\n){0," + this.MaxLength.ToString() + "})$";
+            if ( this.MaxLength != 0
+                 && this.TextMode == TextBoxMode.MultiLine
+                 && _regexValidator != null )
+            { 
+                    _regexValidator.Enabled = true;
+                    _regexValidator.ValidationExpression = @"^((.|\n){0," + this.MaxLength.ToString() + "})$";
 
-                /*
-                    8/14/2021 - CWR
+                    /*
+                        8/14/2021 - CWR
 
-                    The TextLengthInvalid method expects a plain, text-only Label, not one with markup or extra spaces.
-                    The BulkUpdate page (and possibly others) add HTML to the Label, which TextLengthInvalid does not expect.
-                    It will affect the resulting page's style and structure, as noted below from GitHub.
-                    Therefore, we will strip HTML out and trim whitespace before passing the label on to the 'length invalid' message.
+                        The TextLengthInvalid method expects a plain, text-only Label, not one with markup or extra spaces.
+                        The BulkUpdate page (and possibly others) add HTML to the Label, which TextLengthInvalid does not expect.
+                        It will affect the resulting page's style and structure, as noted below from GitHub.
+                        Therefore, we will strip HTML out and trim whitespace before passing the label on to the 'length invalid' message.
 
-                    Reason: GitHub Issue #4231 (https://github.com/SparkDevNetwork/Rock/issues/4231)
-                */
-                _regexValidator.ErrorMessage = Rock.Constants.WarningMessage.TextLengthInvalid( this.Label.StripHtml().Trim(), this.MaxLength );
-                _regexValidator.ValidationGroup = this.ValidationGroup;
-                _regexValidator.RenderControl( writer );
+                        Reason: GitHub Issue #4231 (https://github.com/SparkDevNetwork/Rock/issues/4231)
+                    */
+                    _regexValidator.ErrorMessage = Rock.Constants.WarningMessage.TextLengthInvalid( this.Label.StripHtml().Trim(), this.MaxLength );
+                    _regexValidator.ValidationGroup = this.ValidationGroup;
+                    _regexValidator.RenderControl( writer );
             }
         }
 
