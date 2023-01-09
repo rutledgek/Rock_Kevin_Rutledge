@@ -2526,16 +2526,7 @@ namespace Rock.Rest.v2
         {
             using ( var rockContext = new RockContext() )
             {
-                var mediaAccountService = new Rock.Model.MediaAccountService( rockContext );
-
-                // Get all media accounts that are active.
-                var mediaAccounts = mediaAccountService.Queryable()
-                    .Where( ma => ma.IsActive )
-                    .OrderBy( ma => ma.Name )
-                    .Select( ma => new ListItemBag { Text = ma.Name, Value = ma.Guid.ToString() } )
-                    .ToList();
-
-                return Ok( mediaAccounts );
+                return Ok( GetMediaAccounts(rockContext) );
             }
         }
 
@@ -2553,30 +2544,14 @@ namespace Rock.Rest.v2
         {
             using ( var rockContext = new RockContext() )
             {
-                // Get the media account from the given GUID so we can filter folders by account
-                var mediaAccountService = new Rock.Model.MediaAccountService( rockContext );
-                var mediaAccount = mediaAccountService.Queryable()
-                    .Where( a => a.Guid == options.MediaAccountGuid )
-                    .First();
+                var mediaAccount = GetMediaAccountByGuid( options.MediaAccountGuid, rockContext );
 
-                if (mediaAccount != null)
+                if ( mediaAccount == null )
                 {
-                    // Get all media folders
-                    var mediaFolderService = new Rock.Model.MediaFolderService( rockContext );
-                    var mediaFolders = mediaFolderService.Queryable()
-                        .Where( mf => mf.MediaAccountId == mediaAccount.Id )
-                        .OrderBy( mf => mf.Name )
-                        .Select( mf => new ListItemBag
-                        {
-                            Text = mf.Name,
-                            Value = mf.Guid.ToString()
-                        } )
-                        .ToList();
-
-                    return Ok( mediaFolders );
+                    return NotFound();
                 }
 
-                return NotFound();
+                return Ok( GetMediaFoldersForAccount(mediaAccount, rockContext ));
             }
         }
 
@@ -2594,31 +2569,227 @@ namespace Rock.Rest.v2
         {
             using ( var rockContext = new RockContext() )
             {
-                // Get the media folder from the given GUID so we can filter elements by folder
-                var mediaFolderService = new Rock.Model.MediaFolderService( rockContext );
-                var mediaFolder = mediaFolderService.Queryable()
-                    .Where( a => a.Guid == options.MediaFolderGuid )
-                    .First();
+                var mediaFolder = GetMediaFolderByGuid( options.MediaFolderGuid, rockContext );
 
-                if ( mediaFolder != null )
+                if ( mediaFolder == null )
                 {
-                    // Get all media elements
-                    var mediaElementService = new Rock.Model.MediaElementService( rockContext );
-                    var mediaElements = mediaElementService.Queryable()
-                        .Where( me => me.MediaFolderId == mediaFolder.Id )
-                        .OrderBy( me => me.Name )
-                        .Select( me => new ListItemBag
-                        {
-                            Text = me.Name,
-                            Value = me.Guid.ToString()
-                        } )
-                        .ToList();
-
-                    return Ok( mediaElements );
+                    return NotFound();
                 }
 
-                return NotFound();
+                return Ok( GetMediaElementsForFolder( mediaFolder, rockContext ) );
             }
+        }
+
+        /// <summary>
+        /// TODO
+        /// </summary>
+        /// <param name="options">The options that describe which media elements to load.</param>
+        /// <returns>A List of <see cref="TreeItemBag"/> objects that represent media elements.</returns>
+        [HttpPost]
+        [System.Web.Http.Route( "MediaElementPickerGetMediaTree" )]
+        [Authenticate]
+        [Rock.SystemGuid.RestActionGuid( "9b922b7e-95b4-4ecf-a6ec-f61b45f5e210" )]
+        public IHttpActionResult MediaElementPickerGetMediaTree( [FromBody] MediaElementPickerGetMediaTreeOptionsBag options )
+        {
+            using ( var rockContext = new RockContext() )
+            {
+                var accounts = new List<ListItemBag>();
+                var folders = new List<ListItemBag>();
+                var elements = new List<ListItemBag>();
+
+                MediaAccount mediaAccount = null;
+                MediaFolder mediaFolder = null;
+                MediaElement mediaElement = null;
+
+                ListItemBag mediaAccountItem = null;
+                ListItemBag mediaFolderItem = null;
+                ListItemBag mediaElementItem = null;
+
+                if (options.MediaElementGuid != null)
+                {
+                    mediaElement = GetMediaElementByGuid( options.MediaElementGuid, rockContext );
+                    mediaFolder = mediaElement.MediaFolder;
+                    mediaAccount = mediaFolder.MediaAccount;
+
+                    mediaAccountItem = new ListItemBag { Text = mediaAccount.Name, Value = mediaAccount.Guid.ToString() };
+                    mediaFolderItem = new ListItemBag { Text = mediaFolder.Name, Value = mediaFolder.Guid.ToString() };
+                    mediaElementItem = new ListItemBag { Text = mediaElement.Name, Value = mediaElement.Guid.ToString() };
+
+                    accounts = GetMediaAccounts( rockContext );
+                    folders = GetMediaFoldersForAccount( mediaAccount, rockContext );
+                    elements = GetMediaElementsForFolder( mediaFolder, rockContext );
+                }
+                else if (options.MediaFolderGuid != null)
+                {
+                    mediaFolder = GetMediaFolderByGuid( options.MediaFolderGuid, rockContext );
+                    mediaAccount = mediaFolder.MediaAccount;
+
+                    mediaAccountItem = new ListItemBag { Text = mediaAccount.Name, Value = mediaAccount.Guid.ToString() };
+                    mediaFolderItem = new ListItemBag { Text = mediaFolder.Name, Value = mediaFolder.Guid.ToString() };
+
+                    accounts = GetMediaAccounts( rockContext );
+                    folders = GetMediaFoldersForAccount( mediaAccount, rockContext );
+                }
+                else if ( options.MediaFolderGuid != null )
+                {
+                    mediaAccount = GetMediaAccountByGuid( options.MediaFolderGuid, rockContext );
+
+                    mediaAccountItem = new ListItemBag { Text = mediaAccount.Name, Value = mediaAccount.Guid.ToString() };
+
+                    accounts = GetMediaAccounts( rockContext );
+                }
+
+                return Ok( new
+                {
+                    MediaAccount = mediaAccountItem,
+                    MediaFolder = mediaFolderItem,
+                    MediaElement = mediaElementItem,
+
+                    MediaAccounts = accounts,
+                    MediaFolders = folders,
+                    MediaElements = elements,
+                } );
+            }
+        }
+
+        /// <summary>
+        /// TODO
+        /// </summary>
+        /// <param name="guid">TODO</param>
+        /// <param name="rockContext">TODO</param>
+        /// <returns>TODO</returns>
+        private MediaAccount GetMediaAccountByGuid (Guid guid, RockContext rockContext)
+        {
+                // Get the media folder from the given GUID so we can filter elements by folder
+                var mediaAccountService = new Rock.Model.MediaAccountService( rockContext );
+                var mediaAccount = mediaAccountService.Queryable()
+                    .Where( a => a.Guid == guid )
+                    .First();
+
+                return mediaAccount;
+        }
+
+        /// <summary>
+        /// TODO
+        /// </summary>
+        /// <param name="guid">TODO</param>
+        /// <param name="rockContext">TODO</param>
+        /// <returns>TODO</returns>
+        private MediaFolder GetMediaFolderByGuid( Guid guid, RockContext rockContext )
+        {
+            // Get the media folder from the given GUID so we can filter elements by folder
+            var mediaFolderService = new Rock.Model.MediaFolderService( rockContext );
+                var mediaFolder = mediaFolderService.Queryable()
+                    .Where( a => a.Guid == guid )
+                    .First();
+
+                return mediaFolder;
+        }
+
+        /// <summary>
+        /// TODO
+        /// </summary>
+        /// <param name="guid">TODO</param>
+        /// <param name="rockContext">TODO</param>
+        /// <returns>TODO</returns>
+        private MediaElement GetMediaElementByGuid( Guid guid, RockContext rockContext )
+        {
+            // Get the media folder from the given GUID so we can filter elements by folder
+            var mediaElementService = new Rock.Model.MediaElementService( rockContext );
+                var mediaElement = mediaElementService.Queryable()
+                    .Where( a => a.Guid == guid )
+                    .First();
+
+                return mediaElement;
+        }
+
+        /// <summary>
+        /// TODO
+        /// </summary>
+        /// <param name="guid">TODO</param>
+        /// <param name="rockContext">TODO</param>
+        /// <returns>TODO</returns>
+        private MediaAccount GetMediaAccountFromMediaFolderGuid( Guid guid, RockContext rockContext )
+        {
+            var mediaFolder = GetMediaFolderByGuid( guid, rockContext );
+            return mediaFolder?.MediaAccount;
+        }
+
+        /// <summary>
+        /// TODO
+        /// </summary>
+        /// <param name="guid">TODO</param>
+        /// <param name="rockContext">TODO</param>
+        /// <returns>TODO</returns>
+        private MediaFolder GetMediaFolderFromMediaElementGuid( Guid guid, RockContext rockContext )
+        {
+            var mediaElement = GetMediaElementByGuid( guid, rockContext );
+            return mediaElement?.MediaFolder;
+        }
+
+        /// <summary>
+        /// TODO
+        /// </summary>
+        /// <param name="guid">TODO</param>
+        /// <param name="rockContext">TODO</param>
+        /// <returns>TODO</returns>
+        private List<ListItemBag> GetMediaAccounts( RockContext rockContext )
+        {
+            var mediaAccountService = new Rock.Model.MediaAccountService( rockContext );
+
+            // Get all media accounts that are active.
+            var mediaAccounts = mediaAccountService.Queryable()
+                .Where( ma => ma.IsActive )
+                .OrderBy( ma => ma.Name )
+                .Select( ma => new ListItemBag { Text = ma.Name, Value = ma.Guid.ToString() } )
+                .ToList();
+
+            return mediaAccounts;
+        }
+
+        /// <summary>
+        /// TODO
+        /// </summary>
+        /// <param name="mediaAccount">TODO</param>
+        /// <param name="rockContext">TODO</param>
+        /// <returns>TODO</returns>
+        private List<ListItemBag> GetMediaFoldersForAccount( MediaAccount mediaAccount, RockContext rockContext )
+        {
+            // Get all media folders
+            var mediaFolderService = new Rock.Model.MediaFolderService( rockContext );
+            var mediaFolders = mediaFolderService.Queryable()
+                .Where( mf => mf.MediaAccountId == mediaAccount.Id )
+                .OrderBy( mf => mf.Name )
+                .Select( mf => new ListItemBag
+                {
+                    Text = mf.Name,
+                    Value = mf.Guid.ToString()
+                } )
+                .ToList();
+
+            return mediaFolders;
+        }
+
+        /// <summary>
+        /// TODO
+        /// </summary>
+        /// <param name="mediaFolder">TODO</param>
+        /// <param name="rockContext">TODO</param>
+        /// <returns>TODO</returns>
+        private List<ListItemBag> GetMediaElementsForFolder( MediaFolder mediaFolder, RockContext rockContext )
+        {
+            var mediaElementService = new Rock.Model.MediaElementService( rockContext );
+            var mediaElements = mediaElementService.Queryable()
+                .Where( me => me.MediaFolderId == mediaFolder.Id )
+                .OrderBy( me => me.Name )
+                .Select( me => new ListItemBag
+                {
+                    Text = me.Name,
+                    Value = me.Guid.ToString()
+                } )
+                .ToList();
+
+            return mediaElements;
         }
 
         #endregion

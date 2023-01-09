@@ -188,19 +188,19 @@
 
 
     watch(() => props.account, () => {
-        console.debug("ACCOUNT PROP CHANGED");
+        console.debug("ACCOUNT PROP CHANGED", updateRefValue(internalMediaAccount, props.account));
         if (updateRefValue(internalMediaAccount, props.account)) {
             // Prop value is different than current value... need updates from server
         }
     });
     watch(() => props.folder, () => {
-        console.debug("FOLDER PROP CHANGED");
+        console.debug("FOLDER PROP CHANGED", updateRefValue(internalMediaFolder, props.folder));
         if (updateRefValue(internalMediaFolder, props.folder)) {
             // Prop value is different than current value... need updates from server
         }
     });
     watch(() => props.modelValue, () => {
-        console.debug("ELEMENT PROP CHANGED");
+        console.debug("ELEMENT PROP CHANGED", updateRefValue(internalMediaElement, props.modelValue));
         if (updateRefValue(internalMediaElement, props.modelValue)) {
             // Prop value is different than current value... need updates from server
         }
