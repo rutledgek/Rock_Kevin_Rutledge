@@ -2581,14 +2581,14 @@ namespace Rock.Rest.v2
         }
 
         /// <summary>
-        /// TODO
+        /// Get all of the list items and the account/folder/element, depending on what the deepest given item is.
         /// </summary>
-        /// <param name="options">The options that describe which media elements to load.</param>
-        /// <returns>A List of <see cref="TreeItemBag"/> objects that represent media elements.</returns>
+        /// <param name="options">The options that describe which media element picker data to load.</param>
+        /// <returns>All of the picker lists (as List&lt;ListItemBag&gt;), and individual picker selections that could be derived from the given options</returns>
         [HttpPost]
         [System.Web.Http.Route( "MediaElementPickerGetMediaTree" )]
         [Authenticate]
-        [Rock.SystemGuid.RestActionGuid( "9b922b7e-95b4-4ecf-a6ec-f61b45f5e210" )]
+        [Rock.SystemGuid.RestActionGuid( "2cc15018-201e-4f22-b116-06846c70ad0b" )]
         public IHttpActionResult MediaElementPickerGetMediaTree( [FromBody] MediaElementPickerGetMediaTreeOptionsBag options )
         {
             using ( var rockContext = new RockContext() )
@@ -2605,7 +2605,8 @@ namespace Rock.Rest.v2
                 ListItemBag mediaFolderItem = null;
                 ListItemBag mediaElementItem = null;
 
-                if (options.MediaElementGuid != null)
+                // If a media element is specified, get everything based on that
+                if (!options.MediaElementGuid.IsEmpty())
                 {
                     mediaElement = GetMediaElementByGuid( options.MediaElementGuid, rockContext );
                     mediaFolder = mediaElement.MediaFolder;
@@ -2619,7 +2620,8 @@ namespace Rock.Rest.v2
                     folders = GetMediaFoldersForAccount( mediaAccount, rockContext );
                     elements = GetMediaElementsForFolder( mediaFolder, rockContext );
                 }
-                else if (options.MediaFolderGuid != null)
+                // Otherwise, if a media folder is specified, get everything based on that, not getting a media element
+                else if (!options.MediaFolderGuid.IsEmpty())
                 {
                     mediaFolder = GetMediaFolderByGuid( options.MediaFolderGuid, rockContext );
                     mediaAccount = mediaFolder.MediaAccount;
@@ -2629,17 +2631,21 @@ namespace Rock.Rest.v2
 
                     accounts = GetMediaAccounts( rockContext );
                     folders = GetMediaFoldersForAccount( mediaAccount, rockContext );
+                    elements = GetMediaElementsForFolder( mediaFolder, rockContext );
                 }
-                else if ( options.MediaFolderGuid != null )
+                // Otherwise, if a media account is specified, get the account and the lists of accounts and folders
+                else if (!options.MediaAccountGuid.IsEmpty())
                 {
-                    mediaAccount = GetMediaAccountByGuid( options.MediaFolderGuid, rockContext );
+                    mediaAccount = GetMediaAccountByGuid( options.MediaAccountGuid, rockContext );
 
                     mediaAccountItem = new ListItemBag { Text = mediaAccount.Name, Value = mediaAccount.Guid.ToString() };
 
                     accounts = GetMediaAccounts( rockContext );
+                    folders = GetMediaFoldersForAccount( mediaAccount, rockContext );
                 }
 
-                return Ok( new
+                // Some things might be null, but we pass back everything we have
+                return Ok( new MediaElementPickerGetMediaTreeResultsBag
                 {
                     MediaAccount = mediaAccountItem,
                     MediaFolder = mediaFolderItem,
@@ -2647,17 +2653,17 @@ namespace Rock.Rest.v2
 
                     MediaAccounts = accounts,
                     MediaFolders = folders,
-                    MediaElements = elements,
+                    MediaElements = elements
                 } );
             }
         }
 
         /// <summary>
-        /// TODO
+        /// Retrieve a MediaAccount object based on its Guid
         /// </summary>
-        /// <param name="guid">TODO</param>
-        /// <param name="rockContext">TODO</param>
-        /// <returns>TODO</returns>
+        /// <param name="guid">The Media Account's Guid</param>
+        /// <param name="rockContext">DB context</param>
+        /// <returns>The MediaAccount with that Guid</returns>
         private MediaAccount GetMediaAccountByGuid (Guid guid, RockContext rockContext)
         {
                 // Get the media folder from the given GUID so we can filter elements by folder
@@ -2670,11 +2676,11 @@ namespace Rock.Rest.v2
         }
 
         /// <summary>
-        /// TODO
+        /// Retrieve a MediaFolder object based on its Guid
         /// </summary>
-        /// <param name="guid">TODO</param>
-        /// <param name="rockContext">TODO</param>
-        /// <returns>TODO</returns>
+        /// <param name="guid">The Media Folder's Guid</param>
+        /// <param name="rockContext">DB context</param>
+        /// <returns>The MediaFolder with that Guid</returns>
         private MediaFolder GetMediaFolderByGuid( Guid guid, RockContext rockContext )
         {
             // Get the media folder from the given GUID so we can filter elements by folder
@@ -2687,11 +2693,11 @@ namespace Rock.Rest.v2
         }
 
         /// <summary>
-        /// TODO
+        /// Retrieve a MediaElement object based on its Guid
         /// </summary>
-        /// <param name="guid">TODO</param>
-        /// <param name="rockContext">TODO</param>
-        /// <returns>TODO</returns>
+        /// <param name="guid">The Media Element's Guid</param>
+        /// <param name="rockContext">DB context</param>
+        /// <returns>The MediaElement with that Guid</returns>
         private MediaElement GetMediaElementByGuid( Guid guid, RockContext rockContext )
         {
             // Get the media folder from the given GUID so we can filter elements by folder
@@ -2704,35 +2710,10 @@ namespace Rock.Rest.v2
         }
 
         /// <summary>
-        /// TODO
+        /// Get a list of all the Media Accounts
         /// </summary>
-        /// <param name="guid">TODO</param>
-        /// <param name="rockContext">TODO</param>
-        /// <returns>TODO</returns>
-        private MediaAccount GetMediaAccountFromMediaFolderGuid( Guid guid, RockContext rockContext )
-        {
-            var mediaFolder = GetMediaFolderByGuid( guid, rockContext );
-            return mediaFolder?.MediaAccount;
-        }
-
-        /// <summary>
-        /// TODO
-        /// </summary>
-        /// <param name="guid">TODO</param>
-        /// <param name="rockContext">TODO</param>
-        /// <returns>TODO</returns>
-        private MediaFolder GetMediaFolderFromMediaElementGuid( Guid guid, RockContext rockContext )
-        {
-            var mediaElement = GetMediaElementByGuid( guid, rockContext );
-            return mediaElement?.MediaFolder;
-        }
-
-        /// <summary>
-        /// TODO
-        /// </summary>
-        /// <param name="guid">TODO</param>
-        /// <param name="rockContext">TODO</param>
-        /// <returns>TODO</returns>
+        /// <param name="rockContext">DB context</param>
+        /// <returns>List of ListItemBags representing all of the Media Accounts</returns>
         private List<ListItemBag> GetMediaAccounts( RockContext rockContext )
         {
             var mediaAccountService = new Rock.Model.MediaAccountService( rockContext );
@@ -2748,11 +2729,11 @@ namespace Rock.Rest.v2
         }
 
         /// <summary>
-        /// TODO
+        /// Get a list of all the Media Folders for the given Media Account
         /// </summary>
-        /// <param name="mediaAccount">TODO</param>
-        /// <param name="rockContext">TODO</param>
-        /// <returns>TODO</returns>
+        /// <param name="mediaAccount">MediaAccount object we want to get the child Media Folders of</param>
+        /// <param name="rockContext">DB context</param>
+        /// <returns>List of ListItemBags representing all of the Media Folders for the given Media Account</returns>
         private List<ListItemBag> GetMediaFoldersForAccount( MediaAccount mediaAccount, RockContext rockContext )
         {
             // Get all media folders
@@ -2771,11 +2752,11 @@ namespace Rock.Rest.v2
         }
 
         /// <summary>
-        /// TODO
+        /// Get a list of all the Media Elements for the given Media Account
         /// </summary>
-        /// <param name="mediaFolder">TODO</param>
-        /// <param name="rockContext">TODO</param>
-        /// <returns>TODO</returns>
+        /// <param name="mediaAccount">MediaFolder object we want to get the child Media Elements of</param>
+        /// <param name="rockContext">DB context</param>
+        /// <returns>List of ListItemBags representing all of the Media Elements for the given Media Folder</returns>
         private List<ListItemBag> GetMediaElementsForFolder( MediaFolder mediaFolder, RockContext rockContext )
         {
             var mediaElementService = new Rock.Model.MediaElementService( rockContext );

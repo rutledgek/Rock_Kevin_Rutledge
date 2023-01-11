@@ -440,7 +440,7 @@ export const GalleryAndResult = defineComponent({
     </div>
     <div v-if="value !== void 0" class="col-sm-6">
         <div class="well">
-            <h4>Current Value</h4>
+            <h4>Current Value<template v-if="hasMultipleValues">s</template></h4>
             <template v-if="hasMultipleValues" v-for="value, key in formattedValue">
                 <h5><code>{{ key }}</code></h5>
                 <pre class="m-0 p-0 border-0 galleryContent-valueBox">{{ value }}</pre>
@@ -6691,7 +6691,7 @@ const mediaElementPickerGallery = defineComponent({
         GalleryAndResult,
         CheckBox,
         TextBox,
-        DefinedValuePicker,
+        DropDownList,
         MediaElementPicker
     },
     setup() {
@@ -6707,18 +6707,25 @@ const mediaElementPickerGallery = defineComponent({
             hideFolderPicker: ref(false),
             hideMediaPicker: ref(false),
             importCode: getSfcControlImportPath("mediaElementPicker"),
-            exampleCode: `<MediaElementPicker label="Media" v-model="value" :multiple="false" />`
+            exampleCode: `<MediaElementPicker label="Media" v-model="value" :isRefreshDisallowed="false" :hideAccountPicker="hideAccountPicker" :hideFolderPicker="hideFolderPicker" :hideMediaPicker="hideMediaPicker" />`
         };
     },
     template: `
 <GalleryAndResult
-    :value="{modelValue: value, account, folder}"
+    :value="{account, folder, modelValue: value}"
     hasMultipleValues
     :importCode="importCode"
     :exampleCode="exampleCode"
     enableReflection >
 
-    <MediaElementPicker label="Media Element" v-model="value" v-model:account="account" v-model:folder="folder" :multiple="multiple" :showBlankItem="showBlankItem" :isRefreshDisallowed="hideRefresh" :rules="required ? 'required' : ''"
+    <MediaElementPicker label="Media Element"
+        v-model="value"
+        v-model:account="account"
+        v-model:folder="folder"
+        :multiple="multiple"
+        :showBlankItem="showBlankItem"
+        :isRefreshDisallowed="hideRefresh"
+        :rules="required ? 'required' : ''"
         :hideAccountPicker="hideAccountPicker"
         :hideFolderPicker="hideFolderPicker"
         :hideMediaPicker="hideMediaPicker"
