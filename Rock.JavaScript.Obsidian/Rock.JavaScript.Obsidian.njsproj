@@ -279,6 +279,7 @@
     <TypeScriptCompile Include="Framework\Enums\Cms\persistedDatasetScriptType.ts" />
     <TypeScriptCompile Include="Framework\Enums\Cms\siteType.ts" />
     <TypeScriptCompile Include="Framework\Enums\Cms\tagType.ts" />
+    <TypeScriptCompile Include="Framework\Enums\Communication\communicationMessageFilter.ts" />
     <TypeScriptCompile Include="Framework\Enums\Communication\communicationRecipientStatus.ts" />
     <TypeScriptCompile Include="Framework\Enums\Communication\communicationStatus.ts" />
     <TypeScriptCompile Include="Framework\Enums\Communication\notificationClassification.ts" />
