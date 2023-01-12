@@ -28,16 +28,16 @@ namespace Rock.ViewModels.Rest.Controls
         /// <summary>
         /// GUID of the selected media element, if one is selected
         /// </summary>
-        public Guid MediaElementGuid { get; set; }
+        public Guid? MediaElementGuid { get; set; } = null;
 
         /// <summary>
         /// GUID of the selected media folder, if one is selected
         /// </summary>
-        public Guid MediaFolderGuid { get; set; }
+        public Guid? MediaFolderGuid { get; set; } = null;
 
         /// <summary>
         /// GUID of the selected media account, if one is selected
         /// </summary>
-        public Guid MediaAccountGuid { get; set; }
+        public Guid? MediaAccountGuid { get; set; } = null;
     }
 }

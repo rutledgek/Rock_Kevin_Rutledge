@@ -3,14 +3,14 @@
     <RockFormField v-bind="formFieldProps" :modelValue="internalMediaElement" name="media-element-picker">
         <BaseAsyncPicker v-if="!hideAccountPicker" v-model="internalMediaAccount" v-bind="standardProps" label="Account" :multiple="false" :items="mediaAccountItems" showBlankItem />
         <BaseAsyncPicker v-if="internalMediaAccount && !hideFolderPicker" v-model="internalMediaFolder" v-bind="standardProps" label="Folder" :multiple="false" :items="mediaFolderItems" showBlankItem :lazyMode="ControlLazyMode.Eager">
-            <template #inputGroupAppend v-if="!isRefreshDisallowed">
+            <template #inputGroupAppend v-if="!hideRefreshButtons">
                 <span class="input-group-addon">
                     <RockButton isSquare @click.prevent="fetchMediaFolders"><i class="fa fa-refresh"></i></RockButton>
                 </span>
             </template>
         </BaseAsyncPicker>
         <BaseAsyncPicker v-if="internalMediaFolder && !hideMediaPicker" v-model="internalMediaElement" v-bind="standardProps" :label="mediaElementLabel" :items="mediaElementItems" showBlankItem :lazyMode="ControlLazyMode.Eager">
-            <template #inputGroupAppend v-if="!isRefreshDisallowed">
+            <template #inputGroupAppend v-if="!hideRefreshButtons">
                 <span class="input-group-addon">
                     <RockButton isSquare @click.prevent="fetchMediaElements"><i class="fa fa-refresh"></i></RockButton>
                 </span>
@@ -39,20 +39,20 @@
 
         /** v-model of the media account */
         account: {
-            type: Object as PropType<ListItemBag>,
+            type: Object as PropType<ListItemBag | null>,
             default: null
         },
 
         /** v-model of the folder */
         folder: {
-            type: Object as PropType<ListItemBag>,
+            type: Object as PropType<ListItemBag | null>,
             default: null
         },
 
         /** v-model of the media element */
         modelValue: {
-            type: Object as PropType<ListItemBag>,
-            required: true
+            type: Object as PropType<ListItemBag | null>,
+            default: null
         },
 
         /** Whether to hide the media account dropdown portion */
@@ -74,7 +74,7 @@
         },
 
         /** True to hide the refresh buttons next to the folder and element dropdowns */
-        isRefreshDisallowed: {
+        hideRefreshButtons: {
             type: Boolean,
             default: false
         },
@@ -116,6 +116,7 @@
 
     // #region Functions
 
+    /** Generic function to load items for sub-pickers. Used by specific load functions */
     async function loadItems(apiAction: string, payload: HttpBodyData = null): Promise<ListItemBag[]> {
         const result = await http.post<ListItemBag[]>("/api/v2/Controls/" + apiAction, undefined, payload);
 
@@ -128,10 +129,12 @@
         }
     }
 
+    /** Load media accounts from server and returns them */
     async function loadMediaAccounts(): Promise<ListItemBag[]> {
         return loadItems("MediaElementPickerGetMediaAccounts");
     }
 
+    /** Load media folders for the selected account from server and returns them */
     async function loadMediaFolders(): Promise<ListItemBag[]> {
         const options: MediaElementPickerGetMediaFoldersOptionsBag = {
             mediaAccountGuid: internalMediaAccount.value?.value ?? null
@@ -140,6 +143,7 @@
         return loadItems("MediaElementPickerGetMediaFolders", options);
     }
 
+    /** Load media elements for the selected folder from server and returns them */
     async function loadMediaElements(): Promise<ListItemBag[]> {
         const options: MediaElementPickerGetMediaElementsOptionsBag = {
             mediaFolderGuid: internalMediaFolder.value?.value ?? null
@@ -148,6 +152,10 @@
         return loadItems("MediaElementPickerGetMediaElements", options);
     }
 
+    /**
+     * When we receive a selected account/folder/element from outside this component, we need to update all the sub-pickers
+     * to match the given data. This loads all that matching data from the server and applies it.
+     */
     async function loadFullTree(payload: MediaElementPickerGetMediaTreeOptionsBag): Promise<void> {
 
         const result = await http.post<MediaElementPickerGetMediaTreeResultsBag>("/api/v2/Controls/MediaElementPickerGetMediaTree", undefined, payload);
@@ -193,12 +201,15 @@
         pauseModelWatching = false;
     }
 
+    /** Sets the list of account items to a load function so the picker knows to run it to load account items */
     function fetchMediaAccounts(): void {
         mediaAccountItems.value = () => loadMediaAccounts();
     }
+    /** Sets the list of folder items to a load function so the picker knows to run it to load folder items */
     function fetchMediaFolders(): void {
         mediaFolderItems.value = () => loadMediaFolders();
     }
+    /** Sets the list of media element items to a load function so the picker knows to run it to load media element items */
     function fetchMediaElements(): void {
         mediaElementItems.value = () => loadMediaElements();
     }
@@ -233,6 +244,7 @@
             fetchMediaFolders();
         }
     });
+
     watch(internalMediaFolder, () => {
         emit("update:folder", internalMediaFolder.value);
 
@@ -245,9 +257,11 @@
             fetchMediaElements();
         }
     });
+
     watch(internalMediaElement, () => {
         emit("update:modelValue", internalMediaElement.value);
     });
+
 
     watch(() => props.account, () => {
         if (updateRefValue(internalMediaAccount, props.account) && internalMediaAccount.value != null) {
@@ -255,12 +269,14 @@
             loadFullTree({ mediaAccountGuid: internalMediaAccount.value.value });
         }
     });
+
     watch(() => props.folder, () => {
         if (updateRefValue(internalMediaFolder, props.folder) && internalMediaFolder.value != null) {
             // Prop value is different than current value... need updates from server
             loadFullTree({ mediaFolderGuid: internalMediaFolder.value.value });
         }
     });
+
     watch(() => props.modelValue, () => {
         if (updateRefValue(internalMediaElement, props.modelValue) && internalMediaElement.value != null) {
             // Prop value is different than current value... need updates from server

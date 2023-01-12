@@ -2522,7 +2522,7 @@ namespace Rock.Rest.v2
         [System.Web.Http.Route( "MediaElementPickerGetMediaAccounts" )]
         [Authenticate]
         [Rock.SystemGuid.RestActionGuid( "849e3ac3-f1e1-4efa-b0c8-1a79c4a666c7" )]
-        public IHttpActionResult MediaElementPickerGetMediaAccounts( /* [FromBody] MediaElementPickerGetMediaAccountsOptionsBag options */ )
+        public IHttpActionResult MediaElementPickerGetMediaAccounts( )
         {
             using ( var rockContext = new RockContext() )
             {
@@ -2606,9 +2606,9 @@ namespace Rock.Rest.v2
                 ListItemBag mediaElementItem = null;
 
                 // If a media element is specified, get everything based on that
-                if (!options.MediaElementGuid.IsEmpty())
+                if (options.MediaElementGuid.HasValue)
                 {
-                    mediaElement = GetMediaElementByGuid( options.MediaElementGuid, rockContext );
+                    mediaElement = GetMediaElementByGuid( ( Guid ) options.MediaElementGuid, rockContext );
                     mediaFolder = mediaElement.MediaFolder;
                     mediaAccount = mediaFolder.MediaAccount;
 
@@ -2621,9 +2621,9 @@ namespace Rock.Rest.v2
                     elements = GetMediaElementsForFolder( mediaFolder, rockContext );
                 }
                 // Otherwise, if a media folder is specified, get everything based on that, not getting a media element
-                else if (!options.MediaFolderGuid.IsEmpty())
+                else if (options.MediaFolderGuid.HasValue)
                 {
-                    mediaFolder = GetMediaFolderByGuid( options.MediaFolderGuid, rockContext );
+                    mediaFolder = GetMediaFolderByGuid( ( Guid ) options.MediaFolderGuid, rockContext );
                     mediaAccount = mediaFolder.MediaAccount;
 
                     mediaAccountItem = new ListItemBag { Text = mediaAccount.Name, Value = mediaAccount.Guid.ToString() };
@@ -2634,9 +2634,9 @@ namespace Rock.Rest.v2
                     elements = GetMediaElementsForFolder( mediaFolder, rockContext );
                 }
                 // Otherwise, if a media account is specified, get the account and the lists of accounts and folders
-                else if (!options.MediaAccountGuid.IsEmpty())
+                else if (options.MediaAccountGuid.HasValue)
                 {
-                    mediaAccount = GetMediaAccountByGuid( options.MediaAccountGuid, rockContext );
+                    mediaAccount = GetMediaAccountByGuid( ( Guid ) options.MediaAccountGuid, rockContext );
 
                     mediaAccountItem = new ListItemBag { Text = mediaAccount.Name, Value = mediaAccount.Guid.ToString() };
 
