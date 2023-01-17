@@ -298,4 +298,7 @@
   <data name="_202212011956416_Rollup_20221201_chartupdate" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>202212011956416_rollup_20221201_chartupdate.sql;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
   </data>
+  <data name="_202301171605464_DeleteOrphanedAttributeMatricesSP_spCore_DeleteOrphanedAttributeMatrices" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>202301171605464_DeleteOrphanedAttributeMatricesSP_spCore_DeleteOrphanedAttributeMatrices.sql;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
 </root>

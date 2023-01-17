@@ -1152,7 +1152,7 @@ namespace Rock.Migrations.Migrations {
         ///
         ///{%- if type == &apos;&apos;stackedbar&apos;&apos; -%}
         ///    {%- assign type = &apos;&apos;bar&apos;&apos; -%}
-        ///    {%- assign xaxistype = &apos;&apos;stacked&apos;&apos; -% [rest of string was truncated]&quot;;.
+        ///    {%- assign xaxistype = &apos;&apos;st [rest of string was truncated]&quot;;.
         /// </summary>
         public static string _202212011956416_Rollup_20221201_chartupdate {
             get {
@@ -1161,15 +1161,7 @@ namespace Rock.Migrations.Migrations {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to USE [RockRMS_v1141]
-        ///GO
-        ////****** Object:  StoredProcedure [dbo].[spAnalytics_ETL_Family]    Script Date: 18-11-2022 22:24:40 ******/
-        ///SET ANSI_NULLS ON
-        ///GO
-        ///SET QUOTED_IDENTIFIER ON
-        ///GO
-        ///-- EXECUTE [dbo].[spAnalytics_ETL_Family] 
-        ///ALTER PROCEDURE [dbo].[spAnalytics_ETL_Family]
+        ///   Looks up a localized string similar to ALTER PROCEDURE [dbo].[spAnalytics_ETL_Family]
         ///AS
         ///BEGIN
         ///    DECLARE @EtlDate DATE = convert(DATE, SysDateTime())
@@ -1177,11 +1169,34 @@ namespace Rock.Migrations.Migrations {
         ///        ,@RecordStatusActiveId INT = (
         ///            SELECT TOP 1 Id
         ///            FROM DefinedValue
-        ///       [rest of string was truncated]&quot;;.
+        ///            WHERE [Guid] = &apos;618F906C-C33D-4FA3-8AEF-E58CB7B63F1E&apos;
+        ///            )
+        ///        ,@GroupTypeFamilyId INT = (
+        ///            SELECT TOP 1 Id
+        ///            FROM GroupType
+        ///            WHERE [Guid] = &apos;790E3215-3B10-442B-AF69-616C0DCB9 [rest of string was truncated]&quot;;.
         /// </summary>
         public static string _202212011956416_Rollup_20221201_Update_spAnalytics_ETL_Family_11182022 {
             get {
                 return ResourceManager.GetString("_202212011956416_Rollup_20221201_Update_spAnalytics_ETL_Family_11182022", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to DECLARE @MatrixItemEntityTypeId INT = (SELECT Id FROM [EntityType] WHERE [Guid]=&apos;3C9D5021-0484-4846-AEF6-B6216D26C3C8&apos;)
+        ///DECLARE @MatrixFieldTypeId INT = (SELECT Id FROM [FieldType] WHERE [Guid]=&apos;f16fc460-dc1e-4821-9012-5f21f974c677&apos;)
+        ///DECLARE @MatrixEntityTypeId INT = (SELECT Id FROM [EntityType] WHERE [Guid]=&apos;028228F0-B1D9-4DE5-9E6A-F898C34DDAB8&apos;)
+        ///SELECT
+        ///    am.[Id], am.[Guid]
+        ///INTO #temp
+        ///FROM
+        ///    [AttributeMatrix] am 
+        ///    LEFT OUTER JOIN [AttributeValue] av ON av.[Value] = CONVERT(nvarchar(36), am.[Guid] [rest of string was truncated]&quot;;.
+        /// </summary>
+        public static string _202301171605464_DeleteOrphanedAttributeMatricesSP_spCore_DeleteOrphanedAttributeMatrices {
+            get {
+                return ResourceManager.GetString("_202301171605464_DeleteOrphanedAttributeMatricesSP_spCore_DeleteOrphanedAttribute" +
+                        "Matrices", resourceCulture);
             }
         }
     }
