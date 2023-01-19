@@ -156,6 +156,9 @@
     <Reference Include="TimeZoneConverter, Version=3.5.0.0, Culture=neutral, PublicKeyToken=e20ab7d0d9479841, processorArchitecture=MSIL">
       <HintPath>..\packages\TimeZoneConverter.3.5.0\lib\net471\TimeZoneConverter.dll</HintPath>
     </Reference>
+    <Reference Include="UAParser, Version=3.1.44.0, Culture=neutral, PublicKeyToken=f7377bf021646069, processorArchitecture=MSIL">
+      <HintPath>..\packages\UAParser.3.1.44\lib\net45\UAParser.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Achievement\GivingToAccountAchievementTest.cs" />
@@ -250,6 +253,8 @@
     <Compile Include="StorageTests\BaseStorageComponentTests.cs" />
     <Compile Include="StorageTests\GoogleCloudComponentTests.cs" />
     <Compile Include="TestData\EventTestDataHelper.cs" />
+    <Compile Include="TestData\TestDataHelper.Crm.cs" />
+    <Compile Include="TestData\TestDataHelper.Web.cs" />
     <Compile Include="TestFramework\DatabaseIntegrationTestClassBase.cs" />
     <Compile Include="DotLiquid\TemplateTests.cs" />
     <Compile Include="Interactions\PageViewTests.cs" />
