@@ -72,6 +72,10 @@
     <Compile Include="Migrations\202301121749126_CodeGenerated_20230112.designer.cs">
       <DependentUpon>202301121749126_CodeGenerated_20230112.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202301231355209_PopulateReplaceTransactionEntryJob.cs" />
+    <Compile Include="Migrations\202301231355209_PopulateReplaceTransactionEntryJob.designer.cs">
+      <DependentUpon>202301231355209_PopulateReplaceTransactionEntryJob.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Version 14.0\Version 1.14.1\202209221552523_AddAbbreviatedNameToSchedule.cs" />
     <Compile Include="Migrations\Version 14.0\Version 1.14.1\202209221552523_AddAbbreviatedNameToSchedule.designer.cs">
       <DependentUpon>202209221552523_AddAbbreviatedNameToSchedule.cs</DependentUpon>
@@ -1487,6 +1491,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202301121749126_CodeGenerated_20230112.resx">
       <DependentUpon>202301121749126_CodeGenerated_20230112.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202301231355209_PopulateReplaceTransactionEntryJob.resx">
+      <DependentUpon>202301231355209_PopulateReplaceTransactionEntryJob.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\Version 14.0\Version 1.14.1\202209221552523_AddAbbreviatedNameToSchedule.resx">
       <DependentUpon>202209221552523_AddAbbreviatedNameToSchedule.cs</DependentUpon>
