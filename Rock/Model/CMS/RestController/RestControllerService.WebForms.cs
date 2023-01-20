@@ -18,10 +18,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Web.Http;
 using System.Web.Http.Controllers;
 
 using Rock.Data;
+using Rock.Logging;
 
 namespace Rock.Model
 {
@@ -79,6 +81,8 @@ namespace Rock.Model
              * See task for detailed background: https://app.asana.com/0/474497188512037/1150703513867003/f
              */
 
+            WriteLog( "Initializing..." );
+
             // Controller Class Name => New Format Id => Old Format Id
             var controllerApiIdMap = new Dictionary<string, Dictionary<string, string>>();
 
@@ -89,6 +93,7 @@ namespace Rock.Model
             var config = GlobalConfiguration.Configuration;
             var explorer = config.Services.GetApiExplorer();
 
+            WriteLog( $"ApiExplorer discovered {explorer.ApiDescriptions.Count} methods." );
             if ( !explorer.ApiDescriptions.Any() )
             {
                 // Just in case ApiDescriptions wasn't populated, exit and don't do anything
@@ -152,15 +157,31 @@ namespace Rock.Model
                 controller.DiscoveredRestActions.Add( restAction );
             }
 
+            WriteLog( $"Discovery process located {discoveredControllers.Count()} controllers." );
+
             if ( !discoveredControllers.Any() )
             {
                 // Just in case discoveredControllers somehow is empty, exit and don't do anything
                 return;
             }
 
+            var discoveredControllerNames = discoveredControllers.Select( d => d.Name ).OrderBy( n => n ).ToList();
+
+            WriteLog( $"Identified controllers to be processed. [Controllers={discoveredControllerNames.AsDelimited( ", " ) }]", RockLogLevel.Debug );
+
+            bool addController;
+            bool updateController;
+
+            int controllersAdded = 0;
+            int controllersRemoved = 0;
+            int controllersUpdated = 0;
+
             var actionService = new RestActionService( rockContext );
             foreach ( var discoveredController in discoveredControllers )
             {
+                addController = false;
+                updateController = false;
+
                 var apiIdMap = controllerApiIdMap[discoveredController.ClassName];
 
                 var controller = restControllerService.Queryable( "Actions" )
@@ -173,6 +194,7 @@ namespace Rock.Model
                     };
 
                     restControllerService.Add( controller );
+                    addController = true;
                 }
 
                 controller.ClassName = discoveredController.ClassName;
@@ -182,6 +204,7 @@ namespace Rock.Model
                     if ( controller.Guid != discoveredController.ReflectedGuid.Value )
                     {
                         controller.Guid = discoveredController.ReflectedGuid.Value;
+                        updateController = true;
                     }
                 }
 
@@ -199,6 +222,7 @@ namespace Rock.Model
                     {
                         action = new RestAction { ApiId = newFormatId };
                         controller.Actions.Add( action );
+                        updateController = true;
                     }
 
                     action.Method = discoveredAction.Method;
@@ -208,14 +232,20 @@ namespace Rock.Model
                     {
                         // Update the ID to the new format
                         // This will also take care of method signature changes
+                        WriteLog( $"Updated Action \"{action.ApiId}\" ApiId. [NewValue={newFormatId}]", RockLogLevel.Debug );
+
                         action.ApiId = newFormatId;
+                        updateController = true;
                     }
 
                     if ( discoveredAction.ReflectedGuid.HasValue )
                     {
                         if ( action.Guid != discoveredAction.ReflectedGuid.Value )
                         {
+                            WriteLog ( $"Updated Action \"{action.ApiId}\" Guid. [NewValue={discoveredAction.ReflectedGuid.Value}]", RockLogLevel.Debug );
+
                             action.Guid = discoveredAction.ReflectedGuid.Value;
+                            updateController = true;
                         }
                     }
                 }
@@ -223,23 +253,49 @@ namespace Rock.Model
                 var actions = discoveredController.DiscoveredRestActions.Select( d => d.ApiId ).ToList();
                 foreach ( var action in controller.Actions.Where( a => !actions.Contains( a.ApiId ) ).ToList() )
                 {
+                    WriteLog( $"Removed Action \"{action.ApiId}\".", RockLogLevel.Debug );
+
                     actionService.Delete( action );
                     controller.Actions.Remove( action );
+                    updateController = true;
+                }
+
+                var registerAction = string.Empty;
+                if ( addController )
+                {
+                    registerAction = "Added";
+                    controllersAdded++;
+                }
+                else if (updateController)
+                {
+                    registerAction = "Updated";
+                    controllersUpdated++;
+                }
+                if ( !string.IsNullOrEmpty( registerAction ) )
+                {
+                    WriteLog( $"{registerAction} controller \"{controller.Name}\" ({actions.Count} actions)", RockLogLevel.Debug );
                 }
             }
 
-            var controllers = discoveredControllers.Select( d => d.Name ).ToList();
-            foreach ( var controller in restControllerService.Queryable().Where( c => !controllers.Contains( c.Name ) ).ToList() )
+            // Remove Controllers that are no longer discoverable.
+            var undiscoveredControllers = restControllerService.Queryable().Where( c => !discoveredControllerNames.Contains( c.Name ) ).ToList();
+            foreach ( var controller in undiscoveredControllers )
             {
                 restControllerService.Delete( controller );
+                WriteLog( $"Removed controller \"{controller.Name}\".", RockLogLevel.Debug );
+                controllersRemoved++;
             }
 
             try
             {
                 rockContext.SaveChanges();
+
+                WriteLog( $"Registration complete. ({controllersAdded} added, {controllersUpdated} updated, {controllersRemoved} removed)" );
             }
             catch ( Exception thrownException )
             {
+                WriteLog( $"Registration failed. Check the Exception Log for additional information.", RockLogLevel.Error );
+
                 // if the exception was due to a duplicate Guid, throw as a duplicateGuidException. That'll make it easier to troubleshoot.
                 var duplicateGuidException = Rock.SystemGuid.DuplicateSystemGuidException.CatchDuplicateSystemGuidException( thrownException, null );
                 if ( duplicateGuidException != null )
@@ -251,6 +307,11 @@ namespace Rock.Model
                     throw;
                 }
             }
+        }
+
+        private static void WriteLog( string message, RockLogLevel logLevel = RockLogLevel.Info, [CallerMemberName] string processName = "" )
+        {
+            RockLogger.Log.WriteToLog( logLevel, RockLogDomains.Core, $"{nameof( RestControllerService )} ({processName}): {message}" );
         }
     }
 }
