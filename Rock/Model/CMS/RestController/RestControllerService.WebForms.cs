@@ -91,9 +91,31 @@ namespace Rock.Model
             var discoveredControllers = new List<DiscoveredControllerFromReflection>();
 
             var config = GlobalConfiguration.Configuration;
-            var explorer = config.Services.GetApiExplorer();
 
-            WriteLog( $"ApiExplorer discovered {explorer.ApiDescriptions.Count} methods." );
+            // For Debug Only: Check for a caching error.
+            var assemblies1 = Reflection.GetPluginAssemblies( refreshCache: false )
+                .Select(a => a.GetName().Name );
+            var assemblies2 = Reflection.GetPluginAssemblies( refreshCache: true )
+                .Select( a => a.GetName().Name );
+
+            var addedAssemblies = assemblies2.Except( assemblies1 ).ToList();
+            if ( addedAssemblies.Any() )
+            {
+                WriteLog( $"WARNING - Forced cache refresh found {addedAssemblies.Count} additional assemblies. [Assemblies={addedAssemblies.AsDelimited( ", " )}]", RockLogLevel.Debug );
+            }
+
+            // Identify the target assemblies.
+            var resolver = config.Services.GetAssembliesResolver();
+            var targetAssemblyNames = resolver.GetAssemblies()
+                .Select( a => a.GetName().Name )
+                .ToList();
+
+            WriteLog( $"Discovered {targetAssemblyNames.Count} target assemblies. [Resolver={resolver.GetType().Name}, Assemblies={targetAssemblyNames.AsDelimited(", ")}]", RockLogLevel.Debug );
+
+            // Extract API methods from target assemblies.
+            var explorer = config.Services.GetApiExplorer();
+            WriteLog( $"Discovered {explorer.ApiDescriptions.Count} API methods in target assemblies." );
+
             if ( !explorer.ApiDescriptions.Any() )
             {
                 // Just in case ApiDescriptions wasn't populated, exit and don't do anything
@@ -157,7 +179,7 @@ namespace Rock.Model
                 controller.DiscoveredRestActions.Add( restAction );
             }
 
-            WriteLog( $"Discovery process located {discoveredControllers.Count()} controllers." );
+            WriteLog( $"Discovered {discoveredControllers.Count()} controllers in target assemblies." );
 
             if ( !discoveredControllers.Any() )
             {

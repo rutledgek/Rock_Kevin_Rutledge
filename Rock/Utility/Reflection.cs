@@ -748,7 +748,17 @@ namespace Rock
         /// <returns></returns>
         public static List<Assembly> GetPluginAssemblies()
         {
-            if ( _pluginAssemblies != null )
+            return GetPluginAssemblies( false );
+        }
+
+        /// <summary>
+        /// Gets a list of Assemblies in the ~/Bin and ~/Plugins folders as well as the RockWeb.App_Code assembly that are assemblies that might have plugins
+        /// </summary>
+        /// <param name="refreshCache">If true, cached assembly values will be refreshed.</param>
+        /// <returns></returns>
+        public static List<Assembly> GetPluginAssemblies( bool refreshCache )
+        {
+            if ( _pluginAssemblies != null && !refreshCache )
             {
                 return _pluginAssemblies.ToList();
             }
