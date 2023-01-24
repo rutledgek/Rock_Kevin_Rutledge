@@ -26,6 +26,7 @@ BEGIN
 	DECLARE @MatrixEntityTypeId INT = (SELECT Id FROM [EntityType] WHERE [Guid]='028228F0-B1D9-4DE5-9E6A-F898C34DDAB8')
 	IF @MatrixItemEntityTypeId IS NOT NULL AND @MatrixFieldTypeId IS NOT NULL AND @MatrixEntityTypeId IS NOT NULL
 	BEGIN
+        -- Get all the attribute matrix identifiers into temp table that has no active reference found in attribute value
 		SELECT
 			am.[Id], am.[Guid]
 		INTO #temp
@@ -35,6 +36,7 @@ BEGIN
 				SELECT a.[Id] FROM [Attribute] a WHERE a.[FieldTypeId] = @MatrixFieldTypeId )
 		WHERE av.[Value] IS NULL
 
+        -- Exclude attribute matrix identifiers from the temp table that has any reference foundn in AssignedGroupMemberAttributeValues of connection request
 		DELETE FROM #temp 
 		WHERE [Guid] IN (SELECT 
 				am.[Guid] 
@@ -44,6 +46,7 @@ BEGIN
 			WHERE
 				[AssignedGroupMemberAttributeValues] LIKE ('%' + CONVERT(nvarchar(36), am.[Guid]) + '%'))
 
+        -- Delete all the attribute value related to attribute matrices found in temp table
 		DELETE FROM av
 		FROM 
 			#temp as am 
@@ -52,11 +55,13 @@ BEGIN
 			INNER JOIN [Attribute] as a ON a.EntityTypeId = @MatrixItemEntityTypeId AND a.Id = av.AttributeId
 		WHERE a.EntityTypeId = @MatrixItemEntityTypeId
 
+        -- Delete all the attribute matrix items related to attribute matrices found in temp table
 		DELETE FROM ai
 		FROM 
 			#temp as am 
 			INNER JOIN [AttributeMatrixItem] ai ON am.Id = ai.AttributeMatrixId 
 
+        -- Delete all the attribute matrix items related to attribute matrices found in temp table
 		DELETE FROM [AttributeMatrix] WHERE [Id] IN (SELECT Id FROM #temp)
 	END
 END
