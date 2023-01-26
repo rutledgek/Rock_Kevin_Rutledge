@@ -927,7 +927,7 @@ export class MergeFieldTreeItemProvider implements ITreeItemProvider {
     /**
      * Currently selected page
      */
-    public selectedIds?: string[] | null;
+    public selectedIds?: string[] | string | null;
 
     /**
      * Root Level Merge Fields
@@ -959,16 +959,14 @@ export class MergeFieldTreeItemProvider implements ITreeItemProvider {
             return [];
         }
 
-        return result;
-
         // If we're getting child nodes or if there is no selected page
-        // if (parentId || !this.selectedMergeFieldGuids) {
-        //     return result;
-        // }
+        if (parentId || !this.selectedIds || this.selectedIds.length == 0) {
+            return result;
+        }
 
         // If we're getting the root elements and we have a selected page, we also want to grab
         // all the parent pages so we can pre-load the entire hierarchy to the selected page
-        // return this.getHierarchyToSelectedMergeField(result);
+        return this.getHierarchyToSelectedMergeField(result);
     }
 
     /**
@@ -977,16 +975,16 @@ export class MergeFieldTreeItemProvider implements ITreeItemProvider {
      * @param rootLayer The bottom layer of pages that we'll build depth upon
      *
      * @return The augmented `rootLayer` with the child pages
-     *
+     */
     private async getHierarchyToSelectedMergeField(rootLayer: TreeItemBag[]): Promise<TreeItemBag[]> {
-        const parents = await this.getParentList();
+        const parents = this.getParentList();
 
         if (!parents || parents.length == 0) {
             // Selected page has no parents, so we're done.
             return rootLayer;
         }
 
-        const childLists = await Promise.all(parents.map(guid => this.getItems(guid)));
+        const childLists = await Promise.all(parents.map(id => this.getItems(id)));
         const allMergeFields = rootLayer.concat(flatten(childLists));
 
         parents.forEach((parentGuid, i) => {
@@ -997,7 +995,50 @@ export class MergeFieldTreeItemProvider implements ITreeItemProvider {
         });
 
         return rootLayer;
-    }*/
+    }
+
+    /**
+     * Get the hierarchical list of parent pages of the selectedPageGuid
+     *
+     * @returns A list of GUIDs of the parent pages
+     */
+    private getParentList(): string[] | null {
+        if (!this.selectedIds || this.selectedIds.length == 0) {
+            return null;
+        }
+
+        // If it's a single selection, grab the parents by splitting on "|",
+        // e.g. "Grand|Parent|Child" will give ["Grand", "Parent"] as the parents
+        if (typeof this.selectedIds == "string") {
+            return this.splitSelectionIntoParents(this.selectedIds);
+        }
+
+        // Not null/empty nor a single selection, so must be an array of selections
+        return flatten(this.selectedIds.map(sel => this.splitSelectionIntoParents(sel)));
+    }
+
+    /**
+     * Split the given selected ID up and get a list of the parent IDs
+     *
+     * @param selection a string denoted one of the selected values
+     */
+    private splitSelectionIntoParents(selection: string): string[] {
+        const parentIds: string[] = [];
+
+        // grab the parents by splitting on "|",
+        // e.g. "Grand|Parent|Child" will give ["Grand", "Parent"] as the parents
+        const splitList = selection.split("|");
+        splitList.pop();
+
+        // Now we need to make sure each item further in the list contains it's parents' names
+        // e.g. ["Grand", "Parent"] => ["Grand", "Grand|Parent"]
+        while (splitList.length >= 1) {
+            parentIds.unshift(splitList.join("|"));
+            splitList.pop();
+        }
+
+        return parentIds;
+    }
 
 
     /**

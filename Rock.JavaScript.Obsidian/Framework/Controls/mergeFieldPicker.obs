@@ -2,8 +2,7 @@
 <template>
     <TreeItemPicker
                     v-bind="standardFieldProps"
-                    :modelValue="(pagePickerValue as ListItemBag[])"
-                    @update:modelValue="updatePage"
+                    v-model="internalValue"
                     formGroupClasses="location-item-picker"
                     iconCssClass="fa fa-file"
                     :provider="itemProvider"
@@ -15,16 +14,15 @@
 <script setup lang="ts">
     import { computed, PropType, ref, watch } from "vue";
     import { ListItemBag } from "@Obsidian/ViewModels/Utility/listItemBag";
-    import TreeItemPicker from "./treeItemPicker.obs";
-    import { PageRouteValueBag } from "@Obsidian/ViewModels/Rest/Controls/pageRouteValueBag";
+    import { standardRockFormFieldProps, updateRefValue, useStandardRockFormFieldProps, useVModelPassthroughWithPropUpdateCheck } from "@Obsidian/Utility/component";
     import { MergeFieldTreeItemProvider } from "@Obsidian/Utility/treeItemProviders";
+    import TreeItemPicker from "./treeItemPicker.obs";
     import { emptyGuid } from "@Obsidian/Utility/guid";
-    import { standardRockFormFieldProps, useStandardRockFormFieldProps } from "@Obsidian/Utility/component";
     import { useSecurityGrantToken } from "@Obsidian/Utility/block";
 
     const props = defineProps({
         modelValue: {
-            type: Object as PropType<PageRouteValueBag | PageRouteValueBag[] | null>,
+            type: Object as PropType<ListItemBag | ListItemBag[] | null>,
             required: false
         },
 
@@ -50,76 +48,37 @@
     });
 
     const emit = defineEmits<{
-        (e: "update:modelValue", value: PageRouteValueBag | PageRouteValueBag[] | null): void
+        (e: "update:modelValue", value: ListItemBag | ListItemBag[] | null): void
     }>();
 
     const standardFieldProps = useStandardRockFormFieldProps(props);
-
-    // Extract the page value(s) from the the PageRouteValueBag(s) so they can be used with the tree picker
-    const internalPageValue = computed<ListItemBag | (ListItemBag | null | undefined)[] | null | undefined>(() => {
-        if (!props.modelValue) {
-            return null;
-        }
-        if (Array.isArray(props.modelValue)) {
-            if (props.multiple) {
-                return props.modelValue.map(item => item.page);
-            }
-            emit("update:modelValue", { page: props.modelValue[0].page });
-            return props.modelValue[0].page;
-        }
-
-        return props.modelValue.page;
-    });
-
-    // This value is used for TreePicker to show the route in parentheses if a route is chosen
-    const pagePickerValue = computed<ListItemBag | (ListItemBag | null | undefined)[] | null | undefined>(() => {
-        return internalPageValue.value;
-    });
-
-    // Set the page value
-    function updatePage(pages: ListItemBag | ListItemBag[] | null): void {
-        if (!pages) {
-            if (props.multiple) {
-                emit("update:modelValue", []);
-            }
-            else {
-                emit("update:modelValue", null);
-            }
-        }
-        else if (props.multiple) {
-            // When `multiple`, we can assume we're receiving an array
-            emit("update:modelValue", (pages as ListItemBag[]).map(page => ({ page })));
-        }
-        else if ((pages as ListItemBag).value == (internalPageValue.value as ListItemBag)?.value) {
-            // In this case, the user hit "select" without choosing a different option, so reset the value to the current page (no route)
-            emit("update:modelValue", { page: internalPageValue.value as ListItemBag });
-        }
-        else {
-            // When page is updated, no route will be picked, so just use the page property
-            emit("update:modelValue", { page: pages as ListItemBag });
-        }
-    }
+    const [internalValue, onModelPropUpdate] = useVModelPassthroughWithPropUpdateCheck(props, "modelValue", emit);
 
     // Configure the item provider with our settings.
-    const itemProvider = ref(new MergeFieldTreeItemProvider());
+    const itemProvider = ref(newItemProvider());
 
-    function updateItemProvider(): void {
+    function newItemProvider(): MergeFieldTreeItemProvider {
         const prov = new MergeFieldTreeItemProvider();
         prov.securityGrantToken = props.securityGrantToken;
         prov.additionalFields = props.additionalFields;
 
-        if (internalPageValue.value) {
-            if (Array.isArray(internalPageValue.value)) {
-                prov.selectedIds = internalPageValue.value.map(p => p?.value ?? emptyGuid);
+        if (internalValue.value) {
+            if (Array.isArray(internalValue.value)) {
+                prov.selectedIds = internalValue.value.map(p => p?.value ?? emptyGuid);
             }
             else {
-                prov.selectedIds = [internalPageValue.value.value ?? emptyGuid];
+                prov.selectedIds = [internalValue.value.value ?? emptyGuid];
             }
         }
 
-        itemProvider.value = prov;
+        return prov;
     }
 
-    watch(() => [props.securityGrantToken, props.additionalFields], updateItemProvider, { immediate: true });
+    watch(() => [props.securityGrantToken, props.additionalFields], (): void => {
+        itemProvider.value = newItemProvider();
+    });
 
+    onModelPropUpdate((): void => {
+        itemProvider.value = newItemProvider();
+    });
 </script>

@@ -47,6 +47,37 @@ export function useVModelPassthrough<T extends Prop, K extends PropKey<T>, E ext
 }
 
 /**
+ * Utility function for when you are using a component that takes a v-model
+ * and uses that model as a v-model in that component's template. It creates
+ * a new ref that keeps itself up-to-date with the given model and fires an
+ * 'update:MODELNAME' event when it gets changed.
+ *
+ * Ensure the related `props` and `emits` are specified to ensure there are
+ * no type issues.
+ */
+export function useVModelPassthroughWithPropUpdateCheck<T extends Prop, K extends PropKey<T>, E extends `update:${K}`>(props: T, modelName: K, emit: EmitFn<E>, options?: WatchOptions): [Ref<T[K]>, (fn: () => unknown) => void] {
+    const internalValue = ref(props[modelName]) as Ref<T[K]>;
+    const listeners: (() => void)[] = [];
+
+    watch(() => props[modelName], val => {
+        if (updateRefValue(internalValue, val)) {
+            onPropUpdate();
+        }
+    }, options);
+    watch(internalValue, val => emit(`update:${modelName}`, val), options);
+
+    function onPropUpdate(): void {
+        listeners.forEach(fn => fn());
+    }
+
+    function addPropUpdateListener(fn: () => unknown): void {
+        listeners.push(fn);
+    }
+
+    return [internalValue, addPropUpdateListener];
+}
+
+/**
  * Updates the Ref value, but only if the new value is actually different than
  * the current value. A deep comparison is performed.
  *

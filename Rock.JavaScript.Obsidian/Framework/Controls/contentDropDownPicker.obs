@@ -327,15 +327,12 @@
     });
 
     const pickerMenuStyles = computed<string>(() => {
-        let styles = "";
-        // let styles = internalShowPopup.value ? "display: block;" : "";
-
         // Width is already specified in the stylesheet for .picker-menu, so only set it if we have an override
         if (props.pickerContentBoxWidth) {
-            styles += `width: ${props.pickerContentBoxWidth};`;
+            return `width: ${props.pickerContentBoxWidth};`;
         }
 
-        return styles;
+        return "";
     });
 
     // #endregion

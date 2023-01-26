@@ -6908,14 +6908,38 @@ const mergeFieldPickerGallery = defineComponent({
     components: {
         GalleryAndResult,
         CheckBox,
-        MergeFieldPicker
+        MergeFieldPicker,
+        RockButton
     },
     setup() {
+        const value = ref([
+            {
+                "value": "Rock.Model.Group|ArchivedByPersonAlias|Person|Aliases|AliasedDateTime",
+                "text": "Aliased Date Time"
+            },
+            {
+                "value": "Rock.Model.Person|ConnectionStatusValue|Category|CreatedByPersonAliasId",
+                "text": "Created By Person Alias Id"
+            }
+        ]);
+
         return {
-            multiple: ref(false),
-            value: ref(null),
+            multiple: ref(true),
+            value,
+            swapValues: () => {
+                value.value = [
+                    {
+                        "value": "Rock.Model.Person|ConnectionStatusValue|Category|ChildCategories|CreatedByPersonAliasId",
+                        "text": "Created By Person Alias Id"
+                    },
+                    {
+                        "value": "Rock.Model.Group|ArchivedByPersonAlias|Person|Aliases|Person|AbilityLevel",
+                        "text": "Ability Level"
+                    }
+                ];
+            },
             importCode: getSfcControlImportPath("mergeFieldPicker"),
-            exampleCode: `<MergeFieldPicker label="Merge Field" v-model="value" :multiple="false" />`
+            exampleCode: `<MergeFieldPicker label="Merge Field" v-model="value" :multiple="false" additionalFields="GlobalAttribute,Rock.Model.Person,Rock.Model.Group" />`
         };
     },
     template: `
@@ -6927,11 +6951,11 @@ const mergeFieldPickerGallery = defineComponent({
     <MergeFieldPicker label="Merge Field" v-model="value" :multiple="multiple" additionalFields="GlobalAttribute,Rock.Model.Person,Rock.Model.Group" />
 
     <template #settings>
-
         <div class="row">
             <div class="col-md-4">
                 <CheckBox label="Multiple" v-model="multiple" />
             </div>
+            <RockButton type="button" @click.prevent="swapValues">SWAP</RockButton>
         </div>
         <p class="text-semibold font-italic">Not all options have been implemented yet.</p>
     </template>
