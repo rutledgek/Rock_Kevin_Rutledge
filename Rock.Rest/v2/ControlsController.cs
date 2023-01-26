@@ -2813,7 +2813,11 @@ namespace Rock.Rest.v2
         [Rock.SystemGuid.RestActionGuid( "f6722f7a-64ed-401a-9dea-c64fa9738b75" )]
         public IHttpActionResult MergeFieldPickerGetChildren( [FromBody] MergeFieldPickerGetChildrenOptionsBag options )
         {
-            return Ok( MergeFieldPickerGetChildren( options.Id, options.AdditionalFields, RockRequestContext.CurrentPerson ) );
+            var children = MergeFieldPickerGetChildren( options.Id, options.AdditionalFields, RockRequestContext.CurrentPerson );
+
+            var treeItemChildren = children?.Select( convertTreeViewItemToTreeItemBag ).ToList();
+
+            return Ok( treeItemChildren );
         }
 
         /// <summary>
@@ -4272,6 +4276,25 @@ namespace Rock.Rest.v2
 
                 return attributeList;
             }
+        }
+
+        /// <summary>
+        /// Converts the TreeViewItem to TreeItemBag.
+        /// </summary>
+        /// <param name="item">The TreeViewItem to be converted.</param>
+        /// <returns>The item as a TreeItemBag</returns>
+        private TreeItemBag convertTreeViewItemToTreeItemBag (TreeViewItem item)
+        {
+            return new TreeItemBag
+            {
+                Value = item.Id,
+                Text = item.Name,
+                IsFolder = item.HasChildren,
+                HasChildren = item.HasChildren,
+                IconCssClass = item.IconCssClass,
+                IsActive = item.IsActive,
+                Children = item.Children?.Select( convertTreeViewItemToTreeItemBag ).ToList()
+            };
         }
 
         #endregion

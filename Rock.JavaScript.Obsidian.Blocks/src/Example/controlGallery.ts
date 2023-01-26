@@ -6924,7 +6924,7 @@ const mergeFieldPickerGallery = defineComponent({
     :importCode="importCode"
     :exampleCode="exampleCode"
     enableReflection >
-    <MergeFieldPicker label="Merge Field" v-model="value" :multiple="multiple" />
+    <MergeFieldPicker label="Merge Field" v-model="value" :multiple="multiple" additionalFields="GlobalAttribute,Rock.Model.Person,Rock.Model.Group" />
 
     <template #settings>
 
