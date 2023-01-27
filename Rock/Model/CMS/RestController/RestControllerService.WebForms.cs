@@ -16,12 +16,15 @@
 //
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
+using System.Net.Http;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Web.Http;
 using System.Web.Http.Controllers;
-
+using System.Web.Http.Description;
+using System.Web.Http.Routing;
 using Rock.Data;
 using Rock.Logging;
 
@@ -32,6 +35,43 @@ namespace Rock.Model
     /// </summary>
     public partial class RestControllerService
     {
+        /// <summary>
+        /// An implementation of the ApiExplorer that provides diagnostic logging.
+        /// </summary>
+        public class RockApiExplorer : ApiExplorer
+        {
+            public RockApiExplorer( HttpConfiguration configuration )
+                : base( configuration )
+            {
+                //
+            }
+
+            public override bool ShouldExploreController( string controllerVariableValue, HttpControllerDescriptor controllerDescriptor,
+                IHttpRoute route )
+            {
+                var shouldExplore = base.ShouldExploreController( controllerVariableValue, controllerDescriptor, route );
+
+                if ( !shouldExplore )
+                {
+                    WriteLog( $"Controller excluded from scan. [Controller={controllerDescriptor.ControllerType.FullName}, Route-{route.RouteTemplate}, ControllerVariableValue={controllerVariableValue}]", RockLogLevel.Debug );
+                }
+
+                return shouldExplore;
+            }
+
+            public override bool ShouldExploreAction( string actionVariableValue, HttpActionDescriptor actionDescriptor, IHttpRoute route )
+            {
+                var shouldExplore = base.ShouldExploreAction( actionVariableValue, actionDescriptor, route );
+
+                if ( !shouldExplore )
+                {
+                    WriteLog( $"Action excluded from scan. [Controller={actionDescriptor.ControllerDescriptor.ControllerName}, Action={actionDescriptor.ActionName}]" );
+                }
+
+                return shouldExplore;
+            }
+        }
+
         private class DiscoveredControllerFromReflection
         {
             public string Name { get; set; }
@@ -53,6 +93,145 @@ namespace Rock.Model
             public override string ToString()
             {
                 return ApiId;
+            }
+        }
+
+        /// <summary>
+        /// A custom implementation of the ApiExplorer.ApiDescriptions method that adds logging.
+        /// </summary>
+        /// <param name="httpConfig"></param>
+        /// <returns></returns>
+        private static List<ApiDescription> GetApiDescriptionsWithCustomQuery( HttpConfiguration httpConfig )
+        {
+            var apiExplorer = httpConfig.Services.GetApiExplorer();
+            var controllerSelector = httpConfig.Services.GetHttpControllerSelector();
+            var controllerMappings = controllerSelector.GetControllerMapping();
+
+            if ( controllerMappings == null )
+            {
+                return new List<ApiDescription>();
+            }
+
+            /*
+             * Use Reflection to call a private method of the ApiExplorer.
+             */
+            // https://github.com/aspnet/AspNetWebStack/blob/42991b3d2537b702736463f76a10a4fcf2ea44c9/src/System.Web.Http/Description/ApiExplorer.cs#L253
+            var explorerType = typeof( ApiExplorer );
+            var exploreControllersMethod = explorerType.GetMethod( "ExploreRouteControllers",
+                    bindingAttr: BindingFlags.Instance | BindingFlags.NonPublic,
+                    binder: null,
+                    types: new[] { typeof( IDictionary<string, HttpControllerDescriptor> ), typeof( IHttpRoute ) },
+                    modifiers: null );
+
+            if ( exploreControllersMethod == null )
+            {
+                return new List<ApiDescription>();
+            }
+
+            var allDescriptions = new List<ApiDescription>();
+            foreach ( var route in httpConfig.Routes )
+            {
+                var routeDescriptions = exploreControllersMethod.Invoke( apiExplorer, new object[] { controllerMappings, route } ) as Collection<ApiDescription>;
+                allDescriptions.AddRange( routeDescriptions );
+            }
+
+            var descriptions = allDescriptions.OrderBy( d => d.ID ).ToList();
+            return descriptions;
+        }
+
+        private static List<ApiDescription> GetApiDescriptionsWithCustomExplorer( HttpConfiguration httpConfig )
+        {
+            var explorer = new RockApiExplorer( httpConfig );
+            var descriptions = explorer.ApiDescriptions;
+
+            return descriptions.ToList();
+        }
+
+        private static List<ApiDescription> GetApiDescriptions( HttpConfiguration httpConfig )
+        {
+            var apiDescriptionsExplorer = GetApiDescriptionsWithCustomExplorer( httpConfig );
+            WriteLog( $"Custom Api Explorer found { apiDescriptionsExplorer.Count } methods.", RockLogLevel.Debug );
+
+            var apiDescriptionsQuery = GetApiDescriptionsWithCustomQuery( httpConfig );
+            WriteLog( $"Custom Api Query found { apiDescriptionsQuery.Count } methods.", RockLogLevel.Debug );
+
+            var differences1 = apiDescriptionsExplorer
+                .Select( a => a.ID )
+                .Except( apiDescriptionsQuery.Select( a => a.ID ) )
+                .OrderBy( i => i ).ToList();
+            if ( differences1.Count > 0 )
+            {
+                WriteLog( $"Additional Custom Api Explorer methods found: {differences1.AsDelimited( ", " )}.", RockLogLevel.Debug );
+            }
+
+            var differences2 = apiDescriptionsQuery
+                .Select( a => a.ID )
+                .Except( apiDescriptionsExplorer.Select( a => a.ID ) )
+                .OrderBy( i => i ).ToList();
+            if ( differences2.Count > 0 )
+            {
+                WriteLog( $"Additional Custom Api Query methods found: {differences2.AsDelimited( ", " )}.", RockLogLevel.Debug );
+            }
+
+            // Return the API Explorer results.
+            return apiDescriptionsExplorer;
+        }
+
+        private static void VerifyTargetAssemblies( HttpConfiguration httpConfig )
+        {
+            // For Debug Only: Check for a caching error.
+            var assemblies1 = Reflection.GetPluginAssemblies( refreshCache: false )
+                .Select( a => a.GetName().Name );
+            var assemblies2 = Reflection.GetPluginAssemblies( refreshCache: true )
+                .Select( a => a.GetName().Name );
+
+            var addedAssemblies = assemblies2.Except( assemblies1 ).ToList();
+            if ( addedAssemblies.Any() )
+            {
+                WriteLog( $"WARNING - Forced cache refresh found {addedAssemblies.Count} additional assemblies. [Assemblies={addedAssemblies.AsDelimited( ", " )}]", RockLogLevel.Debug );
+            }
+
+            // Identify the target assemblies.
+            var resolver = httpConfig.Services.GetAssembliesResolver();
+            var assemblies = resolver.GetAssemblies();
+
+            var targetAssemblyNames = assemblies
+                .Select( a => a.GetName().Name )
+                .ToList();
+
+            WriteLog( $"Discovered {targetAssemblyNames.Count} target assemblies. [Resolver={resolver.GetType().Name}, Assemblies={targetAssemblyNames.AsDelimited( ", " )}]", RockLogLevel.Debug );
+        }
+
+        private static void LogApiDescriptions( List<ApiDescription> apiDescriptions )
+        {
+            var assemblies = apiDescriptions.Select( e => e.ActionDescriptor.ControllerDescriptor.ControllerType.Assembly )
+                .DistinctBy( a => a.FullName )
+                .OrderBy( a => a.FullName )
+                .ToList();
+
+            WriteLog( $"Discovered {apiDescriptions.Count} API methods in target assemblies. [Assemblies={assemblies.AsDelimited( ", " )}]", RockLogLevel.Debug );
+
+            var pluginAssemblies = assemblies.Where( a => !a.FullName.ToLower().StartsWith( "rock." ) ).ToList();
+
+            var pluginAssemblyNames = pluginAssemblies.Select( a => a.GetName().Name ).ToList();
+            WriteLog( $"Discovered {pluginAssemblies.Count} plugin assemblies. [Assemblies={pluginAssemblyNames.AsDelimited( ", " )}]", RockLogLevel.Debug );
+
+            foreach ( var pluginAssembly in pluginAssemblies )
+            {
+                WriteLog( $"Processing plugin assembly \"{ pluginAssembly.CodeBase }\"...", RockLogLevel.Debug );
+
+                var controllerTypesInAssembly = apiDescriptions.Where( e => e.ActionDescriptor.ControllerDescriptor.ControllerType.Assembly == pluginAssembly )
+                    .Select( a => a.ActionDescriptor.ControllerDescriptor.ControllerType )
+                    .Distinct()
+                    .ToList();
+
+                foreach ( var controllerType in controllerTypesInAssembly )
+                {
+                    var actions = apiDescriptions.Where( e => e.ActionDescriptor.ControllerDescriptor.ControllerType == controllerType ).ToList();
+                    var actionNames = actions.Select( m => m.ActionDescriptor.ActionName ).ToList();
+
+                    WriteLog( $"Discovered Controller \"{controllerType.Name}\". [Actions={actionNames.AsDelimited( ", " )}]", RockLogLevel.Debug );
+                }
             }
         }
 
@@ -92,37 +271,20 @@ namespace Rock.Model
 
             var config = GlobalConfiguration.Configuration;
 
-            // For Debug Only: Check for a caching error.
-            var assemblies1 = Reflection.GetPluginAssemblies( refreshCache: false )
-                .Select(a => a.GetName().Name );
-            var assemblies2 = Reflection.GetPluginAssemblies( refreshCache: true )
-                .Select( a => a.GetName().Name );
-
-            var addedAssemblies = assemblies2.Except( assemblies1 ).ToList();
-            if ( addedAssemblies.Any() )
-            {
-                WriteLog( $"WARNING - Forced cache refresh found {addedAssemblies.Count} additional assemblies. [Assemblies={addedAssemblies.AsDelimited( ", " )}]", RockLogLevel.Debug );
-            }
-
-            // Identify the target assemblies.
-            var resolver = config.Services.GetAssembliesResolver();
-            var targetAssemblyNames = resolver.GetAssemblies()
-                .Select( a => a.GetName().Name )
-                .ToList();
-
-            WriteLog( $"Discovered {targetAssemblyNames.Count} target assemblies. [Resolver={resolver.GetType().Name}, Assemblies={targetAssemblyNames.AsDelimited(", ")}]", RockLogLevel.Debug );
+            VerifyTargetAssemblies( config );
 
             // Extract API methods from target assemblies.
-            var explorer = config.Services.GetApiExplorer();
-            WriteLog( $"Discovered {explorer.ApiDescriptions.Count} API methods in target assemblies." );
+            var apiDescriptions = GetApiDescriptions( config );
 
-            if ( !explorer.ApiDescriptions.Any() )
+            LogApiDescriptions( apiDescriptions );
+
+            if ( !apiDescriptions.Any() )
             {
                 // Just in case ApiDescriptions wasn't populated, exit and don't do anything
                 return;
             }
 
-            foreach ( var apiDescription in explorer.ApiDescriptions )
+            foreach ( var apiDescription in apiDescriptions )
             {
                 var reflectedHttpActionDescriptor = ( ReflectedHttpActionDescriptor ) apiDescription.ActionDescriptor;
                 var action = apiDescription.ActionDescriptor;
@@ -254,7 +416,7 @@ namespace Rock.Model
                     {
                         // Update the ID to the new format
                         // This will also take care of method signature changes
-                        WriteLog( $"Updated Action \"{action.ApiId}\" ApiId. [NewValue={newFormatId}]", RockLogLevel.Debug );
+                        WriteLog( $"Updated Action \"{action.Controller.Name}.{action.Method}\" ApiId. [OldValue={action.ApiId}, NewValue={newFormatId}]", RockLogLevel.Debug );
 
                         action.ApiId = newFormatId;
                         updateController = true;
@@ -264,7 +426,7 @@ namespace Rock.Model
                     {
                         if ( action.Guid != discoveredAction.ReflectedGuid.Value )
                         {
-                            WriteLog ( $"Updated Action \"{action.ApiId}\" Guid. [NewValue={discoveredAction.ReflectedGuid.Value}]", RockLogLevel.Debug );
+                            WriteLog( $"Updated Action \"{action.Controller.Name}.{action.Method}\" Guid. [OldValue={action.Guid}, NewValue={discoveredAction.ReflectedGuid.Value}]", RockLogLevel.Debug );
 
                             action.Guid = discoveredAction.ReflectedGuid.Value;
                             updateController = true;
@@ -275,7 +437,7 @@ namespace Rock.Model
                 var actions = discoveredController.DiscoveredRestActions.Select( d => d.ApiId ).ToList();
                 foreach ( var action in controller.Actions.Where( a => !actions.Contains( a.ApiId ) ).ToList() )
                 {
-                    WriteLog( $"Removed Action \"{action.ApiId}\".", RockLogLevel.Debug );
+                    WriteLog( $"Removed Action \"{action.Controller.Name}.{action.Method}\". [ApiId={action.ApiId}]", RockLogLevel.Debug );
 
                     actionService.Delete( action );
                     controller.Actions.Remove( action );
@@ -288,14 +450,14 @@ namespace Rock.Model
                     registerAction = "Added";
                     controllersAdded++;
                 }
-                else if (updateController)
+                else if ( updateController )
                 {
                     registerAction = "Updated";
                     controllersUpdated++;
                 }
                 if ( !string.IsNullOrEmpty( registerAction ) )
                 {
-                    WriteLog( $"{registerAction} controller \"{controller.Name}\" ({actions.Count} actions)", RockLogLevel.Debug );
+                    WriteLog( $"{registerAction} controller \"{controller.Name}\" ({actions.Count} actions)", RockLogLevel.Info );
                 }
             }
 
@@ -330,8 +492,7 @@ namespace Rock.Model
                 }
             }
         }
-
-        private static void WriteLog( string message, RockLogLevel logLevel = RockLogLevel.Info, [CallerMemberName] string processName = "" )
+        internal static void WriteLog( string message, RockLogLevel logLevel = RockLogLevel.Info, [CallerMemberName] string processName = "" )
         {
             RockLogger.Log.WriteToLog( logLevel, RockLogDomains.Core, $"{nameof( RestControllerService )} ({processName}): {message}" );
         }
