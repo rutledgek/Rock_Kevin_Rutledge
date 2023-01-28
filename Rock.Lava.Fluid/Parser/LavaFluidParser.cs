@@ -103,6 +103,7 @@ namespace Rock.Lava.Fluid
             RegisterLavaCommentTag();
             RegisterLavaCaptureTag();
             RegisterLavaElseIfTag();
+            RegisterLavaIncludeTag();
             RegisterLavaTag();
 
             RegisterLavaOperators();
@@ -319,6 +320,24 @@ namespace Rock.Lava.Fluid
                 .ElseError( "Invalid 'if' tag" );
 
             RegisteredTags["if"] = ifTag;
+        }
+
+        /// <summary>
+        /// Replace the default Fluid include block to bypass internal template caching.
+        /// Applies to Fluid v2.3.1
+        /// </summary>
+        private void RegisterLavaIncludeTag()
+        {
+            var includeTag = OneOf(
+                        Primary.AndSkip( Comma ).And( Separated( Comma, Identifier.AndSkip( Colon ).And( Primary ).Then( x => new AssignStatement( x.Item1, x.Item2 ) ) ) ).Then( x => new FluidLavaIncludeStatement( this, x.Item1, null, null, null, x.Item2 ) ),
+                        Primary.AndSkip( Terms.Text( "with" ) ).And( Primary ).And( ZeroOrOne( Terms.Text( "as" ).SkipAnd( Identifier ) ) ).Then( x => new FluidLavaIncludeStatement( this, x.Item1, with: x.Item2, alias: x.Item3 ) ),
+                        Primary.AndSkip( Terms.Text( "for" ) ).And( Primary ).And( ZeroOrOne( Terms.Text( "as" ).SkipAnd( Identifier ) ) ).Then( x => new FluidLavaIncludeStatement( this, x.Item1, @for: x.Item2, alias: x.Item3 ) ),
+                        Primary.Then( x => new FluidLavaIncludeStatement( this, x ) )
+                        ).AndSkip( TagEnd )
+                        .Then<Statement>( x => x )
+                        .ElseError( "Invalid 'include' tag" );
+
+            RegisteredTags["include"] = includeTag;
         }
 
         /// <summary>
