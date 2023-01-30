@@ -177,7 +177,9 @@
                             $control.find('.js-select-all').hide();
                         }
 
-                        self.toggleSelectAll(rockTree);
+                        if (self.selectAll) {
+                            self.toggleSelectAll(rockTree);
+                        }
                     })
                     .on('rockTree:rendered', function (evt, data) {
                         var rockTree = $control.find('.treeview').data('rockTree');
@@ -882,7 +884,7 @@
 
                 const setNodeOpenState = function (node, isOpen) {
                     node.isOpen = isOpen;
-                    if (node.hasChildren) {
+                    if (node.hasChildren && node.children) {
                         node.children.forEach(childNode => setNodeOpenState(childNode, isOpen));
                     }
                 }
