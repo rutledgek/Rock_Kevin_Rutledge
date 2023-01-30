@@ -116,6 +116,9 @@ namespace Rock.Web.UI
         /// </summary>
         public bool Compile( bool onlyCompileIfNeeded, out string messages )
         {
+            System.Diagnostics.Debug.WriteLine( $"Starting compile of theme {this.Name}" );
+            var stopWatch = System.Diagnostics.Stopwatch.StartNew();
+
             messages = string.Empty;
             bool compiledSuccessfully = true;
             var rockWebStyleFiles = Directory.GetFiles( _rockWebStylesDirectory, "*.*", SearchOption.AllDirectories );
@@ -125,11 +128,13 @@ namespace Rock.Web.UI
                 var latestModifiedDateTime = rockWebStyleFiles.Select( a => File.GetLastWriteTimeUtc( a ) ).Max();
                 var latestCreatedDateTime = rockWebStyleFiles.Select( a => File.GetCreationTimeUtc( a ) ).Max();
                 newestRockWebStyleFileDateTimeUTC = DateTime.Compare( latestCreatedDateTime, latestModifiedDateTime ) > 0 ? latestCreatedDateTime : latestModifiedDateTime;
+                System.Diagnostics.Debug.WriteLine( $"newestRockWebStyleFileDateTimeUTC {newestRockWebStyleFileDateTimeUTC}" );
             }
             else
             {
                 // Shouldn't happen, but just in case, say there are new files so that all files will get compiled.
                 newestRockWebStyleFileDateTimeUTC = DateTime.MaxValue;
+                System.Diagnostics.Debug.WriteLine( $"Set newestRockWebStyleFileDateTimeUTC to DateTime.MaxValue" );
             }
 
             try
@@ -137,6 +142,7 @@ namespace Rock.Web.UI
                 DirectoryInfo themeDirectory = new DirectoryInfo( this.AbsolutePath + @"\Styles" );
                 if ( !themeDirectory.Exists )
                 {
+                    System.Diagnostics.Debug.WriteLine( $"Theme directory does not exist" );
                     return true;
                 }
 
@@ -144,6 +150,7 @@ namespace Rock.Web.UI
 
                 if ( files == null || !this.AllowsCompile )
                 {
+                    System.Diagnostics.Debug.WriteLine( $"No files in the Theme directory" );
                     return true;
                 }
 
@@ -172,6 +179,7 @@ namespace Rock.Web.UI
                     var latestModifiedDateTime = themeFilesList.Select( a => File.GetLastWriteTimeUtc( a ) ).Max();
                     var latestCreatedDateTime = themeFilesList.Select( a => File.GetCreationTimeUtc( a ) ).Max();
                     newestThemeFileDateTimeUTC = DateTime.Compare( latestCreatedDateTime, latestModifiedDateTime ) > 0 ? latestCreatedDateTime : latestModifiedDateTime;
+                    System.Diagnostics.Debug.WriteLine( $"newestThemeFileDateTimeUTC {newestThemeFileDateTimeUTC}" );
                 }
                 else
                 {
@@ -179,10 +187,15 @@ namespace Rock.Web.UI
                     // to compile, but set newestThemeFileDateTimeUTC to Max just in case.
                     // That would cause the less files to always get compiled.
                     newestThemeFileDateTimeUTC = DateTime.MaxValue;
+                    System.Diagnostics.Debug.WriteLine( $"Set newestThemeFileDateTimeUTC to DateTime.MaxValue" );
                 }
+
+                System.Diagnostics.Debug.WriteLine( $"Processing {lessInputFiles.Length} files for theme {this.Name}" );
 
                 foreach ( var file in lessInputFiles )
                 {
+                    var fileStartTime = stopWatch.ElapsedMilliseconds;
+                    System.Diagnostics.Debug.WriteLine( $"Processing file {file.FullName}" );
                     var cssFileName = file.DirectoryName + @"\" + file.Name.Replace( ".less", ".css" );
                     if ( onlyCompileIfNeeded && File.Exists( cssFileName ) )
                     {
@@ -192,6 +205,7 @@ namespace Rock.Web.UI
                         if ( cssFileDateTimeUTC > newestThemeFileDateTimeUTC && cssFileDateTimeUTC > newestRockWebStyleFileDateTimeUTC )
                         {
                             var skippedCompileMessage = $"{this.Name}: Skipped compiling {file.Name}. CSS File is already up to date.";
+                            System.Diagnostics.Debug.WriteLine( skippedCompileMessage );
                             continue;
                         }
                     }
@@ -210,13 +224,16 @@ namespace Rock.Web.UI
                     */
 
                     lessEngine.CurrentDirectory = themeDirectory.FullName;
-
+                    System.Diagnostics.Debug.WriteLine( $"Starting TransformToCss for file {file.FullName} at {stopWatch.ElapsedMilliseconds}" );
                     string cssSource = lessEngine.TransformToCss( File.ReadAllText( file.FullName ), null );
+                    System.Diagnostics.Debug.WriteLine( $"Finished TransformToCss for file {file.FullName} at {stopWatch.ElapsedMilliseconds}" );
 
                     // Check for compile errors
                     if ( lessEngine.LastTransformationSuccessful )
                     {
+                        System.Diagnostics.Debug.WriteLine( $"Start Writting css to file {file.FullName} at {stopWatch.ElapsedMilliseconds}" );
                         File.WriteAllText( cssFileName, cssSource );
+                        System.Diagnostics.Debug.WriteLine( $"Finished Writting css to file {file.FullName} at {stopWatch.ElapsedMilliseconds}" );
                     }
                     else
                     {
@@ -230,6 +247,11 @@ namespace Rock.Web.UI
                             messages += "\n" + string.Join( "\n", loggerInstance.LogLines ) + "\n";
                         }
                     }
+
+                    var elapsedFileMs = stopWatch.ElapsedMilliseconds - fileStartTime;
+                    var elapsedFileTime = TimeSpan.FromMilliseconds( elapsedFileMs );
+                    var convertedElapsedFileTime = $"{elapsedFileTime.Hours:D2}h:{elapsedFileTime.Minutes:D2}m:{elapsedFileTime.Seconds:D2}s:{elapsedFileTime.Milliseconds:D3}ms";
+                    System.Diagnostics.Debug.WriteLine( $"Completed file {file.FullName} in {convertedElapsedFileTime} ({elapsedFileMs}ms)" );
                 }
             }
             catch ( Exception ex )
@@ -237,7 +259,18 @@ namespace Rock.Web.UI
                 compiledSuccessfully = false;
                 messages = ex.Message;
                 Rock.Model.ExceptionLogService.LogException( ex );
+                System.Diagnostics.Debug.WriteLine( $"Exception for theme {this.Name}: {ex.Message}" );
             }
+
+            stopWatch.Stop();
+            var timeSpan = TimeSpan.FromMilliseconds( stopWatch.ElapsedMilliseconds );
+            var convertedElapsedTime = $"{timeSpan.Hours:D2}h:{timeSpan.Minutes:D2}m:{timeSpan.Seconds:D2}s:{timeSpan.Milliseconds:D3}ms";
+            if ( messages.IsNotNullOrWhiteSpace() )
+            {
+                System.Diagnostics.Debug.WriteLine( $"Messages: {messages}" );
+            }
+
+            System.Diagnostics.Debug.WriteLine( $"Completed compile of theme {this.Name} in {convertedElapsedTime} ({stopWatch.ElapsedMilliseconds}ms)" );
 
             return compiledSuccessfully;
         }
