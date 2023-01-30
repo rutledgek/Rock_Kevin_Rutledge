@@ -2821,6 +2821,196 @@ namespace Rock.Rest.v2
         }
 
         /// <summary>
+        /// Formats a selected Merge Field value as Lava
+        /// This endpoint returns items formatted for use in a tree view control.
+        /// ***NOTE***: Also implemented in Rock.Web.UI.Controls.MergeFieldPicker's FormatSelectedValue method.
+        /// Any changes here should also be made there
+        /// </summary>
+        /// <param name="options">The options that contain the selected value</param>
+        /// <returns>A string of Lava</returns>
+        [HttpPost]
+        [System.Web.Http.Route( "MergeFieldPickerFormatSelectedValue" )]
+        [Authenticate]
+        [Rock.SystemGuid.RestActionGuid( "ffe018c4-c088-4057-b28b-4980541f16d5" )]
+        public IHttpActionResult MergeFieldPickerFormatSelectedValue( [FromBody] MergeFieldPickerFormatSelectedValueOptionsBag options )
+        {
+            if (options.SelectedValue == null)
+            {
+                return BadRequest();
+            }
+
+            var idParts = options.SelectedValue.Split( new char[] { '|' }, StringSplitOptions.RemoveEmptyEntries ).ToList();
+            if ( idParts.Count > 0 )
+            {
+                if ( idParts.Count == 2 && idParts[0] == "GlobalAttribute" )
+                {
+                    return Ok(string.Format( "{{{{ 'Global' | Attribute:'{0}' }}}}", idParts[1] ));
+                }
+
+                if ( idParts.Count == 1 && idParts[0].StartsWith( "AdditionalMergeField" ) )
+                {
+                    string mFields = idParts[0].Replace( "AdditionalMergeField_", "" ).Replace( "AdditionalMergeFields_", "" );
+                    if ( mFields.IsNotNullOrWhiteSpace() )
+                    {
+                        string beginFor = "{% for field in AdditionalFields %}";
+                        string endFor = "{% endfor %}";
+                        var mergeFields = String.Join( "", mFields.Split( new char[] { '^' }, StringSplitOptions.RemoveEmptyEntries )
+                            .Select( f => "{{ field." + f + "}}" ) );
+
+                        return Ok( $"{beginFor}{mergeFields}{endFor}");
+                    }
+                }
+
+                if ( idParts.Count == 1 )
+                {
+                    if ( idParts[0] == "Campuses" )
+                    {
+                        return Ok( @"
+{% for campus in Campuses %}
+<p>
+    Name: {{ campus.Name }}<br/>
+    Description: {{ campus.Description }}<br/>
+    Is Active: {{ campus.IsActive }}<br/>
+    Short Code: {{ campus.ShortCode }}<br/>
+    Url: {{ campus.Url }}<br/>
+    Phone Number: {{ campus.PhoneNumber }}<br/>
+    Service Times:
+    {% for serviceTime in campus.ServiceTimes %}
+        {{ serviceTime.Day }} {{ serviceTime.Time }},
+    {% endfor %}
+    <br/>
+{% endfor %}
+");
+                    }
+
+                    if ( idParts[0] == "Date" )
+                    {
+                        return Ok( "{{ 'Now' | Date:'MM/dd/yyyy' }}");
+                    }
+
+                    if ( idParts[0] == "Time" )
+                    {
+                        return Ok("{{ 'Now' | Date:'hh:mm:ss tt' }}");
+                    }
+
+                    if ( idParts[0] == "DayOfWeek" )
+                    {
+                        return Ok("{{ 'Now' | Date:'dddd' }}");
+                    }
+
+                    if ( idParts[0] == "PageParameter" )
+                    {
+                        return Ok("{{ PageParameter.[Enter Page Parameter Name Here] }}");
+                    }
+
+                }
+
+                var workingParts = new List<string>();
+
+                // Get the root type
+                int pathPointer = 0;
+                EntityTypeCache entityType = null;
+                while ( entityType == null && pathPointer < idParts.Count() )
+                {
+                    string item = idParts[pathPointer];
+                    string[] itemParts = item.Split( new char[] { '^' }, StringSplitOptions.RemoveEmptyEntries );
+
+                    string itemName = itemParts.Length > 1 ? itemParts[0] : string.Empty;
+                    string mergeFieldId = itemParts.Length > 1 ? itemParts[1] : item;
+
+                    var entityTypeInfo = MergeFieldPicker.GetEntityTypeInfoFromMergeFieldId( mergeFieldId );
+                    entityType = entityTypeInfo?.EntityType;
+
+                    workingParts.Add( entityType != null ?
+                        ( itemName != string.Empty ? itemName : entityType.FriendlyName.Replace( " ", string.Empty ) ) :
+                        idParts[pathPointer] );
+                    pathPointer++;
+                }
+
+                if ( entityType != null )
+                {
+                    Type type = entityType.GetEntityType();
+
+                    var formatString = "{0}";
+
+                    // Traverse the Property path
+                    bool itemIsCollection = false;
+                    bool lastItemIsProperty = true;
+
+                    while ( idParts.Count > pathPointer )
+                    {
+                        string propertyName = idParts[pathPointer];
+                        workingParts.Add( propertyName );
+
+                        var childProperty = type.GetProperty( propertyName );
+                        if ( childProperty != null )
+                        {
+                            lastItemIsProperty = true;
+                            type = childProperty.PropertyType;
+
+                            if ( type.IsGenericType &&
+                                type.GetGenericTypeDefinition() == typeof( ICollection<> ) &&
+                                type.GetGenericArguments().Length == 1 )
+                            {
+                                string propertyNameSingularized = propertyName.Singularize();
+                                string forString = string.Format( "<% for {0} in {1} %> {{0}} <% endfor %>", propertyNameSingularized, workingParts.AsDelimited( "." ) );
+                                workingParts.Clear();
+                                workingParts.Add( propertyNameSingularized );
+                                formatString = string.Format( formatString, forString );
+
+                                type = type.GetGenericArguments()[0];
+
+                                itemIsCollection = true;
+                            }
+                            else
+                            {
+                                itemIsCollection = false;
+                            }
+                        }
+                        else
+                        {
+                            lastItemIsProperty = false;
+                        }
+
+                        pathPointer++;
+                    }
+
+                    string itemString = string.Empty;
+                    if ( !itemIsCollection )
+                    {
+                        if ( lastItemIsProperty )
+                        {
+                            itemString = string.Format( "<< {0} >>", workingParts.AsDelimited( "." ) );
+                        }
+                        else
+                        {
+                            string partPath = workingParts.Take( workingParts.Count - 1 ).ToList().AsDelimited( "." );
+                            var partItem = workingParts.Last();
+                            if ( type == typeof( Rock.Model.Person ) && partItem == "Campus" )
+                            {
+                                itemString = string.Format( "{{{{ {0} | Campus | Property:'Name' }}}}", partPath );
+                            }
+                            else
+                            {
+
+                                itemString = string.Format( "{{{{ {0} | Attribute:'{1}' }}}}", partPath, partItem );
+                            }
+
+                        }
+
+                    }
+
+                    return Ok( string.Format( formatString, itemString ).Replace( "<", "{" ).Replace( ">", "}" ));
+                }
+
+                return Ok(string.Format( "{{{{ {0} }}}}", idParts.AsDelimited( "." ) ));
+
+            }
+
+            return Ok(string.Empty);
+        }
+
+        /// <summary>
         /// Gets the child merge fields available to the given user.
         /// NOTE: This is used by the legacy MergeFieldsController and was copied from there
         /// </summary>

@@ -6909,7 +6909,7 @@ const mergeFieldPickerGallery = defineComponent({
         GalleryAndResult,
         CheckBox,
         MergeFieldPicker,
-        RockButton
+        TextBox
     },
     setup() {
         const value = ref([
@@ -6926,18 +6926,7 @@ const mergeFieldPickerGallery = defineComponent({
         return {
             multiple: ref(true),
             value,
-            swapValues: () => {
-                value.value = [
-                    {
-                        "value": "Rock.Model.Person|ConnectionStatusValue|Category|ChildCategories|CreatedByPersonAliasId",
-                        "text": "Created By Person Alias Id"
-                    },
-                    {
-                        "value": "Rock.Model.Group|ArchivedByPersonAlias|Person|Aliases|Person|AbilityLevel",
-                        "text": "Ability Level"
-                    }
-                ];
-            },
+            additionalFields: ref("GlobalAttribute,Rock.Model.Person,Rock.Model.Group"),
             importCode: getSfcControlImportPath("mergeFieldPicker"),
             exampleCode: `<MergeFieldPicker label="Merge Field" v-model="value" :multiple="false" additionalFields="GlobalAttribute,Rock.Model.Person,Rock.Model.Group" />`
         };
@@ -6948,14 +6937,16 @@ const mergeFieldPickerGallery = defineComponent({
     :importCode="importCode"
     :exampleCode="exampleCode"
     enableReflection >
-    <MergeFieldPicker label="Merge Field" v-model="value" :multiple="multiple" additionalFields="GlobalAttribute,Rock.Model.Person,Rock.Model.Group" />
+    <MergeFieldPicker label="Merge Field" v-model="value" :multiple="multiple" :additionalFields="additionalFields" />
 
     <template #settings>
         <div class="row">
             <div class="col-md-4">
                 <CheckBox label="Multiple" v-model="multiple" />
             </div>
-            <RockButton type="button" @click.prevent="swapValues">SWAP</RockButton>
+            <div class="col-md-4">
+                <TextBox label="Root Merge Fields" v-model="additionalFields" />
+            </div>
         </div>
         <p class="text-semibold font-italic">Not all options have been implemented yet.</p>
     </template>
