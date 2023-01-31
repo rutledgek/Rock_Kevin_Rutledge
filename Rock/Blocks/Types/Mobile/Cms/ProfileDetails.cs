@@ -283,6 +283,11 @@ namespace Rock.Blocks.Types.Mobile.Cms
 
         #region Block Actions
 
+        /// <summary>
+        /// Gets a <see cref="MobilePerson" /> from a specified personGuid.
+        /// </summary>
+        /// <param name="personGuid">The guid of the person to return profile details of.</param>
+        /// <returns>A <see cref="MobilePerson"/> </returns>
         [BlockAction]
         public BlockActionResult GetMobilePersonProfileDetails( Guid personGuid )
         {
@@ -301,6 +306,12 @@ namespace Rock.Blocks.Types.Mobile.Cms
             }
         }
 
+        /// <summary>
+        /// Updates a user profile based off the MobilePerson passed in.
+        /// </summary>
+        /// <param name="profile">The profile to use to update the user.</param>
+        /// <param name="user">The user to update.</param>
+        /// <returns></returns>
         private MobilePerson UpdateUserProfile( MobilePerson profile, UserLogin user )
         {
             var personId = user.PersonId.Value;
@@ -481,7 +492,7 @@ namespace Rock.Blocks.Types.Mobile.Cms
         }
 
         /// <summary>
-        /// Updates the user's profile.
+        /// Updates another user's profile based off the personGuid, if authorized.
         /// </summary>
         /// <param name="profile">The new profile data.</param>
         /// <param name="personGuid">.</param>
