@@ -60,8 +60,8 @@ namespace Rock.Rest.Controllers
             var person = GetPerson();
 
             // The logic that was here was moved to the v2 API because calling GetPerson here when that new API used this method
-            // caused errors due to this controller not have the Request Context
-            return new ControlsController().MergeFieldPickerGetChildren( id, additionalFields, person );
+            // caused errors due to this controller not have the Request Context 
+            return ControlsController.MergeFieldPickerGetChildren( id, additionalFields, person );
         }
     }
 }

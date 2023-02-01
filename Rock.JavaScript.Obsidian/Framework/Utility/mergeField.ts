@@ -16,14 +16,14 @@
 //
 
 import { MergeFieldPickerFormatSelectedValueOptionsBag } from "@Obsidian/ViewModels/Rest/Controls/mergeFieldPickerFormatSelectedValueOptionsBag";
-import { useHttp } from "@Obsidian/Utility/http";
+import { useHttp } from "./http";
 
 /**
  * Take a given mergeFieldPicker value and format it for Lava
  *
- * @param value The depth level specifying how deep a nested array structure should be flattened. Defaults to 1.
+ * @param value The merge field to be formatted
  *
- * @returns A new array with the sub-array elements concatenated into it.
+ * @returns The formatted string in a Promise
  */
 export async function formatValue(value: string): Promise<string> {
     const http = useHttp();

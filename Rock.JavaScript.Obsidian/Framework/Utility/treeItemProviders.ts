@@ -998,9 +998,9 @@ export class MergeFieldTreeItemProvider implements ITreeItemProvider {
     }
 
     /**
-     * Get the hierarchical list of parent pages of the selectedPageGuid
+     * Get the hierarchical list of parent merge fields of the selected merge fields
      *
-     * @returns A list of GUIDs of the parent pages
+     * @returns A list of IDs of the parent merge fields
      */
     private getParentList(): string[] | null {
         if (!this.selectedIds || this.selectedIds.length == 0) {

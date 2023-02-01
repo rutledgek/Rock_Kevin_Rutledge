@@ -12,9 +12,9 @@
 </template>
 
 <script setup lang="ts">
-    import { computed, PropType, ref, watch } from "vue";
+    import { PropType, ref, watch } from "vue";
     import { ListItemBag } from "@Obsidian/ViewModels/Utility/listItemBag";
-    import { standardRockFormFieldProps, updateRefValue, useStandardRockFormFieldProps, useVModelPassthroughWithPropUpdateCheck } from "@Obsidian/Utility/component";
+    import { standardRockFormFieldProps, useStandardRockFormFieldProps, useVModelPassthroughWithPropUpdateCheck } from "@Obsidian/Utility/component";
     import { MergeFieldTreeItemProvider } from "@Obsidian/Utility/treeItemProviders";
     import TreeItemPicker from "./treeItemPicker.obs";
     import { emptyGuid } from "@Obsidian/Utility/guid";
@@ -29,11 +29,6 @@
         additionalFields: {
             type: String,
             required: true
-        },
-
-        securityGrantToken: {
-            type: String as PropType<string | null>,
-            required: false
         },
 
         /**
@@ -52,14 +47,15 @@
     }>();
 
     const standardFieldProps = useStandardRockFormFieldProps(props);
-    const [internalValue, onModelPropUpdate] = useVModelPassthroughWithPropUpdateCheck(props, "modelValue", emit);
+    const [internalValue, watchModelProp] = useVModelPassthroughWithPropUpdateCheck(props, "modelValue", emit);
+    const securityGrantToken = useSecurityGrantToken();
 
     // Configure the item provider with our settings.
     const itemProvider = ref(newItemProvider());
 
     function newItemProvider(): MergeFieldTreeItemProvider {
         const prov = new MergeFieldTreeItemProvider();
-        prov.securityGrantToken = props.securityGrantToken;
+        prov.securityGrantToken = securityGrantToken.value;
         prov.additionalFields = props.additionalFields;
 
         if (internalValue.value) {
@@ -74,11 +70,11 @@
         return prov;
     }
 
-    watch(() => [props.securityGrantToken, props.additionalFields], (): void => {
+    watch(() => props.additionalFields, (): void => {
         itemProvider.value = newItemProvider();
     });
 
-    onModelPropUpdate((): void => {
+    watchModelProp((): void => {
         itemProvider.value = newItemProvider();
     });
 </script>

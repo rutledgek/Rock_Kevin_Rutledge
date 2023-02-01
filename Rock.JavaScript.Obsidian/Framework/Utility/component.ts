@@ -50,7 +50,9 @@ export function useVModelPassthrough<T extends Prop, K extends PropKey<T>, E ext
  * Utility function for when you are using a component that takes a v-model
  * and uses that model as a v-model in that component's template. It creates
  * a new ref that keeps itself up-to-date with the given model and fires an
- * 'update:MODELNAME' event when it gets changed.
+ * 'update:MODELNAME' event when it gets changed. It also gives a means of watching
+ * the model prop for any changes (verifies that the prop change is different than
+ * the current value first)
  *
  * Ensure the related `props` and `emits` are specified to ensure there are
  * no type issues.

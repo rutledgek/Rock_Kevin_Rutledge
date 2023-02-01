@@ -3018,7 +3018,7 @@ namespace Rock.Rest.v2
         /// <param name="additionalFields">The additional fields.</param>
         /// <param name="person">The current user</param>
         /// <returns></returns>
-        public IQueryable<TreeViewItem> MergeFieldPickerGetChildren( string id, string additionalFields, Person person )
+        internal static IQueryable<TreeViewItem> MergeFieldPickerGetChildren( string id, string additionalFields, Person person )
         {
             List<TreeViewItem> items = new List<TreeViewItem>();
 
