@@ -40,7 +40,7 @@ type EmitFn<E extends `update:${string}`> = E extends Array<infer EE> ? (event: 
 export function useVModelPassthrough<T extends Prop, K extends PropKey<T>, E extends `update:${K}`>(props: T, modelName: K, emit: EmitFn<E>, options?: WatchOptions): Ref<T[K]> {
     const internalValue = ref(props[modelName]) as Ref<T[K]>;
 
-    watch(() => props[modelName], val => internalValue.value = val, options);
+    watch(() => props[modelName], val => updateRefValue(internalValue, val), options);
     watch(internalValue, val => emit(`update:${modelName}`, val), options);
 
     return internalValue;
