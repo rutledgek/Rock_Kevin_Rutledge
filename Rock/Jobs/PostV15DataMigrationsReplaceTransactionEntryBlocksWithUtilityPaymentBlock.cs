@@ -25,7 +25,7 @@ namespace Rock.Jobs
     Description = "Maximum amount of time (in seconds) to wait for each SQL command to complete. On a large database with lots of transactions, this could take several minutes or more.",
     IsRequired = false,
     DefaultIntegerValue = 240 * 60 )]
-    public class PostV14DataMigrationsReplaceTransactionEntryBlocksWithUtilityPaymentBlock : IJob
+    public class PostV15DataMigrationsReplaceTransactionEntryBlocksWithUtilityPaymentBlock : IJob
     {
         private static class AttributeKey
         {
