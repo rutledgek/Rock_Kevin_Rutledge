@@ -379,7 +379,7 @@ DELETE [Block] WHERE [Id] = @BlockToBeReplacedBlockId
                 }
             }
 
-            // DeleteJob( context.GetJobId() );
+            DeleteJob( context.GetJobId() );
         }
 
         /// <summary>

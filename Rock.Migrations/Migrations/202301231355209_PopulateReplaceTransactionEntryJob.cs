@@ -35,7 +35,7 @@ namespace Rock.Migrations
             IF NOT EXISTS (
                 SELECT 1
                 FROM [ServiceJob]
-                WHERE [Class] = 'Rock.Jobs.PostV14DataMigrationsReplaceTransactionEntryBlocksWithUtilityPaymentBlock'
+                WHERE [Class] = 'Rock.Jobs.PostV15DataMigrationsReplaceTransactionEntryBlocksWithUtilityPaymentBlock'
                     AND [Guid] = '{Rock.SystemGuid.ServiceJob.DATA_MIGRATIONS_150_REPLACE_TRANSACTION_ENTRY_BLOCKS_WITH_UTILITY_PAYMENT_ENTRY_BLOCK}'
             )
             BEGIN
@@ -53,7 +53,7 @@ namespace Rock.Migrations
                     , 1
                     , 'Rock Update Helper v15.0 - Replace TransactionEntry Blocks with UtilityPaymentEntry block.'
                     , 'This job will replace all existing instances of the TransactionEntryBlock with a new instance of the UtilityPayment block whiles preserving block settings.'
-                    , 'Rock.Jobs.PostV14DataMigrationsReplaceTransactionEntryBlocksWithUtilityPaymentBlock'
+                    , 'Rock.Jobs.PostV15DataMigrationsReplaceTransactionEntryBlocksWithUtilityPaymentBlock'
                     , '0 0 21 1/1 * ? *'
                     , 1
                     , '{Rock.SystemGuid.ServiceJob.DATA_MIGRATIONS_150_REPLACE_TRANSACTION_ENTRY_BLOCKS_WITH_UTILITY_PAYMENT_ENTRY_BLOCK}'
