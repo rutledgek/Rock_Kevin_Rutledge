@@ -64,6 +64,18 @@
     <Compile Include="..\Rock.Version\AssemblySharedInfo.cs">
       <Link>AssemblySharedInfo.cs</Link>
     </Compile>
+    <Compile Include="Migrations\202302071940522_AddPasswordlessAuthentication.cs" />
+    <Compile Include="Migrations\202302071940522_AddPasswordlessAuthentication.designer.cs">
+      <DependentUpon>202302071940522_AddPasswordlessAuthentication.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\202302072059567_AddSystemPhoneNumberModel.cs" />
+    <Compile Include="Migrations\202302072059567_AddSystemPhoneNumberModel.designer.cs">
+      <DependentUpon>202302072059567_AddSystemPhoneNumberModel.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\202302072257354_AddShortTermServingProjects.cs" />
+    <Compile Include="Migrations\202302072257354_AddShortTermServingProjects.designer.cs">
+      <DependentUpon>202302072257354_AddShortTermServingProjects.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Version 14.0\Version 1.14.1\202301102307054_rollup_20230110.cs" />
     <Compile Include="Migrations\Version 14.0\Version 1.14.1\202301102307054_rollup_20230110.designer.cs">
       <DependentUpon>202301102307054_rollup_20230110.cs</DependentUpon>
@@ -1486,6 +1498,15 @@
     <Compile Include="SqlServerTypes\Loader.cs" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Migrations\202302071940522_AddPasswordlessAuthentication.resx">
+      <DependentUpon>202302071940522_AddPasswordlessAuthentication.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202302072059567_AddSystemPhoneNumberModel.resx">
+      <DependentUpon>202302072059567_AddSystemPhoneNumberModel.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202302072257354_AddShortTermServingProjects.resx">
+      <DependentUpon>202302072257354_AddShortTermServingProjects.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Migrations\Version 14.0\Version 1.14.1\202301102307054_rollup_20230110.resx">
       <DependentUpon>202301102307054_rollup_20230110.cs</DependentUpon>
     </EmbeddedResource>
@@ -2772,6 +2793,10 @@
     <ProjectReference Include="..\Rock.Common\Rock.Common.csproj">
       <Project>{13568622-324e-4493-b605-c9896e725d30}</Project>
       <Name>Rock.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Rock.Enums\Rock.Enums.csproj">
+      <Project>{61DECE2B-0434-435E-8D65-49A4FDF98365}</Project>
+      <Name>Rock.Enums</Name>
     </ProjectReference>
     <ProjectReference Include="..\Rock.Lava.Shared\Rock.Lava.Shared.csproj">
       <Project>{8820cd93-70ee-496d-b17b-0c4c68dd4957}</Project>
