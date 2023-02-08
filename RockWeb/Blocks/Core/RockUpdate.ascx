@@ -32,6 +32,13 @@
                         You will need to upgrade your database in order to proceed with that update.
                     </p>
                 </Rock:NotificationBox>
+                <Rock:NotificationBox ID="nbLegacyLavaIssue" runat="server" NotificationBoxType="Warning" Visible="false">
+                    <h2><i class="fa fa-exclamation-triangle"></i> Lava Support Level Update Required</h2>
+                    <p>
+                        Rock v16 no longer supports "Legacy" Lava.
+                        In order to upgrade Rock to v16, your <strong> Lava Support Level </strong> Global Attribute must be set to "No Legacy".
+                    </p>
+                </Rock:NotificationBox>
                 <Rock:NotificationBox ID="nbCompileThreadsIssue" runat="server" NotificationBoxType="Warning" Visible="false">
                     <h2><i class="fa fa-exclamation-triangle"></i> Background Process Running</h2>
                     <p>

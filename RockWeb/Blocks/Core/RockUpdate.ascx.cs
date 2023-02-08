@@ -34,6 +34,7 @@ using Rock.Update.Helpers;
 using Rock.Update.Models;
 using Rock.Update.Services;
 using Rock.VersionInfo;
+using Rock.Web.Cache;
 
 namespace RockWeb.Blocks.Core
 {
@@ -150,6 +151,13 @@ namespace RockWeb.Blocks.Core
                     nbSqlServer2016Issue.Visible = true;
                 }
 
+                var lavaSupportLevel = GlobalAttributesCache.Get().LavaSupportLevel;
+
+                if ( lavaSupportLevel != Rock.Lava.LavaSupportLevel.NoLegacy )
+                {
+                    nbLegacyLavaIssue.Visible = true;
+                }
+
                 _releases = GetOrderedReleaseList( rockUpdateService, _installedVersion );
 
                 if ( _releases.Count > 0 )
@@ -160,10 +168,19 @@ namespace RockWeb.Blocks.Core
                         nbVersionIssue.NotificationBoxType = Rock.Web.UI.Controls.NotificationBoxType.Danger;
                     }
 
-                    if ( !_hasSqlServer16OrHigher && new Version( _releases.Last().SemanticVersion ) >= new Version( "1.16.0" ) )
+                    if ( new Version( _releases.Last().SemanticVersion ) >= new Version( "1.16.0" ) )
                     {
                         // if SqlServer2016Issue is visible, and they are updating to v16 or later, show the version Warning as an Danger instead.
-                        nbSqlServer2016Issue.NotificationBoxType = Rock.Web.UI.Controls.NotificationBoxType.Danger;
+                        if ( !_hasSqlServer16OrHigher )
+                        {
+                            nbSqlServer2016Issue.NotificationBoxType = Rock.Web.UI.Controls.NotificationBoxType.Danger;
+                        }
+
+                        // if LegacyLavaIssue is visible, and they are updating to v16 or later, show the version Warning as an Danger instead.
+                        if ( lavaSupportLevel != Rock.Lava.LavaSupportLevel.NoLegacy )
+                        {
+                            nbLegacyLavaIssue.NotificationBoxType = Rock.Web.UI.Controls.NotificationBoxType.Danger;
+                        }
                     }
 
                     pnlUpdatesAvailable.Visible = true;

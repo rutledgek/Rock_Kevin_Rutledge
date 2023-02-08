@@ -19,6 +19,7 @@ using Rock.Data;
 using Rock.Update.Enum;
 using Rock.Update.Exceptions;
 using Rock.Utility.Settings;
+using Rock.Web.Cache;
 
 namespace Rock.Update.Helpers
 {
@@ -142,11 +143,18 @@ namespace Rock.Update.Helpers
                 }
             }
 
-            var requiresSqlServer16OrHigher = targetVersion.Major > 1 || targetVersion.Minor > 15;
+            var isTargetVersionGreaterThan15 = targetVersion.Major > 1 || targetVersion.Minor > 15;
+
             var hasSqlServer2016OrGreater = CheckSqlServerVersion( SqlServerVersion.v2016 );
-            if ( !hasSqlServer2016OrGreater && requiresSqlServer16OrHigher )
+            if ( !hasSqlServer2016OrGreater && isTargetVersionGreaterThan15 )
             {
                 throw new VersionValidationException( $"Version {targetVersion} requires Microsoft SQL Azure or Microsoft Sql Server 2016 or greater." );
+            }
+
+            var lavaSupportLevel = GlobalAttributesCache.Get().LavaSupportLevel;
+            if ( isTargetVersionGreaterThan15 && lavaSupportLevel != Lava.LavaSupportLevel.NoLegacy )
+            {
+                throw new VersionValidationException( $"Version {targetVersion} requires a lava support level of 'NoLegacy'." );
             }
         }
 
