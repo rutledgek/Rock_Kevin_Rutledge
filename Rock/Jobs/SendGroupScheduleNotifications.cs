@@ -32,7 +32,7 @@ namespace Rock.Jobs
     [Description( "Sends Group Scheduling Confirmations and Reminders to people that haven't been notified yet. Only Email and SMS are supported. PUSH is not supported." )]
 
     [GroupField(
-        "Group",
+        "Group Filter",
         Key = AttributeKey.RootGroup,
         Description = "Only people in or under this group will receive the schedule notifications.",
         IsRequired = false,
