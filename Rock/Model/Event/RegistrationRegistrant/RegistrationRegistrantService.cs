@@ -16,6 +16,7 @@
 //
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Data.Entity;
 using System.Linq;
 using System.Linq.Expressions;
@@ -153,7 +154,9 @@ namespace Rock.Model
             if ( options.RegistrationInstanceId.HasValue )
             {
                 allInstancesPlacementGroupInfoQuery =
-                    registrationInstanceService.GetRegistrationInstancePlacementGroups( registrationInstanceService.Get( options.RegistrationInstanceId.Value ) )
+                    registrationInstanceService.GetRegistrationInstancePlacementGroupsByPlacement(
+                        registrationInstanceService.Get( options.RegistrationInstanceId.Value ),
+                        options.RegistrationTemplatePlacementId )
                         .Where( a => a.GroupTypeId == registrationTemplatePlacement.GroupTypeId )
                         .SelectMany( a => a.Members ).Select( a => a.PersonId )
                         .Select( s => new InstancePlacementGroupPersonId
@@ -166,7 +169,9 @@ namespace Rock.Model
             {
                 foreach ( var registrationInstanceId in options.RegistrationTemplateInstanceIds )
                 {
-                    var instancePlacementGroupInfoQuery = registrationInstanceService.GetRegistrationInstancePlacementGroups( registrationInstanceService.Get( registrationInstanceId ) )
+                    var instancePlacementGroupInfoQuery = registrationInstanceService.GetRegistrationInstancePlacementGroupsByPlacement(
+                        registrationInstanceService.Get( registrationInstanceId ),
+                        options.RegistrationTemplatePlacementId )
                     .Where( a => a.GroupTypeId == registrationTemplatePlacement.GroupTypeId )
                     .SelectMany( a => a.Members ).Select( a => a.PersonId )
                     .Select( s => new InstancePlacementGroupPersonId
@@ -481,6 +486,7 @@ namespace Rock.Model
         /// <value>
         /// The registration template identifier.
         /// </value>
+        [Required]
         public int RegistrationTemplateId { get; set; }
 
         /// <summary>

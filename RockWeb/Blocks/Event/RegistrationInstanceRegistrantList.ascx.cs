@@ -900,7 +900,7 @@ namespace RockWeb.Blocks.Event
             }
 
             // Set the registrant race
-            var lRace= e.Row.FindControl( "lRace" ) as Literal;
+            var lRace = e.Row.FindControl( "lRace" ) as Literal;
             if ( lRace != null )
             {
                 if ( registrant.PersonAlias != null && registrant.PersonAlias.Person != null )
@@ -1406,23 +1406,31 @@ namespace RockWeb.Blocks.Event
                 if ( _registrationTemplatePlacements.Any() )
                 {
                     var registrationTemplatePlacementService = new RegistrationTemplatePlacementService( rockContext );
-                    var instancePlacementGroupsQry = registrationInstanceService.GetRegistrationInstancePlacementGroups( registrationInstance );
-                    _placementGroupInfoList = instancePlacementGroupsQry.AsNoTracking().Select( s => new
+                    if ( _placementGroupInfoList == null )
                     {
-                        Group = s,
-                        PersonIds = s.Members.Select( m => m.PersonId ).ToList()
-                    } )
-                        .ToList()
-                        .Select( a => new PlacementGroupInfo
-                        {
-                            Group = a.Group,
-                            RegistrationTemplatePlacementId = null,
-                            PersonIds = a.PersonIds.ToArray(),
-                        } ).ToList();
+                        _placementGroupInfoList = new List<PlacementGroupInfo>();
+                    }
 
                     foreach ( var placementTemplate in registrationInstance.RegistrationTemplate.Placements )
                     {
-                        var registrationTemplatePlacementPlacementGroupsQuery = registrationTemplatePlacementService.GetRegistrationTemplatePlacementPlacementGroups( placementTemplate );
+                        var instancePlacementGroupsQry = registrationInstanceService.GetRegistrationInstancePlacementGroupsByPlacement( registrationInstance, placementTemplate.Id );
+                        var instancePlacementGroupInfoList = instancePlacementGroupsQry.AsNoTracking()
+                            .Select( s => new
+                            {
+                                Group = s,
+                                PersonIds = s.Members.Select( m => m.PersonId ).ToList()
+                            } )
+                            .ToList()
+                            .Select( a => new PlacementGroupInfo
+                            {
+                                Group = a.Group,
+                                RegistrationTemplatePlacementId = placementTemplate.Id,
+                                PersonIds = a.PersonIds.ToArray(),
+                            } ).ToList();
+                        _placementGroupInfoList.AddRange( instancePlacementGroupInfoList );
+
+                        var registrationTemplatePlacementPlacementGroupsQuery =
+                            registrationTemplatePlacementService.GetRegistrationTemplatePlacementPlacementGroups( placementTemplate );
 
                         var templatePlacementGroupInfoList = registrationTemplatePlacementPlacementGroupsQuery.AsNoTracking()
                             .Select( s => new
@@ -1438,7 +1446,7 @@ namespace RockWeb.Blocks.Event
                                 PersonIds = a.PersonIds.ToArray()
                             } ).ToList();
 
-                        _placementGroupInfoList = _placementGroupInfoList.Union( templatePlacementGroupInfoList ).ToList();
+                        _placementGroupInfoList.AddRange( templatePlacementGroupInfoList );
                     }
                 }
                 else
