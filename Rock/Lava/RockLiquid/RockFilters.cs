@@ -53,6 +53,7 @@ using Ical.Net;
 using Rock.Web.UI.Controls;
 using System.Web.UI;
 using Rock.Lava.DotLiquid;
+using Rock.Cms.StructuredContent;
 
 namespace Rock.Lava
 {
@@ -5502,6 +5503,17 @@ namespace Rock.Lava
                     RockPage.AddScriptToHead( rockPage, quickReturnScript, true );
                 }
             }
+        }
+
+        /// <summary>
+        /// Renders the content of the structured.
+        /// </summary>
+        /// <param name="content">The content.</param>
+        /// <returns></returns>
+        public static string RenderStructuredContentAsHtml( string content )
+        {
+            var helper = new StructuredContentHelper( content );
+            return helper.Render();
         }
 
         #endregion Misc Filters

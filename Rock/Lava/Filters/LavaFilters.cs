@@ -38,6 +38,7 @@ using Ical.Net;
 using ImageResizer;
 using Rock;
 using Rock.Attribute;
+using Rock.Cms.StructuredContent;
 using Rock.Data;
 using Rock.Logging;
 using Rock.Model;
@@ -5361,6 +5362,17 @@ namespace Rock.Lava
                     RockPage.AddScriptToHead( rockPage, quickReturnScript, true );
                 }
             }
+        }
+
+        /// <summary>
+        /// Renders the content of the structured.
+        /// </summary>
+        /// <param name="content">The content.</param>
+        /// <returns></returns>
+        public static string RenderStructuredContentAsHtml( string content )
+        {
+            var helper = new StructuredContentHelper( content );
+            return helper.Render();
         }
 
         #endregion Misc Filters
