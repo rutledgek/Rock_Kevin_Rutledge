@@ -170,29 +170,32 @@ BEGIN
 	    AND EntityTypeQualifierValue = @NewBlockBlockTypeId
 	    AND EntityTypeQualifierColumn = 'BlockTypeId' and [Key] = '{0}')
 
-    SET @NewBlockBlockAttributeValueId = (SELECT Id FROM [AttributeValue]
-        WHERE [AttributeId] = @NewBlockBlockAttributeId
-        AND [EntityId] = @NewBlockBlockId)
-
-    SET @BlockToBeReplacedBlockAttributeValue = (SELECT Value FROM AttributeValue
-    	WHERE Id = @BlockToBeReplacedBlockAttributeValueId)
-
-    IF @NewBlockBlockAttributeValueId IS NULL
+    IF (@NewBlockBlockAttributeId IS NOT NULL)
     BEGIN
-    	INSERT INTO [AttributeValue] (
-    		[IsSystem],[AttributeId],[EntityId],
-    		[Value],
-    		[Guid])
-    	VALUES(
-    		1,@NewBlockBlockAttributeId,@NewBlockBlockId,
-    		@BlockToBeReplacedBlockAttributeValue,
-    		NEWID())
-    END
-    ELSE
-    BEGIN
-    	UPDATE [AttributeValue]
-    	SET [Value] = @BlockToBeReplacedBlockAttributeValue
-    	WHERE Id = @NewBlockBlockAttributeValueId
+        SET @NewBlockBlockAttributeValueId = (SELECT Id FROM [AttributeValue]
+            WHERE [AttributeId] = @NewBlockBlockAttributeId
+            AND [EntityId] = @NewBlockBlockId)
+
+        SET @BlockToBeReplacedBlockAttributeValue = (SELECT Value FROM AttributeValue
+        	WHERE Id = @BlockToBeReplacedBlockAttributeValueId)
+
+        IF @NewBlockBlockAttributeValueId IS NULL
+        BEGIN
+        	INSERT INTO [AttributeValue] (
+        		[IsSystem],[AttributeId],[EntityId],
+        		[Value],
+        		[Guid])
+        	VALUES(
+        		1,@NewBlockBlockAttributeId,@NewBlockBlockId,
+        		@BlockToBeReplacedBlockAttributeValue,
+        		NEWID())
+        END
+        ELSE
+        BEGIN
+        	UPDATE [AttributeValue]
+        	SET [Value] = @BlockToBeReplacedBlockAttributeValue
+        	WHERE Id = @NewBlockBlockAttributeValueId
+        END
     END
 
 END
@@ -240,7 +243,7 @@ DELETE [Block] WHERE [Id] = @BlockToBeReplacedBlockId
             new AttributeKeyMapping( "AccountHeaderTemplate" ),
             new AttributeKeyMapping( "EnableInitialBackbutton" ),
             new AttributeKeyMapping( "BatchNamePrefix" ),
-            //new AttributeKeyMapping( "AdditionalAccounts" ),
+            new AttributeKeyMapping( "AdditionalAccounts" ),
             new AttributeKeyMapping( "AllowScheduled" ),
             new AttributeKeyMapping( "EnableBusinessGiving" ),
             new AttributeKeyMapping( "EnableAnonymousGiving" ),
