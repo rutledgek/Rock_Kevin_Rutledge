@@ -64,6 +64,7 @@ namespace Rock.Chart
         /// Display legend?
         /// </summary>
         [Obsolete]
+        [RockObsolete( "1.15" )]
         public bool DisplayLegend { get; set; } = true;
 
         /// <summary>
@@ -420,6 +421,7 @@ function(tooltipModel) {
         /// Legend position: {top|left|bottom|right}
         /// </summary>
         [Obsolete( "Use the GetJsonArgs parameter instead." )]
+        [RockObsolete( "1.15" )]
         public string LegendPosition { get; set; } = "bottom";
 
         /// <summary>
@@ -500,6 +502,7 @@ function(tooltipModel) {
             /// A Rock chart configuration settings object.
             /// </summary>
             [Obsolete]
+            [RockObsolete( "1.15" )]
             public ChartStyle ChartStyle { get; set; }
 
             /// <summary>

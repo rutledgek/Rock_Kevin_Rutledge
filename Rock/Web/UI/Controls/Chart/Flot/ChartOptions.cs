@@ -29,6 +29,7 @@ namespace Rock.Web.UI.Controls
     /// This class can be serialized to JSON, and properties are case sensitive.
     /// </summary>
     [Obsolete( "These option settings are used by the superseded Flot Chart library implementation." )]
+    [RockObsolete( "1.15" )]
     public class ChartOptions
     {
         /// <summary>

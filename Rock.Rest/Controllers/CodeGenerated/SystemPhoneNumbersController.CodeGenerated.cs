@@ -29,7 +29,7 @@ namespace Rock.Rest.Controllers
     /// <summary>
     /// SystemPhoneNumbers REST API
     /// </summary>
-    [RestControllerGuid( "80D93F61-438F-47DB-91EB-BE54A6915067" )]
+    [RestControllerGuid( "CD65A9DF-44FA-4FD1-A6C0-F3BE5431DE6B" )]
     public partial class SystemPhoneNumbersController : Rock.Rest.ApiController<Rock.Model.SystemPhoneNumber>
     {
         /// <summary>
