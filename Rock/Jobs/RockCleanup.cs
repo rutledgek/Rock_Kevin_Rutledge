@@ -774,7 +774,9 @@ namespace Rock.Jobs
                 var personSearchKeyService = new PersonSearchKeyService( personRockContext );
                 var alternateKeyQuery = personSearchKeyService.Queryable().AsNoTracking().Where( a => a.SearchTypeValueId == alternateValueId );
 
-                IQueryable<Person> personQuery = personService.Queryable( includeDeceased: true ).AsNoTracking();
+                IQueryable<Person> personQuery = personService.Queryable( includeDeceased: true )
+                    .AsNoTracking()
+                    .Include( p => p.Aliases );
 
                 // Make a list of items that we're going to bulk insert.
                 var itemsToInsert = new List<PersonSearchKey>();
