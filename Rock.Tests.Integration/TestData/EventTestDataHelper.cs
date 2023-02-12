@@ -18,7 +18,7 @@ using Rock.Data;
 using Rock.Model;
 using Rock.Web.Cache;
 
-namespace Rock.Tests.Integration.TestData
+namespace Rock.Tests.Integration
 {
     public static partial class TestDataHelper
     {

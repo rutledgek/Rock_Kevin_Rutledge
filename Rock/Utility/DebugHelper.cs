@@ -508,5 +508,65 @@ StackTrace:
                 }
             }
         }
+
+
+        #region Stopwatch
+
+        private static Dictionary<string, Stopwatch> _stopwatches = new Dictionary<string, Stopwatch>(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>
+        /// Starts or restarts a named timer.
+        /// </summary>
+        /// <param name="name"></param>
+        public static void StartTimer(string name)
+        {
+            Stopwatch stopwatch;
+            if ( _stopwatches.ContainsKey(name) )
+            {
+                stopwatch = _stopwatches[name];
+            }
+            else
+            {
+                stopwatch = new Stopwatch();
+                _stopwatches[name] = stopwatch;
+                Debug.Print( $"** START: {name}" );
+            }
+            stopwatch.Start();
+        }
+
+        /// <summary>
+        /// Stops the named timer.
+        /// </summary>
+        /// <param name="name"></param>
+        public static void StopTimer( string name )
+        {
+            if ( !_stopwatches.ContainsKey( name ) )
+            {
+                return;
+            }
+
+            var stopwatch = _stopwatches[name];
+            stopwatch.Stop();
+        }
+
+        /// <summary>
+        /// Finalizes the named timer and prints the elapsed time to debug output.
+        /// </summary>
+        /// <param name="name"></param>
+        public static void EndTimer( string name )
+        {
+            if ( !_stopwatches.ContainsKey( name ) )
+            {
+                return;
+            }
+
+            var stopwatch = _stopwatches[name];
+            stopwatch.Stop();
+            _stopwatches.Remove( name );
+
+            Debug.Print( $"**   END: {name} ({stopwatch.ElapsedMilliseconds}ms)" );
+        }
+
+        #endregion
     }
 }
