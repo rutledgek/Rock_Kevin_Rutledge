@@ -26,6 +26,7 @@ using Rock.Attribute;
 using Rock.Blocks.Types.Mobile.Prayer;
 using Rock.Data;
 using Rock.Model;
+using Rock.ViewModels.Utility;
 using Rock.Web.Cache;
 
 namespace Rock.Blocks.Example
@@ -140,6 +141,11 @@ namespace Rock.Blocks.Example
                 .AddDateTimeField( "expirationDateTime", pr => pr.ExpirationDate )
                 .AddField( "isUrgent", pr => pr.IsUrgent )
                 .AddField( "isPublic", pr => pr.IsPublic )
+                .AddField( "mode", pr => new ListItemBag
+                {
+                    Value = pr.IsUrgent == true ? "#900000" : "#009000",
+                    Text = pr.IsUrgent != true ? "Closed" : "Open"
+                } )
                 .AddAttributeFields( gridAttributes );
         }
     }

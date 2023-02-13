@@ -16,302 +16,491 @@
 
         <DateColumn name="expirationDateTime" title="Expires" field="expirationDateTime" sortField="expirationDateTime" />
 
-        <BadgeColumn name="isUrgent" title="Urgent" field="isUrgent" sortField="isUrgent" :classSource="badgeClassLookup" />
         <!-- <BooleanColumn name="isUrgent" title="Urgent" field="isUrgent" sortField="isUrgent" /> -->
 
-        <BooleanColumn name="isPublic" title="Public" field="isPublic" sortField="isPublic" />
+        <!--
+        <BadgeColumn name="isUrgent"
+                          title="Urgent"
+                          field="isUrgent"
+                          sortField="isUrgent"
+                          :classSource="badgeClassLookup" />
+        -->
+
+        <!--
+        <Column name="isUrgent"
+                title="Urgent"
+                field="isUrgent"
+                sortField="isUrgent">
+            <template #body="{ row }">
+                <span v-if="row.isUrgent"
+                      class="label label-success">
+                    {{ row.isUrgent }}
+                </span>
+                <span v-else
+                      class="label label-danger">
+                    {{ row.isUrgent }}
+                </span>
+            </template>
+        </Column>
+        -->
+
+        <ColoredBadgeColumn name="mode"
+            title="Mode"
+            field="mode" />
+
+        <BooleanColumn name="isPublic"
+                       title="Public"
+                       field="isPublic"
+                       sortField="isPublic" />
 
         <AttributeColumns :attributes="attributeColumns" />
     </Grid>
 </template>
 
 <script setup lang="ts">
-// #region Imports
-import { useConfigurationValues, useInvokeBlockAction } from "@Obsidian/Utility/block";
-import { computed, defineComponent, PropType, VNode } from "vue";
-import { RockDateTime } from "@Obsidian/Utility/rockDateTime";
-import Grid from "./GridTest/grid.partial";
-import { AttributeColumnDefinition, GridColumnDefinition, GridData, GridDefinition } from "./GridTest/types";
+    // #region Imports
+    import { useConfigurationValues, useInvokeBlockAction } from "@Obsidian/Utility/block";
+    import { computed, defineComponent, PropType, VNode } from "vue";
+    import { RockDateTime } from "@Obsidian/Utility/rockDateTime";
+    import Grid from "./GridTest/grid.partial";
+    import { AttributeColumnDefinition, GridColumnDefinition, GridData, GridDefinition } from "./GridTest/types";
+import { ListItemBag } from "@Obsidian/ViewModels/Utility/listItemBag";
 
-const Column = defineComponent({
-    props: {
-        name: {
-            type: String as PropType<string>,
-            default: ""
-        },
+    const Column = defineComponent({
+        props: {
+            name: {
+                type: String as PropType<string>,
+                default: ""
+            },
 
-        title: {
-            type: String as PropType<string>,
-            required: false
-        },
+            title: {
+                type: String as PropType<string>,
+                required: false
+            },
 
-        sortField: {
-            type: String as PropType<string>,
-            required: false
-        },
+            sortField: {
+                type: String as PropType<string>,
+                required: false
+            },
 
-        sortValue: {
-            type: Object as PropType<((row: Record<string, unknown>, column: GridColumnDefinition) => string | number | undefined)>,
-            required: false
-        }
-    }
-});
-
-const dateColumnValueComponent = defineComponent({
-    props: {
-        column: {
-            type: Object as PropType<GridColumnDefinition>,
-            required: true
-        },
-        row: {
-            type: Object as PropType<Record<string, unknown>>,
-            required: true
-        }
-    },
-
-    setup(props) {
-        const formattedValue = computed(() => {
-            if (props.column.field) {
-                return RockDateTime.parseISO(props.row[props.column.field] as string)?.toASPString("d") ?? "";
+            sortValue: {
+                type: Object as PropType<((row: Record<string, unknown>, column: GridColumnDefinition) => string | number | undefined)>,
+                required: false
             }
-            else {
-                return "";
-            }
-        });
-
-        return {
-            formattedValue
-        };
-    },
-
-    template: `{{ formattedValue }}`
-});
-
-const DateColumn = defineComponent({
-    props: {
-        name: {
-            type: String as PropType<string>,
-            default: ""
-        },
-
-        title: {
-            type: String as PropType<string>,
-            required: false
-        },
-
-        sortField: {
-            type: String as PropType<string>,
-            required: false
-        },
-
-        sortValue: {
-            type: Object as PropType<((row: Record<string, unknown>, column: GridColumnDefinition) => string | number | undefined)>,
-            required: false
-        },
-
-        format: {
-            type: Object as PropType<VNode>,
-            required: false,
-            default: dateColumnValueComponent
         }
-    }
-});
+    });
 
-const booleanColumnValueComponent = defineComponent({
-    props: {
-        column: {
-            type: Object as PropType<GridColumnDefinition>,
-            required: true
+    const dateColumnValueComponent = defineComponent({
+        props: {
+            column: {
+                type: Object as PropType<GridColumnDefinition>,
+                required: true
+            },
+            row: {
+                type: Object as PropType<Record<string, unknown>>,
+                required: true
+            }
         },
-        row: {
-            type: Object as PropType<Record<string, unknown>>,
-            required: true
+
+        setup(props) {
+            const formattedValue = computed(() => {
+                if (props.column.field) {
+                    return RockDateTime.parseISO(props.row[props.column.field] as string)?.toASPString("d") ?? "";
+                }
+                else {
+                    return "";
+                }
+            });
+
+            return {
+                formattedValue
+            };
+        },
+
+        template: `{{ formattedValue }}`
+    });
+
+    const DateColumn = defineComponent({
+        props: {
+            name: {
+                type: String as PropType<string>,
+                default: ""
+            },
+
+            title: {
+                type: String as PropType<string>,
+                required: false
+            },
+
+            sortField: {
+                type: String as PropType<string>,
+                required: false
+            },
+
+            sortValue: {
+                type: Object as PropType<((row: Record<string, unknown>, column: GridColumnDefinition) => string | number | undefined)>,
+                required: false
+            },
+
+            format: {
+                type: Object as PropType<VNode>,
+                required: false,
+                default: dateColumnValueComponent
+            }
         }
-    },
+    });
 
-    setup(props) {
-        const isTrue = computed(() => {
-            if (props.column.field) {
-                return props.row[props.column.field] === true;
+    const booleanColumnValueComponent = defineComponent({
+        props: {
+            column: {
+                type: Object as PropType<GridColumnDefinition>,
+                required: true
+            },
+            row: {
+                type: Object as PropType<Record<string, unknown>>,
+                required: true
             }
-            else {
-                return false;
-            }
-        });
-
-        return {
-            isTrue
-        };
-    },
-
-    template: `<i v-if="isTrue" class="fa fa-check"></i>`
-});
-
-function booleanColumnSortValue(row: Record<string, unknown>, column: GridColumnDefinition): number | undefined {
-    if (!column.sortField) {
-        return undefined;
-    }
-
-    return row[column.sortField] === true ? 1 : 0;
-}
-
-const BooleanColumn = defineComponent({
-    props: {
-        name: {
-            type: String as PropType<string>,
-            default: ""
         },
 
-        title: {
-            type: String as PropType<string>,
-            required: false
+        setup(props) {
+            const isTrue = computed(() => {
+                if (props.column.field) {
+                    return props.row[props.column.field] === true;
+                }
+                else {
+                    return false;
+                }
+            });
+
+            return {
+                isTrue
+            };
         },
 
-        sortField: {
-            type: String as PropType<string>,
-            required: false
-        },
+        template: `<i v-if="isTrue" class="fa fa-check"></i>`
+    });
 
-        sortValue: {
-            type: Object as PropType<((row: Record<string, unknown>, column: GridColumnDefinition) => string | number | undefined)>,
-            required: false,
-            default: booleanColumnSortValue
-        },
-
-        format: {
-            type: Object as PropType<VNode>,
-            required: false,
-            default: booleanColumnValueComponent
+    function booleanColumnSortValue(row: Record<string, unknown>, column: GridColumnDefinition): number | undefined {
+        if (!column.sortField) {
+            return undefined;
         }
+
+        return row[column.sortField] === true ? 1 : 0;
     }
-});
 
-const badgeColumnValueComponent = defineComponent({
-    props: {
-        column: {
-            type: Object as PropType<GridColumnDefinition>,
-            required: true
-        },
+    const BooleanColumn = defineComponent({
+        props: {
+            name: {
+                type: String as PropType<string>,
+                default: ""
+            },
 
-        row: {
-            type: Object as PropType<Record<string, unknown>>,
-            required: true
+            title: {
+                type: String as PropType<string>,
+                required: false
+            },
+
+            sortField: {
+                type: String as PropType<string>,
+                required: false
+            },
+
+            sortValue: {
+                type: Object as PropType<((row: Record<string, unknown>, column: GridColumnDefinition) => string | number | undefined)>,
+                required: false,
+                default: booleanColumnSortValue
+            },
+
+            format: {
+                type: Object as PropType<VNode>,
+                required: false,
+                default: booleanColumnValueComponent
+            }
         }
-    },
+    });
 
-    setup(props) {
-        const text = computed(() => {
-            if (props.column.field) {
-                return `${props.row[props.column.field]}`;
+    const badgeColumnValueComponent = defineComponent({
+        props: {
+            column: {
+                type: Object as PropType<GridColumnDefinition>,
+                required: true
+            },
+
+            row: {
+                type: Object as PropType<Record<string, unknown>>,
+                required: true
             }
-            else {
-                return "";
-            }
-        });
-
-        const labelClass = computed(() => {
-            const classSource = props.column.props["classSource"] as Record<string, string>;
-
-            if (classSource && text.value in classSource) {
-                return `label label-${classSource[text.value]}`;
-            }
-            else {
-                return "label label-default";
-            }
-        });
-
-        return {
-            text,
-            labelClass
-        };
-    },
-
-    template: `<span :class="labelClass">{{ text }}</span>`
-});
-
-const BadgeColumn = defineComponent({
-    props: {
-        name: {
-            type: String as PropType<string>,
-            default: ""
         },
 
-        title: {
-            type: String as PropType<string>,
-            required: false
+        setup(props) {
+            const text = computed(() => {
+                if (props.column.field) {
+                    return `${props.row[props.column.field]}`;
+                }
+                else {
+                    return "";
+                }
+            });
+
+            const labelClass = computed(() => {
+                const classSource = props.column.props["classSource"] as Record<string, string>;
+
+                if (classSource && text.value in classSource) {
+                    return `label label-${classSource[text.value]}`;
+                }
+                else {
+                    return "label label-default";
+                }
+            });
+
+            return {
+                text,
+                labelClass
+            };
         },
 
-        sortField: {
-            type: String as PropType<string>,
-            required: false
-        },
+        template: `<span :class="labelClass">{{ text }}</span>`
+    });
 
-        format: {
-            type: Object as PropType<VNode>,
-            required: false,
-            default: badgeColumnValueComponent
-        },
+    const BadgeColumn = defineComponent({
+        props: {
+            name: {
+                type: String as PropType<string>,
+                default: ""
+            },
 
-        classSource: {
-            type: Object as PropType<Record<string, string>>,
-            required: false
+            title: {
+                type: String as PropType<string>,
+                required: false
+            },
+
+            sortField: {
+                type: String as PropType<string>,
+                required: false
+            },
+
+            format: {
+                type: Object as PropType<VNode>,
+                required: false,
+                default: badgeColumnValueComponent
+            },
+
+            classSource: {
+                type: Object as PropType<Record<string, string>>,
+                required: false
+            }
         }
-    }
-});
+    });
 
+    const badgeColorColumnValueComponent = defineComponent({
+        props: {
+            column: {
+                type: Object as PropType<GridColumnDefinition>,
+                required: true
+            },
 
-const AttributeColumns = defineComponent({
-    components: {
-        Column
-    },
-
-    props: {
-        attributes: {
-            type: Array as PropType<AttributeColumnDefinition[]>,
-            default: []
+            row: {
+                type: Object as PropType<Record<string, unknown>>,
+                required: true
+            }
         },
 
-        __attributeColumns: {
-            type: Boolean as PropType<boolean>,
-            default: true
+        setup(props) {
+            const text = computed(() => {
+                if (props.column.field) {
+                    return `${props.row[props.column.field]}`;
+                }
+                else {
+                    return "";
+                }
+            });
+
+            const labelStyle = computed(() => {
+                const colorSource = props.column.props["colorSource"] as Record<string, string>;
+
+                if (colorSource && text.value in colorSource) {
+                    return {
+                        "backgroundColor": colorSource[text.value],
+                        "color": "white"
+                    }
+                }
+                else {
+                    return {
+                        "backgroundColor": "gray",
+                        "color": "white"
+                    }
+                }
+            });
+
+            return {
+                text,
+                labelStyle
+            };
+        },
+
+        template: `<span class="label label-default" :style="labelStyle">{{ text }}</span>`
+    });
+
+    const BadgeColorColumn = defineComponent({
+        props: {
+            name: {
+                type: String as PropType<string>,
+                default: ""
+            },
+
+            title: {
+                type: String as PropType<string>,
+                required: false
+            },
+
+            sortField: {
+                type: String as PropType<string>,
+                required: false
+            },
+
+            format: {
+                type: Object as PropType<VNode>,
+                required: false,
+                default: badgeColorColumnValueComponent
+            },
+
+            colorSource: {
+                type: Object as PropType<Record<string, string>>,
+                required: false
+            }
         }
+    });
+
+    const coloredBadgeColumnValueComponent = defineComponent({
+        props: {
+            column: {
+                type: Object as PropType<GridColumnDefinition>,
+                required: true
+            },
+
+            row: {
+                type: Object as PropType<Record<string, unknown>>,
+                required: true
+            }
+        },
+
+        setup(props) {
+            const text = computed(() => {
+                if (props.column.field) {
+                    return `${(props.row[props.column.field] as ListItemBag).text}`;
+                }
+                else {
+                    return "";
+                }
+            });
+
+            const labelStyle = computed(() => {
+                if (props.column.field && props.row[props.column.field] && (props.row[props.column.field] as ListItemBag).value) {
+                    return {
+                        "backgroundColor": (props.row[props.column.field] as ListItemBag).value,
+                        "color": "white"
+                    }
+                }
+                else {
+                    return {
+                        "backgroundColor": "gray",
+                        "color": "white"
+                    }
+                }
+            });
+
+            return {
+                text,
+                labelStyle
+            };
+        },
+
+        template: `<span class="label label-default" :style="labelStyle">{{ text }}</span>`
+    });
+
+    const ColoredBadgeColumn = defineComponent({
+        props: {
+            name: {
+                type: String as PropType<string>,
+                default: ""
+            },
+
+            title: {
+                type: String as PropType<string>,
+                required: false
+            },
+
+            sortField: {
+                type: String as PropType<string>,
+                required: false
+            },
+
+            format: {
+                type: Object as PropType<VNode>,
+                required: false,
+                default: coloredBadgeColumnValueComponent
+            }
+        }
+    });
+
+
+    const AttributeColumns = defineComponent({
+        components: {
+            Column
+        },
+
+        props: {
+            attributes: {
+                type: Array as PropType<AttributeColumnDefinition[]>,
+                default: []
+            },
+
+            __attributeColumns: {
+                type: Boolean as PropType<boolean>,
+                default: true
+            }
+        }
+    });
+
+    // #endregion
+
+    const configuration = useConfigurationValues<{ gridDefinition: GridDefinition }>();
+    const invokeBlockAction = useInvokeBlockAction();
+
+    const badgeClassLookup = {
+        "true": "success",
+        "false": "danger"
+    };
+
+    const badgeColorLookup = {
+        "true": "#00cc00",
+        "false": "#cc0000"
+    };
+
+    const attributeColumns = computed((): AttributeColumnDefinition[] => {
+        return configuration.gridDefinition.attributeColumns ?? [];
+    });
+
+    const loadGridData = async (): Promise<GridData> => {
+        const result = await invokeBlockAction<GridData>("GetGridData");
+
+        if (result.isSuccess && result.data) {
+            return {
+                rows: result.data.rows
+            };
+        }
+        else {
+            throw new Error(result.errorMessage ?? "Unknown error while trying to load grid data.");
+        }
+    };
+
+    function formatDate(value?: string): string {
+        if (!value) {
+            return "";
+        }
+
+        const dt = RockDateTime.parseISO(value);
+
+        return dt?.toASPString("g") ?? "";
     }
-});
-
-// #endregion
-
-const configuration = useConfigurationValues<{ gridDefinition: GridDefinition }>();
-const invokeBlockAction = useInvokeBlockAction();
-
-const badgeClassLookup = {
-    "true": "success",
-    "false": "danger"
-};
-
-const attributeColumns = computed((): AttributeColumnDefinition[] => {
-    return configuration.gridDefinition.attributeColumns ?? [];
-});
-
-const loadGridData = async (): Promise<GridData> => {
-    const result = await invokeBlockAction<GridData>("GetGridData");
-
-    if (result.isSuccess && result.data) {
-        return {
-            rows: result.data.rows
-        };
-    }
-    else {
-        throw new Error(result.errorMessage ?? "Unknown error while trying to load grid data.");
-    }
-};
-
-function formatDate(value?: string): string {
-    if (!value) {
-        return "";
-    }
-
-    const dt = RockDateTime.parseISO(value);
-
-    return dt?.toASPString("g") ?? "";
-}
 </script>
