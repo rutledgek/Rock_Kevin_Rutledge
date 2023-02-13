@@ -43,6 +43,35 @@ function getVNodeProp<T>(node: VNode, propName: string): T | undefined {
     return undefined;
 }
 
+function getVNodeProps(node: VNode): Record<string, unknown> {
+    const props: Record<string, unknown> = {};
+
+    // Get all default values.
+    if (typeof node.type === "object" && typeof node.type["props"] === "object") {
+        const defaultProps = node.type["props"] as Record<string, unknown>;
+
+        for (const p in defaultProps) {
+            const defaultProp = defaultProps[p];
+            console.log("defaultProp", p, defaultProp);
+
+            if (defaultProp && typeof defaultProp === "object" && defaultProp["default"] !== undefined) {
+                props[p] = defaultProp["default"];
+            }
+        }
+    }
+
+    // Get specified values.
+    if (node.props) {
+        for (const p in node.props) {
+            console.log("prop", p, node.props[p]);
+
+            props[p] = node.props[p];
+        }
+    }
+
+    return props;
+}
+
 const textColumnValueComponent = defineComponent({
     props: {
         column: {
@@ -93,7 +122,8 @@ function getColumnDefinitions(columnNodes: VNode[]): GridColumnDefinition[] {
                     title: attribute.title ?? undefined,
                     field: attribute.name,
                     sortField: attribute.name,
-                    format: getVNodeProp<VNode>(node, "format") ?? textColumnValueComponent
+                    format: getVNodeProp<VNode>(node, "format") ?? textColumnValueComponent,
+                    props: {}
                 });
             }
 
@@ -139,7 +169,8 @@ function getColumnDefinitions(columnNodes: VNode[]): GridColumnDefinition[] {
             field: getVNodeProp<string>(node, "field"),
             format: node.children?.["body"] ?? getVNodeProp<VNode>(node, "format") ?? textColumnValueComponent,
             sortField: getVNodeProp<string>(node, "sortField"),
-            sortValue: sortValue
+            sortValue: sortValue,
+            props: getVNodeProps(node)
         });
     }
 
@@ -150,7 +181,7 @@ function getColumnDefinitions(columnNodes: VNode[]): GridColumnDefinition[] {
 
 /*
  * 8/17/2022 - DSH
- * 
+ *
  * The grid uses a number of non-ref instances with calculations via function call.
  * This is because the normal wrapped references that Vue uses dramatically slow
  * down our filtering and sorting processes. For example, filtering over wrapped
@@ -472,7 +503,7 @@ export default defineComponent({
             box-shadow: 2px 2px 4px rgba(0,0,0,0.2);
             font-weight: initial;
         }
-    
+
         table.table-obsidian th.grid-column-header .grid-filter-popup .actions {
             border-top: 1px solid #eee;
             margin: 18px -12px 0px -12px;
@@ -491,7 +522,7 @@ export default defineComponent({
         table.table-obsidian th.grid-column-header:hover .resize-handle {
             background-color: #eee;
         }
-    
+
     table.table-obsidian td.grid-paging {
     }
 

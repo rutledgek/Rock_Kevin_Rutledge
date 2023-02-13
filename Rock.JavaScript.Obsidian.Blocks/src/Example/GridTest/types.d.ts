@@ -80,6 +80,8 @@ type GridColumnDefinition = {
 
     /** Determines if the value matches the custom column filter. */
     filter?: (needle: unknown, haystack: unknown) => boolean;
+
+    props: Record<string, unknown>;
 };
 
 type GridDefinition = {

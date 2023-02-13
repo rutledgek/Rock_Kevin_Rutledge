@@ -16,7 +16,8 @@
 
         <DateColumn name="expirationDateTime" title="Expires" field="expirationDateTime" sortField="expirationDateTime" />
 
-        <BooleanColumn name="isUrgent" title="Urgent" field="isUrgent" sortField="isUrgent" />
+        <BadgeColumn name="isUrgent" title="Urgent" field="isUrgent" sortField="isUrgent" :classSource="badgeClassLookup" />
+        <!-- <BooleanColumn name="isUrgent" title="Urgent" field="isUrgent" sortField="isUrgent" /> -->
 
         <BooleanColumn name="isPublic" title="Public" field="isPublic" sortField="isPublic" />
 
@@ -185,6 +186,80 @@ const BooleanColumn = defineComponent({
     }
 });
 
+const badgeColumnValueComponent = defineComponent({
+    props: {
+        column: {
+            type: Object as PropType<GridColumnDefinition>,
+            required: true
+        },
+
+        row: {
+            type: Object as PropType<Record<string, unknown>>,
+            required: true
+        }
+    },
+
+    setup(props) {
+        const text = computed(() => {
+            if (props.column.field) {
+                return `${props.row[props.column.field]}`;
+            }
+            else {
+                return "";
+            }
+        });
+
+        const labelClass = computed(() => {
+            const classSource = props.column.props["classSource"] as Record<string, string>;
+
+            if (classSource && text.value in classSource) {
+                return `label label-${classSource[text.value]}`;
+            }
+            else {
+                return "label label-default";
+            }
+        });
+
+        return {
+            text,
+            labelClass
+        };
+    },
+
+    template: `<span :class="labelClass">{{ text }}</span>`
+});
+
+const BadgeColumn = defineComponent({
+    props: {
+        name: {
+            type: String as PropType<string>,
+            default: ""
+        },
+
+        title: {
+            type: String as PropType<string>,
+            required: false
+        },
+
+        sortField: {
+            type: String as PropType<string>,
+            required: false
+        },
+
+        format: {
+            type: Object as PropType<VNode>,
+            required: false,
+            default: badgeColumnValueComponent
+        },
+
+        classSource: {
+            type: Object as PropType<Record<string, string>>,
+            required: false
+        }
+    }
+});
+
+
 const AttributeColumns = defineComponent({
     components: {
         Column
@@ -207,6 +282,11 @@ const AttributeColumns = defineComponent({
 
 const configuration = useConfigurationValues<{ gridDefinition: GridDefinition }>();
 const invokeBlockAction = useInvokeBlockAction();
+
+const badgeClassLookup = {
+    "true": "success",
+    "false": "danger"
+};
 
 const attributeColumns = computed((): AttributeColumnDefinition[] => {
     return configuration.gridDefinition.attributeColumns ?? [];
