@@ -49,7 +49,7 @@ namespace Rock.Jobs
         Key = AttributeKey.CommandTimeoutSeconds,
         Description = "Maximum amount of time (in seconds) to wait for the SQL operation to complete. Leave blank to use the default for this job (180).",
         IsRequired = false,
-        DefaultIntegerValue = 60 * 3,
+        DefaultIntegerValue = 180,
         Category = "General",
         Order = 2 )]
     public class SendGroupScheduleNotifications : RockJob
