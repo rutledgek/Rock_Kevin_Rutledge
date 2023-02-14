@@ -33,7 +33,7 @@
                     <legend>Your Information</legend>
 
                     <%-- Special input with rock-fullname class --%>
-                    <Rock:RockTextBox ID="tbRockFullName" runat="server" CssClass="rock-fullname" ValidationGroup="vgRockFullName" Placeholder="Please enter name (Required)" />
+                    <Rock:RockTextBox ID="tbRockFullName" runat="server" CssClass="rock-fullname" ValidationGroup="vgRockFullName" Placeholder="Please enter name (Required)" autocomplete="new-password" />
                     <Rock:NotificationBox ID="nbRockFullName" runat="server" NotificationBoxType="Validation" />
 
                     <Rock:FirstNameTextBox ID="tbFirstName" runat="server" Label="First Name" Required="true" />
@@ -93,7 +93,7 @@
         </div>
 
         <div class="actions">
-            <asp:Button ID="btnUserInfoNext" runat="server" Text="Next" CssClass="btn btn-primary" OnClick="btnUserInfoNext_Click" />
+            <Rock:BootstrapButton ID="btnUserInfoNext" runat="server" Text="Next" CssClass="btn btn-primary" OnClick="btnUserInfoNext_Click" />
         </div>
 
     </asp:PlaceHolder>
