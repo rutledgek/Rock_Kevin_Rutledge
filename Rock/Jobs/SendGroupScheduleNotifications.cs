@@ -40,7 +40,7 @@ namespace Rock.Jobs
     [DataViewField(
         "Groups Data View Filter",
         Description = "Only groups returned from this data view will be considered (child groups are not included).",
-        EntityType = typeof(Rock.Model.Group),
+        EntityType = typeof( Rock.Model.Group ),
         Key = AttributeKey.GroupDataView,
         IsRequired = false,
         Order = 1 )]
@@ -65,10 +65,12 @@ namespace Rock.Jobs
             /// The root group
             /// </summary>
             public const string RootGroup = "RootGroup";
+
             /// <summary>
             /// The group data view
             /// </summary>
             public const string GroupDataView = "GroupDataView";
+
             /// <summary>
             /// The command timeout in seconds
             /// </summary>
@@ -156,11 +158,11 @@ namespace Rock.Jobs
                 }
 
                 // if the group data view guid is configured on the Job then limit to selected groups in the data view not considering child groups
-                if (groupDataViewGuid.HasValue)
+                if ( groupDataViewGuid.HasValue )
                 {
                     var groupDataView = new DataViewService( rockContext ).Get( groupDataViewGuid.Value );
                     var groupsQuery = groupDataView.GetQuery( new DataViewGetQueryArgs { DatabaseTimeoutSeconds = commandTimeoutSeconds } ) as IQueryable<Group>;
-                    groupIds.AddRange( groupsQuery.Select( a => a.Id ).ToList());
+                    groupIds.AddRange( groupsQuery.Select( a => a.Id ).ToList() );
                     sendConfirmationAttendancesQuery = sendConfirmationAttendancesQuery.Where( a => groupIds.Contains( a.Occurrence.GroupId.Value ) );
                 }
 
@@ -212,11 +214,11 @@ namespace Rock.Jobs
                 }
 
                 // if the group data view guid is configured on the Job then limit to selected groups in the data view not considering child groups
-                if (groupDataViewGuid.HasValue)
+                if ( groupDataViewGuid.HasValue )
                 {
                     var groupDataView = new DataViewService( rockContext ).Get( groupDataViewGuid.Value );
                     var groupsQuery = groupDataView.GetQuery( new DataViewGetQueryArgs { DatabaseTimeoutSeconds = commandTimeoutSeconds } ) as IQueryable<Group>;
-                    groupIds.AddRange( groupsQuery.Select( a => a.Id ).ToList());
+                    groupIds.AddRange( groupsQuery.Select( a => a.Id ).ToList() );
                     sendReminderAttendancesQuery = sendReminderAttendancesQuery.Where( a => groupIds.Contains( a.Occurrence.GroupId.Value ) );
                 }
 
