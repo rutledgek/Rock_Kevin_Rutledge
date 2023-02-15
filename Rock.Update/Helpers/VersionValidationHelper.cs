@@ -154,7 +154,7 @@ namespace Rock.Update.Helpers
             var lavaSupportLevel = GlobalAttributesCache.Get().LavaSupportLevel;
             if ( isTargetVersionGreaterThan15 && lavaSupportLevel != Lava.LavaSupportLevel.NoLegacy )
             {
-                throw new VersionValidationException( $"Version {targetVersion} requires a lava support level of 'NoLegacy'." );
+                throw new VersionValidationException( $"Version {targetVersion} requires a Lava Support Level of 'NoLegacy'." );
             }
         }
 
