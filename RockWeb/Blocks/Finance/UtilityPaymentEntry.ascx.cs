@@ -1070,6 +1070,7 @@ mission. We are so grateful for your commitment.</p>
             var rockContext = new RockContext();
             List<int> selectableAccountIds = new FinancialAccountService( rockContext ).GetByGuids( this.GetAttributeValues( AttributeKey.AccountsToDisplay ).AsGuidList() ).Select( a => a.Id ).ToList();
             CampusAccountAmountPicker.AccountIdAmount[] accountAmounts = null;
+            caapPromptForAccountAmounts.AccountHeaderTemplate = this.GetAttributeValue( AttributeKey.AccountHeaderTemplate );
 
             AvailableAccounts = new List<AccountItem>();
 
