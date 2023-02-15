@@ -5365,9 +5365,13 @@ namespace Rock.Lava
         }
 
         /// <summary>
-        /// Renders the content of the structured.
+        /// Converts structured blocks designed with the <see cref="StructureContentEditor"/> control from JSON to HTML.
+        /// <para>
+        /// Note that this only works with JSON produced by the <see cref="StructureContentEditor"/> control as it
+        /// contains metadata used in converting the JSON content to HTML.
+        /// </para>
         /// </summary>
-        /// <param name="content">The content.</param>
+        /// <param name="content">JSON formatted string produced by the <see cref="StructureContentEditor"/> control.</param>
         /// <returns></returns>
         public static string RenderStructuredContentAsHtml( string content )
         {
