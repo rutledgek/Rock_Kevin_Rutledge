@@ -19,6 +19,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.Entity.SqlServer;
 using System.Linq;
+
 using Rock.Data;
 using Rock.Security;
 using Rock.Web.Cache;
@@ -27,7 +28,42 @@ namespace Rock.Model
 {
     public static partial class PersonExtensionMethods
     {
+        /// <summary>
+        /// This function will take a person, and if they're a child return a queryable of all
+        /// of the adults in their family. 
+        /// </summary>
+        /// <param name="person">The person.</param>
+        /// <param name="filterByGender">The filter by gender.</param>
+        /// <param name="rockContext"></param>
+        /// <returns>IQueryable&lt;GroupMember&gt;.</returns
+        internal static IQueryable<GroupMember> TransformToParents( this Person person, Gender? filterByGender = null, RockContext rockContext = null )
+        {
+            rockContext = rockContext ?? new RockContext();
 
+            // Return an empty list if the requested person isn't a child.
+            // We do this so you don't have to null check for the condition of
+            // the age classification being adult.
+            if ( person.AgeClassification != AgeClassification.Child )
+            {
+                return null;
+            }
+
+            var groupMemberService = new GroupMemberService( rockContext );
+
+            var parentsQry = groupMemberService
+                .Queryable()
+                .Where( gm => gm.GroupId == person.PrimaryFamilyId 
+                    && gm.Person.AgeClassification == AgeClassification.Adult
+                    && gm.GroupMemberStatus == GroupMemberStatus.Active );
+
+            if( filterByGender != null )
+            {
+                parentsQry = parentsQry.Where( x => x.Person.Gender == filterByGender );
+            }
+
+            return parentsQry;
+        }
+        
         /// <summary>
         /// Gets the families sorted by the person's GroupOrder (GroupMember.GroupOrder)
         /// </summary>
