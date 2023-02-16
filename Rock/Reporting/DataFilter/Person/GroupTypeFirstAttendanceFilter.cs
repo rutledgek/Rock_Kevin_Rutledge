@@ -114,7 +114,7 @@ namespace Rock.Reporting.DataFilter.Person
                 }
 
                 filterName = string.Format(
-                    "Attended '{0}' Group Type {4} {1} {2} times. Date Range: {3}",
+                    "Attended '{0}' Group Type for the first time in the Date Range: {3}",
                     groupType ?? "?",
                     comparisonType.ConvertToString(),
                     options[2],
@@ -244,7 +244,7 @@ namespace Rock.Reporting.DataFilter.Person
 
             // convert the date range from pipe-delimited to comma since we use pipe delimited for the selection values
             var dateRangeCommaDelimitedValues = slidingDateRangePicker.DelimitedValues.Replace( '|', ',' );
-            return string.Format( "{0}|1|1|{3}|{4}", groupValues, ddlIntegerCompare.SelectedValue, tbAttendedCount.Text, dateRangeCommaDelimitedValues, cbChildGroupTypes.Checked.ToTrueFalse() );
+            return string.Format( "{0}|256|1|{3}|{4}", groupValues, ddlIntegerCompare.SelectedValue, tbAttendedCount.Text, dateRangeCommaDelimitedValues, cbChildGroupTypes.Checked.ToTrueFalse() );
         }
 
         /// <inheritdoc/>
@@ -337,28 +337,45 @@ namespace Rock.Reporting.DataFilter.Person
             }
 
             var rockContext = serviceInstance.Context as RockContext;
-            var attendanceQry = new AttendanceService( rockContext ).Queryable().Where( a => a.DidAttend.HasValue && a.DidAttend.Value );
+            var attendanceOccurenceBaseQry = new AttendanceService( rockContext ).Queryable().Where( a => a.DidAttend.HasValue && a.DidAttend.Value );
 
-            if ( dateRange.Start.HasValue )
-            {
-                var startDate = dateRange.Start.Value;
-                attendanceQry = attendanceQry.Where( a => a.Occurrence.OccurrenceDate >= startDate );
-            }
-
-            if ( dateRange.End.HasValue )
-            {
-                var endDate = dateRange.End.Value;
-                attendanceQry = attendanceQry.Where( a => a.Occurrence.OccurrenceDate < endDate );
-            }
 
             if ( groupTypeIds.Count == 1 )
             {
                 int? groupTypeId = groupTypeIds[0];
-                attendanceQry = attendanceQry.Where( a => a.Occurrence.Group.GroupTypeId == groupTypeId );
+                attendanceOccurenceBaseQry = attendanceOccurenceBaseQry.Where( a => a.Occurrence.Group.GroupTypeId == groupTypeId );
             }
             else if ( groupTypeIds.Count > 1 )
             {
-                attendanceQry = attendanceQry.Where( a => groupTypeIds.Contains( a.Occurrence.Group.GroupTypeId ) );
+                attendanceOccurenceBaseQry = attendanceOccurenceBaseQry.Where( a => groupTypeIds.Contains( a.Occurrence.Group.GroupTypeId ) );
+            }
+
+            var personAliasQry = new PersonAliasService( rockContext ).Queryable();
+            var personQryForJoin = new PersonService( rockContext ).Queryable();
+
+            var attendanceOccurrenceQry = attendanceOccurenceBaseQry
+                .Join( personAliasQry, a => a.PersonAliasId, pa => pa.Id, ( a, pa ) => new
+                {
+                    axn = a,
+                    PersonId = pa.PersonId
+                } );
+
+            var firstAttendanceDataQry = attendanceOccurrenceQry
+                .GroupBy( xx => xx.PersonId )
+                .Select( ss => new
+                {
+                    PersonId = ss.Key,
+                    FirstAttendanceDate = ss.Min( a => a.axn.Occurrence.OccurrenceDate )
+                } );
+
+            if ( dateRange.Start.HasValue )
+            {
+                firstAttendanceDataQry = firstAttendanceDataQry.Where( xx => xx.FirstAttendanceDate >= dateRange.Start.Value );
+            }
+
+            if ( dateRange.End.HasValue )
+            {
+                firstAttendanceDataQry = firstAttendanceDataQry.Where( xx => xx.FirstAttendanceDate < dateRange.End.Value );
             }
             else
             {
@@ -366,13 +383,10 @@ namespace Rock.Reporting.DataFilter.Person
                 return Expression.Constant( false );
             }
 
-            var qry = new PersonService( rockContext ).Queryable()
-                  .Where( p => attendanceQry.Where( xx => xx.PersonAlias.PersonId == p.Id ).Count() == attended );
+            var innerQry = firstAttendanceDataQry.Select( xx => xx.PersonId ).AsQueryable();
+            var qry = new PersonService( rockContext ).Queryable().Where( p => innerQry.Any( xx => xx == p.Id ) );
 
-            BinaryExpression compareEqualExpression = FilterExpressionExtractor.Extract<Rock.Model.Person>( qry, parameterExpression, "p" ) as BinaryExpression;
-            BinaryExpression result = FilterExpressionExtractor.AlterComparisonType( comparisonType, compareEqualExpression, null );
-
-            return result;
+            return FilterExpressionExtractor.Extract<Model.Person>( qry, parameterExpression, "p" );
         }
 
         #endregion

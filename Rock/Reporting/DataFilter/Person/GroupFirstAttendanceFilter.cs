@@ -129,7 +129,7 @@ namespace Rock.Reporting.DataFilter.Person
 
             string dateRangeText = SlidingDateRangePicker.FormatDelimitedValues( groupFirstAttendanceFilterSelection.SlidingDateRange );
 
-            selectionOutput = $"Attended '{groupsList}' for the first time in date range: {dateRangeText}";
+             selectionOutput = $"Attended '{groupsList}' for the first time in the Date Range: {dateRangeText}";
 
             return selectionOutput;
         }
@@ -296,7 +296,7 @@ namespace Rock.Reporting.DataFilter.Person
                 schedulePicker.SetValues( schedules );
             }
 
-            ddlIntegerCompare.SelectedValue = "6";
+            ddlIntegerCompare.SelectedValue = "256";
             tbAttendedCount.Text = "1";
             slidingDateRangePicker.DelimitedValues = groupFirstAttendanceFilterSelection.SlidingDateRange;
             cbChildGroups.Checked = groupFirstAttendanceFilterSelection.IncludeChildGroups;
