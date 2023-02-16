@@ -29,52 +29,72 @@ namespace Rock.Model
     public partial class NotificationMessageService : Service<NotificationMessage>
     {
         /// <summary>
-        /// Gets the notifications for the person specified.
+        /// Gets the active messages for the person specified.
+        /// A message is considered active as long as it is within the proper
+        /// date range. Unread messages are still considered active and will be
+        /// included.
         /// </summary>
         /// <param name="personId">The person identifier to use when filtering messages.</param>
         /// <param name="site">The site the messages will be displayed on.</param>
         /// <returns>A <see cref="IQueryable"/> of <see cref="NotificationMessage"/> objects that match the parameters.</returns>
-        public IQueryable<NotificationMessage> GetNotificationsForPerson( int personId, SiteCache site )
+        public IQueryable<NotificationMessage> GetActiveMessagesForPerson( int personId, SiteCache site )
         {
             if ( site == null )
             {
                 throw new ArgumentNullException( nameof( site ) );
             }
 
-            return GetNotificationsForPerson( nm => nm.PersonAlias.PersonId == personId, site );
+            return GetMessagesForPerson( nm => nm.PersonAlias.PersonId == personId, site );
         }
 
         /// <summary>
-        /// Gets the notifications for the person specified.
+        /// Gets the active messages for the person specified.
+        /// A message is considered active as long as it is within the proper
+        /// date range. Unread messages are still considered active and will be
+        /// included.
         /// </summary>
         /// <param name="personGuid">The person unique identifier to use when filtering messages.</param>
         /// <param name="site">The site the messages will be displayed on.</param>
         /// <returns>A <see cref="IQueryable"/> of <see cref="NotificationMessage"/> objects that match the parameters.</returns>
-        public IQueryable<NotificationMessage> GetNotificationsForPerson( Guid personGuid, SiteCache site )
+        public IQueryable<NotificationMessage> GetActiveMessagesForPerson( Guid personGuid, SiteCache site )
         {
             if ( site == null )
             {
                 throw new ArgumentNullException( nameof( site ) );
             }
 
-            return GetNotificationsForPerson( nm => nm.PersonAlias.Person.Guid == personGuid, site );
+            return GetMessagesForPerson( nm => nm.PersonAlias.Person.Guid == personGuid, site );
         }
 
         /// <summary>
-        /// Gets the notifications for the person specified by the predicate.
+        /// Gets the active messages for the person specified by the predicate.
+        /// A message is considered active as long as it is within the proper
+        /// date range. Unread messages are still considered active and will be
+        /// included.
         /// </summary>
         /// <param name="personPredicate">The person predicate to use when filtering messages.</param>
         /// <param name="site">The site the messages will be displayed on.</param>
         /// <returns>A <see cref="IQueryable"/> of <see cref="NotificationMessage"/> objects that match the parameters.</returns>
-        private IQueryable<NotificationMessage> GetNotificationsForPerson( Expression<Func<NotificationMessage, bool>> personPredicate, SiteCache site )
+        private IQueryable<NotificationMessage> GetActiveMessagesForPerson( Expression<Func<NotificationMessage, bool>> personPredicate, SiteCache site )
         {
             var now = RockDateTime.Now;
 
-            var qry = Queryable()
-                .Where( personPredicate )
-                .Where( nm => nm.MessageDateTime <= now
-                    && nm.ExpireDateTime >= now
-                    && !nm.IsRead );
+            return GetMessagesForPerson( personPredicate, site )
+                .Where( nm => nm.MessageDateTime <= now && nm.ExpireDateTime > now );
+        }
+
+        /// <summary>
+        /// Gets the messages for the person specified by the predicate.
+        /// </summary>
+        /// <param name="personPredicate">The person predicate to use when filtering messages.</param>
+        /// <param name="site">The site the messages will be displayed on.</param>
+        /// <returns>A <see cref="IQueryable"/> of <see cref="NotificationMessage"/> objects that match the parameters.</returns>
+        private IQueryable<NotificationMessage> GetMessagesForPerson( Expression<Func<NotificationMessage, bool>> personPredicate, SiteCache site )
+        {
+            var now = RockDateTime.Now;
+
+            // Filter to messages for this person.
+            var qry = Queryable().Where( personPredicate );
 
             if ( site.SiteType == SiteType.Web )
             {
