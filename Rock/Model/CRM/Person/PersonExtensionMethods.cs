@@ -19,7 +19,6 @@ using System;
 using System.Collections.Generic;
 using System.Data.Entity.SqlServer;
 using System.Linq;
-
 using Rock.Data;
 using Rock.Security;
 using Rock.Web.Cache;
@@ -28,7 +27,6 @@ namespace Rock.Model
 {
     public static partial class PersonExtensionMethods
     {
-        
         /// <summary>
         /// Gets the families sorted by the person's GroupOrder (GroupMember.GroupOrder)
         /// </summary>
