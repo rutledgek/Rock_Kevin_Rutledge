@@ -8,6 +8,7 @@ using System.Text;
 using System.Linq;
 using System;
 using System.Diagnostics;
+using OfficeOpenXml.FormulaParsing.Excel.Functions.Logical;
 
 namespace Rock.Jobs
 {
@@ -153,18 +154,26 @@ END
 DELETE [Auth] WHERE [EntityTypeId] = @EntityTypeId AND [EntityId] = @BlockToBeReplacedBlockId
 DELETE [Block] WHERE [Id] = @BlockToBeReplacedBlockId
 ";
-
+        /// <summary>
+        /// The default success header
+        /// </summary>
         private const string defaultSuccessHeader = @"
 <p>
     Thank you for your generous contribution.  Your support is helping {{ ''Global'' | Attribute:''OrganizationName'' }} actively
     achieve our mission.  We are so grateful for your commitment.
 </p>
 ";
+        /// <summary>
+        /// The default success title
+        /// </summary>
         private const string defaultSuccessTitle = "Gift Information";
-        const string finishLavaTemplate = @"
+        /// <summary>
+        /// The finish lava template
+        /// </summary>
+        private const string finishLavaTemplate = @"
 <div class=""well"">
 
-    ##SUCCESS_TITLE##
+    <legend>##SUCCESS_TITLE##</legend>
   
     ##SUCCESS_HEADER##
 
@@ -257,8 +266,6 @@ DELETE [Block] WHERE [Id] = @BlockToBeReplacedBlockId
             {
                 rockContext.Database.CommandTimeout = commandTimeout;
 
-                // Ignore the fundraising page in this update since it requires a special treatment
-                var fundraisingPageGuid = "F04D69C1-786A-4204-8A67-5669BDFEB533".AsGuid();
                 // BlockType to be replaced
                 var transactionEntryBlockTypeGuid = "74EE3481-3E5A-4971-A02E-D463ABB45591".AsGuid();
                 var blockService = new BlockService( rockContext );
@@ -269,8 +276,7 @@ DELETE [Block] WHERE [Id] = @BlockToBeReplacedBlockId
                 // Get all current transaction entry block instances except the one on the Fundraising Transaction Entry Page.
                 var transactionEntryBlockInstances = blockService.Queryable()
                     .Where( p =>
-                        p.BlockType.Guid == transactionEntryBlockTypeGuid
-                        && p.Page.Guid != fundraisingPageGuid )
+                        p.BlockType.Guid == transactionEntryBlockTypeGuid )
                     .ToList();
 
                 foreach ( var block in transactionEntryBlockInstances )
@@ -307,10 +313,17 @@ DELETE [Block] WHERE [Id] = @BlockToBeReplacedBlockId
                         switch ( attributeValue.AttributeKey )
                         {
                             case "SuccessHeader":
-                                blockFinishLavaTemplate = blockFinishLavaTemplate.Replace( "##SUCCESS_HEADER##", attributeValue.Value.Replace( "'", "''" ) );
+                                // Escape any single quote so it doesn't break the sql script.
+                                var successHeader = attributeValue.Value.Replace( "'", "''" );
+                                // Success header from the TransactionEntry block uses 'FinancialTransaction' as its lava variable name for the Transaction entity,
+                                // the FinishLavaTemplate however uses 'Transaction' so we replace 'FinancialTransaction' variable names with 'Transaction'.
+                                successHeader = successHeader.Replace( "{{ FinancialTransaction.", "{{ Transaction." );
+                                blockFinishLavaTemplate = blockFinishLavaTemplate.Replace( "##SUCCESS_HEADER##", successHeader );
                                 break;
                             case "SuccessTitle":
-                                blockFinishLavaTemplate = blockFinishLavaTemplate.Replace( "##SUCCESS_TITLE##", attributeValue.Value );
+                                // Escape any single quotes so it doesn't break the sql script.
+                                var successTitle = attributeValue.Value.Replace( "'", "''" );
+                                blockFinishLavaTemplate = blockFinishLavaTemplate.Replace( "##SUCCESS_TITLE##", successTitle );
                                 break;
                             case "ACHGateway":
                                 attributesToAdd.AddOrReplace( "EnableACH", "True" );
