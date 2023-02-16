@@ -27,6 +27,7 @@ namespace Rock.Model
 {
     public static partial class PersonExtensionMethods
     {
+
         /// <summary>
         /// Gets the families sorted by the person's GroupOrder (GroupMember.GroupOrder)
         /// </summary>
@@ -527,7 +528,7 @@ namespace Rock.Model
         /// <param name="person">The person.</param>
         /// <param name="filterByGender">The filter by gender.</param>
         /// <param name="rockContext"></param>
-        /// <returns>IQueryable&lt;GroupMember&gt;.</returns
+        /// <returns>IQueryable&lt;GroupMember&gt;.</returns>
         internal static IQueryable<GroupMember> TransformToParents( this Person person, Gender? filterByGender = null, RockContext rockContext = null )
         {
             rockContext = rockContext ?? new RockContext();
