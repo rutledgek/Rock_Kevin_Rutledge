@@ -945,6 +945,8 @@
     <Compile Include="Model\CodeGenerated\InteractiveExperienceScheduleCampusService.CodeGenerated.cs" />
     <Compile Include="Model\CodeGenerated\InteractiveExperienceScheduleService.CodeGenerated.cs" />
     <Compile Include="Model\CodeGenerated\InteractiveExperienceService.CodeGenerated.cs" />
+    <Compile Include="Model\CodeGenerated\NotificationMessageService.CodeGenerated.cs" />
+    <Compile Include="Model\CodeGenerated\NotificationMessageTypeService.CodeGenerated.cs" />
     <Compile Include="Model\CodeGenerated\PersonalizationSegmentService.CodeGenerated.cs" />
     <Compile Include="Model\CodeGenerated\ReminderService.CodeGenerated.cs" />
     <Compile Include="Model\CodeGenerated\ReminderTypeService.CodeGenerated.cs" />

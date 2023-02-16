@@ -34,7 +34,7 @@ namespace Rock.Model
     [Table( "NotificationMessage" )]
     [DataContract]
     [Rock.SystemGuid.EntityTypeGuid( "239ADD2E-2DBF-46A7-BD28-4A2A201D4E7B" )]
-    public partial class NotificationMessage : Model<NotificationMessageType>
+    public partial class NotificationMessage : Model<NotificationMessage>
     {
         #region Entity Properties
 
