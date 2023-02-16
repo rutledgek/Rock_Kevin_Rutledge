@@ -17,7 +17,10 @@
 using System;
 using System.Runtime.Serialization;
 
+using Rock.Communication.SmsActions;
+using Rock.Core;
 using Rock.Data;
+using Rock.Lava;
 using Rock.Model;
 
 namespace Rock.Web.Cache
@@ -139,6 +142,7 @@ namespace Rock.Web.Cache
         /// up on all websites. This does not affect other site types.
         /// </summary>
         /// <value>The related web site identifier.</value>
+        [DataMember]
         public virtual SiteCache RelatedWebSite => RelatedWebSiteId.HasValue ? SiteCache.Get( RelatedWebSiteId.Value ) : null;
 
         /// <summary>
@@ -148,6 +152,7 @@ namespace Rock.Web.Cache
         /// other site types.
         /// </summary>
         /// <value>The related mobile site identifier.</value>
+        [DataMember]
         public virtual SiteCache RelatedMobileApplicationSite => RelatedMobileApplicationSiteId.HasValue ? SiteCache.Get( RelatedMobileApplicationSiteId.Value ) : null;
 
         /// <summary>
@@ -157,7 +162,33 @@ namespace Rock.Web.Cache
         /// site types.
         /// </summary>
         /// <value>The related TV site identifier.</value>
+        [DataMember]
         public virtual SiteCache RelatedTvApplicationSite => RelatedTvApplicationSiteId.HasValue ? SiteCache.Get( RelatedTvApplicationSiteId.Value ) : null;
+
+        /// <summary>
+        /// Gets the field.
+        /// </summary>
+        /// <value>
+        /// The field.
+        /// </value>
+        internal NotificationMessageTypeComponent Component
+        {
+            get
+            {
+                if ( _component == null )
+                {
+                    var entityTypeCache = EntityTypeCache.Get( EntityTypeId );
+
+                    if ( entityTypeCache != null )
+                    {
+                        _component = NotificationMessageTypeContainer.GetComponent( entityTypeCache.GetEntityType() );
+                    }
+                }
+
+                return _component;
+            }
+        }
+        private NotificationMessageTypeComponent _component = null;
 
         #endregion
 

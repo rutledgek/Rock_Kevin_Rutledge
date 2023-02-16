@@ -45,10 +45,20 @@ namespace Rock.Core
         /// Gets the component with the matching Entity Type Name.
         /// </summary>
         /// <param name="entityType">Type of the entity.</param>
-        /// <returns></returns>
+        /// <returns>The matching component or <c>null</c> if not found.</returns>
         public static NotificationMessageTypeComponent GetComponent( string entityType )
         {
             return Instance.GetComponentByEntity( entityType );
+        }
+
+        /// <summary>
+        /// Gets the component with the matching Entity Type.
+        /// </summary>
+        /// <param name="entityType">Type of the entity.</param>
+        /// <returns>The matching component or <c>null</c> if not found.</returns>
+        public static NotificationMessageTypeComponent GetComponent( Type entityType )
+        {
+            return Instance.GetComponentByEntity( entityType.FullName );
         }
 
         /// <summary>
