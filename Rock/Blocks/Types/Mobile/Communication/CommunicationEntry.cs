@@ -443,15 +443,26 @@ namespace Rock.Blocks.Types.Mobile.Communication
                         }
                     );
 
+                // We have to loop through each of our recipient objects to create a real CommunicationRecipient.
                 foreach ( var recipientPerson in recipientPeople )
                 {
+                    // Checking for duplicates.
+                    if( communication.Recipients.Any( cr => cr.PersonAliasId == recipientPerson.PrimaryAliasId ) )
+                    {
+                        continue;
+                    };
+
                     communication.Recipients.Add( new CommunicationRecipient
                     {
                         PersonAliasId = recipientPerson.PrimaryAliasId
                     } );
 
+                    // If this is enabled, we're going to send the communication to the
+                    // 'parents' of any children in the recipients list. 
                     if ( communicationBag.SendToParents )
                     {
+                        // This is knowingly obscure. We are actually just going to send to all adult family members in the family, since there
+                        // is no great way to distinguish a child's father/mother in Rock today.
                         var parentsQry = recipientPerson.Person.TransformToParents( rockContext: rockContext );
 
                         if ( parentsQry != null )
@@ -463,9 +474,9 @@ namespace Rock.Blocks.Types.Mobile.Communication
                                 ( p, pa ) => pa.Id )
                             .ToList();
 
-
                             foreach ( var parentAliasId in parentAliasIds )
                             {
+                                // If the parent already exists in the recipients, we don't want to duplicate the communication.
                                 if ( communication.Recipients.Any( cr => cr.PersonAliasId == parentAliasId ) )
                                 {
                                     continue;
@@ -525,7 +536,7 @@ namespace Rock.Blocks.Types.Mobile.Communication
                     communication.SmsFromSystemPhoneNumberId = SystemPhoneNumberCache.Get( communicationBag.FromNumberGuid )?.Id;
                     communication.SMSMessage = communicationBag.Message;
 
-                    // If there was a file attachment, add it to the communication.
+                    // If there was an image attachment, add it to the communication.
                     if ( communicationBag.ImageAttachmentGuid != null )
                     {
                         var binaryFileId = new BinaryFileService( rockContext ).Get( communicationBag.ImageAttachmentGuid.Value )?.Id;
@@ -572,7 +583,7 @@ namespace Rock.Blocks.Types.Mobile.Communication
 
                 rockContext.SaveChanges();
 
-                // send approval email if needed (now that we have a communication id)
+                // Send the approval email (if needed), now that we have a communication id.
                 if ( communication.Status == CommunicationStatus.PendingApproval )
                 {
                     var approvalTransactionMsg = new ProcessSendCommunicationApprovalEmail.Message()
@@ -582,6 +593,7 @@ namespace Rock.Blocks.Types.Mobile.Communication
                     approvalTransactionMsg.Send();
                 }
 
+                // If the communication is already approved (via security), queue it up to send.
                 if ( communication.Status == CommunicationStatus.Approved &&
                            ( !communication.FutureSendDateTime.HasValue || communication.FutureSendDateTime.Value <= RockDateTime.Now ) )
                 {
