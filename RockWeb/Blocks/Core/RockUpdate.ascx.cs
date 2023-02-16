@@ -48,7 +48,6 @@ namespace RockWeb.Blocks.Core
         private bool _isEarlyAccessOrganization = false;
         private List<RockRelease> _releases = new List<RockRelease>();
         Version _installedVersion = new Version( "0.0.0" );
-        private bool _hasSqlServer16OrHigher = false;
         #endregion
 
         #region Properties
@@ -144,11 +143,11 @@ namespace RockWeb.Blocks.Core
                     nbBackupMessage.Visible = false;
                 }
 
-                _hasSqlServer16OrHigher = VersionValidationHelper.CheckSqlServerVersion( VersionValidationHelper.SqlServerVersion.v2016 );
+                var hasMinimumSqlServerOrHigher = VersionValidationHelper.CheckSqlServerVersion( VersionValidationHelper.SqlServerVersion.v2016 );
 
-                if ( !_hasSqlServer16OrHigher )
+                if ( !hasMinimumSqlServerOrHigher )
                 {
-                    nbSqlServer2016Issue.Visible = true;
+                    nbSqlServerVersionIssue.Visible = true;
                 }
 
                 var lavaSupportLevel = GlobalAttributesCache.Get().LavaSupportLevel;
@@ -171,9 +170,9 @@ namespace RockWeb.Blocks.Core
                     if ( new Version( _releases.Last().SemanticVersion ) >= new Version( "1.16.0" ) )
                     {
                         // if SqlServer2016Issue is visible, and they are updating to v16 or later, show the version Warning as an Danger instead.
-                        if ( !_hasSqlServer16OrHigher )
+                        if ( !hasMinimumSqlServerOrHigher )
                         {
-                            nbSqlServer2016Issue.NotificationBoxType = Rock.Web.UI.Controls.NotificationBoxType.Danger;
+                            nbSqlServerVersionIssue.NotificationBoxType = Rock.Web.UI.Controls.NotificationBoxType.Danger;
                         }
 
                         // if LegacyLavaIssue is visible, and they are updating to v16 or later, show the version Warning as an Danger instead.
