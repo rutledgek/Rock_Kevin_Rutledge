@@ -39,8 +39,8 @@ namespace Rock.Migrations
                         ComponentDataJson = c.String(),
                         IsDeletedOnRead = c.Boolean(nullable: false),
                         IsWebSupported = c.Boolean(nullable: false),
-                        IsMobileSupported = c.Boolean(nullable: false),
-                        IsTvSupported = c.Boolean(nullable: false),
+                        IsMobileApplicationSupported = c.Boolean(nullable: false),
+                        IsTvApplicationSupported = c.Boolean(nullable: false),
                         RelatedWebSiteId = c.Int(),
                         RelatedMobileApplicationSiteId = c.Int(),
                         RelatedTvApplicationSiteId = c.Int(),
@@ -68,7 +68,7 @@ namespace Rock.Migrations
                 .Index(t => t.CreatedByPersonAliasId)
                 .Index(t => t.ModifiedByPersonAliasId)
                 .Index(t => t.Guid, unique: true);
-            
+
             CreateTable(
                 "dbo.NotificationMessage",
                 c => new
@@ -84,35 +84,27 @@ namespace Rock.Migrations
                         PersonAliasId = c.Int(nullable: false),
                         IsRead = c.Boolean(nullable: false),
                         ComponentDataJson = c.String(),
-                        CreatedDateTime = c.DateTime(),
-                        ModifiedDateTime = c.DateTime(),
-                        CreatedByPersonAliasId = c.Int(),
-                        ModifiedByPersonAliasId = c.Int(),
                         Guid = c.Guid(nullable: false),
                         ForeignId = c.Int(),
                         ForeignGuid = c.Guid(),
                         ForeignKey = c.String(maxLength: 100),
                     })
                 .PrimaryKey(t => t.Id)
-                .ForeignKey("dbo.PersonAlias", t => t.CreatedByPersonAliasId)
-                .ForeignKey("dbo.PersonAlias", t => t.ModifiedByPersonAliasId)
                 .ForeignKey("dbo.NotificationMessageType", t => t.NotificationMessageTypeId, cascadeDelete: true)
+                .ForeignKey("dbo.PersonAlias", t => t.PersonAliasId)
                 .Index(t => t.NotificationMessageTypeId)
                 .Index(t => t.Key)
-                .Index(t => t.CreatedByPersonAliasId)
-                .Index(t => t.ModifiedByPersonAliasId)
+                .Index(t => t.PersonAliasId)
                 .Index(t => t.Guid, unique: true);
-            
         }
-        
+
         /// <summary>
         /// Operations to be performed during the downgrade process.
         /// </summary>
         public override void Down()
         {
+            DropForeignKey("dbo.NotificationMessage", "PersonAliasId", "dbo.PersonAlias");
             DropForeignKey("dbo.NotificationMessage", "NotificationMessageTypeId", "dbo.NotificationMessageType");
-            DropForeignKey("dbo.NotificationMessage", "ModifiedByPersonAliasId", "dbo.PersonAlias");
-            DropForeignKey("dbo.NotificationMessage", "CreatedByPersonAliasId", "dbo.PersonAlias");
             DropForeignKey("dbo.NotificationMessageType", "RelatedWebSiteId", "dbo.Site");
             DropForeignKey("dbo.NotificationMessageType", "RelatedTvApplicationSiteId", "dbo.Site");
             DropForeignKey("dbo.NotificationMessageType", "RelatedMobileApplicationSiteId", "dbo.Site");
@@ -120,8 +112,7 @@ namespace Rock.Migrations
             DropForeignKey("dbo.NotificationMessageType", "EntityTypeId", "dbo.EntityType");
             DropForeignKey("dbo.NotificationMessageType", "CreatedByPersonAliasId", "dbo.PersonAlias");
             DropIndex("dbo.NotificationMessage", new[] { "Guid" });
-            DropIndex("dbo.NotificationMessage", new[] { "ModifiedByPersonAliasId" });
-            DropIndex("dbo.NotificationMessage", new[] { "CreatedByPersonAliasId" });
+            DropIndex("dbo.NotificationMessage", new[] { "PersonAliasId" });
             DropIndex("dbo.NotificationMessage", new[] { "Key" });
             DropIndex("dbo.NotificationMessage", new[] { "NotificationMessageTypeId" });
             DropIndex("dbo.NotificationMessageType", new[] { "Guid" });

@@ -77,7 +77,7 @@ namespace Rock.Model
 
         /// <summary>
         /// Gets or sets a value indicating whether messages are supported
-        /// on web applications.
+        /// on web sites.
         /// </summary>
         /// <value><c>true</c> if this messages are supported on web; otherwise, <c>false</c>.</value>
         [DataMember]
@@ -89,7 +89,7 @@ namespace Rock.Model
         /// </summary>
         /// <value><c>true</c> if messages are supported on mobile; otherwise, <c>false</c>.</value>
         [DataMember]
-        public bool IsMobileSupported { get; set; }
+        public bool IsMobileApplicationSupported { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether messages are supported
@@ -97,7 +97,7 @@ namespace Rock.Model
         /// </summary>
         /// <value><c>true</c> if messages are supported on TV; otherwise, <c>false</c>.</value>
         [DataMember]
-        public bool IsTvSupported { get; set; }
+        public bool IsTvApplicationSupported { get; set; }
 
         /// <summary>
         /// Gets or sets the related web site identifier. If specified then

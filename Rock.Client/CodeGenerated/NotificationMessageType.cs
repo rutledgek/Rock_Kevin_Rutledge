@@ -50,10 +50,10 @@ namespace Rock.Client
         public bool IsDeletedOnRead { get; set; }
 
         /// <summary />
-        public bool IsMobileSupported { get; set; }
+        public bool IsMobileApplicationSupported { get; set; }
 
         /// <summary />
-        public bool IsTvSupported { get; set; }
+        public bool IsTvApplicationSupported { get; set; }
 
         /// <summary />
         public bool IsWebSupported { get; set; }
@@ -113,8 +113,8 @@ namespace Rock.Client
             this.ForeignGuid = source.ForeignGuid;
             this.ForeignKey = source.ForeignKey;
             this.IsDeletedOnRead = source.IsDeletedOnRead;
-            this.IsMobileSupported = source.IsMobileSupported;
-            this.IsTvSupported = source.IsTvSupported;
+            this.IsMobileApplicationSupported = source.IsMobileApplicationSupported;
+            this.IsTvApplicationSupported = source.IsTvApplicationSupported;
             this.IsWebSupported = source.IsWebSupported;
             this.Key = source.Key;
             this.ModifiedAuditValuesAlreadyUpdated = source.ModifiedAuditValuesAlreadyUpdated;

@@ -150,7 +150,6 @@
     <Compile Include="Communication\ConversationAttachmentBag.cs" />
     <Compile Include="Communication\ConversationMessageBag.cs" />
     <Compile Include="Core\NotificationMessageActionBag.cs" />
-    <Compile Include="Entities\NotificationMessageBag.cs" />
     <Compile Include="Entities\NotificationMessageTypeBag.cs" />
     <Compile Include="Entities\SnippetBag.cs" />
     <Compile Include="Entities\SnippetTypeBag.cs" />

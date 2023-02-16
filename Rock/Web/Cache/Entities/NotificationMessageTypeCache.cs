@@ -15,9 +15,6 @@
 // </copyright>
 //
 using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
 using System.Runtime.Serialization;
 
 using Rock.Data;
@@ -71,7 +68,7 @@ namespace Rock.Web.Cache
 
         /// <summary>
         /// Gets a value indicating whether messages are supported
-        /// on web applications.
+        /// on web sites.
         /// </summary>
         /// <value><c>true</c> if this messages are supported on web; otherwise, <c>false</c>.</value>
         [DataMember]
@@ -83,7 +80,7 @@ namespace Rock.Web.Cache
         /// </summary>
         /// <value><c>true</c> if messages are supported on mobile; otherwise, <c>false</c>.</value>
         [DataMember]
-        public bool IsMobileSupported { get; private set; }
+        public bool IsMobileApplicationSupported { get; private set; }
 
         /// <summary>
         /// Gets a value indicating whether messages are supported
@@ -91,7 +88,7 @@ namespace Rock.Web.Cache
         /// </summary>
         /// <value><c>true</c> if messages are supported on TV; otherwise, <c>false</c>.</value>
         [DataMember]
-        public bool IsTvSupported { get; private set; }
+        public bool IsTvApplicationSupported { get; private set; }
 
         /// <summary>
         /// Gets the related web site identifier. If specified then
@@ -184,8 +181,8 @@ namespace Rock.Web.Cache
             ComponentDataJson = notificationMessageType.ComponentDataJson;
             IsDeletedOnRead = notificationMessageType.IsDeletedOnRead;
             IsWebSupported = notificationMessageType.IsWebSupported;
-            IsMobileSupported = notificationMessageType.IsMobileSupported;
-            IsTvSupported = notificationMessageType.IsTvSupported;
+            IsMobileApplicationSupported = notificationMessageType.IsMobileApplicationSupported;
+            IsTvApplicationSupported = notificationMessageType.IsTvApplicationSupported;
             RelatedWebSiteId = notificationMessageType.RelatedWebSiteId;
             RelatedMobileApplicationSiteId = notificationMessageType.RelatedMobileApplicationSiteId;
             RelatedTvApplicationSiteId = notificationMessageType.RelatedTvApplicationSiteId;

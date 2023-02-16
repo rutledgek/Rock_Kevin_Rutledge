@@ -62,17 +62,17 @@ export type NotificationMessageTypeBag = {
      * Gets or sets a value indicating whether messages are supported
      * on mobile applications.
      */
-    isMobileSupported: boolean;
+    isMobileApplicationSupported: boolean;
 
     /**
      * Gets or sets a value indicating whether messages are supported
      * on TV applications.
      */
-    isTvSupported: boolean;
+    isTvApplicationSupported: boolean;
 
     /**
      * Gets or sets a value indicating whether messages are supported
-     * on web applications.
+     * on web sites.
      */
     isWebSupported: boolean;
 

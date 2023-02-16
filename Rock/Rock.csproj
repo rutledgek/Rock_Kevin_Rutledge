@@ -967,6 +967,7 @@
     <Compile Include="Model\Core\NotificationMessageType\NotificationMessageType.cs" />
     <Compile Include="Model\Core\NotificationMessageType\NotificationMessageType.Logic.cs" />
     <Compile Include="Model\Core\NotificationMessage\NotificationMessage.cs" />
+    <Compile Include="Model\Core\NotificationMessage\NotificationMessageService.cs" />
     <Compile Include="Model\Event\InteractiveExperienceAction\InteractiveExperienceAction.cs" />
     <Compile Include="Model\Event\InteractiveExperienceAction\InteractiveExperienceActionService.cs" />
     <Compile Include="Model\Event\InteractiveExperienceAnswer\InteractiveExperienceAnswer.cs" />

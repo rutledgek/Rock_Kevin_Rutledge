@@ -85,8 +85,8 @@ namespace Rock.Model
                 ComponentDataJson = model.ComponentDataJson,
                 EntityTypeId = model.EntityTypeId,
                 IsDeletedOnRead = model.IsDeletedOnRead,
-                IsMobileSupported = model.IsMobileSupported,
-                IsTvSupported = model.IsTvSupported,
+                IsMobileApplicationSupported = model.IsMobileApplicationSupported,
+                IsTvApplicationSupported = model.IsTvApplicationSupported,
                 IsWebSupported = model.IsWebSupported,
                 Key = model.Key,
                 RelatedMobileApplicationSiteId = model.RelatedMobileApplicationSiteId,
@@ -166,8 +166,8 @@ namespace Rock.Model
             target.ForeignGuid = source.ForeignGuid;
             target.ForeignKey = source.ForeignKey;
             target.IsDeletedOnRead = source.IsDeletedOnRead;
-            target.IsMobileSupported = source.IsMobileSupported;
-            target.IsTvSupported = source.IsTvSupported;
+            target.IsMobileApplicationSupported = source.IsMobileApplicationSupported;
+            target.IsTvApplicationSupported = source.IsTvApplicationSupported;
             target.IsWebSupported = source.IsWebSupported;
             target.Key = source.Key;
             target.RelatedMobileApplicationSiteId = source.RelatedMobileApplicationSiteId;

@@ -67,7 +67,7 @@ namespace Rock.ViewModels.Entities
         /// <value>
         /// true if messages are supported on mobile; otherwise, false.
         /// </value>
-        public bool IsMobileSupported { get; set; }
+        public bool IsMobileApplicationSupported { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether messages are supported
@@ -76,11 +76,11 @@ namespace Rock.ViewModels.Entities
         /// <value>
         /// true if messages are supported on TV; otherwise, false.
         /// </value>
-        public bool IsTvSupported { get; set; }
+        public bool IsTvApplicationSupported { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether messages are supported
-        /// on web applications.
+        /// on web sites.
         /// </summary>
         /// <value>
         /// true if this messages are supported on web; otherwise, false.

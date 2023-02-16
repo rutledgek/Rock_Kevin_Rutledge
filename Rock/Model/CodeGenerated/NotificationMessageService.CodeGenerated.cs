@@ -60,52 +60,6 @@ namespace Rock.Model
     }
 
     /// <summary>
-    /// NotificationMessage View Model Helper
-    /// </summary>
-    [DefaultViewModelHelper( typeof( NotificationMessage ) )]
-    public partial class NotificationMessageViewModelHelper : ViewModelHelper<NotificationMessage, NotificationMessageBag>
-    {
-        /// <summary>
-        /// Converts the model to a view model.
-        /// </summary>
-        /// <param name="model">The entity.</param>
-        /// <param name="currentPerson">The current person.</param>
-        /// <param name="loadAttributes">if set to <c>true</c> [load attributes].</param>
-        /// <returns></returns>
-        public override NotificationMessageBag CreateViewModel( NotificationMessage model, Person currentPerson = null, bool loadAttributes = true )
-        {
-            if ( model == null )
-            {
-                return default;
-            }
-
-            var viewModel = new NotificationMessageBag
-            {
-                IdKey = model.IdKey,
-                ComponentDataJson = model.ComponentDataJson,
-                Count = model.Count,
-                Description = model.Description,
-                ExpireDateTime = model.ExpireDateTime,
-                IsRead = model.IsRead,
-                Key = model.Key,
-                MessageDateTime = model.MessageDateTime,
-                NotificationMessageTypeId = model.NotificationMessageTypeId,
-                PersonAliasId = model.PersonAliasId,
-                Title = model.Title,
-                CreatedDateTime = model.CreatedDateTime,
-                ModifiedDateTime = model.ModifiedDateTime,
-                CreatedByPersonAliasId = model.CreatedByPersonAliasId,
-                ModifiedByPersonAliasId = model.ModifiedByPersonAliasId,
-            };
-
-            AddAttributesToViewModel( model, viewModel, currentPerson, loadAttributes );
-            ApplyAdditionalPropertiesAndSecurityToViewModel( model, viewModel, currentPerson, loadAttributes );
-            return viewModel;
-        }
-    }
-
-
-    /// <summary>
     /// Generated Extension Methods
     /// </summary>
     public static partial class NotificationMessageExtensionMethods
@@ -145,10 +99,6 @@ namespace Rock.Model
             target.ForeignKey = null;
             target.ForeignId = null;
             target.ForeignGuid = null;
-            target.CreatedByPersonAliasId = null;
-            target.CreatedDateTime = RockDateTime.Now;
-            target.ModifiedByPersonAliasId = null;
-            target.ModifiedDateTime = RockDateTime.Now;
 
             return target;
         }
@@ -173,26 +123,9 @@ namespace Rock.Model
             target.NotificationMessageTypeId = source.NotificationMessageTypeId;
             target.PersonAliasId = source.PersonAliasId;
             target.Title = source.Title;
-            target.CreatedDateTime = source.CreatedDateTime;
-            target.ModifiedDateTime = source.ModifiedDateTime;
-            target.CreatedByPersonAliasId = source.CreatedByPersonAliasId;
-            target.ModifiedByPersonAliasId = source.ModifiedByPersonAliasId;
             target.Guid = source.Guid;
             target.ForeignId = source.ForeignId;
 
-        }
-
-        /// <summary>
-        /// Creates a view model from this entity
-        /// </summary>
-        /// <param name="model">The entity.</param>
-        /// <param name="currentPerson" >The currentPerson.</param>
-        /// <param name="loadAttributes" >Load attributes?</param>
-        public static NotificationMessageBag ToViewModel( this NotificationMessage model, Person currentPerson = null, bool loadAttributes = false )
-        {
-            var helper = new NotificationMessageViewModelHelper();
-            var viewModel = helper.CreateViewModel( model, currentPerson, loadAttributes );
-            return viewModel;
         }
 
     }

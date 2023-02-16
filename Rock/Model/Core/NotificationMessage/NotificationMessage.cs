@@ -20,10 +20,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Entity.ModelConfiguration;
 using System.Runtime.Serialization;
 
-using DocumentFormat.OpenXml.Bibliography;
-
 using Rock.Data;
-using Rock.Web.Cache;
 
 namespace Rock.Model
 {
@@ -34,7 +31,7 @@ namespace Rock.Model
     [Table( "NotificationMessage" )]
     [DataContract]
     [Rock.SystemGuid.EntityTypeGuid( "239ADD2E-2DBF-46A7-BD28-4A2A201D4E7B" )]
-    public partial class NotificationMessage : Model<NotificationMessage>
+    public partial class NotificationMessage : Entity<NotificationMessage>
     {
         #region Entity Properties
 
@@ -149,6 +146,16 @@ namespace Rock.Model
         [DataMember]
         public virtual NotificationMessageType NotificationMessageType { get; set; }
 
+        /// <summary>
+        /// Gets or sets the <see cref="Rock.Model.PersonAlias"/> of the individual
+        /// this message should be displayed to.
+        /// </summary>
+        /// <value>
+        /// The <see cref="Rock.Model.PersonAlias"/> to display this message to.
+        /// </value>
+        [DataMember]
+        public virtual PersonAlias PersonAlias { get; set; }
+
         #endregion
 
         #region Public Methods
@@ -180,6 +187,7 @@ namespace Rock.Model
         public NotificationMessageConfiguration()
         {
             this.HasRequired( nm => nm.NotificationMessageType ).WithMany().HasForeignKey( nm => nm.NotificationMessageTypeId ).WillCascadeOnDelete( true );
+            this.HasRequired( nm => nm.PersonAlias ).WithMany().HasForeignKey( nm => nm.PersonAliasId ).WillCascadeOnDelete( false );
         }
     }
 
