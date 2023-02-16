@@ -6,7 +6,6 @@ using System.Linq;
 
 using Rock.Attribute;
 using Rock.Common.Mobile.Blocks.Communication.CommunicationEntry;
-using Rock.Common.Mobile.Blocks.Communication.SmsConversationList;
 using Rock.Data;
 using Rock.Model;
 using Rock.Security;
@@ -48,10 +47,10 @@ namespace Rock.Blocks.Types.Mobile.Communication
         Key = AttributeKey.ShowReplyTo,
         Order = 3 )]
 
-    [BooleanField( "Show Parent Communication Toggle",
+    [BooleanField( "Show Send To Parents",
         Description = "When enabled, a toggle will show to enable an individual with the Age Classification of 'Child' to have the communication sent to their parents as well.",
-        DefaultBooleanValue = true,
-        Key = AttributeKey.EnableParentCommunication,
+        DefaultBooleanValue = false,
+        Key = AttributeKey.ShowSendToParents,
         Order = 4 )]
 
     [BooleanField( "Is Bulk",
@@ -79,6 +78,13 @@ namespace Rock.Blocks.Types.Mobile.Communication
         Key = AttributeKey.HidePersonalSmsNumbers,
         Order = 8 )]
 
+    [LinkedPage(
+        "Person Profile Page",
+        Description = "Page to link to when user taps on a person listed in the 'Failed to Deliver' section. PersonGuid is passed in the query string.",
+        IsRequired = false,
+        Key = AttributeKey.PersonProfilePage,
+        Order = 9 )]
+
     #endregion
 
     [DisplayName( "Communication Entry" )]
@@ -86,7 +92,7 @@ namespace Rock.Blocks.Types.Mobile.Communication
     [Description( "Allows you to send communications to a set of recipients." )]
     [IconCssClass( "fa fa-comment-o" )]
 
-    // This block uses a unique security action that determines whether someone can send out communications or has
+    // This block uses a unique security action that determines whether someone can send out communications immediately or has
     // to submit them for approval.
     [SecurityAction( Authorization.APPROVE, "The roles and/or users that have access to approve new communications." )]
 
@@ -94,6 +100,7 @@ namespace Rock.Blocks.Types.Mobile.Communication
     [Rock.SystemGuid.BlockTypeGuid( "B0182DA2-82F7-4798-A48E-88EBE61F2109" )]
     public class CommunicationEntry : RockMobileBlockType
     {
+
         #region Attribute Keys
 
         /// <summary>
@@ -114,7 +121,7 @@ namespace Rock.Blocks.Types.Mobile.Communication
             /// <summary>
             /// The enable parent communication attribute key.
             /// </summary>
-            public const string EnableParentCommunication = "EnableParentCommunication";
+            public const string ShowSendToParents = "ShowSendToParents";
 
             /// <summary>
             /// The show from name attribute key.
@@ -145,6 +152,11 @@ namespace Rock.Blocks.Types.Mobile.Communication
             /// The hide personal SMS numbers attribute key.
             /// </summary>
             public const string HidePersonalSmsNumbers = "HidePersonalSmsNumbers";
+
+            /// <summary>
+            /// The person profile page attribute key.
+            /// </summary>
+            public const string PersonProfilePage = "PersonProfilePage";
         }
 
         #endregion
@@ -164,10 +176,10 @@ namespace Rock.Blocks.Types.Mobile.Communication
         public bool EnableSMS => GetAttributeValue( AttributeKey.EnableSMS ).AsBoolean();
 
         /// <summary>
-        /// Gets a value indicating whether we should attempt to send communication to the parent of any children in the recipients.
+        /// Gets a value indicating whether we should show a toggle, used to send a communication to the parent of any children in the recipients.
         /// </summary>
         /// <value><c>true</c> if [enable parent communication]; otherwise, <c>false</c>.</value>
-        public bool EnableParentCommunication => GetAttributeValue( AttributeKey.EnableParentCommunication ).AsBoolean();
+        public bool ShowSendToParents => GetAttributeValue( AttributeKey.ShowSendToParents ).AsBoolean();
 
         /// <summary>
         /// Gets a value indicating whether this instance is bulk.
@@ -186,6 +198,14 @@ namespace Rock.Blocks.Types.Mobile.Communication
         /// </summary>
         /// <value><c>true</c> if [show from name]; otherwise, <c>false</c>.</value>
         public bool ShowReplyTo => GetAttributeValue( AttributeKey.ShowReplyTo ).AsBoolean();
+
+        /// <summary>
+        /// Gets the person profile page unique identifier.
+        /// </summary>
+        /// <value>
+        /// The person profile page unique identifier.
+        /// </value>
+        protected Guid? PersonProfilePageGuid => GetAttributeValue( AttributeKey.PersonProfilePage ).AsGuidOrNull();
 
         #endregion
 
@@ -217,17 +237,17 @@ namespace Rock.Blocks.Types.Mobile.Communication
             {
                 EnableEmail = EnableEmail,
                 EnableSMS = EnableSMS,
-                EnableParentCommunication = EnableParentCommunication,
+                ShowSendToParents = ShowSendToParents,
                 IsBulk = IsBulk,
                 ShowFromName = ShowFromName,
-                ShowReplyTo = ShowReplyTo
+                ShowReplyTo = ShowReplyTo,
+                PersonProfilePageGuid = PersonProfilePageGuid
             };
         }
 
         #endregion
 
         #region Block Actions
-
 
         /// <summary>
         /// Gets all phone numbers available to the currently logged in person.
@@ -243,7 +263,7 @@ namespace Rock.Blocks.Types.Mobile.Communication
         /// Gets the recipients.
         /// </summary>
         /// <param name="entitySetGuid">The entity set unique identifier.</param>
-        /// <returns>BlockActionResult.</returns>
+        /// <returns>A BlockActionResult containing the list of recipients.</returns>
         [BlockAction]
         public BlockActionResult GetRecipients( Guid entitySetGuid )
         {
@@ -390,7 +410,6 @@ namespace Rock.Blocks.Types.Mobile.Communication
                 .Select( n => new PhoneNumberBag
                 {
                     Guid = n.Guid,
-                    ContactKey = n.Guid.ToString(),
                     PhoneNumber = n.Number,
                     Description = n.Name
                 } )
@@ -416,15 +435,14 @@ namespace Rock.Blocks.Types.Mobile.Communication
                 communicationService.Add( communication );
 
                 // Convert our recipients to CommunicationRecipients.
-                var entitySet = new EntitySetService( rockContext ).Get( communicationBag.EntitySetGuid );
-
-                // var recipients = GetCommunicationRecipientsFromEntitySet( entitySet, rockContext );
+                var entitySetId = new EntitySetService( rockContext ).Get( communicationBag.EntitySetGuid ).Id;
                 var recipientPeople = new EntitySetItemService( rockContext )
-                    .GetByEntitySetId( entitySet.Id, true )
+                    .GetByEntitySetId( entitySetId, true )
                     .Select( esi => new
                     {
                         esi.EntityId
                     } )
+                    // Join the person that is in reference to the EntityId of the EntitySetItem.
                     .Join( personService.Queryable(),
                         e => e.EntityId,
                         p => p.Id,
@@ -447,7 +465,7 @@ namespace Rock.Blocks.Types.Mobile.Communication
                 foreach ( var recipientPerson in recipientPeople )
                 {
                     // Checking for duplicates.
-                    if( communication.Recipients.Any( cr => cr.PersonAliasId == recipientPerson.PrimaryAliasId ) )
+                    if ( communication.Recipients.Any( cr => cr.PersonAliasId == recipientPerson.PrimaryAliasId ) )
                     {
                         continue;
                     };
@@ -558,7 +576,9 @@ namespace Rock.Blocks.Types.Mobile.Communication
                 communication.Status = CommunicationStatus.Draft;
                 rockContext.SaveChanges();
 
-                if ( !BlockCache.IsAuthorized( Authorization.APPROVE, RequestContext.CurrentPerson ) )
+                // This block uses a unique 'Approve' security verb to either submit a communication for approval or
+                // instantly queue a communication. Only required if the request exceeds the maximum number of recipients.
+                if ( RequiresApproval( communication.Recipients.Count(), communicationBag.MaxRecipients ) && !BlockCache.IsAuthorized( Authorization.APPROVE, RequestContext.CurrentPerson ) )
                 {
                     communication.Status = CommunicationStatus.PendingApproval;
                     successMessage = $"Your message to {communication.Recipients.Count} recipients has been submitted for approval.";
@@ -607,6 +627,24 @@ namespace Rock.Blocks.Types.Mobile.Communication
                 rockContext.SaveChanges();
                 return successMessage;
             }
+        }
+
+        /// <summary>
+        /// Determines whether or not the communication (based on count) requires approval before
+        /// being sent out. If they have permission via the "Approve" security verb, this gets
+        /// overridden.
+        /// </summary>
+        /// <param name="communicationRecipientCount">The communication recipient count.</param>
+        /// <param name="maxRecipients">The maximum recipients.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        private bool RequiresApproval( int communicationRecipientCount, int? maxRecipients )
+        {
+            if( maxRecipients != null && communicationRecipientCount > maxRecipients )
+            {
+                return true;
+            }
+
+            return false;
         }
 
         #endregion
