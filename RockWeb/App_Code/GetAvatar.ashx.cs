@@ -32,6 +32,7 @@ using CacheManager.Core;
 using DocumentFormat.OpenXml.Drawing.Charts;
 using SixLabors.ImageSharp.Processing;
 using DocumentFormat.OpenXml.Wordprocessing;
+using System.Data.Entity.Core.Metadata.Edm;
 
 namespace RockWeb
 {
@@ -72,7 +73,7 @@ namespace RockWeb
         {
             _Delegate.EndInvoke( result );
         }
-        
+
 
         /// <summary>
         /// Enables processing of HTTP Web requests by a custom HttpHandler that implements the <see cref="T:System.Web.IHttpHandler" /> interface.
@@ -81,17 +82,8 @@ namespace RockWeb
         /// <exception cref="System.NotImplementedException"></exception>
         public void ProcessRequest( HttpContext context )
         {
-            var settings = new AvatarSettings();
-
             // Read query string parms
-            settings.AvatarColors.BackgroundColor = ( context.Request.QueryString["BackgroundColor"] ?? "" ).ToString();
-            settings.AvatarColors.ForegroundColor = ( context.Request.QueryString["ForegroundColor"] ?? "" ).ToString();
-            settings.AvatarColors.CompileColors();
-
-            if ( context.Request.QueryString["Size"] != null )
-            {
-                settings.Size = context.Request.QueryString["Size"].AsInteger();
-            }
+            var settings = ReadSettingsFromRequest( context.Request );
 
             // Make a copy of the mask so we don't resize the shared original
             var maskTemplate = AvatarHelper.AdultMaleMask.Clone( o => o.Crop( settings.Size, settings.Size ) );
@@ -112,6 +104,65 @@ namespace RockWeb
             var cacheKey = GenerateCacheKey( settings );
 
             //System.IO.File.SetLastWriteTimeUtc(fileName, DateTime.UtcNow);
+
+            Stream fileContent = null;
+            try
+            {
+                string cachedFilePath = context.Request.MapPath( $"~/App_Data/Cache/{cacheKey}.{settings.AvatarFileExtension}" );
+
+                if ( File.Exists( cachedFilePath ) )
+                {
+                    fileContent = FetchFromCache( cachedFilePath );
+                }
+
+                // The file is not in the cache so we'll create it
+                if ( fileContent == null )
+                {
+                    fileContent = CreateAvatar( settings );
+                }
+
+                // Something has gone really wrong so we'll send an error message
+                if ( fileContent == null )
+                {
+                    context.Response.StatusCode = System.Net.HttpStatusCode.InternalServerError.ConvertToInt();
+                    context.Response.StatusDescription = "The requested avatar could not be created.";
+                    context.ApplicationInstance.CompleteRequest();
+                    return;
+                }
+
+                // Add cache validation headers
+                context.Response.AddHeader( "Last-Modified", DateTime.Now.ToUniversalTime().ToString( "R" ) );
+                context.Response.AddHeader( "ETag", DateTime.Now.ToString().XxHash() );
+
+                // Return the avatar mime-type
+                if ( settings.AvatarFormat == AvatarFormat.Png )
+                {
+                    context.Response.ContentType = "image/png";
+                }
+                else
+                {
+                    context.Response.ContentType = "image/svg+xml";
+                }
+
+                // Stream the contents of the file to the response
+                using ( var responseStream = fileContent )
+                {
+                    context.Response.AddHeader( "content-disposition", "inline;filename=" + $"{cacheKey}.{settings.AvatarFileExtension}".UrlEncode() );
+                    if ( responseStream.CanSeek )
+                    {
+                        responseStream.Seek( 0, SeekOrigin.Begin );
+                    }
+                    responseStream.CopyTo( context.Response.OutputStream );
+                    context.Response.Flush();
+                }
+            }
+            finally
+            {
+                if ( fileContent != null )
+                {
+                    fileContent.Dispose();
+                }
+            }
         }
 
         /// <summary>
@@ -126,9 +177,134 @@ namespace RockWeb
             }
         }
 
+        /// <summary>
+        /// Reads the settings from request.
+        /// </summary>
+        /// <param name="request">The request.</param>
+        /// <returns>RockWeb.AvatarSettings.</returns>
+        private AvatarSettings ReadSettingsFromRequest( HttpRequest request )
+        {
+            var settings = new AvatarSettings();
+
+            settings.AvatarColors.BackgroundColor = ( request.QueryString["BackgroundColor"] ?? "" ).ToString();
+            settings.AvatarColors.ForegroundColor = ( request.QueryString["ForegroundColor"] ?? "" ).ToString();
+            settings.AvatarColors.GenerateMissingColors();
+
+            if ( request.QueryString["Size"] != null )
+            {
+                settings.Size = request.QueryString["Size"].AsInteger();
+            }
+
+            // Format (PNG is the default
+            if ( request.QueryString["Format"] != null )
+            {
+                if ( request.QueryString["Format"].ToLower() == "svg" )
+                {
+                    settings.AvatarFormat = AvatarFormat.Svg;
+                }
+            }
+
+            // Style
+            if ( request.QueryString["Style"] != null )
+            {
+                if ( request.QueryString["Style"].ToLower() == "initials" )
+                {
+                    settings.AvatarStyle = AvatarStyle.Initials;
+                }
+            }
+
+            // Gender
+            if ( request.QueryString["Gender"] != null )
+            {
+                settings.Gender = (Gender) Enum.Parse( typeof(Gender), request.QueryString["Gender"], true );
+            }
+
+            // Text
+            if ( request.QueryString["Text"] != null )
+            {
+                settings.Text = request.QueryString["Text"];
+            }
+
+            // Photo Id
+            if ( request.QueryString["PhotoId"] != null )
+            {
+                settings.PhotoId = request.QueryString["PhotoId"].AsIntegerOrNull();
+            }
+
+            // Record Type Guid
+            if ( request.QueryString["RecordTypeGuid"] != null )
+            {
+                settings.RecordTypeGuid = request.QueryString["RecordTypeGuid"].AsGuidOrNull();
+            }
+
+            // Person Guid
+            if ( request.QueryString["PersonGuid"] != null )
+            {
+                settings.PersonGuid = request.QueryString["PersonGuid"].AsGuidOrNull();
+            }
+
+            // Person Id
+            if ( request.QueryString["PersonId"] != null )
+            {
+                settings.PersonId = request.QueryString["PersonId"].AsIntegerOrNull();
+            }
+
+            // Bold
+            if ( request.QueryString["Bold"] != null )
+            {
+                settings.IsBold = request.QueryString["Bold"].AsBoolean();
+            }
+
+            // Corner Radius + Circle
+            if ( request.QueryString["Radius"] != null )
+            {
+                var radius = request.QueryString["Radius"];
+
+                if ( radius.ToLower() == "circle" )
+                {
+                    settings.IsCircle = true;
+                }
+                else
+                {
+                    settings.CornerRadius = radius.AsInteger();
+                }
+            }
+
+            // Prefers Light
+            if ( request.QueryString["PrefersLight"] != null )
+            {
+                settings.PrefersLight = request.QueryString["PrefersLight"].AsBoolean();
+            }
+
+            return settings;
+        }
+
+        private Stream CreateAvatar( AvatarSettings settings )
+        {
+            return null;
+        }
+
         private string GenerateCacheKey( AvatarSettings settings )
         {
-            return string.Empty;
+            return $"{settings.Size}-{settings.Text}-{settings.AvatarColors.ForegroundColor}_{settings.AvatarColors.BackgroundColor}-{settings.CornerRadius}-{settings.AvatarFormat}-{settings.AvatarStyle}-{settings.Gender}-{settings.IsBold.ToString().Truncate(1)}-{settings.PersonGuid}{settings.PersonId}-{settings.PhotoId}-{settings.PrefersLight.ToString().Truncate( 1 )}-{settings.RecordTypeGuid}";
+        }
+
+        /// <summary>
+        /// Attempts to retrieve the file from cache.
+        /// </summary>
+        /// <param name="physicalPath">The physical path.</param>
+        /// <returns>Stream.</returns>
+        private Stream FetchFromCache( string physicalPath )
+        {
+            try
+            {
+                return File.Open( physicalPath, FileMode.Open, FileAccess.Read, FileShare.Read );
+            }
+            catch
+            {
+                // if it fails, return null, which will result in fetching it from the database instead
+                return null;
+            }
         }
     }
 
@@ -198,11 +374,129 @@ namespace RockWeb
         }
     }
 
+    /// <summary>
+    /// Class for storing the settings needed to create an avatar.
+    /// </summary>
     public class AvatarSettings
     {
+        /// <summary>
+        /// Gets or sets the size (width / height) of the avatar image.
+        /// </summary>
+        /// <value>The size.</value>
         public int Size { get; set; } = 128;
 
+        /// <summary>
+        /// Gets or sets the avatar format.
+        /// </summary>
+        /// <value>The avatar format.</value>
+        public AvatarFormat AvatarFormat { get; set; } = AvatarFormat.Png;
+
+        /// <summary>
+        /// Gets or sets the gender for the avatar icon.
+        /// </summary>
+        /// <value>The gender.</value>
+        public Gender Gender { get; set; } = Gender.Unknown;
+
+        /// <summary>
+        /// Gets or sets the text for the initials.
+        /// </summary>
+        /// <value>The text.</value>
+        public string Text {
+            get
+            {
+                return _text;
+            }
+            set
+            {
+                _text = value.Truncate( 2 );
+            }
+        }
+        private string _text = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the photo identifier.
+        /// </summary>
+        /// <value>The photo identifier.</value>
+        public int? PhotoId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the record type unique identifier.
+        /// </summary>
+        /// <value>The record type unique identifier.</value>
+        public Guid? RecordTypeGuid { get; set; }
+
+        /// <summary>
+        /// Gets or sets the person unique identifier.
+        /// </summary>
+        /// <value>The person unique identifier.</value>
+        public Guid? PersonGuid { get; set; }
+
+        /// <summary>
+        /// Gets or sets the person identifier.
+        /// </summary>
+        /// <value>The person identifier.</value>
+        public int? PersonId { get; set; }
+
+
+        /// <summary>
+        /// Gets the avatar file extension from the format.
+        /// </summary>
+        /// <value>The avatar file extension.</value>
+        public string AvatarFileExtension
+        {
+            get
+            {
+                return AvatarFormat.ToString();
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the avatar colors (foreground / background).
+        /// </summary>
+        /// <value>The avatar colors.</value>
         public AvatarColors AvatarColors { get; set; } = new AvatarColors();
+
+        /// <summary>
+        /// Gets or sets the avatar style.
+        /// </summary>
+        /// <value>The avatar style.</value>
+        public AvatarStyle AvatarStyle { get; set; } = AvatarStyle.Icon;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether this instance is bold.
+        /// </summary>
+        /// <value><c>true</c> if this instance is bold; otherwise, <c>false</c>.</value>
+        public bool IsBold { get; set; } = false;
+
+        /// <summary>
+        /// Gets or sets the corner radius.
+        /// </summary>
+        /// <value>The corner radius.</value>
+        public int CornerRadius { get; set; } = 0;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether this instance is circle.
+        /// </summary>
+        /// <value><c>true</c> if this instance is circle; otherwise, <c>false</c>.</value>
+        public bool IsCircle { get; set; } = false;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether [prefers light].
+        /// </summary>
+        /// <value><c>true</c> if [prefers light]; otherwise, <c>false</c>.</value>
+        public bool PrefersLight { get; set; } = true;
+    }
+
+    public enum AvatarFormat
+    {
+        Png = 0,
+        Svg = 1
+    }
+
+    public enum AvatarStyle
+    {
+        Icon = 0,
+        Initials = 1
     }
 
     /// <summary>
@@ -224,7 +518,10 @@ namespace RockWeb
         public string BackgroundColor { get; set; }
 
 
-        public void CompileColors()
+        /// <summary>
+        /// Generates any missing colors.
+        /// </summary>
+        public void GenerateMissingColors()
         {
             // If we were provided both a foreground color and background color then we don't need
             // to do anything
