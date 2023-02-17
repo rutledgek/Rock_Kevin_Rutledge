@@ -186,7 +186,7 @@ namespace Rock.Model
         /// </summary>
         public NotificationMessageConfiguration()
         {
-            this.HasRequired( nm => nm.NotificationMessageType ).WithMany().HasForeignKey( nm => nm.NotificationMessageTypeId ).WillCascadeOnDelete( true );
+            this.HasRequired( nm => nm.NotificationMessageType ).WithMany( nmt => nmt.NotificationMessages ).HasForeignKey( nm => nm.NotificationMessageTypeId ).WillCascadeOnDelete( true );
             this.HasRequired( nm => nm.PersonAlias ).WithMany().HasForeignKey( nm => nm.PersonAliasId ).WillCascadeOnDelete( false );
         }
     }

@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 //
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Entity.ModelConfiguration;
@@ -170,6 +171,19 @@ namespace Rock.Model
         /// <value>The related TV site identifier.</value>
         [DataMember]
         public virtual Site RelatedTvApplicationSite { get; set; }
+
+        /// <summary>
+        /// Gets or sets a collection containing the <see cref="NotificationMessage"/>
+        /// objects that belong to this <see cref="NotificationMessageType"/>.
+        /// </summary>
+        /// <remarks>
+        /// This should only be used for LINQ queries in Where clauses.
+        /// </remarks>
+        /// <value>
+        /// A collection of <see cref="NotificationMessage"/> objects.
+        /// </value>
+        [DataMember]
+        public virtual ICollection<NotificationMessage> NotificationMessages { get; set; }
 
         #endregion
 

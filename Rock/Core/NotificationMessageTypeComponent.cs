@@ -77,8 +77,9 @@ namespace Rock.Core
         /// Deletes any obsolete notification message types. Such as any types
         /// that correspond to other entities that no longer exist in Rock.
         /// </summary>
+        /// <param name="commandTimeout">The timeout in seconds to use for SQL commands.</param>
         /// <returns>The number of message types that were deleted.</returns>
-        public abstract int DeleteObsoleteNotificationMessageTypes();
+        public abstract int DeleteObsoleteNotificationMessageTypes( int commandTimeout = 30 );
 
         /// <summary>
         /// Deletes any obsolete notification messages. Such as any messages
@@ -87,8 +88,9 @@ namespace Rock.Core
         /// <remarks>
         /// The cleanup job will automatically delete expired messages.
         /// </remarks>
+        /// <param name="commandTimeout">The timeout in seconds to use for SQL commands.</param>
         /// <returns>The number of messages that were deleted.</returns>
-        public abstract int DeleteObsoleteNotificationMessages();
+        public abstract int DeleteObsoleteNotificationMessages( int commandTimeout = 30 );
 
         /// <summary>
         /// Performs any additional cleanup. This is called at the end of the
@@ -96,7 +98,8 @@ namespace Rock.Core
         /// delete any related data tied to messages that no longer exist or
         /// for any other cleanup they need to perform.
         /// </summary>
-        public virtual void PerformCleanup()
+        /// <param name="commandTimeout">The timeout in seconds to use for SQL commands.</param>
+        public virtual void PerformCleanup( int commandTimeout = 30 )
         {
         }
 

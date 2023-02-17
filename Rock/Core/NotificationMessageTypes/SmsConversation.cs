@@ -81,13 +81,13 @@ namespace Rock.Core.NotificationMessageTypes
         }
 
         /// <inheritdoc/>
-        public override int DeleteObsoleteNotificationMessageTypes()
+        public override int DeleteObsoleteNotificationMessageTypes( int commandTimeout )
         {
             return 0;
         }
 
         /// <inheritdoc/>
-        public override int DeleteObsoleteNotificationMessages()
+        public override int DeleteObsoleteNotificationMessages( int commandTimeout )
         {
             return 0;
         }
