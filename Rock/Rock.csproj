@@ -968,6 +968,7 @@
     <Compile Include="Model\Core\NotificationMessageType\NotificationMessageType.cs" />
     <Compile Include="Model\Core\NotificationMessageType\NotificationMessageType.Logic.cs" />
     <Compile Include="Model\Core\NotificationMessage\NotificationMessage.cs" />
+    <Compile Include="Model\Core\NotificationMessage\NotificationMessage.SaveHook.cs" />
     <Compile Include="Model\Core\NotificationMessage\NotificationMessageService.cs" />
     <Compile Include="Model\Event\InteractiveExperienceAction\InteractiveExperienceAction.cs" />
     <Compile Include="Model\Event\InteractiveExperienceAction\InteractiveExperienceActionService.cs" />
@@ -1647,6 +1648,7 @@
     <Compile Include="Transactions\IQueuedTransaction.cs" />
     <Compile Include="Transactions\SendAchievementCompletedRealTimeNotificationsTransaction.cs" />
     <Compile Include="Transactions\SendAttendanceRealTimeNotificationsTransaction.cs" />
+    <Compile Include="Transactions\UpdateNotificationMessageBadgeCountTransaction.cs" />
     <Compile Include="Tv\Classes\AppleTvApplicationSettings.cs" />
     <Compile Include="Tv\Classes\ApplicationSettings.cs" />
     <Compile Include="Tv\TvHelper.cs" />

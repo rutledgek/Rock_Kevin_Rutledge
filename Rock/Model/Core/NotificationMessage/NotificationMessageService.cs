@@ -15,11 +15,16 @@
 // </copyright>
 //
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 
+using Rock.Communication;
 using Rock.Data;
 using Rock.Web.Cache;
+
+using Z.EntityFramework.Plus;
 
 namespace Rock.Model
 {
@@ -161,6 +166,120 @@ namespace Rock.Model
             }
 
             return qry;
+        }
+
+        /// <summary>
+        /// Send badge count updates for the set of person identifiers.
+        /// </summary>
+        /// <param name="personIds">The person identifiers that need a badge count update.</param>
+        /// <returns>A Task representing the asynchronous operation.</returns>
+        internal static async Task SendBadgeCountUpdatesAsync( List<int> personIds )
+        {
+            using ( var rockContext = new RockContext() )
+            {
+                var messageService = new NotificationMessageService( rockContext );
+                List<(int PersonId, int SiteId, List<string> DeviceRegistrationIds)> personSites;
+
+                // Now that we have the person Ids, get all the personal devcies
+                // that need to be updated. Right now we only care about mobile.
+                personSites = new PersonalDeviceService( rockContext ).Queryable()
+                    .Where( pd => pd.NotificationsEnabled
+                        && !string.IsNullOrEmpty( pd.DeviceRegistrationId )
+                        && pd.SiteId.HasValue
+                        && pd.Site.SiteType == SiteType.Mobile
+                        && pd.PersonAliasId.HasValue
+                        && personIds.Contains( pd.PersonAlias.PersonId ) )
+                    .Select( pd => new
+                    {
+                        pd.PersonAlias.PersonId,
+                        SiteId = pd.SiteId.Value,
+                        pd.DeviceRegistrationId
+                    } )
+                    .GroupBy( pd => new
+                    {
+                        pd.PersonId,
+                        pd.SiteId
+                    } )
+                    .ToList()
+                    .Select( g => (g.Key.PersonId, g.Key.SiteId, g.Select( item => item.DeviceRegistrationId ).ToList()) )
+                    .ToList();
+
+                var badgeCounts = new List<(int Count, List<string> DeviceRegistrationIds)>();
+
+                // Loop through all our person site information and run queries
+                // to get all the counts for each pair. We are using the ZZZ
+                // framework Future queries to batch the queries into groups
+                // of 100 queries per round-trip to the database. So if we have
+                // 1,000 pairs, we only send 10 queries instead of 1,000.
+                while ( personSites.Any() )
+                {
+                    var items = personSites.Take( 100 ).ToList();
+                    personSites = personSites.Skip( 100 ).ToList();
+
+                    var counts = items
+                        .Select( ps => new
+                        {
+                            Count = messageService.GetUnreadMessagesForPerson( ps.PersonId, SiteCache.Get( ps.SiteId ) )
+                                .DeferredSum( nm => ( int? ) nm.Count ).FutureValue(),
+                            ps.DeviceRegistrationIds
+                        } )
+                        .ToList()
+                        .Select( a => (a.Count.Value ?? 0, a.DeviceRegistrationIds) )
+                        .ToList();
+
+                    badgeCounts.AddRange( counts );
+                }
+
+                var badgeGroups = badgeCounts.GroupBy( bc => bc.Count );
+                var tasks = new List<Task>();
+
+                foreach ( var badgeGroup in badgeGroups )
+                {
+                    var count = badgeGroup.Key;
+                    var deviceRegistrationIds = badgeGroup.SelectMany( a => a.DeviceRegistrationIds ).ToList();
+
+                    while ( deviceRegistrationIds.Any() )
+                    {
+                        // The docs say you can send to 1,000 registration ids at once.
+                        // Let's send to at most 100 at a time for now for safety.
+                        var registrationIds = deviceRegistrationIds.Take( 100 ).ToList();
+                        deviceRegistrationIds = deviceRegistrationIds.Skip( 100 ).ToList();
+
+                        tasks.Add( Task.Run( () => SendBadgeCountPushNotificationAsync( count, registrationIds ) ) );
+                    }
+                }
+
+                await Task.WhenAll( tasks );
+            }
+        }
+
+        /// <summary>
+        /// Sends out a push notification to all of the device registration
+        /// identifiers.
+        /// </summary>
+        /// <param name="count">The number to use in the application badge.</param>
+        /// <param name="deviceRegistrationIds">The tokens that specify the devices to receive the push notifications.</param>
+        /// <returns>A task that represents this operation.</returns>
+        private static async Task SendBadgeCountPushNotificationAsync( int count, List<string> deviceRegistrationIds )
+        {
+            if ( !MediumContainer.HasActivePushTransport() )
+            {
+                return;
+            }
+
+            var pushMessage = new RockPushMessage
+            {
+                Data = new PushData(),
+                SendSeperatelyToEachRecipient = false
+            };
+
+            pushMessage.Data.ApplicationBadgeCount = count;
+
+            var mergeFields = new Dictionary<string, object>();
+
+            pushMessage.SetRecipients( deviceRegistrationIds.Select( d => RockPushMessageRecipient.CreateAnonymous( d, mergeFields ) ).ToList() );
+
+            await pushMessage.SendAsync();
         }
     }
 }
