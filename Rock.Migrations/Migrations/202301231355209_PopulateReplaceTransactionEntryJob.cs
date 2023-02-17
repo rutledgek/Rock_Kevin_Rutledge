@@ -35,8 +35,7 @@ namespace Rock.Migrations
             IF NOT EXISTS (
                 SELECT 1
                 FROM [ServiceJob]
-                WHERE [Class] = 'Rock.Jobs.PostV15DataMigrationsReplaceTransactionEntryBlocksWithUtilityPaymentBlock'
-                    AND [Guid] = '{Rock.SystemGuid.ServiceJob.DATA_MIGRATIONS_150_REPLACE_TRANSACTION_ENTRY_BLOCKS_WITH_UTILITY_PAYMENT_ENTRY_BLOCK}'
+                WHERE [Guid] = '{Rock.SystemGuid.ServiceJob.DATA_MIGRATIONS_150_REPLACE_TRANSACTION_ENTRY_BLOCKS_WITH_UTILITY_PAYMENT_ENTRY_BLOCK}'
             )
             BEGIN
                 INSERT INTO [ServiceJob] (

@@ -7,8 +7,6 @@ using System.ComponentModel;
 using System.Text;
 using System.Linq;
 using System;
-using System.Diagnostics;
-using OfficeOpenXml.FormulaParsing.Excel.Functions.Logical;
 
 namespace Rock.Jobs
 {
@@ -25,7 +23,7 @@ namespace Rock.Jobs
     AttributeKey.CommandTimeout,
     Description = "Maximum amount of time (in seconds) to wait for each SQL command to complete. On a large database with lots of transactions, this could take several minutes or more.",
     IsRequired = false,
-    DefaultIntegerValue = 240 * 60 )]
+    DefaultIntegerValue = 14400 )]
     public class PostV15DataMigrationsReplaceTransactionEntryBlocksWithUtilityPaymentBlock : IJob
     {
         private static class AttributeKey
@@ -64,6 +62,7 @@ DECLARE @BlockToBeReplacedBlockAttributeId AS INT
 DECLARE @BlockToBeReplacedBlockAttributeValueId AS INT
 DECLARE @BlockToBeReplacedBlockAttributeValue AS NVARCHAR(MAX)
 ";
+
         /// <summary>
         /// The copy attribute value SQL format, finds existing attribute values for the existing block so they can be copied and saved as values for the replacement/new block.
         /// </summary>
@@ -116,6 +115,7 @@ BEGIN
     END
 END
 ";
+
         /// <summary>
         /// The create or update attribute value SQL format, adds new attribute values to the replacement/new block that do not exist for the existing block instance
         /// </summary>
@@ -147,6 +147,7 @@ BEGIN
 	WHERE Id = @NewBlockBlockAttributeValueId
 END
 ";
+
         /// <summary>
         /// The delete old block SQL, run after new block instance is added to page, removed the existing block instance.
         /// </summary>
@@ -154,6 +155,7 @@ END
 DELETE [Auth] WHERE [EntityTypeId] = @EntityTypeId AND [EntityId] = @BlockToBeReplacedBlockId
 DELETE [Block] WHERE [Id] = @BlockToBeReplacedBlockId
 ";
+
         /// <summary>
         /// The default success header
         /// </summary>
@@ -163,10 +165,12 @@ DELETE [Block] WHERE [Id] = @BlockToBeReplacedBlockId
     achieve our mission.  We are so grateful for your commitment.
 </p>
 ";
+
         /// <summary>
         /// The default success title
         /// </summary>
         private const string defaultSuccessTitle = "Gift Information";
+
         /// <summary>
         /// The finish lava template
         /// </summary>
@@ -274,12 +278,7 @@ DELETE [Block] WHERE [Id] = @BlockToBeReplacedBlockId
                 List<BlockSwapMigrationHelperClass> blockSwapHelpers = new List<BlockSwapMigrationHelperClass>();
 
                 // Get all current transaction entry block instances except the one on the Fundraising Transaction Entry Page.
-                var transactionEntryBlockInstances = blockService.Queryable()
-                    .Where( p =>
-                        p.BlockType.Guid == transactionEntryBlockTypeGuid )
-                    .ToList();
-
-                foreach ( var block in transactionEntryBlockInstances )
+                foreach ( var block in blockService.Queryable().Where( p => p.BlockType.Guid == transactionEntryBlockTypeGuid ).ToList() )
                 {
                     // Get all the block attributes of the old/existing block except the ones with different keys (those will be mapped manually)
                     var differentAttributeKeys = attributeKeyMappings.Select( m => m.OldBlockKey );
@@ -348,7 +347,7 @@ DELETE [Block] WHERE [Id] = @BlockToBeReplacedBlockId
                         AttributesToAdd = attributesToAdd,
                         NewBlockBlockTypeGuid = "4CCC45A5-4AB9-4A36-BF8D-A6E316790004",
                         NewBlockGuid = Guid.NewGuid().ToString(),
-                        NewBlockName = $"{block.Name} - Utility",
+                        NewBlockName = block.Name,
                         OldBlockId = block.Id,
                         OldBlockTypeId = block.BlockTypeId,
                         PageId = block.PageId.GetValueOrDefault(),
@@ -444,7 +443,7 @@ DELETE [Block] WHERE [Id] = @BlockToBeReplacedBlockId
             /// Gets or seys the unique identifier of the BlockType of the new block instance
             /// </summary>
             /// <value>
-            /// The new block block type unique identifier.
+            /// The new block BlockType unique identifier.
             /// </value>
             public string NewBlockBlockTypeGuid { get; set; }
             /// <summary>
