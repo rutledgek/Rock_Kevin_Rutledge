@@ -66,15 +66,16 @@ namespace Rock.Rest.Controllers
 
         /// <summary>
         /// Gets the number that should be displayed in the badge for the
-        /// currently logged in person.
+        /// currently logged in person. This is a sum of the Count property
+        /// for all active and unread messages.
         /// </summary>
         /// <param name="siteId">The identifier of the site this request is for.</param>
         /// <returns>An integer that represents the number to display in the badge.</returns>
         [Authenticate, Secured]
         [HttpGet]
-        [System.Web.Http.Route( "api/NotificationMessages/MyMessages/ActiveBadgeCount" )]
+        [System.Web.Http.Route( "api/NotificationMessages/MyMessages/BadgeCount" )]
         [Rock.SystemGuid.RestActionGuid( "61be0d8f-0e4c-4ce1-b473-903b8bac9a5c" )]
-        public IHttpActionResult GetMyActiveMessagesBadgeCount( string siteId = null )
+        public IHttpActionResult GetBadgeCount( string siteId = null )
         {
             var rockContext = ( RockContext ) Service.Context;
             var service = ( NotificationMessageService ) Service;
@@ -90,8 +91,8 @@ namespace Rock.Rest.Controllers
                 return BadRequest( "Unable to determine site to use from request." );
             }
 
-            var count = service.GetActiveMessagesForPerson( person.Id, site )
-                .Sum( nm => nm.Count );
+            var count = service.GetUnreadMessagesForPerson( person.Id, site )
+                .Sum( nm => ( int? ) nm.Count ) ?? 0;
 
             return Ok( count );
         }

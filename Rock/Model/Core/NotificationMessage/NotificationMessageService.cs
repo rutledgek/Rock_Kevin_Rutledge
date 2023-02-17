@@ -44,7 +44,7 @@ namespace Rock.Model
                 throw new ArgumentNullException( nameof( site ) );
             }
 
-            return GetMessagesForPerson( nm => nm.PersonAlias.PersonId == personId, site );
+            return GetActiveMessagesForPerson( nm => nm.PersonAlias.PersonId == personId, site );
         }
 
         /// <summary>
@@ -63,7 +63,45 @@ namespace Rock.Model
                 throw new ArgumentNullException( nameof( site ) );
             }
 
-            return GetMessagesForPerson( nm => nm.PersonAlias.Person.Guid == personGuid, site );
+            return GetActiveMessagesForPerson( nm => nm.PersonAlias.Person.Guid == personGuid, site );
+        }
+
+        /// <summary>
+        /// Gets the unread and active messages for the person specified.
+        /// A message is considered active as long as it is within the proper
+        /// date range.
+        /// </summary>
+        /// <param name="personId">The person identifier to use when filtering messages.</param>
+        /// <param name="site">The site the messages will be displayed on.</param>
+        /// <returns>A <see cref="IQueryable"/> of <see cref="NotificationMessage"/> objects that match the parameters.</returns>
+        public IQueryable<NotificationMessage> GetUnreadMessagesForPerson( int personId, SiteCache site )
+        {
+            if ( site == null )
+            {
+                throw new ArgumentNullException( nameof( site ) );
+            }
+
+            return GetActiveMessagesForPerson( nm => nm.PersonAlias.PersonId == personId, site )
+                .Where( nm => !nm.IsRead );
+        }
+
+        /// <summary>
+        /// Gets the unread and active messages for the person specified.
+        /// A message is considered active as long as it is within the proper
+        /// date range.
+        /// </summary>
+        /// <param name="personGuid">The person unique identifier to use when filtering messages.</param>
+        /// <param name="site">The site the messages will be displayed on.</param>
+        /// <returns>A <see cref="IQueryable"/> of <see cref="NotificationMessage"/> objects that match the parameters.</returns>
+        public IQueryable<NotificationMessage> GetUnreadMessagesForPerson( Guid personGuid, SiteCache site )
+        {
+            if ( site == null )
+            {
+                throw new ArgumentNullException( nameof( site ) );
+            }
+
+            return GetActiveMessagesForPerson( nm => nm.PersonAlias.Person.Guid == personGuid, site )
+                .Where( nm => !nm.IsRead );
         }
 
         /// <summary>
