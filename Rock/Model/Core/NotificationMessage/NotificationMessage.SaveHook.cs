@@ -38,7 +38,7 @@ namespace Rock.Model
                 // so don't bother checking.
                 RockContext.ExecuteAfterCommit( () =>
                 {
-                    new UpdateNotificationBadgeCountTransaction( Entity.Id )
+                    new UpdateNotificationBadgeCountTransaction( Entity.PersonAliasId )
                         .Enqueue();
                 } );
 
