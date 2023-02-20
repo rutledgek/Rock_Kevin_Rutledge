@@ -165,12 +165,12 @@ namespace Rock.Personalization.SegmentFilters
             string requestDetails = PageUrlComparisonValue.IsNotNullOrWhiteSpace() || PageReferrerComparisonValue.IsNotNullOrWhiteSpace() ? " where " : string.Empty;
             if ( PageUrlComparisonValue.IsNotNullOrWhiteSpace() )
             {
-                requestDetails += $"page url {PageUrlComparisonType.ConvertToString()} {PageUrlComparisonValue} and ";
+                requestDetails += $"page url {PageUrlComparisonType.ConvertToString()} {PageUrlComparisonValue} ";
             }
 
             if ( PageReferrerComparisonValue.IsNotNullOrWhiteSpace() )
             {
-                requestDetails += $"referrer {PageReferrerComparisonType.ConvertToString()} {PageReferrerComparisonValue}";
+                requestDetails += $"and referrer {PageReferrerComparisonType.ConvertToString()} {PageReferrerComparisonValue}";
             }
 
             var description = $"{comparisonPhrase} {onTheSites} {inTheDateRange} {limitedToPages} {requestDetails}";
@@ -222,10 +222,10 @@ namespace Rock.Personalization.SegmentFilters
                 switch ( PageUrlComparisonType )
                 {
                     case ComparisonType.EqualTo:
-                        pageViewsInteractionsQuery = pageViewsInteractionsQuery.Where( i => i.InteractionData == PageUrlComparisonValue );
+                        pageViewsInteractionsQuery = pageViewsInteractionsQuery.Where( i => i.InteractionData.ToUpper() == PageUrlComparisonValue.ToUpper() );
                         break;
                     case ComparisonType.NotEqualTo:
-                        pageViewsInteractionsQuery = pageViewsInteractionsQuery.Where( i => i.InteractionData != PageUrlComparisonValue );
+                        pageViewsInteractionsQuery = pageViewsInteractionsQuery.Where( i => i.InteractionData.ToUpper() != PageUrlComparisonValue.ToUpper() );
                         break;
                     case ComparisonType.StartsWith:
                         pageViewsInteractionsQuery = pageViewsInteractionsQuery.Where( i => i.InteractionData.StartsWith( PageUrlComparisonValue ) );
@@ -253,10 +253,10 @@ namespace Rock.Personalization.SegmentFilters
                 switch ( PageReferrerComparisonType )
                 {
                     case ComparisonType.EqualTo:
-                        pageViewsInteractionsQuery = pageViewsInteractionsQuery.Where( i => i.ChannelCustomIndexed1 == PageReferrerComparisonValue );
+                        pageViewsInteractionsQuery = pageViewsInteractionsQuery.Where( i => i.ChannelCustomIndexed1.ToUpper() == PageReferrerComparisonValue.ToUpper() );
                         break;
                     case ComparisonType.NotEqualTo:
-                        pageViewsInteractionsQuery = pageViewsInteractionsQuery.Where( i => i.ChannelCustomIndexed1 != PageReferrerComparisonValue );
+                        pageViewsInteractionsQuery = pageViewsInteractionsQuery.Where( i => i.ChannelCustomIndexed1.ToUpper() != PageReferrerComparisonValue.ToUpper() );
                         break;
                     case ComparisonType.StartsWith:
                         pageViewsInteractionsQuery = pageViewsInteractionsQuery.Where( i => i.ChannelCustomIndexed1.StartsWith( PageReferrerComparisonValue ) );
