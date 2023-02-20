@@ -162,7 +162,7 @@ namespace Rock.Personalization.SegmentFilters
                 limitedToPages = $"limited to the {pageNames.AsDelimited( ",", " and " )} pages";
             }
 
-            string requestDetails = " where ";
+            string requestDetails = PageUrlComparisonValue.IsNotNullOrWhiteSpace() || PageReferrerComparisonValue.IsNotNullOrWhiteSpace() ? " where " : string.Empty;
             if ( PageUrlComparisonValue.IsNotNullOrWhiteSpace() )
             {
                 requestDetails += $"page url {PageUrlComparisonType.ConvertToString()} {PageUrlComparisonValue} and ";
