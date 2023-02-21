@@ -114,10 +114,8 @@ namespace Rock.Reporting.DataFilter.Person
                 }
 
                 filterName = string.Format(
-                    "Attended '{0}' Group Type for the first time in the Date Range: {3}",
+                    "Attended '{0}' Group Type {2} for the first time in the Date Range: {1}",
                     groupType ?? "?",
-                    comparisonType.ConvertToString(),
-                    options[2],
                     dateRangeText,
                     includeChildGroups ? " (or child group types) " : string.Empty );
             }
