@@ -347,30 +347,30 @@ namespace Rock.Reporting.DataFilter.Person
             }
 
             var rockContext = serviceInstance.Context as RockContext;
-            var attendanceOccurrenceBaseQry = new AttendanceService( rockContext ).Queryable().Where( a => a.DidAttend.HasValue && a.DidAttend.Value );
+            var attendanceBaseQry = new AttendanceService( rockContext ).Queryable().Where( a => a.DidAttend.HasValue && a.DidAttend.Value );
 
             var groupIds = GetGroupIds( groupFirstAttendanceFilterSelection.GroupGuids, groupFirstAttendanceFilterSelection.IncludeChildGroups );
             if ( groupIds.Count == 1 )
             {
                 // if there is exactly one groupId we can avoid a 'Contains' (Contains has a small performance impact)
                 int groupId = groupIds[0];
-                attendanceOccurrenceBaseQry = attendanceOccurrenceBaseQry.Where( a => a.Occurrence.GroupId.HasValue && a.Occurrence.GroupId.Value == groupId );
+                attendanceBaseQry = attendanceBaseQry.Where( a => a.Occurrence.GroupId.HasValue && a.Occurrence.GroupId.Value == groupId );
             }
             else if ( groupIds.Count > 1 )
             {
-                attendanceOccurrenceBaseQry = attendanceOccurrenceBaseQry.Where( a => a.Occurrence.GroupId.HasValue && groupIds.Contains( a.Occurrence.GroupId.Value ) );
+                attendanceBaseQry = attendanceBaseQry.Where( a => a.Occurrence.GroupId.HasValue && groupIds.Contains( a.Occurrence.GroupId.Value ) );
             }
 
             if ( groupFirstAttendanceFilterSelection.Schedules.Any() )
             {
-                attendanceOccurrenceBaseQry = attendanceOccurrenceBaseQry.Where( a => a.Occurrence.ScheduleId.HasValue && groupFirstAttendanceFilterSelection.Schedules.Contains( a.Occurrence.ScheduleId.Value ) );
+                attendanceBaseQry = attendanceBaseQry.Where( a => a.Occurrence.ScheduleId.HasValue && groupFirstAttendanceFilterSelection.Schedules.Contains( a.Occurrence.ScheduleId.Value ) );
             }
 
             var personAliasQry = new PersonAliasService( rockContext ).Queryable();
             var personQryForJoin = new PersonService( rockContext ).Queryable();
 
             // Create explicitly joins to person alias and person tables so that rendered SQL has an INNER Joins vs OUTER joins on PersonAlias
-            var attendanceOccurrenceQry = attendanceOccurrenceBaseQry
+            var attendanceOccurrenceQry = attendanceBaseQry
                 .Join( personAliasQry, a => a.PersonAliasId, pa => pa.Id, ( a, pa ) => new
                 {
                     axn = a,

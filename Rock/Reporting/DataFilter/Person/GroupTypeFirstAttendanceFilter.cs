@@ -337,23 +337,23 @@ namespace Rock.Reporting.DataFilter.Person
             }
 
             var rockContext = serviceInstance.Context as RockContext;
-            var attendanceOccurenceBaseQry = new AttendanceService( rockContext ).Queryable().Where( a => a.DidAttend.HasValue && a.DidAttend.Value );
+            var attendanceBaseQry = new AttendanceService( rockContext ).Queryable().Where( a => a.DidAttend.HasValue && a.DidAttend.Value );
 
 
             if ( groupTypeIds.Count == 1 )
             {
                 int? groupTypeId = groupTypeIds[0];
-                attendanceOccurenceBaseQry = attendanceOccurenceBaseQry.Where( a => a.Occurrence.Group.GroupTypeId == groupTypeId );
+                attendanceBaseQry = attendanceBaseQry.Where( a => a.Occurrence.Group.GroupTypeId == groupTypeId );
             }
             else if ( groupTypeIds.Count > 1 )
             {
-                attendanceOccurenceBaseQry = attendanceOccurenceBaseQry.Where( a => groupTypeIds.Contains( a.Occurrence.Group.GroupTypeId ) );
+                attendanceBaseQry = attendanceBaseQry.Where( a => groupTypeIds.Contains( a.Occurrence.Group.GroupTypeId ) );
             }
 
             var personAliasQry = new PersonAliasService( rockContext ).Queryable();
             var personQryForJoin = new PersonService( rockContext ).Queryable();
 
-            var attendanceOccurrenceQry = attendanceOccurenceBaseQry
+            var attendanceOccurrenceQry = attendanceBaseQry
                 .Join( personAliasQry, a => a.PersonAliasId, pa => pa.Id, ( a, pa ) => new
                 {
                     axn = a,
