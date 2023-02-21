@@ -165,7 +165,7 @@ namespace Rock.Rest.Controllers
         /// </summary>
         /// <param name="id">The identifier of the notification message.</param>
         /// <returns>No content.</returns>
-        [Authenticate, Secured]
+        [Authenticate]
         [HttpPost]
         [System.Web.Http.Route( "api/NotificationMessages/MyMessages/Read/{id}" )]
         [Rock.SystemGuid.RestActionGuid( "063a4464-cf76-47a2-abca-246690facbc5" )]

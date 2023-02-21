@@ -213,6 +213,9 @@ namespace Rock.Model
                 // 1,000 pairs, we only send 10 queries instead of 1,000.
                 while ( personSites.Any() )
                 {
+                    // SQL has a maximum limit on the number of parameters a query
+                    // can take. Since this method multiplies those queries, we use
+                    // a relatively small batch size.
                     var items = personSites.Take( 100 ).ToList();
                     personSites = personSites.Skip( 100 ).ToList();
 
@@ -230,6 +233,10 @@ namespace Rock.Model
                     badgeCounts.AddRange( counts );
                 }
 
+                // Group all the device identifiers by badge count. There is
+                // nothing per-user about the push notification. So we can send
+                // the same "badge count" notification to all devices with
+                // matching badge numbers.
                 var badgeGroups = badgeCounts.GroupBy( bc => bc.Count );
                 var tasks = new List<Task>();
 
@@ -241,7 +248,7 @@ namespace Rock.Model
                     while ( deviceRegistrationIds.Any() )
                     {
                         // The docs say you can send to 1,000 registration ids at once.
-                        // Let's send to at most 100 at a time for now for safety.
+                        // Let's send to at most 100 at a time for safety.
                         var registrationIds = deviceRegistrationIds.Take( 100 ).ToList();
                         deviceRegistrationIds = deviceRegistrationIds.Skip( 100 ).ToList();
 

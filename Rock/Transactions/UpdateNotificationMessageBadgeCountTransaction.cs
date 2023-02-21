@@ -63,8 +63,8 @@ namespace Rock.Transactions
 
                 while ( personAliasIds.Any() )
                 {
-                    var aliasIds = personAliasIds.Take( 1_000 ).ToList();
-                    personAliasIds = personAliasIds.Skip( 1_000 ).ToList();
+                    var aliasIds = personAliasIds.Take( 10_000 ).ToList();
+                    personAliasIds = personAliasIds.Skip( 10_000 ).ToList();
 
                     var ids = personAliasService.Queryable()
                         .Where( pa => aliasIds.Contains( pa.Id ) )
