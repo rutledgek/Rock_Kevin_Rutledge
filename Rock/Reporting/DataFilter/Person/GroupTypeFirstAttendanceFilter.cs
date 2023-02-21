@@ -370,12 +370,12 @@ namespace Rock.Reporting.DataFilter.Person
 
             if ( dateRange.Start.HasValue )
             {
-                firstAttendanceDataQry = firstAttendanceDataQry.Where( xx => xx.FirstAttendanceDate >= dateRange.Start.Value );
+                firstAttendanceDataQry = firstAttendanceDataQry.Where( fa => fa.FirstAttendanceDate >= dateRange.Start.Value );
             }
 
             if ( dateRange.End.HasValue )
             {
-                firstAttendanceDataQry = firstAttendanceDataQry.Where( xx => xx.FirstAttendanceDate < dateRange.End.Value );
+                firstAttendanceDataQry = firstAttendanceDataQry.Where( fa => fa.FirstAttendanceDate < dateRange.End.Value );
             }
             else
             {
@@ -383,8 +383,8 @@ namespace Rock.Reporting.DataFilter.Person
                 return Expression.Constant( false );
             }
 
-            var innerQry = firstAttendanceDataQry.Select( xx => xx.PersonId ).AsQueryable();
-            var qry = new PersonService( rockContext ).Queryable().Where( p => innerQry.Any( xx => xx == p.Id ) );
+            var innerQry = firstAttendanceDataQry.Select( fa => fa.PersonId ).AsQueryable();
+            var qry = new PersonService( rockContext ).Queryable().Where( p => innerQry.Any( fa => fa == p.Id ) );
 
             return FilterExpressionExtractor.Extract<Model.Person>( qry, parameterExpression, "p" );
         }
