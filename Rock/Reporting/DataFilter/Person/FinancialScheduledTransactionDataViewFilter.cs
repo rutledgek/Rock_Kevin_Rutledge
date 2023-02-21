@@ -42,15 +42,7 @@ namespace Rock.Reporting.DataFilter.Person
 
         #region Overrides
 
-        /// <summary>
-        /// Gets the selection.
-        /// Implement this version of GetSelection if your DataFilterComponent works the same in all FilterModes
-        /// </summary>
-        /// <param name="entityType">The System Type of the entity to which the filter will be applied.</param>
-        /// <param name="controls">The collection of controls used to set the filter values.</param>
-        /// <returns>
-        /// A formatted string.
-        /// </returns>
+        /// <inheritdoc/>
         public override string GetSelection( Type entityType, Control[] controls )
         {
             var ddlDataView = controls.GetByName<DataViewItemPicker>( _CtlDataView );
@@ -64,13 +56,7 @@ namespace Rock.Reporting.DataFilter.Person
             return settings.ToSelectionString();
         }
 
-        /// <summary>
-        /// Sets the selection.
-        /// Implement this version of SetSelection if your DataFilterComponent works the same in all FilterModes
-        /// </summary>
-        /// <param name="entityType">Type of the entity.</param>
-        /// <param name="controls">The controls.</param>
-        /// <param name="selection">The selection.</param>
+        /// <inheritdoc/>
         public override void SetSelection( Type entityType, Control[] controls, string selection )
         {
             var ddlDataView = controls.GetByName<DataViewItemPicker>( _CtlDataView );
@@ -87,14 +73,7 @@ namespace Rock.Reporting.DataFilter.Person
             cbCombineGiving.Checked = settings.CombineGiving;
         }
 
-        /// <summary>
-        /// Creates the model representation of the child controls used to display and edit the filter settings.
-        /// Implement this version of CreateChildControls if your DataFilterComponent supports different FilterModes
-        /// </summary>
-        /// <param name="entityType"></param>
-        /// <param name="filterControl"></param>
-        /// <param name="filterMode"></param>
-        /// <returns></returns>
+        /// <inheritdoc/>
         public override Control[] CreateChildControls( Type entityType, FilterField filterControl, FilterMode filterMode )
         {
             var ddlDataView = new DataViewItemPicker();
@@ -115,17 +94,7 @@ namespace Rock.Reporting.DataFilter.Person
             return new Control[] { ddlDataView, cbCombineGiving };
         }
 
-        /// <summary>
-        /// Creates a Linq Expression that can be applied to an IQueryable to filter the result set.
-        /// </summary>
-        /// <param name="entityType">The type of entity in the result set.</param>
-        /// <param name="serviceInstance">A service instance that can be queried to obtain the result set.</param>
-        /// <param name="parameterExpression">The input parameter that will be injected into the filter expression.</param>
-        /// <param name="selection">A formatted string representing the filter settings.</param>
-        /// <returns>
-        /// A Linq Expression that can be used to filter an IQueryable.
-        /// </returns>
-        /// <exception cref="System.Exception">Filter issue(s):  + errorMessages.AsDelimited( ;  )</exception>
+        /// <inheritdoc/>
         public override Expression GetExpression( Type entityType, IService serviceInstance, ParameterExpression parameterExpression, string selection )
         {
             var settings = new SelectionConfig( selection );
@@ -192,20 +161,15 @@ namespace Rock.Reporting.DataFilter.Person
             }
 
             /// <summary>
-            /// Gets or sets a value indicating whether [combine giving].
+            /// Gets or sets a value indicating whether to include individuals in the same giving group
+            /// as the filtered persons.
             /// </summary>
             /// <value>
             ///   <c>true</c> if [combine giving]; otherwise, <c>false</c>.
             /// </value>
             public bool CombineGiving { get; set; }
 
-            /// <summary>
-            /// Gets an ordered set of property values that can be used to construct the
-            /// settings string.
-            /// </summary>
-            /// <returns>
-            /// An ordered collection of strings representing the parameter values.
-            /// </returns>
+            /// <inheritdoc />
             protected override IEnumerable<string> OnGetParameters()
             {
                 var settings = new List<string>();
@@ -216,11 +180,7 @@ namespace Rock.Reporting.DataFilter.Person
                 return settings;
             }
 
-            /// <summary>
-            /// Set the property values parsed from a settings string.
-            /// </summary>
-            /// <param name="version">The version number of the parameter set.</param>
-            /// <param name="parameters">An ordered collection of strings representing the parameter values.</param>
+            /// <inheritdoc/>
             protected override void OnSetParameters( int version, IReadOnlyList<string> parameters )
             {
                 this.DataViewGuid = DataComponentSettingsHelper.GetParameterOrEmpty( parameters, 0 ).AsGuidOrNull();
