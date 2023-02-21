@@ -378,11 +378,11 @@ namespace Rock.Reporting.DataFilter.Person
                 } );
 
             var firstAttendanceDataQry = attendanceOccurrenceQry
-                .GroupBy( xx => xx.PersonId )
-                .Select( ss => new
+                .GroupBy( pa => pa.PersonId )
+                .Select( fa => new
                 {
-                    PersonId = ss.Key,
-                    FirstAttendanceDate = ss.Min( a => a.axn.Occurrence.OccurrenceDate )
+                    PersonId = fa.Key,
+                    FirstAttendanceDate = fa.Min( a => a.axn.Occurrence.OccurrenceDate )
                 } );
 
             if ( dateRange.Start.HasValue )
