@@ -130,8 +130,8 @@ namespace Rock.Jobs
         /// Sends the group schedule confirmations.
         /// </summary>
         /// <param name="rootGroupGuid">The root group unique identifier.</param>
-        /// <param name="groupDataViewGuid"></param>
-        /// <param name="commandTimeoutSeconds"></param>
+        /// <param name="groupDataViewGuid">The guid for the group data view.</param>
+        /// <param name="commandTimeoutSeconds">The command timeout seconds.</param>
         private SendMessageResult SendGroupScheduleConfirmationCommunications( System.Guid? rootGroupGuid, System.Guid? groupDataViewGuid, int commandTimeoutSeconds )
         {
             List<Person> personsScheduled = new List<Person>();
@@ -184,8 +184,8 @@ namespace Rock.Jobs
         /// Sends the group schedule reminders.
         /// </summary>
         /// <param name="rootGroupGuid">The root group unique identifier.</param>
-        /// <param name="groupDataViewGuid"></param>
-        /// <param name="commandTimeoutSeconds"></param>
+        /// <param name="groupDataViewGuid">The guid for the group data view.</param>
+        /// <param name="commandTimeoutSeconds">The command timeout seconds.</param>
         private SendMessageResult SendGroupScheduleReminderCommunications( System.Guid? rootGroupGuid, System.Guid? groupDataViewGuid, int commandTimeoutSeconds )
         {
             List<Person> personsScheduled = new List<Person>();
