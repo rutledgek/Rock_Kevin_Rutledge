@@ -33,6 +33,17 @@ using DocumentFormat.OpenXml.Drawing.Charts;
 using SixLabors.ImageSharp.Processing;
 using DocumentFormat.OpenXml.Wordprocessing;
 using System.Data.Entity.Core.Metadata.Edm;
+using System.Diagnostics;
+using Rock.Checkr.Constants;
+using Color = SixLabors.ImageSharp.Color;
+using System.Threading;
+using SixLabors.ImageSharp.Drawing;
+using SixLabors.ImageSharp.Drawing.Processing;
+using Humanizer;
+using Parlot.Fluent;
+using static Lucene.Net.Store.Lock;
+using Mono.CSharp;
+using Enum = System.Enum;
 
 namespace RockWeb
 {
@@ -85,40 +96,17 @@ namespace RockWeb
             // Read query string parms
             var settings = ReadSettingsFromRequest( context.Request );
 
-            // Make a copy of the mask so we don't resize the shared original
-            var maskTemplate = AvatarHelper.AdultMaleMask.Clone( o => o.Crop( settings.Size, settings.Size ) );
-            var test = AvatarHelper.AdultMaleMask.CloneAs<Rgba32>();
-            test.Mutate( o => o.Resize( settings.Size, settings.Size ) );
-
-            var mask = AvatarHelper.CreateIconMask( AvatarHelper.AdultMaleMask, RockColor.FromHex( settings.AvatarColors.ForegroundColor ) );
-
-            var filePath = System.Web.Hosting.HostingEnvironment.MapPath( "~\\Content\\avatar.png" );
-
-
-            mask.Save( filePath );
-            maskTemplate.Save( System.Web.Hosting.HostingEnvironment.MapPath( "~\\Content\\avatar-temp.png" ) );
-            AvatarHelper.AdultMaleMask.Save( System.Web.Hosting.HostingEnvironment.MapPath( "~\\Content\\avatar-temp2.png" ) );
-            test.Save( System.Web.Hosting.HostingEnvironment.MapPath( "~\\Content\\avatar-temp3.png" ) );
-
-            // var routeTable = RockCache.GetOrAddExisting( RoutesCacheKey, BuildDeepLinkRoutes ) as Dictionary<string, List<DeepLinkRoute>>;
-            var cacheKey = GenerateCacheKey( settings );
-
-            //System.IO.File.SetLastWriteTimeUtc(fileName, DateTime.UtcNow);
-
             Stream fileContent = null;
             try
             {
-                string cachedFilePath = context.Request.MapPath( $"~/App_Data/Cache/{cacheKey}.{settings.AvatarFileExtension}" );
+                string cachedFilePath = context.Request.MapPath( $"~/App_Data/Cache/{settings.CacheKey}.png" );
 
-                if ( File.Exists( cachedFilePath ) )
-                {
-                    fileContent = FetchFromCache( cachedFilePath );
-                }
+                fileContent = FetchFromCache( cachedFilePath );
 
                 // The file is not in the cache so we'll create it
                 if ( fileContent == null )
                 {
-                    fileContent = CreateAvatar( settings );
+                    fileContent = AvatarHelper.CreateAvatar( settings );
                 }
 
                 // Something has gone really wrong so we'll send an error message
@@ -133,21 +121,12 @@ namespace RockWeb
                 // Add cache validation headers
                 context.Response.AddHeader( "Last-Modified", DateTime.Now.ToUniversalTime().ToString( "R" ) );
                 context.Response.AddHeader( "ETag", DateTime.Now.ToString().XxHash() );
-
-                // Return the avatar mime-type
-                if ( settings.AvatarFormat == AvatarFormat.Png )
-                {
-                    context.Response.ContentType = "image/png";
-                }
-                else
-                {
-                    context.Response.ContentType = "image/svg+xml";
-                }
+                context.Response.ContentType = "image/png";
 
                 // Stream the contents of the file to the response
                 using ( var responseStream = fileContent )
                 {
-                    context.Response.AddHeader( "content-disposition", "inline;filename=" + $"{cacheKey}.{settings.AvatarFileExtension}".UrlEncode() );
+                    context.Response.AddHeader( "content-disposition", "inline;filename=" + $"{settings.CacheKey}.png".UrlEncode() );
                     if ( responseStream.CanSeek )
                     {
                         responseStream.Seek( 0, SeekOrigin.Begin );
@@ -186,22 +165,18 @@ namespace RockWeb
         {
             var settings = new AvatarSettings();
 
+            // Calculate the physical path to store the cached files to
+            settings.CachePath = request.MapPath( $"~/App_Data/Cache/");
+
+            // Colors
             settings.AvatarColors.BackgroundColor = ( request.QueryString["BackgroundColor"] ?? "" ).ToString();
             settings.AvatarColors.ForegroundColor = ( request.QueryString["ForegroundColor"] ?? "" ).ToString();
             settings.AvatarColors.GenerateMissingColors();
 
+            // Size
             if ( request.QueryString["Size"] != null )
             {
                 settings.Size = request.QueryString["Size"].AsInteger();
-            }
-
-            // Format (PNG is the default
-            if ( request.QueryString["Format"] != null )
-            {
-                if ( request.QueryString["Format"].ToLower() == "svg" )
-                {
-                    settings.AvatarFormat = AvatarFormat.Svg;
-                }
             }
 
             // Style
@@ -211,6 +186,12 @@ namespace RockWeb
                 {
                     settings.AvatarStyle = AvatarStyle.Initials;
                 }
+            }
+
+            // Age Classification
+            if ( request.QueryString["AgeClassification"] != null )
+            {
+                settings.AgeClassification = ( AgeClassification ) Enum.Parse( typeof( AgeClassification ), request.QueryString["AgeClassification"], true );
             }
 
             // Gender
@@ -232,21 +213,9 @@ namespace RockWeb
             }
 
             // Record Type Guid
-            if ( request.QueryString["RecordTypeGuid"] != null )
+            if ( request.QueryString["RecordTypeId"] != null )
             {
-                settings.RecordTypeGuid = request.QueryString["RecordTypeGuid"].AsGuidOrNull();
-            }
-
-            // Person Guid
-            if ( request.QueryString["PersonGuid"] != null )
-            {
-                settings.PersonGuid = request.QueryString["PersonGuid"].AsGuidOrNull();
-            }
-
-            // Person Id
-            if ( request.QueryString["PersonId"] != null )
-            {
-                settings.PersonId = request.QueryString["PersonId"].AsIntegerOrNull();
+                settings.RecordTypeId = request.QueryString["RecordTypeId"].AsIntegerOrNull();
             }
 
             // Bold
@@ -276,17 +245,43 @@ namespace RockWeb
                 settings.PrefersLight = request.QueryString["PrefersLight"].AsBoolean();
             }
 
+            // Logic for loading from Person Objects
+            // ----------------------------------------
+
+            Person person = null;
+            // Person Guid
+            if ( request.QueryString["PersonGuid"] != null )
+            {
+                settings.PersonGuid = request.QueryString["PersonGuid"].AsGuidOrNull();
+
+                if ( settings.PersonGuid.HasValue)
+                {
+                    person = new PersonService( new RockContext() ).Get( settings.PersonGuid.Value );
+                }
+            }
+
+            // Person Id
+            if ( request.QueryString["PersonId"] != null )
+            {
+                settings.PersonId = request.QueryString["PersonId"].AsIntegerOrNull();
+
+                if ( settings.PersonId.HasValue )
+                {
+                    person = new PersonService( new RockContext() ).Get( settings.PersonId.Value );
+                }
+            }
+
+            // Load configuration from the person object
+            if (person != null )
+            {
+                settings.RecordTypeId = person.RecordStatusValueId;
+                settings.Gender = person.Gender;
+                settings.Text = person.Initials;
+                settings.AgeClassification = person.AgeClassification;
+                settings.PhotoId = person.PhotoId;
+            }
+
             return settings;
-        }
-
-        private Stream CreateAvatar( AvatarSettings settings )
-        {
-            return null;
-        }
-
-        private string GenerateCacheKey( AvatarSettings settings )
-        {
-            return $"{settings.Size}-{settings.Text}-{settings.AvatarColors.ForegroundColor}_{settings.AvatarColors.BackgroundColor}-{settings.CornerRadius}-{settings.AvatarFormat}-{settings.AvatarStyle}-{settings.Gender}-{settings.IsBold.ToString().Truncate(1)}-{settings.PersonGuid}{settings.PersonId}-{settings.PhotoId}-{settings.PrefersLight.ToString().Truncate( 1 )}-{settings.RecordTypeGuid}";
         }
 
         /// <summary>
@@ -298,7 +293,15 @@ namespace RockWeb
         {
             try
             {
-                return File.Open( physicalPath, FileMode.Open, FileAccess.Read, FileShare.Read );
+                if ( File.Exists( physicalPath ) )
+                {
+                    // Touch the file to update the last modified date
+                    File.SetLastWriteTimeUtc( physicalPath, DateTime.UtcNow );
+
+                    return File.Open( physicalPath, FileMode.Open, FileAccess.Read, FileShare.Read );
+                }
+
+                return null;
             }
             catch
             {
@@ -318,12 +321,18 @@ namespace RockWeb
         public static Image UnknownGenderMask { get; } = new Image<Rgba32>( 1, 1 );
         public static Image BusinessMask { get; } = new Image<Rgba32>( 1, 1 );
 
+        public static int RecordTypeIdBusiness { get; } = 0;
+
+        public static int RecordTypeIdNamelessPerson { get; } = 0;
+
+        public static int RecordTypeIdPerson { get; } = 0;
+
+
         static AvatarHelper() {
 
             // Load icon masks. 
             var folderPath = System.Web.Hosting.HostingEnvironment.MapPath( "~\\App_Data\\Avatar\\Masks\\" );
 
-            // Adult male
             try
             {
                 AdultMaleMask = Image.Load<RgbaVector>( folderPath + "adult-male.png" );
@@ -333,7 +342,12 @@ namespace RockWeb
                 UnknownGenderMask = Image.Load<RgbaVector>( folderPath + "unknown-gender.png" );
                 BusinessMask = Image.Load<RgbaVector>( folderPath + "business.png" );
             }
-            catch {}
+            catch { }
+
+            // Load cache of record types
+            RecordTypeIdBusiness = DefinedValueCache.Get( Rock.SystemGuid.DefinedValue.PERSON_RECORD_TYPE_BUSINESS.AsGuid() ).Id;
+            RecordTypeIdNamelessPerson = DefinedValueCache.Get( Rock.SystemGuid.DefinedValue.PERSON_RECORD_TYPE_NAMELESS.AsGuid() ).Id;
+            RecordTypeIdPerson = DefinedValueCache.Get( Rock.SystemGuid.DefinedValue.PERSON_RECORD_TYPE_PERSON.AsGuid() ).Id;
         }
 
 
@@ -343,18 +357,14 @@ namespace RockWeb
         /// <param name="mask">The mask.</param>
         /// <param name="color">The color.</param>
         /// <returns>Image.</returns>
-        public static Image CreateIconMask( Image mask, RockColor color )
+        public static Image CreateIconMask( Image mask, string color )
         {
             // Logic for this comes from: https://stackoverflow.com/questions/52875516/how-to-compose-two-images-using-source-in-composition
 
-            // Convert the RGB to floats
-            var red = (float) color.R / 100;
-            var green = ( float ) color.G / 100;
-            var blue = ( float ) color.B / 100;
-
             // Create the "background" which is the solid color that we want our mask  to cut out
-            var background = new Image<RgbaVector>( mask.Width, mask.Height, new RgbaVector( red, green, blue, 1 ) );  
-            
+            var maskColor = RgbaVector.FromHex( color );
+            var background = new Image<RgbaVector>( mask.Width, mask.Height, maskColor );
+
             var processorCreator = new DrawImageProcessor(
                 mask,
                 Point.Empty,
@@ -368,9 +378,197 @@ namespace RockWeb
                 background,
                 mask.Bounds() );
 
-            pxProcessor.Execute(); 
+            pxProcessor.Execute();
 
             return background;
+        }
+
+        /// <summary>
+        /// Creates the avatar based on the provided settings
+        /// </summary>
+        /// <param name="settings"></param>
+        /// <returns></returns>
+        public static Stream CreateAvatar( AvatarSettings settings )
+        {
+            Image avatar = null;
+
+            // If there is a photo in the settings we will always use that
+            if ( settings.PhotoId.HasValue )
+            {
+                // Get image from the binary file
+                avatar = RockImage.GetImageFromBinaryFileService( settings.PhotoId.Value );
+
+                // Resize image
+                avatar.CropResize( settings.Size, settings.Size );
+            }
+
+            // If not photo was provided then we'll create a fallback
+            if ( avatar == null )
+            {
+                switch ( settings.AvatarStyle )
+                {
+                    case AvatarStyle.Icon:
+                        {
+                            avatar = CreateIconAvatar( settings );
+                            break;
+                        }
+                    case AvatarStyle.Initials:
+                        {
+                            avatar = CreateInitialsAvatar( settings );
+                            break;
+                        }
+                }
+            }
+
+            // We should always have a image, but just in case
+            if ( avatar == null )
+            {
+                return null;
+            }
+
+            // Apply the requested styling
+            if ( settings.CornerRadius != 0 )
+            {
+                avatar.Mutate( o => o.ApplyRoundedCorners( settings.CornerRadius ) );
+            }
+
+            if ( settings.IsCircle )
+            {
+                avatar.Mutate( o => o.ApplyCircleCorners() );
+            }
+
+            // Cache the image to the file system
+            //avatar.SaveAsPng( $"{settings.CachePath}{settings.CacheKey}.png" );  TODO: REMOVE BEFORE FLIGHT
+
+            var outputStream = new MemoryStream();
+            avatar.SaveAsPng( outputStream );
+
+            outputStream.Position = 0;
+
+            return outputStream;
+        }
+
+        private static Image CreateIconAvatar( AvatarSettings settings )
+        {
+            // Get the top layer which is the icon
+            var topLayer = CreateIconAvatarTopLayer( settings );
+
+            // Get the background layer which is solid
+            var bottomLayer = RockImage.CreateSolidImage( settings.Size, settings.Size, settings.AvatarColors.BackgroundColor );
+
+            // Return the two images merged
+            bottomLayer.Mutate( i => i
+                        .DrawImage( topLayer, new Point( 0, 0 ), 1f )
+                        .DrawImage( bottomLayer, new Point( 0, 0 ), 1f ) );
+
+            return bottomLayer;
+        }
+
+        /// <summary>
+        /// Gets the top layer for the icon avatar
+        /// </summary>
+        /// <param name="settings"></param>
+        /// <returns></returns>
+        private static Image CreateIconAvatarTopLayer( AvatarSettings settings )
+        {
+            // Get the correct mask to use based off the settings
+            var mask = GetIconMask( settings );
+
+            // Resize the mask
+            var resizeOptions = new ResizeOptions() { Size = new SixLabors.ImageSharp.Size( settings.Size, settings.Size ), Sampler = KnownResamplers.Lanczos3 };
+            mask.Mutate( o => o.Resize( resizeOptions ) );
+
+            var topLayer = AvatarHelper.CreateIconMask( mask, settings.AvatarColors.ForegroundColor );
+
+            return topLayer;
+        }
+
+        /// <summary>
+        /// Gets the correct icon mask based on the settings.
+        /// </summary>
+        /// <param name="settings"></param>
+        /// <returns></returns>
+        private static Image GetIconMask( AvatarSettings settings )
+        {
+            // Business
+            if ( settings.RecordTypeId == AvatarHelper.RecordTypeIdBusiness )
+            {
+                return AvatarHelper.BusinessMask.CloneAs<Rgba32>();
+            }
+
+            // Nameless person
+            if ( settings.RecordTypeId == AvatarHelper.RecordTypeIdNamelessPerson )
+            {
+                return AvatarHelper.UnknownGenderMask.CloneAs<Rgba32>();
+            }
+
+            // Child male
+            if ( settings.Gender == Gender.Male && settings.AgeClassification == AgeClassification.Child )
+            {
+                return AvatarHelper.ChildMaleMask.CloneAs<Rgba32>();
+            }
+
+            // Child female
+            if ( settings.Gender == Gender.Female && settings.AgeClassification == AgeClassification.Child )
+            {
+                return AvatarHelper.ChildFemaleMask.CloneAs<Rgba32>();
+            }
+
+            // Male
+            if ( settings.Gender == Gender.Male )
+            {
+                return AvatarHelper.AdultMaleMask.CloneAs<Rgba32>();
+            }
+
+            // Female
+            if ( settings.Gender == Gender.Female )
+            {
+                return AvatarHelper.AdultFemaleMask.CloneAs<Rgba32>();
+            }
+
+            // Default is unknown
+            return AvatarHelper.UnknownGenderMask.CloneAs<Rgba32>();
+        }
+
+        private static Image CreateInitialsAvatar( AvatarSettings settings )
+        {
+            return null;
+        }
+
+        
+    }
+
+    public static class RockImage
+    {
+        public static Image CreateSolidImage( int width, int height, string color )
+        {
+            return new Image<Rgba32>( width, height, Color.ParseHex( color)  );
+        }
+
+        /// <summary>
+        /// Returns a Image Sharp image from a binary file 
+        /// </summary>
+        /// <param name="photoId"></param>
+        /// <returns></returns>
+        public static Image GetImageFromBinaryFileService( int photoId )
+        {
+            var binaryFileData = new BinaryFileDataService( new RockContext() ).Get( photoId );
+
+            // If the file was not found return a blank image
+            if ( binaryFileData == null )
+            {
+                return new Image<Rgba32>( 1, 1 );
+            }
+
+            // Return the binary file's content as a new image
+            try
+            {
+                return Image.Load<Rgba32>( binaryFileData.Content );
+            }
+            catch { }
+
+            // There was a problem with the content in the binary file so return a blank image
+            return new Image<Rgba32>( 1, 1 );
         }
     }
 
@@ -386,10 +584,9 @@ namespace RockWeb
         public int Size { get; set; } = 128;
 
         /// <summary>
-        /// Gets or sets the avatar format.
+        /// Gets or sets the age classification
         /// </summary>
-        /// <value>The avatar format.</value>
-        public AvatarFormat AvatarFormat { get; set; } = AvatarFormat.Png;
+        public AgeClassification AgeClassification { get; set; }
 
         /// <summary>
         /// Gets or sets the gender for the avatar icon.
@@ -408,7 +605,7 @@ namespace RockWeb
             }
             set
             {
-                _text = value.Truncate( 2 );
+                _text = value.Truncate( 2, false );
             }
         }
         private string _text = string.Empty;
@@ -423,7 +620,7 @@ namespace RockWeb
         /// Gets or sets the record type unique identifier.
         /// </summary>
         /// <value>The record type unique identifier.</value>
-        public Guid? RecordTypeGuid { get; set; }
+        public int? RecordTypeId { get; set; }
 
         /// <summary>
         /// Gets or sets the person unique identifier.
@@ -436,19 +633,6 @@ namespace RockWeb
         /// </summary>
         /// <value>The person identifier.</value>
         public int? PersonId { get; set; }
-
-
-        /// <summary>
-        /// Gets the avatar file extension from the format.
-        /// </summary>
-        /// <value>The avatar file extension.</value>
-        public string AvatarFileExtension
-        {
-            get
-            {
-                return AvatarFormat.ToString();
-            }
-        }
 
         /// <summary>
         /// Gets or sets the avatar colors (foreground / background).
@@ -485,6 +669,31 @@ namespace RockWeb
         /// </summary>
         /// <value><c>true</c> if [prefers light]; otherwise, <c>false</c>.</value>
         public bool PrefersLight { get; set; } = true;
+
+        /// <summary>
+        /// The physical path to store the cached avatars
+        /// </summary>
+        public string CachePath { get; set; }
+
+        /// <summary>
+        /// Creates a cache key based on the settings
+        /// </summary>
+        public string CacheKey
+        {
+            // Written as is to ensure the key is calculated only once.
+            // Note we can't include the person id or guid in the cache key has their profile picture could change and the cache key is
+            // used to cache the image both on the server (which could be clustered) and the client.
+            get
+            {
+                if ( _cacheKey.IsNullOrWhiteSpace() )
+                {
+                    _cacheKey = $"{Size}-{Text}-{AvatarColors.ForegroundColor.Replace("#", "")}_{AvatarColors.BackgroundColor.Replace( "#", "" )}-{CornerRadius}-{AvatarStyle}-{AgeClassification}-{Gender}-{IsBold.ToString().Truncate( 1, false )}-{PhotoId}-{PrefersLight.ToString().Truncate( 1, false )}-{RecordTypeId}";
+                }
+
+                return _cacheKey;
+            }
+        }
+        private string _cacheKey = string.Empty;
     }
 
     public enum AvatarFormat
@@ -504,6 +713,11 @@ namespace RockWeb
     /// </summary>
     public class AvatarColors
     {
+        /// <summary>
+        /// Reusable random generator (ensures colors are truely random). 
+        /// </summary>
+        private static Random _random= new Random();
+
         /// <summary>
         /// Gets or sets the foreground color for the avatar.
         /// </summary>
@@ -533,8 +747,7 @@ namespace RockWeb
             // If no color was provided find a random color
             if ( this.ForegroundColor.IsNullOrWhiteSpace() && this.BackgroundColor.IsNullOrWhiteSpace() )
             {
-                var random = new Random();
-                var randomIndex = random.Next( 0, colorValues.Length );
+                var randomIndex = _random.Next( 0, colorValues.Length );
                 this.ForegroundColor = colorValues[randomIndex];
             }
 
@@ -579,74 +792,101 @@ namespace RockWeb
         // List of random colors to use when no colors were provided
         // From: https://github.com/LasseRafn/ui-avatars/blob/master/Utils/Input.php
         private string[] colorValues = new string[] {
-            "#5e35b1",
-            "#512da8",
-            "#4527a0",
-            "#311b92",
-            "#8e24aa",
-            "#7b1fa2",
-            "#6a1b9a",
-            "#4a148c",
-            "#3949ab",
-            "#303f9f",
-            "#283593",
-            "#1a237e",
-            "#1e88e5",
-            "#1976d2",
-            "#1565c0",
-            "#0d47a1",
-            "#039be5",
-            "#0288d1",
-            "#0277bd",
-            "#01579b",
-            "#00acc1",
-            "#0097a7",
-            "#00838f",
-            "#006064",
-            "#00897b",
-            "#00796b",
-            "#00695c",
-            "#004d40",
-            "#43a047",
-            "#388e3c",
-            "#2e7d32",
-            "#1b5e20",
-            "#7cb342",
-            "#689f38",
-            "#558b2f",
-            "#33691e",
-            "#c0ca33",
-            "#afb42b",
-            "#9e9d24",
-            "#827717",
-            "#fdd835",
-            "#fbc02d",
-            "#f9a825",
-            "#f57f17",
-            "#ffb300",
-            "#ffa000",
-            "#ff8f00",
-            "#ff6f00",
-            "#fb8c00",
-            "#f57c00",
-            "#ef6c00",
-            "#e65100",
-            "#f4511e",
-            "#e64a19",
-            "#d84315",
-            "#bf360c",
-            "#6d4c41",
-            "#5d4037",
-            "#4e342e",
-            "#3e2723",
-            "#546e7a",
-            "#455a64",
-            "#37474f",
-            "#263238",
-            "#F44336",
-            "#E53935",
-            "#D32F2F",
-            "#C62828"
+            "#ef4444",
+            "#f97316",
+            "#71717a",
+            "#f59e0b",
+            "#eab308",
+            "#84cc16",
+            "#22c55e",
+            "#10b981",
+            "#14b8a6",
+            "#06b6d4",
+            "#0ea5e9",
+            "#3b82f6",
+            "#6366f1",
+            "#8b5cf6",
+            "#a855f7",
+            "#d946ef",
+            "#ec4899",
+            "#f43f5e",
+            "#22c55e"
         };
+    }
+
+    public static partial class ExtensionMethods
+    {
+        /// <summary>
+        /// Applies rounded corners to an image.
+        /// </summary>
+        /// <param name="ctx"></param>
+        /// <param name="cornerRadius"></param>
+        /// <returns></returns>
+        public static IImageProcessingContext ApplyRoundedCorners( this IImageProcessingContext ctx, float cornerRadius )
+        {
+            // Source: https://github.com/SixLabors/Samples/blob/main/ImageSharp/AvatarWithRoundedCorner/Program.cs
+
+            // First create a square
+            var rect = new RectangularPolygon( -0.5f, -0.5f, cornerRadius, cornerRadius );
+
+            // Then cut out of the square a circle so we are left with a corner
+            IPath cornerTopLeft = rect.Clip( new EllipsePolygon( cornerRadius - 0.5f, cornerRadius - 0.5f, cornerRadius ) );
+
+            var size = ctx.GetCurrentSize();
+
+            float rightPos = size.Width - cornerTopLeft.Bounds.Width + 1;
+            float bottomPos = size.Height - cornerTopLeft.Bounds.Height + 1;
+
+            // Move it across the width of the image - the width of the shape
+            IPath cornerTopRight = cornerTopLeft.RotateDegree( 90 ).Translate( rightPos, 0 );
+            IPath cornerBottomLeft = cornerTopLeft.RotateDegree( -90 ).Translate( 0, bottomPos );
+            IPath cornerBottomRight = cornerTopLeft.RotateDegree( 180 ).Translate( rightPos, bottomPos );
+
+            var corners = new PathCollection( cornerTopLeft, cornerBottomLeft, cornerTopRight, cornerBottomRight );
+
+            ctx.SetGraphicsOptions( new GraphicsOptions()
+            {
+                Antialias = true,
+                AlphaCompositionMode = PixelAlphaCompositionMode.DestOut // Enforces that any part of this shape that has color is punched out of the background
+            } );
+
+            // mutating in here as we already have a cloned original
+            // use any color (not Transparent), so the corners will be clipped
+            foreach ( var c in corners )
+            {
+                ctx = ctx.Fill( Color.Red, c );
+            }
+            return ctx;
+        }
+
+        /// <summary>
+        /// Gives the corners a circle effect in a way where the image looks round on the edges (a full circle if the image is square).
+        /// </summary>
+        /// <param name="ctx"></param>
+        /// <returns></returns>
+        public static IImageProcessingContext ApplyCircleCorners( this IImageProcessingContext ctx )
+        {
+            var size = ctx.GetCurrentSize();
+
+            // 1/2 of the height + 2 px (to make up for the internal logic of rounded corners)
+            ctx.ApplyRoundedCorners( ( size.Height / 2 ) + 2 );
+
+            return ctx;
+        }
+
+        /// <summary>
+        /// Resizes the source image. Crops the resized image to fit the bounds of its container.
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <returns></returns>
+        public static Image CropResize( this Image source, int width, int height )
+        {
+            var resizeOptions = new ResizeOptions() { Mode = ResizeMode.Crop, Size = new SixLabors.ImageSharp.Size( width, height ), Sampler = KnownResamplers.Lanczos3 };
+            source.Mutate( i => i.Resize( resizeOptions ) );
+
+            return source;
+        }
     }
 }
