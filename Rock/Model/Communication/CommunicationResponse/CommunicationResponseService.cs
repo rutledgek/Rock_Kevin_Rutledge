@@ -553,6 +553,8 @@ namespace Rock.Model
 
                 CommunicationService.SendConversationReadSmsRealTimeNotificationsInBackground( conversationKey );
             }
+
+            UpdateResponseNotificationMessagesInBackground( relatedSmsFromPhoneNumber, fromPersonId );
         }
 
         /// <summary>
@@ -617,6 +619,27 @@ namespace Rock.Model
             }
 
             return messageBag;
+        }
+
+        /// <summary>
+        /// Updates all notification messages in regards to a new response
+        /// being received or an existing response being read.
+        /// </summary>
+        /// <param name="phoneNumber">The phone number that represents Rock's side of the conversation.</param>
+        /// <param name="fromPersonId">The identifier of the person that represents the other parties side of the conversation.</param>
+        internal static void UpdateResponseNotificationMessagesInBackground( SystemPhoneNumberCache phoneNumber, int fromPersonId )
+        {
+            Task.Run( () =>
+            {
+                try
+                {
+                    Rock.Core.NotificationMessageTypes.SmsConversation.UpdateNotificationMessages( phoneNumber, fromPersonId );
+                }
+                catch ( Exception ex )
+                {
+                    ExceptionLogService.LogException( ex );
+                }
+            } );
         }
     }
 }

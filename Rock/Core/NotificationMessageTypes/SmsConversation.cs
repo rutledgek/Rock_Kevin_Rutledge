@@ -18,12 +18,17 @@
 using System;
 using System.ComponentModel;
 using System.ComponentModel.Composition;
+using System.Data.Entity;
+using System.Linq;
 
+using Rock.Data;
 using Rock.Enums.Core;
 using Rock.Model;
 using Rock.Net;
 using Rock.ViewModels.Core;
 using Rock.Web.Cache;
+
+using Z.EntityFramework.Plus;
 
 namespace Rock.Core.NotificationMessageTypes
 {
@@ -37,6 +42,181 @@ namespace Rock.Core.NotificationMessageTypes
     [Rock.SystemGuid.EntityTypeGuid( "A6BC9CB4-9AA8-4D9C-90C8-0131A9ED3A3F" )]
     internal class SmsConversation : NotificationMessageTypeComponent
     {
+        private static readonly Lazy<int> _componentEntityTypeId = new Lazy<int>( () => EntityTypeCache.GetId<SmsConversation>().Value );
+
+        #region Static Methods
+
+        /// <summary>
+        /// Updates the notification messages for the specified conversation.
+        /// </summary>
+        /// <param name="phoneNumber">The phone number that represents Rock's side of the conversation.</param>
+        /// <param name="fromPersonId">The identifier that represents the Person on the other side of the conversation.</param>
+        public static void UpdateNotificationMessages( SystemPhoneNumberCache phoneNumber, int fromPersonId )
+        {
+            if ( !phoneNumber.SmsNotificationGroupId.HasValue )
+            {
+                return;
+            }
+
+            using ( var rockContext = new RockContext() )
+            {
+                var messageType = GetOrCreateMessageType( phoneNumber, rockContext );
+
+                if ( messageType == null )
+                {
+                    return;
+                }
+
+                var messageService = new NotificationMessageService( rockContext );
+                var groupMemberService = new GroupMemberService( rockContext );
+                var personService = new PersonService( rockContext );
+                var responseService = new CommunicationResponseService( rockContext );
+                var key = $"person-{fromPersonId}";
+
+                var toPersons = groupMemberService.Queryable()
+                    .Where( gm => gm.GroupId == phoneNumber.SmsNotificationGroupId.Value
+                        && gm.GroupMemberStatus == GroupMemberStatus.Active )
+                    .Select( gm => new
+                    {
+                        gm.PersonId,
+                        PrimaryPersonAliasId = gm.Person.Aliases.Where( a => a.AliasPersonId == gm.PersonId ).Select( a => ( int? ) a.Id ).FirstOrDefault()
+                    } )
+                    .Where( a => a.PrimaryPersonAliasId.HasValue )
+                    .Distinct()
+                    .ToList();
+                var toPersonIds = toPersons.Select( a => a.PersonId ).ToList();
+
+                // Find any existing notification messages for these people.
+                var messagesValue = messageService.Queryable()
+                    .Include( nm => nm.PersonAlias )
+                    .Where( nm => nm.NotificationMessageTypeId == messageType.Id
+                        && nm.Key == key
+                        && toPersonIds.Contains( nm.PersonAlias.PersonId ) )
+                    .Future();
+
+                // Find the person that sent the message.
+                var personValue = personService.Queryable()
+                    .Include( p => p.Aliases )
+                    .Where( p => p.Id == fromPersonId )
+                    .DeferredFirstOrDefault()
+                    .FutureValue();
+
+                // Find the number of unread messages from that person.
+                var responseCountValue = responseService.Queryable()
+                    .Where( cr => cr.RelatedSmsFromSystemPhoneNumberId == phoneNumber.Id
+                        && cr.FromPersonAlias.PersonId == fromPersonId
+                        && !cr.IsRead )
+                    .DeferredCount()
+                    .FutureValue();
+
+                // Materialize all 3 deferred queries.
+                var person = personValue.Value;
+                var messages = messagesValue.ToList();
+                var responseCount = responseCountValue.Value;
+
+                foreach ( var toPerson in toPersons )
+                {
+                    var message = messages
+                        .Where( nm => nm.PersonAlias.PersonId == toPerson.PersonId )
+                        .OrderByDescending( nm => nm.Id )
+                        .FirstOrDefault();
+
+                    // If the count is zero or the Person no longer exists, then
+                    // we can delete the message if it exists.
+                    if ( responseCount == 0 || person == null || !person.PrimaryAliasId.HasValue )
+                    {
+                        if ( message != null )
+                        {
+                            messageService.Delete( message );
+                            rockContext.SaveChanges();
+                        }
+
+                        continue;
+                    }
+
+                    // Count is greater than zero so we need to either create
+                    // or update the existing message.
+                    if ( message == null )
+                    {
+                        var componentData = new MessageData
+                        {
+                            PhoneNumberId = phoneNumber.Id,
+                            PhoneNumberGuid = phoneNumber.Guid,
+                            PersonId = person.Id,
+                            PersonGuid = person.Guid
+                        };
+
+                        message = new NotificationMessage
+                        {
+                            NotificationMessageTypeId = messageType.Id,
+                            Key = key,
+                            PersonAliasId = toPerson.PrimaryPersonAliasId.Value,
+                            ComponentDataJson = componentData.ToJson()
+                        };
+
+                        messageService.Add( message );
+                    }
+
+                    message.Title = person.FullName;
+                    message.Description = $"You have {responseCount} unread messages.";
+                    message.IsRead = false;
+                    message.MessageDateTime = RockDateTime.Now;
+                    message.ExpireDateTime = message.MessageDateTime.AddDays( 90 );
+                    message.Count = responseCount;
+                }
+
+                rockContext.SaveChanges();
+            }
+        }
+
+        /// <summary>
+        /// Gets the message type or creates it if it doesn't exist.
+        /// </summary>
+        /// <param name="phoneNumber">The phone number the message type is related to.</param>
+        /// <param name="rockContext">The rock context.</param>
+        /// <returns>An instance of <see cref="NotificationMessageTypeCache"/> or <c>null</c> if it could not be created.</returns>
+        private static NotificationMessageTypeCache GetOrCreateMessageType( SystemPhoneNumberCache phoneNumber, RockContext rockContext )
+        {
+            var key = $"number-{phoneNumber.Id}";
+
+            var messageTypeCache = NotificationMessageTypeCache.All()
+                .Where( nmt => nmt.Key == key )
+                .FirstOrDefault();
+
+            if ( messageTypeCache != null )
+            {
+                return messageTypeCache;
+            }
+
+            if ( !phoneNumber.MobileApplicationSiteId.HasValue )
+            {
+                return null;
+            }
+
+            var service = new NotificationMessageTypeService( rockContext );
+
+            var messageType = new NotificationMessageType
+            {
+                EntityTypeId = _componentEntityTypeId.Value,
+                Key = key,
+                IsDeletedOnRead = true,
+                IsMobileApplicationSupported = true,
+                RelatedMobileApplicationSiteId = phoneNumber.MobileApplicationSiteId
+            };
+
+            service.Add( messageType );
+
+            rockContext.SaveChanges();
+
+            return NotificationMessageTypeCache.All()
+                .Where( nmt => nmt.Key == key )
+                .FirstOrDefault();
+        }
+
+        #endregion
+
+        #region Methods
+
         /// <inheritdoc/>
         public override NotificationMessageActionBag GetActionForNotificationMessage( NotificationMessage message, SiteCache site, RockRequestContext context )
         {
@@ -92,6 +272,10 @@ namespace Rock.Core.NotificationMessageTypes
             return 0;
         }
 
+        #endregion
+
+        #region Support Classes
+
         /// <summary>
         /// Provides the data stored on individual notification messages used
         /// by this component.
@@ -122,5 +306,7 @@ namespace Rock.Core.NotificationMessageTypes
             /// <value>The person unique identifier.</value>
             public Guid PersonGuid { get; set; }
         }
+
+        #endregion
     }
 }
