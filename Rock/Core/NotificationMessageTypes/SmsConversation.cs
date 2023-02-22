@@ -128,7 +128,7 @@ namespace Rock.Core.NotificationMessageTypes
                         if ( message != null )
                         {
                             messageService.Delete( message );
-                            rockContext.SaveChanges();
+                            messages.Remove( message );
                         }
 
                         continue;
