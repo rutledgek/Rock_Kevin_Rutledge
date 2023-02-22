@@ -221,11 +221,9 @@ namespace Rock.Rest.Controllers
         /// <returns><c>true</c> if a site was found, <c>false</c> otherwise.</returns>
         private bool TryGetSite( string siteKey, out SiteCache site )
         {
-            site = SiteCache.GetSiteByDomain( RockRequestContext.RequestUri.Host );
-
             if ( siteKey.IsNotNullOrWhiteSpace() )
             {
-                site = SiteCache.Get( siteKey, !( site?.DisablePredictableIds ?? true ) );
+                site = SiteCache.Get( siteKey, true );
             }
             else
             {
