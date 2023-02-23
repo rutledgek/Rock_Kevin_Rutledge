@@ -70,7 +70,6 @@ namespace Rock.Model
                  * 
                  */
                 
-
                 int personId = Entity.PersonId;
                 PersonHistoryChanges = new Dictionary<int, History.HistoryChangeList> { { personId, new History.HistoryChangeList() } };
 
@@ -78,7 +77,6 @@ namespace Rock.Model
                 {
                     case EntityContextState.Added:
                         {
-
                             History.EvaluateChange( PersonHistoryChanges[personId], string.Format( "{0} Phone", DefinedValueCache.GetName( Entity.NumberTypeValueId ) ), string.Empty, Entity.NumberFormatted );
                             History.EvaluateChange( PersonHistoryChanges[personId], string.Format( "{0} Phone Unlisted", DefinedValueCache.GetName( Entity.NumberTypeValueId ) ), ( bool? ) null, Entity.IsUnlisted );
                             History.EvaluateChange( PersonHistoryChanges[personId], string.Format( "{0} Phone Messaging Enabled", DefinedValueCache.GetName( Entity.NumberTypeValueId ) ), ( bool? ) null, Entity.IsMessagingEnabled );
