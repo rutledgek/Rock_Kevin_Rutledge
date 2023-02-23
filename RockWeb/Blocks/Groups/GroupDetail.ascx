@@ -110,7 +110,7 @@
                                     <Rock:GroupPicker ID="gpParentGroup" runat="server" Required="false" Label="Parent Group" OnSelectItem="ddlParentGroup_SelectedIndexChanged" />
                                     <Rock:DefinedValuePicker ID="dvpGroupStatus" runat="server" Label="Status" Visible="false" />
                                     <Rock:NumberBox ID="nbGroupCapacity" runat="server" Label="Group Capacity" NumberType="Integer" MinimumValue="0" />
-                                    <Rock:PersonPicker ID="ppAdministrator" runat="server" />
+                                    <Rock:PersonPicker ID="ppAdministrator" runat="server" EnableSelfSelection="true" />
                                 </div>
                                 <div class="col-md-6">
                                     <asp:Panel runat="server" ID="pnlElevatedSecurity">
@@ -198,6 +198,7 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <Rock:RockCheckBox ID="cbDisableGroupScheduling" runat="server" Label="Disable Group Scheduling" Help="Checking this box will opt the group out from the group scheduling system." />
+                                    <Rock:RockDropDownList ID="ddlScheduleConfirmationLogic" runat="server" Label="Schedule Confirmation Logic" Help="Determines if the individual will be asked to Accept or Decline, or if their request will be auto accepted. This setting overrides the group type's setting." />
                                 </div>
                                 <div class="col-md-6">
                                     <Rock:RockCheckBox ID="cbDisableScheduleToolboxAccess" runat="server" Label="Disable Schedule Toolbox Access" Help="Checking this will hide the group from the schedule toolbox." />
@@ -454,7 +455,7 @@
 
                 <Rock:RockDropDownList ID="ddlGroupRequirementType" runat="server" Label="Group Requirement Type" Required="true" AutoPostBack="true" OnSelectedIndexChanged="ddlGroupRequirementType_SelectedIndexChanged" ValidationGroup="vg_GroupRequirement" />
 
-                <Rock:GroupRolePicker ID="grpGroupRequirementGroupRole" runat="server" Label="Group Role" Help="Select the group role that this requirement applies to. Leave blank if it applies to all group roles." ValidationGroup="vg_GroupRequirement" />
+                <Rock:GroupRolePicker ID="grpGroupRequirementGroupRole" runat="server" Label="Applies to Group Role" Help="Select the group role that this requirement applies to. Leave blank if it applies to all group roles." ValidationGroup="vg_GroupRequirement" />
 
                 <Rock:RockRadioButtonList ID="rblAppliesToAgeClassification" runat="server" Label="Applies to Age Classification" RepeatDirection="Horizontal" Help="Determines which age classifications this requirement applies to."></Rock:RockRadioButtonList>
 
@@ -466,8 +467,8 @@
 
                 <Rock:RockCheckBox ID="cbAllowLeadersToOverride" runat="server" Text="Allow Leaders to Override" Help="Determines if the leader should be allowed to override meeting the requirement." />
 
-                <Rock:DatePicker ID="dpDueDate" runat="server" Label="Due Date" ValidationGroup="vg_GroupTypeGroupRequirement" />
-                <Rock:RockDropDownList ID="ddlDueDateGroupAttribute" runat="server" Label="Due Date Group Attribute" Help="The group attribute that contains the due date for requirements."></Rock:RockDropDownList>
+                <Rock:DatePicker ID="dpDueDate" runat="server" Label="Due Date" ValidationGroup="vg_GroupRequirement" />
+                <Rock:RockDropDownList ID="ddlDueDateGroupAttribute" runat="server" Label="Due Date Group Attribute" Help="The group attribute that contains the due date for requirements." ValidationGroup="vg_GroupRequirement" />
                 <Rock:RockCheckBox ID="cbMembersMustMeetRequirementOnAdd" runat="server" Text="Members must meet this requirement before adding" Help="If this is enabled, a person can only become a group member if this requirement is met. Note: only applies to Data View and SQL type requirements since manual ones can't be checked until after the person is added." />
 
             </Content>

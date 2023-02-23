@@ -17,7 +17,7 @@
 
 import { asFormattedString } from "@Obsidian/Utility/numberUtils";
 import { pluralConditional } from "@Obsidian/Utility/stringUtils";
-import Alert from "@Obsidian/Controls/alert.vue";
+import Alert from "@Obsidian/Controls/alert.obs";
 import LoadingIndicator from "@Obsidian/Controls/loadingIndicator";
 import { computed,  createApp,  defineComponent, PropType, ref, toRaw, VNode, watch } from "vue";
 import GridActionGroup from "./gridActionGroup.partial";

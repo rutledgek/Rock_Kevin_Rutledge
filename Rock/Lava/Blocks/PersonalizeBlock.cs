@@ -133,9 +133,8 @@ namespace Rock.Lava.Blocks
                 if ( !string.IsNullOrEmpty( content ) )
                 {
                     var engine = context.GetService<ILavaEngine>();
-                    var render = engine.RenderTemplate( content );
-
-                    result.Write( render.Text );
+                    var renderResult = engine.RenderTemplate( content, new LavaRenderParameters { Context = context } );
+                    result.Write( renderResult.Text );
                 }
             }
             catch ( Exception ex )
@@ -163,13 +162,13 @@ namespace Rock.Lava.Blocks
         /// <returns></returns>
         private bool ShowContentForCurrentRequest( ILavaRenderContext context )
         {
-            var matchType = _settings.GetStringValue( ParameterMatchType, "any" ).ToLower();
+            var matchType = _settings.GetString( ParameterMatchType, "any" ).ToLower();
 
             // Apply the request filters if we are processing a HTTP request.
             // Do this first because we may have the opportunity to exit early and avoid retrieving personalization segments.
             bool? requestFilterIsValid = null;
-            var requestFilterParameterString = _settings.GetStringValue( ParameterRequestFilters )
-                ?? _settings.GetStringValue( "requestfilters" );
+            var requestFilterParameterString = _settings.GetStringOrNull( ParameterRequestFilters )
+                ?? _settings.GetString( "requestfilters" );
 
             if ( !string.IsNullOrWhiteSpace( requestFilterParameterString ) )
             {
@@ -220,12 +219,12 @@ namespace Rock.Lava.Blocks
 
             // Determine if the current block segments match the segments for the user in the current context.
             bool? segmentFilterIsValid = null;
-            var segmentParameterString = _settings.GetStringValue( ParameterSegments )
-                ?? _settings.GetStringValue( "segments" );
+            var segmentParameterString = _settings.GetStringOrNull( ParameterSegments )
+                ?? _settings.GetString( "segments" );
             if ( !string.IsNullOrWhiteSpace( segmentParameterString ) )
             {
                 // Get personalization segments for the target person.
-                var personReference = _settings.GetStringValue( "person" );
+                var personReference = _settings.GetString( "person" );
                 Person person;
                 if ( !string.IsNullOrEmpty( personReference ) )
                 {
@@ -242,19 +241,9 @@ namespace Rock.Lava.Blocks
                     }
                 }
 
-                List<int> personSegmentIdList;
-                var rockContext = LavaHelper.GetRockContextFromLavaContext( context );
-                if ( person != null )
-                {
-                    personSegmentIdList = LavaPersonalizationHelper.GetPersonalizationSegmentIdListForRequest( person,
-                        rockContext,
-                        System.Web.HttpContext.Current?.Request );
-                }
-                else
-                {
-                    personSegmentIdList = LavaPersonalizationHelper.GetPersonalizationSegmentIdListForPerson( person,
-                        rockContext );
-                }
+                var personSegmentIdList = LavaPersonalizationHelper.GetPersonalizationSegmentIdListForContext( context,
+                    System.Web.HttpContext.Current,
+                    person );
 
                 var requiredSegmentIdList = PersonalizationSegmentCache.GetByKeys( segmentParameterString )
                     .Select( ps => ps.Id )

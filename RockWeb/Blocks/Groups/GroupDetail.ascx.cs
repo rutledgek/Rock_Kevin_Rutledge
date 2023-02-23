@@ -28,6 +28,7 @@ using Rock;
 using Rock.Attribute;
 using Rock.Constants;
 using Rock.Data;
+using Rock.Enums.Group;
 using Rock.Model;
 using Rock.Security;
 using Rock.Utility;
@@ -1060,7 +1061,7 @@ namespace RockWeb.Blocks.Groups
             group.ScheduleCancellationPersonAliasId = ppScheduleCancellationPerson.PersonAliasId;
             group.DisableScheduling = cbDisableGroupScheduling.Checked;
             group.DisableScheduleToolboxAccess = cbDisableScheduleToolboxAccess.Checked;
-
+            group.ScheduleConfirmationLogic = ddlScheduleConfirmationLogic.SelectedValueAsEnumOrNull<ScheduleConfirmationLogic>();
             string iCalendarContent = string.Empty;
 
             // If unique schedule option was selected, but a schedule was not defined, set option to 'None'
@@ -1431,6 +1432,15 @@ namespace RockWeb.Blocks.Groups
 
                     rockContext.SaveChanges();
                     Rock.Security.Authorization.Clear();
+
+                    // Copy the group-specific requirements.
+                    foreach ( var groupRequirement in group.GroupRequirements )
+                    {
+                        GroupRequirement newGroupRequirement = groupRequirement.CloneWithoutIdentity();
+                        newGroup.GroupRequirements.Add( newGroupRequirement );
+                    }
+
+                    rockContext.SaveChanges();
                 } );
 
                 NavigateToCurrentPage( new Dictionary<string, string> { { PageParameterKey.GroupId, newGroup.Id.ToString() } } );
@@ -1913,6 +1923,8 @@ namespace RockWeb.Blocks.Groups
             cbDisableScheduleToolboxAccess.Checked = group.DisableScheduleToolboxAccess;
             cbDisableGroupScheduling.Checked = group.DisableScheduling;
             ddlAttendanceRecordRequiredForCheckIn.SetValue( group.AttendanceRecordRequiredForCheckIn.ConvertToInt() );
+            ddlScheduleConfirmationLogic.SetValue( group.ScheduleConfirmationLogic.HasValue ? group.ScheduleConfirmationLogic.ConvertToInt().ToString() : null );
+
             if ( group.ScheduleCancellationPersonAlias != null )
             {
                 ppScheduleCancellationPerson.SetValue( group.ScheduleCancellationPersonAlias.Person );
@@ -2577,6 +2589,7 @@ namespace RockWeb.Blocks.Groups
             }
 
             ddlAttendanceRecordRequiredForCheckIn.BindToEnum<AttendanceRecordRequiredForCheckIn>();
+            ddlScheduleConfirmationLogic.BindToEnum<ScheduleConfirmationLogic>( true );
         }
 
         /// <summary>
@@ -3494,7 +3507,9 @@ namespace RockWeb.Blocks.Groups
 
             // Make sure that the Due Date controls are not visible unless the requirement has a due date.
             ddlDueDateGroupAttribute.Visible = false;
+            ddlDueDateGroupAttribute.Required = false;
             dpDueDate.Visible = false;
+            dpDueDate.Required = false;
 
             rblAppliesToAgeClassification.Items.Clear();
 
@@ -3520,12 +3535,14 @@ namespace RockWeb.Blocks.Groups
                 if ( groupRequirementType.DueDateType == DueDateType.GroupAttribute )
                 {
                     ddlDueDateGroupAttribute.Visible = true;
+                    ddlDueDateGroupAttribute.Required = true;
                     ddlDueDateGroupAttribute.SetValue( selectedGroupRequirement.DueDateAttributeId.HasValue ? selectedGroupRequirement.DueDateAttributeId.ToString() : string.Empty );
                 }
 
                 if ( groupRequirementType.DueDateType == DueDateType.ConfiguredDate )
                 {
                     dpDueDate.Visible = true;
+                    dpDueDate.Required = true;
                     dpDueDate.SelectedDate = selectedGroupRequirement.DueDateStaticDate.Value;
                 }
             }
@@ -4549,21 +4566,27 @@ namespace RockWeb.Blocks.Groups
                 case DueDateType.DaysAfterJoining:
                     {
                         ddlDueDateGroupAttribute.Visible = false;
+                        ddlDueDateGroupAttribute.Required = false;
                         dpDueDate.Visible = false;
+                        dpDueDate.Required = false;
                         break;
                     }
 
                 case DueDateType.ConfiguredDate:
                     {
                         ddlDueDateGroupAttribute.Visible = false;
+                        ddlDueDateGroupAttribute.Required = false;
                         dpDueDate.Visible = true;
+                        dpDueDate.Required = true;
                         break;
                     }
 
                 case DueDateType.GroupAttribute:
                     {
                         ddlDueDateGroupAttribute.Visible = true;
+                        ddlDueDateGroupAttribute.Required = true;
                         dpDueDate.Visible = false;
+                        dpDueDate.Required = false;
                         break;
                     }
             }

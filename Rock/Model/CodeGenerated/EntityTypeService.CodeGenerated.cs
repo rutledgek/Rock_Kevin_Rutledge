@@ -284,6 +284,12 @@ namespace Rock.Model
                 return false;
             }
 
+            if ( new Service<NotificationMessageType>( Context ).Queryable().Any( a => a.EntityTypeId == item.Id ) )
+            {
+                errorMessage = string.Format( "This {0} is assigned to a {1}.", EntityType.FriendlyTypeName, NotificationMessageType.FriendlyTypeName );
+                return false;
+            }
+
             if ( new Service<PersistedDataset>( Context ).Queryable().Any( a => a.EntityTypeId == item.Id ) )
             {
                 errorMessage = string.Format( "This {0} is assigned to a {1}.", EntityType.FriendlyTypeName, PersistedDataset.FriendlyTypeName );
@@ -301,6 +307,12 @@ namespace Rock.Model
             if ( new Service<RelatedEntity>( Context ).Queryable().Any( a => a.TargetEntityTypeId == item.Id ) )
             {
                 errorMessage = string.Format( "This {0} is assigned to a {1}.", EntityType.FriendlyTypeName, RelatedEntity.FriendlyTypeName );
+                return false;
+            }
+
+            if ( new Service<ReminderType>( Context ).Queryable().Any( a => a.EntityTypeId == item.Id ) )
+            {
+                errorMessage = string.Format( "This {0} is assigned to a {1}.", EntityType.FriendlyTypeName, ReminderType.FriendlyTypeName );
                 return false;
             }
 

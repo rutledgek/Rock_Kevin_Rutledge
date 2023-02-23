@@ -1355,6 +1355,14 @@ namespace Rock.Data
         public DbSet<InteractiveExperienceAnswer> InteractiveExperienceAnswers { get; set; }
 
         /// <summary>
+        /// Gets or sets the Interactive Experience Occurrences.
+        /// </summary>
+        /// <value>
+        /// the Interactive Experience Occurrences.
+        /// </value>
+        public DbSet<InteractiveExperienceOccurrence> InteractiveExperienceOccurrences { get; set; }
+
+        /// <summary>
         /// Gets or sets the Interactive Experience Schedules.
         /// </summary>
         /// <value>
@@ -1585,6 +1593,18 @@ namespace Rock.Data
         /// The note watches.
         /// </value>
         public DbSet<NoteWatch> NoteWatches { get; set; }
+
+        /// <summary>
+        /// Gets or sets the notification message types.
+        /// </summary>
+        /// <value>The notification message types.</value>
+        public DbSet<NotificationMessageType> NotificationMessageTypes { get; set; }
+
+        /// <summary>
+        /// Gets or sets the notification messages.
+        /// </summary>
+        /// <value>The notification messages.</value>
+        public DbSet<NotificationMessage> NotificationMessages { get; set; }
 
         /// <summary>
         /// Gets or sets the notifications.
@@ -1891,6 +1911,22 @@ namespace Rock.Data
         public DbSet<RelatedEntity> RelatedEntities { get; set; }
 
         /// <summary>
+        /// Gets or sets the reminders.
+        /// </summary>
+        /// <value>
+        /// The reminders.
+        /// </value>
+        public DbSet<Reminder> Reminders { get; set; }
+
+        /// <summary>
+        /// Gets or sets the reminder types.
+        /// </summary>
+        /// <value>
+        /// The reminder types.
+        /// </value>
+        public DbSet<ReminderType> ReminderTypes { get; set; }
+
+        /// <summary>
         /// Gets or sets the remote authentication sessions.
         /// </summary>
         /// <value>
@@ -2113,7 +2149,7 @@ namespace Rock.Data
         /// The system emails.
         /// </value>
         [RockObsolete( "1.10" )]
-        [Obsolete( "Use SystemCommunications instead." )]
+        [Obsolete( "Use SystemCommunications instead.", true )]
         public DbSet<SystemEmail> SystemEmails { get; set; }
 
         /// <summary>
@@ -2123,6 +2159,14 @@ namespace Rock.Data
         /// The system emails.
         /// </value>
         public DbSet<SystemCommunication> SystemCommunications { get; set; }
+
+        /// <summary>
+        /// Gets or sets the system phone numbers.
+        /// </summary>
+        /// <value>
+        /// The system phone numbers.
+        /// </value>
+        public DbSet<SystemPhoneNumber> SystemPhoneNumbers { get; set; }
 
         /// <summary>
         /// Gets or sets the Tags.
@@ -2299,6 +2343,22 @@ namespace Rock.Data
         /// The segments.
         /// </value>
         public DbSet<PersonalizationSegment> Segments { get; set; }
+
+        /// <summary>
+        /// Gets or sets the snippets.
+        /// </summary>
+        /// <value>
+        /// The snippets.
+        /// </value>
+        public DbSet<Snippet> Snippets { get; set; }
+
+        /// <summary>
+        /// Gets or sets the snippet types.
+        /// </summary>
+        /// <value>
+        /// The snippet types.
+        /// </value>
+        public DbSet<SnippetType> SnippetTypes { get; set; }
 
         #endregion
 

@@ -20,20 +20,21 @@
 
                         <asp:Literal ID="lGroupHeader" runat="server" />
 
-                        <div class="card-section pb-0">
-                            <div class="d-flex flex-wrap">
+                        <asp:Panel class="card-section pb-0" ID="pnlMembersDiv" runat="server">
+                            <div class="family-grid">
                                 <asp:Repeater ID="rptrMembers" runat="server" OnItemDataBound="rptrMembers_ItemDataBound">
                                     <ItemTemplate>
                                         <asp:Literal ID="litGroupMemberInfo" runat="server"></asp:Literal>
                                     </ItemTemplate>
                                 </asp:Repeater>
                             </div>
-                        </div>
+                        </asp:Panel>
 
                         <asp:panel ID="pnlGroupAttributes" runat="server" CssClass="card-section js-group-attribute-section">
-                            <div class="pull-right">
+                            <asp:Label ID="lblShowGroupAttributeTitle" runat="server" Visible="false" CssClass="pull-left"></asp:Label>
+                            <asp:Panel ID="pnlShowExpandChevorn" runat="server" CssClass="pull-right">
                                 <a class="js-show-more-family-attributes"><i class="fa fa-chevron-down"></i></a>
-                            </div>
+                            </asp:Panel>
                             <dl class="m-0">
                                 <asp:Literal ID="litGroupAttributes" runat="server"></asp:Literal>
                             </dl>
