@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-//
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -327,7 +327,6 @@ namespace RockWeb.Blocks.Security
                                                 }
                                                 else if ( hfStreet1.Value != string.Empty )
                                                 {
-
                                                     // user clicked move so create a previous address
                                                     var previousAddress = new GroupLocation();
                                                     groupLocationService.Add( previousAddress );
@@ -362,7 +361,6 @@ namespace RockWeb.Blocks.Security
                                                 rockContext.SaveChanges();
                                             }
                                         }
-
                                     }
                                 }
                             }
