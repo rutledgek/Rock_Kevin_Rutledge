@@ -184,7 +184,7 @@ namespace Rock.Update.Helpers
                     var versionParts = RockInstanceConfig.Database.VersionNumber.Split( '.' );
                     int.TryParse( versionParts[0], out var majorVersion );
 
-                    if ( majorVersion > majorVersionNumber )
+                    if ( majorVersion >= majorVersionNumber )
                     {
                         isOk = true;
                     }
