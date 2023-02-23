@@ -3457,7 +3457,7 @@ namespace Rock.Model
 
             if ( isDuplicate )
             {
-                var listOfValidNumbers = person.PhoneNumbers.OrderBy(o=>o.NumberTypeValueId).GroupBy( pn => pn.Number ).Select( y => y.First() ).ToList();
+                var listOfValidNumbers = person.PhoneNumbers.OrderBy( o => o.NumberTypeValueId ).GroupBy( pn => pn.Number ).Select( y => y.First() ).ToList();
                 var removedNumbers = person.PhoneNumbers.Except( listOfValidNumbers ).ToList();
                 phoneNumberService.DeleteRange( removedNumbers );
                 person.PhoneNumbers = listOfValidNumbers;
