@@ -44,6 +44,13 @@ using Parlot.Fluent;
 using static Lucene.Net.Store.Lock;
 using Mono.CSharp;
 using Enum = System.Enum;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using SixLabors.Fonts;
+using FontFamily = SixLabors.Fonts.FontFamily;
+using DocumentFormat.OpenXml.Drawing;
+using OpenXmlPowerTools;
+using Point = SixLabors.ImageSharp.Point;
 
 namespace RockWeb
 {
@@ -57,9 +64,8 @@ namespace RockWeb
         // Good overview on how to implement an IHttpAsyncHandler
         // https://www.madskristensen.net/blog/how-to-use-the-ihttpasynchandler-in-aspnet/
 
-
+        // Delegate setup variables
         private AsyncProcessorDelegate _Delegate;
-
         protected delegate void AsyncProcessorDelegate( HttpContext context );
 
         /// <summary>
@@ -96,11 +102,24 @@ namespace RockWeb
             // Read query string parms
             var settings = ReadSettingsFromRequest( context.Request );
 
+            string cacheFolder = context.Request.MapPath( $"~/App_Data/Avatar/Cache/" );
+            string cachedFilePath = $"{cacheFolder}{settings.CacheKey}.png";
+
+            // Process any cache refresh request for single item
+            if ( context.Request.QueryString["RefreshItemCache"] != null && context.Request.QueryString["RefreshItemCache"].AsBoolean() )
+            {
+                RefreshItemCache( cachedFilePath );
+            }
+
+            // Process any cache refresh for all items
+            if ( context.Request.QueryString["RefreshCache"] != null && context.Request.QueryString["RefreshCache"].AsBoolean() )
+            {
+                RefreshCache( cacheFolder );
+            }
+
             Stream fileContent = null;
             try
             {
-                string cachedFilePath = context.Request.MapPath( $"~/App_Data/Cache/{settings.CacheKey}.png" );
-
                 fileContent = FetchFromCache( cachedFilePath );
 
                 // The file is not in the cache so we'll create it
@@ -121,6 +140,11 @@ namespace RockWeb
                 // Add cache validation headers
                 context.Response.AddHeader( "Last-Modified", DateTime.Now.ToUniversalTime().ToString( "R" ) );
                 context.Response.AddHeader( "ETag", DateTime.Now.ToString().XxHash() );
+
+                // Configure client to cache image locally for 1 week
+                //context.Response.Cache.SetCacheability( HttpCacheability.Public ); REMOVE BEFORE FLIGHT
+                //context.Response.Cache.SetMaxAge( new TimeSpan( 7, 0, 0, 0, 0 ) ); REMOVE BEFORE FLIGHT
+
                 context.Response.ContentType = "image/png";
 
                 // Stream the contents of the file to the response
@@ -157,6 +181,62 @@ namespace RockWeb
         }
 
         /// <summary>
+        /// Refreshs the cache for a specific item
+        /// </summary>
+        /// <param name="filePath"></param>
+        private void RefreshItemCache( string filePath )
+        {
+            // Ensure the person is allowed to refresh the cache
+            if ( !IsPersonAllowedRefeshCache() )
+            {
+                return;
+            }
+
+            // Delete the file if it exists
+            if ( File.Exists( filePath ) )
+            {
+                File.Delete( filePath );
+            }
+        }
+
+        /// <summary>
+        /// Refreshes the cache on all cached avatars
+        /// </summary>
+        /// <param name="cacheFolder"></param>
+        private void RefreshCache( string cacheFolder )
+        {
+            // Ensure the person is allowed to refresh the cache
+            if ( !IsPersonAllowedRefeshCache() )
+            {
+                return;
+            }
+
+            // Delete all files
+            foreach ( string sFile in System.IO.Directory.GetFiles( cacheFolder, "*.png" ) )
+            {
+                File.Delete( sFile );
+            }
+        }
+
+        /// <summary>
+        /// Determines if the person is in a role that allows them to refresh cache
+        /// </summary>
+        /// <returns></returns>
+        private bool IsPersonAllowedRefeshCache()
+        {
+            var rockContext = new RockContext();
+            var currentUser = new UserLoginService( rockContext ).GetByUserName( UserLogin.GetCurrentUserName() );
+            var currentPerson = currentUser != null ? currentUser.Person : null;
+
+            return RoleCache.AllRoles()
+                        .Where( r =>
+                            AvatarHelper.RoleGuidsAuthorizedToRefreshCache.Contains( r.Guid )
+                            && r.IsPersonInRole( currentPerson.Guid )
+                        )
+                        .Any();
+        }
+
+        /// <summary>
         /// Reads the settings from request.
         /// </summary>
         /// <param name="request">The request.</param>
@@ -166,7 +246,7 @@ namespace RockWeb
             var settings = new AvatarSettings();
 
             // Calculate the physical path to store the cached files to
-            settings.CachePath = request.MapPath( $"~/App_Data/Cache/");
+            settings.CachePath = request.MapPath( $"~/App_Data/Avatar/Cache/");
 
             // Colors
             settings.AvatarColors.BackgroundColor = ( request.QueryString["BackgroundColor"] ?? "" ).ToString();
@@ -327,20 +407,35 @@ namespace RockWeb
 
         public static int RecordTypeIdPerson { get; } = 0;
 
+        public static List<Guid> RoleGuidsAuthorizedToRefreshCache { get; } = new List<Guid>();
+
+        // Fonts for avatars
+        private static FontCollection _fontCollection = null;
 
         static AvatarHelper() {
 
             // Load icon masks. 
-            var folderPath = System.Web.Hosting.HostingEnvironment.MapPath( "~\\App_Data\\Avatar\\Masks\\" );
+            var folderPath = System.Web.Hosting.HostingEnvironment.MapPath( "~\\App_Data\\Avatar\\" );
+
+            // Load role guids that are allowed to refresh the cache
+            RoleGuidsAuthorizedToRefreshCache.Add( Rock.SystemGuid.Group.GROUP_ADMINISTRATORS.AsGuid() );
+            RoleGuidsAuthorizedToRefreshCache.Add( Rock.SystemGuid.Group.GROUP_WEB_ADMINISTRATORS.AsGuid() );
 
             try
             {
-                AdultMaleMask = Image.Load<RgbaVector>( folderPath + "adult-male.png" );
-                AdultFemaleMask = Image.Load<RgbaVector>( folderPath + "adult-female.png" );
-                ChildMaleMask = Image.Load<RgbaVector>( folderPath + "child-male.png" );
-                ChildFemaleMask = Image.Load<RgbaVector>( folderPath + "child-female.png" );
-                UnknownGenderMask = Image.Load<RgbaVector>( folderPath + "unknown-gender.png" );
-                BusinessMask = Image.Load<RgbaVector>( folderPath + "business.png" );
+                AdultMaleMask = Image.Load<RgbaVector>( folderPath + "\\Masks\\adult-male.png" );
+                AdultFemaleMask = Image.Load<RgbaVector>( folderPath + "\\Masks\\adult-female.png" );
+                ChildMaleMask = Image.Load<RgbaVector>( folderPath + "\\Masks\\child-male.png" );
+                ChildFemaleMask = Image.Load<RgbaVector>( folderPath + "\\Masks\\child-female.png" );
+                UnknownGenderMask = Image.Load<RgbaVector>( folderPath + "\\Masks\\unknown-gender.png" );
+                BusinessMask = Image.Load<RgbaVector>( folderPath + "\\Masks\\business.png" );
+
+                // Load Fonts
+                _fontCollection = new FontCollection();
+                _fontCollection.Add( folderPath + "\\Fonts\\Inter-Regular.ttf" );
+                _fontCollection.Add( folderPath + "\\Fonts\\Inter-ExtraBold.ttf" );
+                _fontCollection.Add( folderPath + "\\Fonts\\Inter-Bold.ttf" );
+                _fontCollection.Add( folderPath + "\\Fonts\\Inter-Thin.ttf" );
             }
             catch { }
 
@@ -357,31 +452,7 @@ namespace RockWeb
         /// <param name="mask">The mask.</param>
         /// <param name="color">The color.</param>
         /// <returns>Image.</returns>
-        public static Image CreateIconMask( Image mask, string color )
-        {
-            // Logic for this comes from: https://stackoverflow.com/questions/52875516/how-to-compose-two-images-using-source-in-composition
-
-            // Create the "background" which is the solid color that we want our mask  to cut out
-            var maskColor = RgbaVector.FromHex( color );
-            var background = new Image<RgbaVector>( mask.Width, mask.Height, maskColor );
-
-            var processorCreator = new DrawImageProcessor(
-                mask,
-                Point.Empty,
-                PixelColorBlendingMode.Normal,
-                PixelAlphaCompositionMode.DestIn, // The destination where the destination and source overlap.
-                1f
-            );
-
-            var pxProcessor = processorCreator.CreatePixelSpecificProcessor(
-                Configuration.Default,
-                background,
-                mask.Bounds() );
-
-            pxProcessor.Execute();
-
-            return background;
-        }
+        
 
         /// <summary>
         /// Creates the avatar based on the provided settings
@@ -475,10 +546,9 @@ namespace RockWeb
             var mask = GetIconMask( settings );
 
             // Resize the mask
-            var resizeOptions = new ResizeOptions() { Size = new SixLabors.ImageSharp.Size( settings.Size, settings.Size ), Sampler = KnownResamplers.Lanczos3 };
-            mask.Mutate( o => o.Resize( resizeOptions ) );
+            mask.Mutate( o => o.Resize( settings.Size, settings.Size, KnownResamplers.Lanczos3 ) );
 
-            var topLayer = AvatarHelper.CreateIconMask( mask, settings.AvatarColors.ForegroundColor );
+            var topLayer = RockImage.CreateMaskImage( mask, settings.AvatarColors.ForegroundColor );
 
             return topLayer;
         }
@@ -532,7 +602,47 @@ namespace RockWeb
 
         private static Image CreateInitialsAvatar( AvatarSettings settings )
         {
-            return null;
+            // Create the background
+            var backgroundImage = new Image<Rgba32>( settings.Size, settings.Size, Color.ParseHex( settings.AvatarColors.BackgroundColor ) );
+
+            // Calculate spacing
+            var fontSize = ( settings.Size / 3 ); // font size is 1/3 of the height
+            
+            // Get font
+            var fontWeight = FontStyle.Regular;
+
+            if ( settings.IsBold )
+            {
+                fontWeight = FontStyle.Bold;
+            }
+
+            var fontFamily = _fontCollection.Get( "Inter" );
+            var font = fontFamily.CreateFont( ( float ) fontSize, fontWeight );
+
+            // Write text
+            // https://github.com/SixLabors/ImageSharp/issues/185
+            // https://www.adamrussell.com/adding-image-watermark-text-in-c-with-imagesh
+            var textOptions = new TextOptions( font )
+            {
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                WrappingLength = settings.Size,
+                Dpi = (float) backgroundImage.Metadata.VerticalResolution
+            };
+
+            // Measure the size of the text
+            var textSize = TextMeasurer.Measure( settings.Text, textOptions );
+
+            // Calculate margins
+            var leftMargin = (settings.Size - textSize.Width ) / 2;
+            var topMargin = ( settings.Size - textSize.Height ) / 2;
+
+            textOptions.Origin = new System.Numerics.Vector2(topMargin, leftMargin);
+
+            backgroundImage.Mutate( o => o.DrawText( textOptions, settings.Text, Color.ParseHex( settings.AvatarColors.ForegroundColor) ) );
+            //backgroundImage.Mutate( o => o.DrawText( settings.Text, font, Color.ParseHex( settings.AvatarColors.ForegroundColor ), new PointF( topMargin, leftMargin ) ) );
+
+            return backgroundImage;
         }
 
         
@@ -540,6 +650,38 @@ namespace RockWeb
 
     public static class RockImage
     {
+        /// <summary>
+        /// Creates a image from a mask using the fill color provided.
+        /// </summary>
+        /// <param name="mask"></param>
+        /// <param name="fillColor"></param>
+        /// <returns></returns>
+        public static Image CreateMaskImage( Image mask, string fillColor )
+        {
+            // Logic for this comes from: https://stackoverflow.com/questions/52875516/how-to-compose-two-images-using-source-in-composition
+
+            // Create the "background" which is the solid color that we want our mask  to cut out
+            var maskColor = RgbaVector.FromHex( fillColor );
+            var background = new Image<RgbaVector>( mask.Width, mask.Height, maskColor );
+
+            var processorCreator = new DrawImageProcessor(
+                mask,
+                Point.Empty,
+                PixelColorBlendingMode.Normal,
+                PixelAlphaCompositionMode.DestIn, // The destination where the destination and source overlap.
+                1f
+            );
+
+            var pxProcessor = processorCreator.CreatePixelSpecificProcessor(
+                Configuration.Default,
+                background,
+                mask.Bounds() );
+
+            pxProcessor.Execute();
+
+            return background;
+        }
+
         public static Image CreateSolidImage( int width, int height, string color )
         {
             return new Image<Rgba32>( width, height, Color.ParseHex( color)  );
