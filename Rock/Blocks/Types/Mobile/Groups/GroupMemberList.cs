@@ -1,4 +1,4 @@
-// <copyright>
+﻿// <copyright>
 // Copyright by the Spark Development Network
 //
 // Licensed under the Rock Community License (the "License");
@@ -17,15 +17,24 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Data.Entity;
 using System.Linq;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 
+using Newtonsoft.Json.Linq;
+
+using OfficeOpenXml.FormulaParsing.Excel.Functions.Math;
+
 using Rock.Attribute;
+using Rock.Common.Mobile.Blocks.Groups.GroupMemberList;
+using Rock.Common.Mobile.Enums;
+using Rock.Common.Mobile.ViewModel;
 using Rock.Data;
 using Rock.Mobile;
 using Rock.Mobile.JsonFields;
 using Rock.Model;
+using Rock.ViewModels.Utility;
 using Rock.Web.Cache;
 using Rock.Web.UI.Controls;
 
@@ -72,10 +81,59 @@ namespace Rock.Blocks.Types.Mobile.Groups
         Key = AttributeKeys.AdditionalFields,
         Order = 3 )]
 
+    [BooleanField( "Show Group Role Type Filter",
+        Description = "If enabled then the 'Group Type Role' filter option will be shown.",
+        IsRequired = false,
+        Key = AttributeKeys.ShowGroupRoleTypeFilter,
+        DefaultBooleanValue = false,
+        Order = 4 )]
+
+    [BooleanField( "Show Group Role Filter",
+        Description = "If enabled then the 'Group Role' filter option will be shown.",
+        IsRequired = false,
+        DefaultBooleanValue = true,
+        Key = AttributeKeys.ShowGroupRoleFilter,
+        Order = 5 )]
+
+    [BooleanField( "Show Gender Filter",
+        Description = "If enabled then the 'Gender' filter option will be shown.",
+        IsRequired = false,
+        DefaultBooleanValue = false,
+        Key = AttributeKeys.ShowGenderFilter,
+        Order = 6 )]
+
+    [BooleanField( "Show Child Groups Filter",
+        Description = "If enabled then the 'Child Groups' filter option will be shown.",
+        IsRequired = false,
+        DefaultBooleanValue = false,
+        Key = AttributeKeys.ShowChildGroupsFilter,
+        Order = 7 )]
+
+    [BooleanField( "Show Attendance Filter",
+        Description = "If enabled then the 'Attendance' filter option will be shown.",
+        IsRequired = false,
+        DefaultBooleanValue = false,
+        Key = AttributeKeys.ShowAttendanceFilter,
+        Order = 8 )]
+
+    [IntegerField( "Attendance Filter Short Period",
+        Description = "Displays a filter option that gives a variety of different options for attendance based on x number of weeks.",
+        IsRequired = false,
+        DefaultIntegerValue = 3,
+        Key = AttributeKeys.AttendanceFilterShortPeriod,
+        Order = 9 )]
+
+    [IntegerField( "Attendance Filter Long Period",
+        Description = "Displays a filter option that gives a variety of different options for attendance based on x number of weeks.",
+        IsRequired = false,
+        DefaultIntegerValue = 12,
+        Key = AttributeKeys.AttendanceFilterLongPeriod,
+        Order = 10 )]
+
     #endregion
 
     [Rock.SystemGuid.EntityTypeGuid( Rock.SystemGuid.EntityType.MOBILE_GROUPS_GROUP_MEMBER_LIST_BLOCK_TYPE )]
-    [Rock.SystemGuid.BlockTypeGuid( "5A6D2ADB-03A7-4B55-8EAA-26A37116BFF1")]
+    [Rock.SystemGuid.BlockTypeGuid( "5A6D2ADB-03A7-4B55-8EAA-26A37116BFF1" )]
     public class GroupMemberList : RockMobileBlockType
     {
         #region Block Attributes
@@ -104,6 +162,41 @@ namespace Rock.Blocks.Types.Mobile.Groups
             /// The additional fields key.
             /// </summary>
             public const string AdditionalFields = "AdditionalFields";
+
+            /// <summary>
+            /// The show group role type filter key.
+            /// </summary>
+            public const string ShowGroupRoleTypeFilter = "ShowGroupRoleTypeFilter";
+
+            /// <summary>
+            /// The show group role filter key.
+            /// </summary>
+            public const string ShowGroupRoleFilter = "ShowGroupRoleFilter";
+
+            /// <summary>
+            /// The show gender filter key.
+            /// </summary>
+            public const string ShowGenderFilter = "ShowGenderFilter";
+
+            /// <summary>
+            /// The show child groups filter key.
+            /// </summary>
+            public const string ShowChildGroupsFilter = "ShowChildGroupsFilter";
+
+            /// <summary>
+            /// The show attendance filter key.
+            /// </summary>
+            public const string ShowAttendanceFilter = "ShowAttendanceFilter";
+
+            /// <summary>
+            /// The attendance filter short period filter key.
+            /// </summary>
+            public const string AttendanceFilterShortPeriod = "AttendanceFilterShortPeriod";
+
+            /// <summary>
+            /// The attendance filter long period filter key.
+            /// </summary>
+            public const string AttendanceFilterLongPeriod = "AttendanceFilterLongPeriod";
         }
 
         /// <summary>
@@ -121,6 +214,48 @@ namespace Rock.Blocks.Types.Mobile.Groups
         /// The group member detail page.
         /// </value>
         protected Guid? GroupMemberDetailPage => GetAttributeValue( AttributeKeys.GroupMemberDetailPage ).AsGuidOrNull();
+
+        /// <summary>
+        /// Gets a value indicating whether to show the group role type filter option.
+        /// </summary>
+        /// <value><c>true</c> if [show group role type filter]; otherwise, <c>false</c>.</value>
+        protected bool ShowGroupRoleTypeFilter => GetAttributeValue( AttributeKeys.ShowGroupRoleTypeFilter ).AsBoolean();
+
+        /// <summary>
+        /// Gets a value indicating whether to show the group role filter.
+        /// </summary>
+        /// <value><c>true</c> if [show group role filter]; otherwise, <c>false</c>.</value>
+        protected bool ShowGroupRoleFilter => GetAttributeValue( AttributeKeys.ShowGroupRoleFilter ).AsBoolean();
+
+        /// <summary>
+        /// Gets a value indicating whether to show the gender filter option.
+        /// </summary>
+        /// <value><c>true</c> if [show gender filter]; otherwise, <c>false</c>.</value>
+        protected bool ShowGenderFilter => GetAttributeValue( AttributeKeys.ShowGenderFilter ).AsBoolean();
+
+        /// <summary>
+        /// Gets a value indicating whether to show the child group filter option.
+        /// </summary>
+        /// <value><c>true</c> if [show child group filter]; otherwise, <c>false</c>.</value>
+        protected bool ShowChildGroupFilter => GetAttributeValue( AttributeKeys.ShowChildGroupsFilter ).AsBoolean();
+
+        /// <summary>
+        /// Gets a value indicating whether to show the attendance filter.
+        /// </summary>
+        /// <value><c>true</c> if [show attendance filter]; otherwise, <c>false</c>.</value>
+        protected bool ShowAttendanceFilter => GetAttributeValue( AttributeKeys.ShowAttendanceFilter ).AsBoolean();
+
+        /// <summary>
+        /// Gets the attendance filter short period.
+        /// </summary>
+        /// <value>The attendance filter short period.</value>
+        protected int? AttendanceFilterShortPeriod => GetAttributeValue( AttributeKeys.AttendanceFilterShortPeriod ).AsIntegerOrNull();
+
+        /// <summary>
+        /// Gets the attendance filter long period.
+        /// </summary>
+        /// <value>The attendance filter long period.</value>
+        protected int? AttendanceFilterLongPeriod => GetAttributeValue( AttributeKeys.AttendanceFilterLongPeriod ).AsIntegerOrNull();
 
         /// <summary>
         /// Gets the template.
@@ -172,7 +307,14 @@ namespace Rock.Blocks.Types.Mobile.Groups
             return new
             {
                 Template = Template,
-                GroupMemberDetailPage = GroupMemberDetailPage
+                GroupMemberDetailPage = GroupMemberDetailPage,
+                ShowGroupRoleTypeFilter = ShowGroupRoleTypeFilter,
+                ShowGenderFilter = ShowGenderFilter,
+                ShowAttendanceFilter = ShowAttendanceFilter,
+                ShowGroupRoleFilter = ShowGroupRoleFilter,
+                ShowChildGroupFilter = ShowChildGroupFilter,
+                AttendanceFilterLongPeriod = AttendanceFilterLongPeriod,
+                AttendanceFilterShortPeriod = AttendanceFilterShortPeriod
             };
         }
 
@@ -193,6 +335,7 @@ namespace Rock.Blocks.Types.Mobile.Groups
                 { "Id", "Id" },
                 { "Guid", "Guid" },
                 { "PersonId", "PersonId" },
+                { "PersonGuid", "Person.Guid" },
                 { "FullName", "Person.FullName" },
                 { "FirstName", "Person.FirstName" },
                 { "NickName", "Person.NickName" },
@@ -223,6 +366,7 @@ namespace Rock.Blocks.Types.Mobile.Groups
         /// </summary>
         /// <returns></returns>
         [BlockAction]
+        [RockObsolete( "1.15" )]
         public object GetGroupDetails()
         {
             using ( var rockContext = new RockContext() )
@@ -247,6 +391,253 @@ namespace Rock.Blocks.Types.Mobile.Groups
                     Title = title,
                     Members = members
                 };
+            }
+        }
+
+        /// <summary>
+        /// Filters the group members.
+        /// </summary>
+        /// <param name="group">The group.</param>
+        /// <param name="members">The members.</param>
+        /// <param name="filterBag">The filter bag.</param>
+        /// <returns>IEnumerable&lt;GroupMember&gt;.</returns>
+        private IEnumerable<GroupMember> FilterGroupMembers( Group group, FilterBag filterBag, RockContext rockContext )
+        {
+            var groupTypeCache = GroupTypeCache.Get( group.GroupTypeId );
+
+            var members = new GroupMemberService( rockContext )
+                .Queryable()
+                .Where( gm => gm.Group.Guid == group.Guid );
+
+            // If they selected group roles to filter, and the amount of
+            // selected group roles does not equal of group roles the amount the group already has.
+            var filterByGroupRole = ( filterBag.SelectedGroupRoles?.Any() ?? false )
+                && filterBag.SelectedGroupRoles.Count() != groupTypeCache.Roles.Count;
+
+            if ( filterByGroupRole )
+            {
+                members = members.Where( m => filterBag.SelectedGroupRoles.Contains( m.GroupRole.Guid ) );
+            }
+
+            // Filter by gender, we first check if there are any selected
+            // gender filters, if the amount of selected genders
+            // is the same as the amount contained in the enum (all of them)
+            // we shouldn't filter.
+            var filterByGender = filterBag.SelectedGenders?.Any() ?? false && filterBag.SelectedGenders.Count() != Enum.GetNames( typeof( Rock.Common.Mobile.Enums.Gender ) ).Length;
+            if ( filterByGender )
+            {
+                var genders = new List<Rock.Common.Mobile.Enums.Gender>();
+                foreach ( var selectedGender in filterBag.SelectedGenders )
+                {
+                    genders.Add( selectedGender );
+                }
+
+                members = members.Where( gm => genders.Contains( ( Common.Mobile.Enums.Gender ) gm.Person.Gender ) );
+            }
+
+            // Same logic as the gender one above.
+            var filterByGroupTypeRole = filterBag.SelectedGroupTypeRoles?.Any() ?? false
+                && filterBag.SelectedGroupTypeRoles.Count() != Enum.GetNames( typeof( GroupRoleTypeSpecifier ) ).Length;
+
+            // This will need to be updated if we ever add more specific
+            // group role types. Since as of today we only utilize
+            // the 'IsLeader' property.
+            if ( filterByGroupTypeRole )
+            {
+                foreach ( var groupTypeRole in filterBag.SelectedGroupTypeRoles )
+                {
+                    switch ( groupTypeRole )
+                    {
+                        case GroupRoleTypeSpecifier.Leader:
+                            members = members.Where( m => m.GroupRole.IsLeader );
+                            break;
+                        case GroupRoleTypeSpecifier.Member:
+                            members = members.Where( m => !m.GroupRole.IsLeader );
+                            break;
+                    }
+                }
+            }
+
+            var filterByChildGroup = filterBag.SelectedChildGroups?.Any() ?? false && filterBag.SelectedChildGroups.Count() != group.Groups.Count;
+            if ( filterByChildGroup )
+            {
+                members = members.Where( gm => gm.Person.Members.Any( innerGm => filterBag.SelectedChildGroups.Contains( innerGm.Group.Guid ) ) );
+            }
+
+            var filterByAttendance = filterBag.SelectedAttendance != null;
+            if ( filterByAttendance )
+            {
+                var range = filterBag.SelectedAttendance.Range;
+                var attendanceFilterType = filterBag.SelectedAttendance.FilterType;
+
+                members = FilterMembersByAttendanceOption( members, range, attendanceFilterType, rockContext );
+            }
+
+            return members.ToList();
+        }
+
+        private static IQueryable<GroupMember> FilterMembersByAttendanceOption( IQueryable<GroupMember> groupMembers, int amtOfWeeks, AttendanceFilterOptionType option, RockContext rockContext )
+        {
+            switch ( option )
+            {
+                case AttendanceFilterOptionType.NoAttendance:
+                    return WhereMembersWithNoAttendanceForNumberOfWeeks( groupMembers, amtOfWeeks, rockContext );
+                case AttendanceFilterOptionType.FirstAttended:
+                    return GetMembersWhoFirstAttendedWithinNumberOfWeeks( groupMembers, amtOfWeeks, rockContext );
+                case AttendanceFilterOptionType.Attended:
+                    return GetMembersWhoAttendedWithinNumberOfWeeks( groupMembers, amtOfWeeks, rockContext );
+            }
+
+            return groupMembers;
+        }
+
+        [RockInternal("1.15")]
+        internal static IQueryable<GroupMember> WhereMembersWithNoAttendanceForNumberOfWeeks( IQueryable<GroupMember> members, int amtOfWeeks, RockContext rockContext )
+        {
+            var attendanceOccurenceService = new AttendanceService( rockContext );
+            var limitDate = RockDateTime.Now.AddDays( amtOfWeeks * -7 );
+
+            // Pull the attendance occurrences for this group.
+            var attendedPersonIds = attendanceOccurenceService
+                .Queryable()
+                .Where( x => x.Occurrence.OccurrenceDate >= limitDate && x.DidAttend == true )
+                .Select( a => a.PersonAlias.PersonId );
+
+            return members.Where( m => !attendedPersonIds.Contains( m.PersonId ) );
+        }
+
+        [RockInternal( "1.15" )]
+        internal static IQueryable<GroupMember> GetMembersWhoFirstAttendedWithinNumberOfWeeks( IQueryable<GroupMember> members, int amtOfWeeks, RockContext rockContext )
+        {
+            var attendanceOccurenceService = new AttendanceService( rockContext );
+            var limitDate = RockDateTime.Now.AddDays( amtOfWeeks * -7 );
+
+            // Pull the attendance occurrences for this group.
+            var previousAttendancesPersonIds = attendanceOccurenceService
+                .Queryable()
+                .Where( x => x.Occurrence.OccurrenceDate < limitDate && x.DidAttend == true )
+                .Select( a => a.PersonAlias.PersonId );
+
+            // Pull the attendance occurrences for this group.
+            var attendedPersonIds = attendanceOccurenceService
+                .Queryable()
+                .Where( x => x.Occurrence.OccurrenceDate >= limitDate && x.DidAttend == true )
+                .Select( a => a.PersonAlias.PersonId );
+
+            return members.Where( m => !previousAttendancesPersonIds.Contains( m.PersonId ) && attendedPersonIds.Contains( m.PersonId ) );
+        }
+
+        [RockInternal( "1.15" )]
+        internal static IQueryable<GroupMember> GetMembersWhoAttendedWithinNumberOfWeeks( IQueryable<GroupMember> members, int amtOfWeeks, RockContext rockContext )
+        {
+            var attendanceOccurenceService = new AttendanceService( rockContext );
+            var limitDate = RockDateTime.Now.AddDays( amtOfWeeks * -7 );
+
+            // Pull the attendance occurrences for this group.
+            var attendedPersonIds = attendanceOccurenceService
+                .Queryable()
+                .Where( x => x.Occurrence.OccurrenceDate >= limitDate && x.DidAttend == true )
+                .Select( a => a.PersonAlias.PersonId );
+
+            return members.Where( m => attendedPersonIds.Contains( m.PersonId ) );
+        }
+
+        /// <summary>
+        /// Gets the group details with filter options.
+        /// </summary>
+        /// <param name="filterBag">The filter bag.</param>
+        /// <returns>BlockActionResult.</returns>
+        [BlockAction]
+        public BlockActionResult GetGroupDetailsWithFilterOptions( FilterBag filterBag )
+        {
+            using ( var rockContext = new RockContext() )
+            {
+                var groupGuid = RequestContext.GetPageParameter( PageParameterKeys.GroupGuid ).AsGuid();
+
+                var group = new GroupService( rockContext )
+                    .Queryable()
+                    .Include( g => g.Groups )
+                    .Where( g => g.Guid == groupGuid )
+                    .FirstOrDefault();
+
+                if ( group == null )
+                {
+                    return ActionNotFound();
+                }
+
+                IEnumerable<GroupMember> groupMembers;
+                int totalGroupMemberCount;
+                if ( filterBag == null )
+                {
+                    groupMembers = new GroupMemberService( rockContext )
+                        .Queryable()
+                        .Include( gm => gm.Person )
+                        .Where( gm => gm.Group.Guid == groupGuid )
+                        .ToList();
+
+                    totalGroupMemberCount = groupMembers.Count();
+                }
+                else
+                {
+                    groupMembers = FilterGroupMembers( group, filterBag, rockContext );
+                    totalGroupMemberCount = new GroupMemberService( rockContext )
+                        .Queryable()
+                        .Where( gm => gm.Group.Guid == groupGuid )
+                        .Count();
+                }
+
+                var lavaTemplate = CreateLavaTemplate();
+
+                var mergeFields = RequestContext.GetCommonMergeFields();
+                mergeFields.Add( "Items", groupMembers );
+                mergeFields.Add( "Group", group );
+
+                var title = TitleTemplate.ResolveMergeFields( mergeFields );
+                var memberJson = lavaTemplate.ResolveMergeFields( mergeFields );
+
+                // This is about 1,000x faster than .FromJsonDynamic() --dsh
+                var members = Newtonsoft.Json.Linq.JToken.Parse( memberJson );
+
+                var groupRoleTypes = new List<ListItemViewModel>()
+                {
+                    new ListItemViewModel
+                    {
+                        Text = "Is Leader",
+                        Value = GroupRoleTypeSpecifier.Leader.ToString()
+                    },
+                    new ListItemViewModel
+                    {
+                        Text = "Is Member",
+                        Value = GroupRoleTypeSpecifier.Member.ToString()
+                    }
+                };
+
+                var groupTypeCache = GroupTypeCache.Get( group.GroupTypeId );
+
+                var groupRoles = groupTypeCache.Roles.Select( r => new ListItemViewModel
+                {
+                    Text = r.Name,
+                    Value = r.Guid.ToString()
+                } ).ToList();
+
+                var childGroups = group.Groups.Select( g => new ListItemViewModel
+                {
+                    Text = g.Name,
+                    Value = g.Guid.ToString()
+                } ).ToList();
+
+
+                var groupDetailBag = new GroupDetailBag
+                {
+                    GroupRoles = groupRoles,
+                    GroupRoleTypes = groupRoleTypes,
+                    ChildGroups = childGroups,
+                    Members = members,
+                    TotalGroupMemberCount = totalGroupMemberCount,
+                    Title = title
+                };
+
+                return ActionOk( groupDetailBag );
             }
         }
 
