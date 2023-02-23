@@ -3434,6 +3434,38 @@ namespace Rock.Model
         }
 
         /// <summary>
+        /// Removes duplicate and empty number phone numbers from a person
+        /// </summary>
+        /// <param name="person">The Person.</param>
+        /// <param name="phoneNumberTypeIds">The list of phone number type ids.</param>
+        /// <param name="rockContext">The rock context.</param>
+        public void RemoveEmptyAndDuplicatePhoneNumbers( Person person, List<int> phoneNumberTypeIds, RockContext rockContext )
+        {
+            var phoneNumberService = new PhoneNumberService( rockContext );
+
+            // Remove any blank numbers
+            foreach ( var phoneNumber in person.PhoneNumbers
+                            .Where( n => n.NumberTypeValueId.HasValue && !phoneNumberTypeIds.Contains( n.NumberTypeValueId.Value ) )
+                            .ToList() )
+            {
+                person.PhoneNumbers.Remove( phoneNumber );
+                phoneNumberService.Delete( phoneNumber );
+            }
+
+            // Remove any duplicate numbers
+            var isDuplicate = person.PhoneNumbers.GroupBy( pn => pn.Number ).Where( g => g.Count() > 1 ).Any();
+
+            if ( isDuplicate )
+            {
+                var listOfValidNumbers = person.PhoneNumbers.OrderBy(o=>o.NumberTypeValueId).GroupBy( pn => pn.Number ).Select( y => y.First() ).ToList();
+                var removedNumbers = person.PhoneNumbers.Except( listOfValidNumbers ).ToList();
+                phoneNumberService.DeleteRange( removedNumbers );
+                person.PhoneNumbers = listOfValidNumbers;
+            }
+
+        }
+
+        /// <summary>
         /// Gets the selected value.
         /// </summary>
         /// <param name="anonymousPersonValue">Anonymous person value.</param>

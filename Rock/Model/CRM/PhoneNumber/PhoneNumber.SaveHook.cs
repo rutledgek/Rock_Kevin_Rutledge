@@ -56,35 +56,20 @@ namespace Rock.Model
                     Entity.Number = PhoneNumber.CleanNumber( Entity.NumberFormatted );
                 }
 
-                // Check for duplicate
-                if ( State == EntityContextState.Added || State == EntityContextState.Modified )
-                {
-                    var rockContext = ( RockContext ) this.RockContext;
-                    var phoneNumberService = new PhoneNumberService( rockContext );
-                    var duplicates = phoneNumberService.Queryable().Where( pn => pn.PersonId == Entity.PersonId && pn.Number == Entity.Number && pn.CountryCode == Entity.CountryCode );
-
-                    // Make sure this number isn't considered a duplicate
-                    if ( State == EntityContextState.Modified )
-                    {
-                        duplicates = duplicates.Where( d => d.Id != Entity.Id );
-                    }
-
-                    if ( duplicates.Any() )
-                    {
-                        var highestOrderedDuplicate = duplicates.Where( p => p.NumberTypeValue != null ).OrderBy( p => p.NumberTypeValue.Order ).FirstOrDefault();
-                        if ( Entity.NumberTypeValueId.HasValue && highestOrderedDuplicate != null && highestOrderedDuplicate.NumberTypeValue != null )
-                        {
-                            // Ensure that we preserve the PhoneNumber with the highest preference phone type
-                            var numberType = DefinedValueCache.Get( Entity.NumberTypeValueId.Value, rockContext );
-                            if ( highestOrderedDuplicate.NumberTypeValue.Order < numberType.Order )
-                            {
-                                Entity.NumberTypeValueId = highestOrderedDuplicate.NumberTypeValueId;
-                            }
-
-                            phoneNumberService.DeleteRange( duplicates );
-                        }
-                    }
-                }
+                /*
+                 * 2023-02-23
+                 * 
+                 * Code that used to be here to check for duplicates has been moved.
+                 * Now, a RemoveEmptyAndDuplicatePhoneNumbers method is within the PersonService to perform this task.
+                 * Before the numbers reach the save hook, they will be filtered out to have duplicate removed and emptied.
+                 * This method is called within the block where the number is being changed.
+                 * 
+                 * Having the remove duplicate numbers in this location caused several issues:
+                 * Duplicate numbers could still be added to a user initially (user has no numbers and one can add the same number for work and home)
+                 * Numbers were unable to be swapped (mobile and work phone number switched)
+                 * 
+                 */
+                
 
                 int personId = Entity.PersonId;
                 PersonHistoryChanges = new Dictionary<int, History.HistoryChangeList> { { personId, new History.HistoryChangeList() } };

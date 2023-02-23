@@ -431,7 +431,6 @@ namespace RockWeb.Blocks.Crm.PersonDetail
                         var personService = new PersonService( rockContext );
 
                         var person = personService.Get( Person.Id );
-
                         int? orphanedPhotoId = null;
                         if ( person.PhotoId != imgPhoto.BinaryFileId )
                         {
@@ -545,15 +544,8 @@ namespace RockWeb.Blocks.Crm.PersonDetail
                             }
                         }
 
-                        // Remove any blank numbers
-                        var phoneNumberService = new PhoneNumberService( rockContext );
-                        foreach ( var phoneNumber in person.PhoneNumbers
-                            .Where( n => n.NumberTypeValueId.HasValue && !phoneNumberTypeIds.Contains( n.NumberTypeValueId.Value ) )
-                            .ToList() )
-                        {
-                            person.PhoneNumbers.Remove( phoneNumber );
-                            phoneNumberService.Delete( phoneNumber );
-                        }
+                        // Remove any duplicates and blank numbers
+                        personService.RemoveEmptyAndDuplicatePhoneNumbers( person, phoneNumberTypeIds, rockContext );
 
                         person.Email = tbEmail.Text.Trim();
                         person.IsEmailActive = cbIsEmailActive.Checked;
