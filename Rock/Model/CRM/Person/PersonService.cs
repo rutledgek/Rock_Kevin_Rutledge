@@ -685,7 +685,7 @@ namespace Rock.Model
                     if they have different emails. However, this is been changed so that people with a
                     low AccountProtectionProfile (no Login, for example) can be matched even though
                     the email address doesn't exactly match (as long as the ConfidenceScore is
-                    above MATCH_SCORE_CUTOFF). Note that this change also results in Never attemping to match people with
+                    above MATCH_SCORE_CUTOFF). Note that this change also results in Never attempting to match people with
                     higher AccountProtectionProfile, regardless of the ConfidenceScore.
 
                     2020-11-12 - MDP (outdated, see 2021-09-27 note)
