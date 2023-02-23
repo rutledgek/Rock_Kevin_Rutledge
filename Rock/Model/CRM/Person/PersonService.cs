@@ -3443,7 +3443,7 @@ namespace Rock.Model
         {
             var phoneNumberService = new PhoneNumberService( rockContext );
 
-            // Remove any blank numbers
+            // Remove any empty numbers
             foreach ( var phoneNumber in person.PhoneNumbers
                             .Where( n => n.NumberTypeValueId.HasValue && !phoneNumberTypeIds.Contains( n.NumberTypeValueId.Value ) )
                             .ToList() )
