@@ -465,7 +465,6 @@ namespace RockWeb.Blocks.Cms
 
             cpCampus.Label = GetAttributeValue( AttributeKey.CampusSelectorLabel );
 
-
             if ( !string.IsNullOrWhiteSpace( GetAttributeValue( AttributeKey.RequiredAdultPhoneTypes ) ) )
             {
                 _requiredPhoneNumberGuids = GetAttributeValue( AttributeKey.RequiredAdultPhoneTypes ).Split( ',' ).Select( Guid.Parse ).ToList();
