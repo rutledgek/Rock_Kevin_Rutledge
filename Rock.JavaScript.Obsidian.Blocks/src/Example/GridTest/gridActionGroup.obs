@@ -1,0 +1,19 @@
+<template>
+    <div class="grid-actions">
+        <GridActionButton v-for="action in gridActions" :action="action" />
+    </div>
+</template>
+
+<script setup lang="ts">
+    import { computed, PropType } from "vue";
+    import { GridAction } from "./types";
+    import GridActionButton from "./gridActionButton.obs";
+
+
+    const props = defineProps({
+        gridActions: {
+            type: Array as PropType<GridAction[]>,
+            default: []
+        }
+    });
+</script>

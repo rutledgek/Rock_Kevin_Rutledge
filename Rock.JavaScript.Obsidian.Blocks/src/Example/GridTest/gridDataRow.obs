@@ -1,0 +1,23 @@
+<template>
+    <tr>
+        <GridDataCell v-for="column in columns" :column="column" :row="data" />
+    </tr>
+</template>
+
+<script setup lang="ts">
+    import { PropType } from "vue";
+    import GridDataCell from "./gridDataCell.obs";
+    import { GridColumnDefinition } from "./types";
+
+    const props = defineProps({
+        columns: {
+            type: Array as PropType<GridColumnDefinition[]>,
+            default: []
+        },
+
+        data: {
+            type: Object as PropType<Record<string, unknown>>,
+            required: true
+        }
+    });
+</script>

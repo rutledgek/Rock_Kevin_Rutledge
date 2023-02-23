@@ -1,0 +1,38 @@
+<template>
+    <ul v-if="pageSizes" class="grid-pagesize pagination pagination-sm">
+        <li v-for="size in pageSizes" :class="getPageSizeClass(size)">
+            <a href="#" @click.prevent="onPageSizeClick(size)">{{ size }}</a>
+        </li>
+    </ul>
+</template>
+
+<script setup lang="ts">
+    import { useVModelPassthrough } from "@Obsidian/Utility/component";
+    import { PropType } from "vue";
+
+    const props = defineProps({
+        modelValue: {
+            type: Number as PropType<number>,
+            required: true
+        },
+
+        pageSizes: {
+            type: Array as PropType<number[]>,
+            default: []
+        }
+    });
+
+    const emit = defineEmits<{
+        (event: "update:modelValue", value: number): void,
+    }>();
+
+    const pageSize = useVModelPassthrough(props, "modelValue", emit);
+
+    const getPageSizeClass = (size: number): string | undefined => {
+        return pageSize.value === size ? "active" : undefined;
+    };
+
+    const onPageSizeClick = (size: number): void => {
+        pageSize.value = size;
+    };
+</script>

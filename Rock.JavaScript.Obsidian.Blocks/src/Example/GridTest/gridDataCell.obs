@@ -1,0 +1,26 @@
+<template>
+    <td>
+        <component :is="cellContent" :row="row" :column="column" />
+    </td>
+</template>
+
+<script setup lang="ts">
+    import { Component as VueComponent, computed, PropType, VNode } from "vue";
+    import { GridColumnDefinition } from "./types";
+
+    const props = defineProps({
+        column: {
+            type: Object as PropType<GridColumnDefinition>,
+            required: true
+        },
+
+        row: {
+            type: Object as PropType<Record<string, unknown>>,
+            required: true
+        }
+    });
+
+    const cellContent = computed((): VNode | VueComponent | undefined => {
+        return props.column.format;
+    });
+</script>

@@ -1,0 +1,44 @@
+<template>
+    <tr>
+        <th class="grid-filter" :colspan="visibleColumnCount">
+            <div class="d-flex">
+                <div class="grid-quick-filter">
+                    <TextBox v-model="filterValue" placeholder="Filter" />
+                </div>
+
+                <GridActionGroup :gridActions="gridActions" />
+            </div>
+        </th>
+    </tr>
+</template>
+
+<script setup lang="ts">
+    import { useVModelPassthrough } from "@Obsidian/Utility/component";
+    import TextBox from "@Obsidian/Controls/textBox";
+    import { computed, PropType } from "vue";
+    import GridActionGroup from "./gridActionGroup.obs";
+    import { GridAction } from "./types";
+
+    const props = defineProps({
+        filterValue: {
+            type: String as PropType<string>,
+            default: ""
+        },
+
+        gridActions: {
+            type: Array as PropType<GridAction[]>,
+            default: []
+        },
+
+        visibleColumnCount: {
+            type: Number as PropType<number>,
+            default: 0
+        }
+    });
+
+    const emit = defineEmits<{
+        (event: "update:filterValue", value: string): void
+    }>();
+
+    const filterValue = useVModelPassthrough(props, "filterValue", emit);
+</script>

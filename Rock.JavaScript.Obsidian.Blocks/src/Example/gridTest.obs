@@ -1,3 +1,4 @@
+<!-- Copyright by the Spark Development Network; Licensed under the Rock Community License -->
 <template>
     <Grid :data="loadGridData">
         <Column name="name" title="Name" sortValue="{{ row.name.lastName }} {{ row.name.firstName }}">
@@ -62,10 +63,11 @@
     import { useConfigurationValues, useInvokeBlockAction } from "@Obsidian/Utility/block";
     import { computed, defineComponent, PropType, VNode } from "vue";
     import { RockDateTime } from "@Obsidian/Utility/rockDateTime";
-    import Grid from "./GridTest/grid.partial";
+    import Grid from "./GridTest/grid.obs";
     import { AttributeColumnDefinition, GridColumnDefinition, GridData, GridDefinition } from "./GridTest/types";
-import { ListItemBag } from "@Obsidian/ViewModels/Utility/listItemBag";
+    import { ListItemBag } from "@Obsidian/ViewModels/Utility/listItemBag";
 
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     const Column = defineComponent({
         props: {
             name: {
@@ -120,6 +122,7 @@ import { ListItemBag } from "@Obsidian/ViewModels/Utility/listItemBag";
         template: `{{ formattedValue }}`
     });
 
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     const DateColumn = defineComponent({
         props: {
             name: {
@@ -188,6 +191,7 @@ import { ListItemBag } from "@Obsidian/ViewModels/Utility/listItemBag";
         return row[column.sortField] === true ? 1 : 0;
     }
 
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     const BooleanColumn = defineComponent({
         props: {
             name: {
@@ -262,6 +266,7 @@ import { ListItemBag } from "@Obsidian/ViewModels/Utility/listItemBag";
         template: `<span :class="labelClass">{{ text }}</span>`
     });
 
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     const BadgeColumn = defineComponent({
         props: {
             name: {
@@ -322,13 +327,13 @@ import { ListItemBag } from "@Obsidian/ViewModels/Utility/listItemBag";
                     return {
                         "backgroundColor": colorSource[text.value],
                         "color": "white"
-                    }
+                    };
                 }
                 else {
                     return {
                         "backgroundColor": "gray",
                         "color": "white"
-                    }
+                    };
                 }
             });
 
@@ -341,6 +346,7 @@ import { ListItemBag } from "@Obsidian/ViewModels/Utility/listItemBag";
         template: `<span class="label label-default" :style="labelStyle">{{ text }}</span>`
     });
 
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     const BadgeColorColumn = defineComponent({
         props: {
             name: {
@@ -399,13 +405,13 @@ import { ListItemBag } from "@Obsidian/ViewModels/Utility/listItemBag";
                     return {
                         "backgroundColor": (props.row[props.column.field] as ListItemBag).value,
                         "color": "white"
-                    }
+                    };
                 }
                 else {
                     return {
                         "backgroundColor": "gray",
                         "color": "white"
-                    }
+                    };
                 }
             });
 
@@ -418,6 +424,7 @@ import { ListItemBag } from "@Obsidian/ViewModels/Utility/listItemBag";
         template: `<span class="label label-default" :style="labelStyle">{{ text }}</span>`
     });
 
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     const ColoredBadgeColumn = defineComponent({
         props: {
             name: {
@@ -443,7 +450,7 @@ import { ListItemBag } from "@Obsidian/ViewModels/Utility/listItemBag";
         }
     });
 
-
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     const AttributeColumns = defineComponent({
         components: {
             Column
