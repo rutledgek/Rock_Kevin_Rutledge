@@ -59,13 +59,13 @@ namespace Rock.Model
                 /*
                  * 2023-02-23
                  * 
-                 * Code that used to be here to check for duplicates has been moved.
+                 * This section used to check for duplicate numbers in this location.
                  * Now, a RemoveEmptyAndDuplicatePhoneNumbers method is within the PersonService to perform this task.
-                 * Before the numbers reach the save hook, they will be filtered out to have duplicate removed and emptied.
+                 * Before the phone numbers reach this save hook, they will be filtered out to have duplicate removed and emptied. 
                  * This method is called within the block where the number is being changed.
                  * 
                  * Having the remove duplicate numbers in this location caused several issues:
-                 * Duplicate numbers could still be added to a user initially (user has no numbers and one can add the same number for work and home)
+                 * Duplicate numbers could still be added to a user initially when the user had no numbers
                  * Numbers were unable to be swapped (mobile and work phone number switched)
                  * 
                  */
