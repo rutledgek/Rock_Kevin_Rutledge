@@ -83,7 +83,7 @@ namespace RockWeb.Blocks.Crm.PersonDetail
         DefaultBooleanValue = false,
         Order = 3 )]
 
-    [CustomDropdownListField (
+    [CustomDropdownListField(
         "Race",
         Key = AttributeKey.RaceOption,
         Description = "Allow Race to be optionally selected.",
