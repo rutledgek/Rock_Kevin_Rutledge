@@ -375,11 +375,6 @@ namespace Rock.Reporting.DataFilter.Person
             {
                 firstAttendanceDataQry = firstAttendanceDataQry.Where( fa => fa.FirstAttendanceDate < dateRange.End.Value );
             }
-            else
-            {
-                // no group type selected, so return nothing
-                return Expression.Constant( false );
-            }
 
             var innerQry = firstAttendanceDataQry.Select( fa => fa.PersonId ).AsQueryable();
             var qry = new PersonService( rockContext ).Queryable().Where( p => innerQry.Any( fa => fa == p.Id ) );
