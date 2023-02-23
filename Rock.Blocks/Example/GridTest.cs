@@ -44,7 +44,7 @@ namespace Rock.Blocks.Example
     [Rock.SystemGuid.EntityTypeGuid( "1934a378-57d6-44d0-b7cd-4443f347a1ee" )]
     public class GridTest : RockObsidianBlockType
     {
-        public override string BlockFileUrl => $"{base.BlockFileUrl}.vue";
+        public override string BlockFileUrl => $"{base.BlockFileUrl}.obs";
 
         public override object GetObsidianBlockInitialization()
         {
