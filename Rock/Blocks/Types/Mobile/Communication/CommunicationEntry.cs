@@ -32,7 +32,7 @@ namespace Rock.Blocks.Types.Mobile.Communication
     [BooleanField( "Enable SMS",
         Description = "When enabled, show SMS as a selectable communication transport.",
         DefaultBooleanValue = true,
-        Key = AttributeKey.EnableSMS,
+        Key = AttributeKey.EnableSms,
         Order = 1 )]
 
     [BooleanField( "Show From Name",
@@ -63,7 +63,7 @@ namespace Rock.Blocks.Types.Mobile.Communication
         Description = "Set the allowed FROM numbers to appear when in SMS mode (if none are selected all numbers will be included). ",
         IsRequired = false,
         AllowMultiple = true,
-        Key = AttributeKey.AllowedSMSNumbers,
+        Key = AttributeKey.AllowedSmsNumbers,
         Order = 6 )]
 
     [BooleanField( "Show only personal SMS number",
@@ -116,7 +116,7 @@ namespace Rock.Blocks.Types.Mobile.Communication
             /// <summary>
             /// The enable SMS attribute key.
             /// </summary>
-            public const string EnableSMS = "EnableSMS";
+            public const string EnableSms = "EnableSms";
 
             /// <summary>
             /// The enable parent communication attribute key.
@@ -141,7 +141,7 @@ namespace Rock.Blocks.Types.Mobile.Communication
             /// <summary>
             /// The allowed SMS numbers attribute key.
             /// </summary>
-            public const string AllowedSMSNumbers = "AllowedSMSNumbers";
+            public const string AllowedSmsNumbers = "AllowedSMSNumbers";
 
             /// <summary>
             /// The show only personal SMS number attribute key.
@@ -173,7 +173,7 @@ namespace Rock.Blocks.Types.Mobile.Communication
         /// Gets a value indicating whether SMS should be displayed as an option of communication medium.
         /// </summary>
         /// <value><c>true</c> if [enable SMS]; otherwise, <c>false</c>.</value>
-        public bool EnableSMS => GetAttributeValue( AttributeKey.EnableSMS ).AsBoolean();
+        public bool EnableSms => GetAttributeValue( AttributeKey.EnableSms ).AsBoolean();
 
         /// <summary>
         /// Gets a value indicating whether we should show a toggle, used to send a communication to the parent of any children in the recipients.
@@ -236,7 +236,7 @@ namespace Rock.Blocks.Types.Mobile.Communication
             return new Rock.Common.Mobile.Blocks.Communication.CommunicationEntry.Configuration
             {
                 EnableEmail = EnableEmail,
-                EnableSMS = EnableSMS,
+                EnableSms = EnableSms,
                 ShowSendToParents = ShowSendToParents,
                 IsBulk = IsBulk,
                 ShowFromName = ShowFromName,
@@ -388,7 +388,7 @@ namespace Rock.Blocks.Types.Mobile.Communication
                 .ThenBy( spn => spn.Id )
                 .Where( spn => spn.IsAuthorized( Rock.Security.Authorization.VIEW, RequestContext.CurrentPerson ) );
 
-            var selectedNumberGuids = GetAttributeValue( AttributeKey.AllowedSMSNumbers ).SplitDelimitedValues( true ).AsGuidList();
+            var selectedNumberGuids = GetAttributeValue( AttributeKey.AllowedSmsNumbers ).SplitDelimitedValues( true ).AsGuidList();
             if ( selectedNumberGuids.Any() )
             {
                 smsNumbers = smsNumbers.Where( v => selectedNumberGuids.Contains( v.Guid ) );
