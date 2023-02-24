@@ -22,10 +22,6 @@ using System.Linq;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 
-using Newtonsoft.Json.Linq;
-
-using OfficeOpenXml.FormulaParsing.Excel.Functions.Math;
-
 using Rock.Attribute;
 using Rock.Common.Mobile.Blocks.Groups.GroupMemberList;
 using Rock.Common.Mobile.Enums;
@@ -34,7 +30,6 @@ using Rock.Data;
 using Rock.Mobile;
 using Rock.Mobile.JsonFields;
 using Rock.Model;
-using Rock.ViewModels.Utility;
 using Rock.Web.Cache;
 using Rock.Web.UI.Controls;
 
@@ -362,47 +357,16 @@ namespace Rock.Blocks.Types.Mobile.Groups
         #region Action Methods
 
         /// <summary>
-        /// Gets the group details.
-        /// </summary>
-        /// <returns></returns>
-        [BlockAction]
-        [RockObsolete( "1.15" )]
-        public object GetGroupDetails()
-        {
-            using ( var rockContext = new RockContext() )
-            {
-                var groupGuid = RequestContext.GetPageParameter( PageParameterKeys.GroupGuid ).AsGuid();
-                var group = new GroupService( rockContext ).Get( groupGuid );
-
-                var lavaTemplate = CreateLavaTemplate();
-
-                var mergeFields = RequestContext.GetCommonMergeFields();
-                mergeFields.Add( "Items", group.Members );
-                mergeFields.Add( "Group", group );
-
-                var title = TitleTemplate.ResolveMergeFields( mergeFields );
-                var memberJson = lavaTemplate.ResolveMergeFields( mergeFields );
-
-                // This is about 1,000x faster than .FromJsonDynamic() --dsh
-                var members = Newtonsoft.Json.Linq.JToken.Parse( memberJson );
-
-                return new
-                {
-                    Title = title,
-                    Members = members
-                };
-            }
-        }
-
-        /// <summary>
         /// Filters the group members.
         /// </summary>
         /// <param name="group">The group.</param>
-        /// <param name="members">The members.</param>
         /// <param name="filterBag">The filter bag.</param>
+        /// <param name="rockContext">The rock context.</param>
         /// <returns>IEnumerable&lt;GroupMember&gt;.</returns>
-        private IEnumerable<GroupMember> FilterGroupMembers( Group group, FilterBag filterBag, RockContext rockContext )
+        private static IEnumerable<GroupMember> FilterGroupMembers( Group group, FilterBag filterBag, RockContext rockContext = null )
         {
+            rockContext = rockContext ?? new RockContext();
+
             var groupTypeCache = GroupTypeCache.Get( group.GroupTypeId );
 
             var members = new GroupMemberService( rockContext )
@@ -476,70 +440,32 @@ namespace Rock.Blocks.Types.Mobile.Groups
             return members.ToList();
         }
 
+        /// <summary>
+        /// Filters the members by attendance option.
+        /// See <see cref="AttendanceFilterOptionType" />.
+        /// </summary>
+        /// <param name="groupMembers">The group members.</param>
+        /// <param name="amtOfWeeks">The amt of weeks.</param>
+        /// <param name="option">The option.</param>
+        /// <param name="rockContext">The rock context.</param>
+        /// <returns>IQueryable&lt;GroupMember&gt;.</returns>
         private static IQueryable<GroupMember> FilterMembersByAttendanceOption( IQueryable<GroupMember> groupMembers, int amtOfWeeks, AttendanceFilterOptionType option, RockContext rockContext )
         {
+            // Switch our selected attendance option from the shell.
             switch ( option )
             {
+                // If we want to retrieve group members where there is not an attendance for x number of weeks.
                 case AttendanceFilterOptionType.NoAttendance:
-                    return WhereMembersWithNoAttendanceForNumberOfWeeks( groupMembers, amtOfWeeks, rockContext );
+                    return GroupMemberService.WhereMembersWithNoAttendanceForNumberOfWeeks( groupMembers, amtOfWeeks, rockContext );
+                // If we want to retrieve group members who first attended within an x number of weeks.
                 case AttendanceFilterOptionType.FirstAttended:
-                    return GetMembersWhoFirstAttendedWithinNumberOfWeeks( groupMembers, amtOfWeeks, rockContext );
+                    return GroupMemberService.WhereMembersWhoFirstAttendedWithinNumberOfWeeks( groupMembers, amtOfWeeks, rockContext );
+                // If we want to retrieve group members who attended within an x number of weeks.
                 case AttendanceFilterOptionType.Attended:
-                    return GetMembersWhoAttendedWithinNumberOfWeeks( groupMembers, amtOfWeeks, rockContext );
+                    return GroupMemberService.WhereMembersWhoAttendedWithinNumberOfWeeks( groupMembers, amtOfWeeks, rockContext );
             }
 
             return groupMembers;
-        }
-
-        [RockInternal("1.15")]
-        internal static IQueryable<GroupMember> WhereMembersWithNoAttendanceForNumberOfWeeks( IQueryable<GroupMember> members, int amtOfWeeks, RockContext rockContext )
-        {
-            var attendanceOccurenceService = new AttendanceService( rockContext );
-            var limitDate = RockDateTime.Now.AddDays( amtOfWeeks * -7 );
-
-            // Pull the attendance occurrences for this group.
-            var attendedPersonIds = attendanceOccurenceService
-                .Queryable()
-                .Where( x => x.Occurrence.OccurrenceDate >= limitDate && x.DidAttend == true )
-                .Select( a => a.PersonAlias.PersonId );
-
-            return members.Where( m => !attendedPersonIds.Contains( m.PersonId ) );
-        }
-
-        [RockInternal( "1.15" )]
-        internal static IQueryable<GroupMember> GetMembersWhoFirstAttendedWithinNumberOfWeeks( IQueryable<GroupMember> members, int amtOfWeeks, RockContext rockContext )
-        {
-            var attendanceOccurenceService = new AttendanceService( rockContext );
-            var limitDate = RockDateTime.Now.AddDays( amtOfWeeks * -7 );
-
-            // Pull the attendance occurrences for this group.
-            var previousAttendancesPersonIds = attendanceOccurenceService
-                .Queryable()
-                .Where( x => x.Occurrence.OccurrenceDate < limitDate && x.DidAttend == true )
-                .Select( a => a.PersonAlias.PersonId );
-
-            // Pull the attendance occurrences for this group.
-            var attendedPersonIds = attendanceOccurenceService
-                .Queryable()
-                .Where( x => x.Occurrence.OccurrenceDate >= limitDate && x.DidAttend == true )
-                .Select( a => a.PersonAlias.PersonId );
-
-            return members.Where( m => !previousAttendancesPersonIds.Contains( m.PersonId ) && attendedPersonIds.Contains( m.PersonId ) );
-        }
-
-        [RockInternal( "1.15" )]
-        internal static IQueryable<GroupMember> GetMembersWhoAttendedWithinNumberOfWeeks( IQueryable<GroupMember> members, int amtOfWeeks, RockContext rockContext )
-        {
-            var attendanceOccurenceService = new AttendanceService( rockContext );
-            var limitDate = RockDateTime.Now.AddDays( amtOfWeeks * -7 );
-
-            // Pull the attendance occurrences for this group.
-            var attendedPersonIds = attendanceOccurenceService
-                .Queryable()
-                .Where( x => x.Occurrence.OccurrenceDate >= limitDate && x.DidAttend == true )
-                .Select( a => a.PersonAlias.PersonId );
-
-            return members.Where( m => attendedPersonIds.Contains( m.PersonId ) );
         }
 
         /// <summary>
@@ -638,6 +564,39 @@ namespace Rock.Blocks.Types.Mobile.Groups
                 };
 
                 return ActionOk( groupDetailBag );
+            }
+        }
+
+        /// <summary>
+        /// Gets the group details.
+        /// </summary>
+        /// <returns></returns>
+        [BlockAction]
+        [RockObsolete( "1.15" )]
+        public object GetGroupDetails()
+        {
+            using ( var rockContext = new RockContext() )
+            {
+                var groupGuid = RequestContext.GetPageParameter( PageParameterKeys.GroupGuid ).AsGuid();
+                var group = new GroupService( rockContext ).Get( groupGuid );
+
+                var lavaTemplate = CreateLavaTemplate();
+
+                var mergeFields = RequestContext.GetCommonMergeFields();
+                mergeFields.Add( "Items", group.Members );
+                mergeFields.Add( "Group", group );
+
+                var title = TitleTemplate.ResolveMergeFields( mergeFields );
+                var memberJson = lavaTemplate.ResolveMergeFields( mergeFields );
+
+                // This is about 1,000x faster than .FromJsonDynamic() --dsh
+                var members = Newtonsoft.Json.Linq.JToken.Parse( memberJson );
+
+                return new
+                {
+                    Title = title,
+                    Members = members
+                };
             }
         }
 
