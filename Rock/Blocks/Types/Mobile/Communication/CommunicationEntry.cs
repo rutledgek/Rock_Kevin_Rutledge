@@ -316,7 +316,7 @@ namespace Rock.Blocks.Types.Mobile.Communication
                     PersonGuid = a.PersonGuid,
                     EntitySetItemGuid = a.EntitySetItemGuid,
                     PhotoUrl = a.PhotoId != null ? $"{publicUrl}GetImage.ashx?Id={a.PhotoId}&maxwidth=256&maxheight=256" : string.Empty,
-                    SMSNumber = a.PhoneNumbers.GetFirstSmsNumber(),
+                    SmsNumber = a.PhoneNumbers.GetFirstSmsNumber(),
                 } ).ToList();
 
                 return ActionOk( recipientBag );
@@ -423,6 +423,11 @@ namespace Rock.Blocks.Types.Mobile.Communication
         /// <returns>A string describing the result of the operation.</returns>
         private string SendCommunicationInternal( SendCommunicationRequestBag communicationBag )
         {
+            if ( RequestContext.CurrentPerson == null )
+            {
+                return "You must be logged in to attempt to send a communication.";
+            }
+
             using ( var rockContext = new RockContext() )
             {
                 var communicationService = new CommunicationService( rockContext );
@@ -459,7 +464,30 @@ namespace Rock.Blocks.Types.Mobile.Communication
                             Person = p,
                             PrimaryAliasId = pa.Id
                         }
-                    );
+                    ).ToList();
+
+                var parents = new Dictionary<int?, List<int>>();
+
+                // If this is enabled, we're going to send the communication to the
+                // 'parents' of any children in the recipients list. 
+                if ( communicationBag.SendToParents )
+                {
+                    // This is knowingly obscure. We are actually just going to include all adult family members in the family, since there
+                    // is no great way to distinguish a child's father/mother in Rock today. In other words, Uncle Joe will also
+                    // receive the communication.
+                    parents = personService
+                       .GetParentsForChildren( recipientPeople.Select( a => a.Person ).ToList() )
+                       .Join( personAliasService.Queryable(),
+                            p => p.Id,
+                            pa => pa.AliasPersonId,
+                            ( p, pa ) => new
+                            {
+                                PrimaryAliasId = pa.Id,
+                                PrimaryFamilyId = p.PrimaryFamilyId
+                            } )
+                       .GroupBy( p => p.PrimaryFamilyId )
+                       .ToDictionary( kvp => kvp.Key, kvp => kvp.Select( a => a.PrimaryAliasId ).ToList() );
+                }
 
                 // We have to loop through each of our recipient objects to create a real CommunicationRecipient.
                 foreach ( var recipientPerson in recipientPeople )
@@ -470,28 +498,12 @@ namespace Rock.Blocks.Types.Mobile.Communication
                         continue;
                     };
 
-                    communication.Recipients.Add( new CommunicationRecipient
-                    {
-                        PersonAliasId = recipientPerson.PrimaryAliasId
-                    } );
-
                     // If this is enabled, we're going to send the communication to the
                     // 'parents' of any children in the recipients list. 
                     if ( communicationBag.SendToParents )
                     {
-                        // This is knowingly obscure. We are actually just going to send to all adult family members in the family, since there
-                        // is no great way to distinguish a child's father/mother in Rock today.
-                        var parentsQry = recipientPerson.Person.TransformToParents( rockContext: rockContext );
-
-                        if ( parentsQry != null )
+                        if ( parents.TryGetValue( recipientPerson.Person.PrimaryFamilyId, out var parentAliasIds ) )
                         {
-                            var parentAliasIds = parentsQry
-                            .Join( personAliasService.Queryable(),
-                                p => p.Id,
-                                pa => pa.AliasPersonId,
-                                ( p, pa ) => pa.Id )
-                            .ToList();
-
                             foreach ( var parentAliasId in parentAliasIds )
                             {
                                 // If the parent already exists in the recipients, we don't want to duplicate the communication.
@@ -500,6 +512,7 @@ namespace Rock.Blocks.Types.Mobile.Communication
                                     continue;
                                 }
 
+                                // Add the parent to the communication.
                                 communication.Recipients.Add( new CommunicationRecipient
                                 {
                                     PersonAliasId = parentAliasId
@@ -507,6 +520,11 @@ namespace Rock.Blocks.Types.Mobile.Communication
                             }
                         }
                     }
+
+                    communication.Recipients.Add( new CommunicationRecipient
+                    {
+                        PersonAliasId = recipientPerson.PrimaryAliasId
+                    } );
                 }
 
                 communication.CommunicationType = ( CommunicationType ) communicationBag.CommunicationType;
@@ -639,7 +657,7 @@ namespace Rock.Blocks.Types.Mobile.Communication
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         private bool RequiresApproval( int communicationRecipientCount, int? maxRecipients )
         {
-            if( maxRecipients != null && communicationRecipientCount > maxRecipients )
+            if ( maxRecipients != null && communicationRecipientCount > maxRecipients )
             {
                 return true;
             }

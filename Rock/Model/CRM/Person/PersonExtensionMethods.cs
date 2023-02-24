@@ -520,38 +520,5 @@ namespace Rock.Model
 
             return rockSecuritySettingsService.SecuritySettings.DisableTokensForAccountProtectionProfiles.Contains( person.AccountProtectionProfile ) == false;
         }
-
-        /// <summary>
-        /// This function will take a person, and if they're a child return a queryable of all
-        /// of the adults in their family. The term 'Parents' is iffy, we know.
-        /// </summary>
-        /// <param name="person">The person.</param>
-        /// <param name="filterByGender">The filter by gender.</param>
-        /// <param name="rockContext"></param>
-        /// <returns>IQueryable&lt;GroupMember&gt;.</returns>
-        internal static IQueryable<GroupMember> TransformToParents( this Person person, Gender? filterByGender = null, RockContext rockContext = null )
-        {
-            rockContext = rockContext ?? new RockContext();
-
-            if ( person.AgeClassification != AgeClassification.Child )
-            {
-                return null;
-            }
-
-            var groupMemberService = new GroupMemberService( rockContext );
-
-            var parentsQry = groupMemberService
-                .Queryable()
-                .Where( gm => gm.GroupId == person.PrimaryFamilyId
-                    && gm.Person.AgeClassification == AgeClassification.Adult
-                    && gm.GroupMemberStatus == GroupMemberStatus.Active );
-
-            if ( filterByGender != null )
-            {
-                parentsQry = parentsQry.Where( x => x.Person.Gender == filterByGender );
-            }
-
-            return parentsQry;
-        }
     }
 }
