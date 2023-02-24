@@ -352,10 +352,6 @@ namespace Rock.Blocks.Types.Mobile.Groups
             return MobileHelper.CreateItemLavaTemplate( properties, fields );
         }
 
-        #endregion
-
-        #region Action Methods
-
         /// <summary>
         /// Filters the group members.
         /// </summary>
@@ -422,12 +418,14 @@ namespace Rock.Blocks.Types.Mobile.Groups
                 }
             }
 
+            // Filtering by child group.
             var filterByChildGroup = filterBag.SelectedChildGroups?.Any() ?? false && filterBag.SelectedChildGroups.Count() != group.Groups.Count;
             if ( filterByChildGroup )
             {
                 members = members.Where( gm => gm.Person.Members.Any( innerGm => filterBag.SelectedChildGroups.Contains( innerGm.Group.Guid ) ) );
             }
 
+            // Filtering by attendance.
             var filterByAttendance = filterBag.SelectedAttendance != null;
             if ( filterByAttendance )
             {
@@ -468,6 +466,10 @@ namespace Rock.Blocks.Types.Mobile.Groups
             return groupMembers;
         }
 
+        #endregion
+
+        #region Action Methods
+
         /// <summary>
         /// Gets the group details with filter options.
         /// </summary>
@@ -480,6 +482,7 @@ namespace Rock.Blocks.Types.Mobile.Groups
             {
                 var groupGuid = RequestContext.GetPageParameter( PageParameterKeys.GroupGuid ).AsGuid();
 
+                // Get our group from the Group Guid.
                 var group = new GroupService( rockContext )
                     .Queryable()
                     .Include( g => g.Groups )
@@ -493,22 +496,27 @@ namespace Rock.Blocks.Types.Mobile.Groups
 
                 IEnumerable<GroupMember> groupMembers;
                 int totalGroupMemberCount;
+
+                // This really shouldn't ever be null, and in most cases
+                // the shell just passes up an empty filter, but if it is
+                // we just want to use all of the active group members.
                 if ( filterBag == null )
                 {
                     groupMembers = new GroupMemberService( rockContext )
                         .Queryable()
                         .Include( gm => gm.Person )
-                        .Where( gm => gm.Group.Guid == groupGuid )
+                        .Where( gm => gm.Group.Guid == groupGuid && gm.GroupMemberStatus == GroupMemberStatus.Active )
                         .ToList();
 
                     totalGroupMemberCount = groupMembers.Count();
                 }
+                // Otherwise, filter the group members according to our filter bag values.
                 else
                 {
                     groupMembers = FilterGroupMembers( group, filterBag, rockContext );
                     totalGroupMemberCount = new GroupMemberService( rockContext )
                         .Queryable()
-                        .Where( gm => gm.Group.Guid == groupGuid )
+                        .Where( gm => gm.Group.Guid == groupGuid && gm.GroupMemberStatus == GroupMemberStatus.Active )
                         .Count();
                 }
 
@@ -540,18 +548,21 @@ namespace Rock.Blocks.Types.Mobile.Groups
 
                 var groupTypeCache = GroupTypeCache.Get( group.GroupTypeId );
 
+                // We need to send the shell a list of roles
+                // that they can filter by.
                 var groupRoles = groupTypeCache.Roles.Select( r => new ListItemViewModel
                 {
                     Text = r.Name,
                     Value = r.Guid.ToString()
                 } ).ToList();
 
+                // We also need to send the shell a list of child groups
+                // that they can filter by.
                 var childGroups = group.Groups.Select( g => new ListItemViewModel
                 {
                     Text = g.Name,
                     Value = g.Guid.ToString()
                 } ).ToList();
-
 
                 var groupDetailBag = new GroupDetailBag
                 {
