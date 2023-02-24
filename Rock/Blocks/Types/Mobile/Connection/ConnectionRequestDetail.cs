@@ -367,8 +367,7 @@ namespace Rock.Blocks.Types.Mobile.Connection
                     FirstName = a.ConnectorPersonAlias.Person.FirstName,
                     LastName = a.ConnectorPersonAlias.Person.LastName,
                     PhotoUrl = $"{baseUrl}{a.ConnectorPersonAlias.Person.PhotoUrl}",
-                },
-                ConnectionRequestId = a.ConnectionRequestId
+                }
             } ).ToList();
 
             var viewModel = new RequestViewModel
@@ -399,8 +398,7 @@ namespace Rock.Blocks.Types.Mobile.Connection
                 StatusGuid = request.ConnectionStatus.Guid,
                 StatusName = request.ConnectionStatus.Name,
                 WorkflowTypes = connectionWorkflows,
-                Activities = activitesViewModel,
-                Id = request.Id
+                Activities = activitesViewModel
             };
 
             if ( isEditable )
@@ -2151,12 +2149,6 @@ namespace Rock.Blocks.Types.Mobile.Connection
         public class RequestViewModel : RequestViewModelBase
         {
             /// <summary>
-            /// Gets or sets the identifier.
-            /// </summary>
-            /// <value>The identifier.</value>
-            public int Id { get; set; }
-
-            /// <summary>
             /// Gets or sets the content of the header.
             /// </summary>
             /// <value>
@@ -2578,12 +2570,6 @@ namespace Rock.Blocks.Types.Mobile.Connection
             /// </summary>
             /// <value><c>true</c> if this instance is modifiable; otherwise, <c>false</c>.</value>
             public bool IsModifiable { get; set; }
-
-            /// <summary>
-            /// Gets or sets the connection request identifier.
-            /// </summary>
-            /// <value>The connection request identifier.</value>
-            public int ConnectionRequestId { get; set; }
         }
 
         /// <summary>
