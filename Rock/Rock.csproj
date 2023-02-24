@@ -955,6 +955,7 @@
     <Compile Include="Model\Communication\Communication\CommunicationType.cs" />
     <Compile Include="Model\Communication\Snippet\SnippetService.cs" />
     <Compile Include="Model\Communication\SystemPhoneNumber\SystemPhoneNumber.cs" />
+    <Compile Include="Model\Communication\SystemPhoneNumber\SystemPhoneNumber.Logic.cs" />
     <Compile Include="Model\Communication\SystemPhoneNumber\SystemPhoneNumberService.cs" />
     <Compile Include="Model\Connection\ConnectionRequest\ConnectionState.cs" />
     <Compile Include="Model\Core\AttributeQualifier\AttributeQualifier.SaveHook.cs" />
@@ -1009,6 +1010,7 @@
     <Compile Include="Model\Finance\BenevolenceType\BenevolenceType.Logic.cs" />
     <Compile Include="Personalization\SegmentFilterCookieData.cs" />
     <Compile Include="Model\Event\EventCalendar\EventCalendarService.cs" />
+    <Compile Include="Plugin\HotFixes\166_MigrationRollupsForV14_2_0.cs" />
     <Compile Include="Plugin\HotFixes\165_EnableTextToGiveMultiAcct.cs" />
     <Compile Include="Plugin\HotFixes\159_AddStaffFormsWorkflowCategory.cs" />
     <Compile Include="Plugin\HotFixes\164_UpdateRemindersSystemCommunication.cs" />
@@ -1067,6 +1069,8 @@
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="Reporting\DataFilter\GroupMembers\GroupMemberGroupTypeFilter.cs" />
+    <Compile Include="Reporting\DataFilter\Person\GroupFirstAttendanceFilter.cs" />
+    <Compile Include="Reporting\DataFilter\Person\GroupTypeFirstAttendanceFilter.cs" />
     <Compile Include="Reporting\DataFilter\Person\PersonalDevicesFilter.cs" />
     <Compile Include="Bulk\SampleData\SampleDataManager.cs" />
     <Compile Include="Security\Authentication\Credential\CredentialAuthenticationOptions.cs" />
@@ -1626,7 +1630,9 @@
     <Compile Include="Tasks\UpdatePersonAliasLastVisitDateTime.cs" />
     <Compile Include="Tasks\UpdateUserLastActivity.cs" />
     <Compile Include="Store\StoreApiResult.cs" />
+    <Compile Include="Transactions\AggregateTransaction.cs" />
     <Compile Include="Transactions\BenevolenceRequestChangeTransaction.cs" />
+    <Compile Include="Transactions\IQueuedTransaction.cs" />
     <Compile Include="Tv\Classes\AppleTvApplicationSettings.cs" />
     <Compile Include="Tv\Classes\ApplicationSettings.cs" />
     <Compile Include="Tv\TvHelper.cs" />
