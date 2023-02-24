@@ -111,18 +111,18 @@ namespace Rock.Blocks.Types.Mobile.Groups
         Key = AttributeKeys.ShowAttendanceFilter,
         Order = 8 )]
 
-    [IntegerField( "Attendance Filter Short Period",
+    [IntegerField( "Attendance Filter Short Week Range",
         Description = "Displays a filter option that gives a variety of different options for attendance based on x number of weeks.",
         IsRequired = false,
         DefaultIntegerValue = 3,
-        Key = AttributeKeys.AttendanceFilterShortPeriod,
+        Key = AttributeKeys.AttendanceFilterShortWeekRange,
         Order = 9 )]
 
-    [IntegerField( "Attendance Filter Long Period",
+    [IntegerField( "Attendance Filter Long Week Range",
         Description = "Displays a filter option that gives a variety of different options for attendance based on x number of weeks.",
         IsRequired = false,
         DefaultIntegerValue = 12,
-        Key = AttributeKeys.AttendanceFilterLongPeriod,
+        Key = AttributeKeys.AttendanceFilterLongWeekRange,
         Order = 10 )]
 
     #endregion
@@ -186,12 +186,12 @@ namespace Rock.Blocks.Types.Mobile.Groups
             /// <summary>
             /// The attendance filter short period filter key.
             /// </summary>
-            public const string AttendanceFilterShortPeriod = "AttendanceFilterShortPeriod";
+            public const string AttendanceFilterShortWeekRange = "AttendanceFilterShortWeekRange";
 
             /// <summary>
             /// The attendance filter long period filter key.
             /// </summary>
-            public const string AttendanceFilterLongPeriod = "AttendanceFilterLongPeriod";
+            public const string AttendanceFilterLongWeekRange = "AttendanceFilterLongWeekRange";
         }
 
         /// <summary>
@@ -244,13 +244,13 @@ namespace Rock.Blocks.Types.Mobile.Groups
         /// Gets the attendance filter short period.
         /// </summary>
         /// <value>The attendance filter short period.</value>
-        protected int? AttendanceFilterShortPeriod => GetAttributeValue( AttributeKeys.AttendanceFilterShortPeriod ).AsIntegerOrNull();
+        protected int? AttendanceFilterShortWeekRange => GetAttributeValue( AttributeKeys.AttendanceFilterShortWeekRange ).AsIntegerOrNull();
 
         /// <summary>
         /// Gets the attendance filter long period.
         /// </summary>
         /// <value>The attendance filter long period.</value>
-        protected int? AttendanceFilterLongPeriod => GetAttributeValue( AttributeKeys.AttendanceFilterLongPeriod ).AsIntegerOrNull();
+        protected int? AttendanceFilterLongWeekRange => GetAttributeValue( AttributeKeys.AttendanceFilterLongWeekRange ).AsIntegerOrNull();
 
         /// <summary>
         /// Gets the template.
@@ -299,7 +299,7 @@ namespace Rock.Blocks.Types.Mobile.Groups
         /// </returns>
         public override object GetMobileConfigurationValues()
         {
-            return new
+            return new Rock.Common.Mobile.Blocks.Groups.GroupMemberList.Configuration
             {
                 Template = Template,
                 GroupMemberDetailPage = GroupMemberDetailPage,
@@ -308,8 +308,8 @@ namespace Rock.Blocks.Types.Mobile.Groups
                 ShowAttendanceFilter = ShowAttendanceFilter,
                 ShowGroupRoleFilter = ShowGroupRoleFilter,
                 ShowChildGroupFilter = ShowChildGroupFilter,
-                AttendanceFilterLongPeriod = AttendanceFilterLongPeriod,
-                AttendanceFilterShortPeriod = AttendanceFilterShortPeriod
+                AttendanceFilterLongWeekRange = AttendanceFilterLongWeekRange,
+                AttendanceFilterShortWeekRange = AttendanceFilterShortWeekRange
             };
         }
 
