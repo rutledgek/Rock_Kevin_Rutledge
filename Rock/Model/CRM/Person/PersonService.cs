@@ -24,6 +24,7 @@ using System.Text;
 using System.Web.UI.WebControls;
 
 using Rock;
+using Rock.Attribute;
 using Rock.BulkExport;
 using Rock.Data;
 using Rock.Security;
@@ -4958,6 +4959,7 @@ FROM (
         /// <param name="people">The people.</param>
         /// <param name="filterByGender">The filter by gender.</param>
         /// <returns>IQueryable&lt;Person&gt;.</returns>
+        [RockInternal("1.15")]
         internal IQueryable<Person> GetParentsForChildren( List<Person> people, Gender? filterByGender = null )
         {
             var personFamilyIds = people.Where( p => p.AgeClassification == AgeClassification.Child )
