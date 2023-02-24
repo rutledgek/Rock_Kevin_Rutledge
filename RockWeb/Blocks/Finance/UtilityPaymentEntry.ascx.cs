@@ -1070,6 +1070,7 @@ mission. We are so grateful for your commitment.</p>
             var rockContext = new RockContext();
             List<int> selectableAccountIds = new FinancialAccountService( rockContext ).GetByGuids( this.GetAttributeValues( AttributeKey.AccountsToDisplay ).AsGuidList() ).Select( a => a.Id ).ToList();
             CampusAccountAmountPicker.AccountIdAmount[] accountAmounts = null;
+            caapPromptForAccountAmounts.AccountHeaderTemplate = this.GetAttributeValue( AttributeKey.AccountHeaderTemplate );
 
             AvailableAccounts = new List<AccountItem>();
 
@@ -1221,8 +1222,8 @@ mission. We are so grateful for your commitment.</p>
                         accountItem.Children = childList.Where( f => f.ParentAccountId == accountItem.Id && !availableAccounts.Any( fa => fa.ParentAccountId == f.Id ) )
                             .Select( f => new AccountItem() { Id = f.Id, PublicName = f.PublicName, ParentAccountId = f.ParentAccountId } )
                             .ToList();
-                        // An account is considered a root item in the hierarchical mode if it is a top level account with children or is a parent account to any other child account.
-                        accountItem.IsRootItem = ( !account.ParentAccountId.HasValue && accountItem.HasChildren ) || availableAccounts.Any( f => f.ParentAccountId == account.Id );
+                        // An account is considered a root item in the hierarchical mode if it is a top level account without children or is a parent account to any other child account and has children.
+                        accountItem.IsRootItem = ( !account.ParentAccountId.HasValue && !accountItem.HasChildren ) || ( availableAccounts.Any( f => f.ParentAccountId == account.Id && accountItem.HasChildren ) );
                     }
 
                     AvailableAccounts.Add( accountItem );
@@ -1239,9 +1240,8 @@ mission. We are so grateful for your commitment.</p>
         private void DatabindAddAccountsButton( bool enableAccountHierachy )
         {
             // Further filter available accounts to return higher level accounts with any child accounts without children of their own.
-            // If the child account has children of their own it will act as the root of a hierarchy, and should not be included in the parent's list of child accounts
-            // and if the parent account has no direct child accounts without children of their own then it is not displayed. 
-            var hierarchicalAccounts = AvailableAccounts.Where( a => a.IsRootItem && a.Children.Any( c => !c.HasChildren ) );
+            // If the child account has children of their own it will act as the root of a hierarchy, and should not be included in the parent's list of child accounts.
+            var hierarchicalAccounts = AvailableAccounts.Where( a => a.IsRootItem || a.Children.Any( c => !c.HasChildren ) );
             phbtnAddAccount.Visible = GetAttributeValue( AttributeKey.AdditionalAccounts ).AsBoolean();
 
             if ( phbtnAddAccount.Visible )
@@ -1385,7 +1385,7 @@ mission. We are so grateful for your commitment.</p>
             foreach ( var accountItem in selected.Where( a => a.ParentAccountId.HasValue ) )
             {
                 var parentAccount = AvailableAccounts.FirstOrDefault( a => a.Id == accountItem.ParentAccountId.Value );
-                parentAccount?.RemoveFromChildItems( accountItem );
+                parentAccount?.UpdateChildItems( accountItem, AvailableAccounts );
             }
 
             DatabindAddAccountsButton( GetAttributeValue( AttributeKey.EnableAccountHierarchy ).AsBoolean() );
@@ -3819,12 +3819,26 @@ mission. We are so grateful for your commitment.</p>
 
             public bool IsRootItem { get; set; }
 
-            public List<AccountItem> Children { get; set; }
+            public List<AccountItem> Children { get; set; } = new List<AccountItem>();
 
-            internal void RemoveFromChildItems( AccountItem accountItem )
+            internal void UpdateChildItems( AccountItem accountItem, List<AccountItem> availableAccounts )
             {
                 Children = Children.Where( c => c.Id != accountItem.Id ).ToList();
                 HasChildren = Children.Any();
+                IsRootItem = !ParentAccountId.HasValue && !accountItem.HasChildren;
+
+                // If the account no longer has any children to display but is itself a child item then
+                // try and add it to its parent account if the parent account is still part of the Available accounts.
+                // This is to update the hierarchy on the UI.
+                if ( ParentAccountId.HasValue && !HasChildren )
+                {
+                    var parent = availableAccounts.FirstOrDefault( m => m.Id == ParentAccountId && !Children.Any( c => c.Id == Id ) );
+                    if ( parent != null )
+                    {
+                        parent.Children.Add( this );
+                        parent.HasChildren = parent.Children.Any();
+                    }
+                }
             }
         }
 
