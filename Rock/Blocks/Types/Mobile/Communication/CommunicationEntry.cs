@@ -269,9 +269,12 @@ namespace Rock.Blocks.Types.Mobile.Communication
         {
             using ( var rockContext = new RockContext() )
             {
+                // First load the entity set from the entity set guid.
                 var entitySet = new EntitySetService( rockContext )
                     .GetNoTracking( entitySetGuid );
 
+                // Our recipients really should always be a Person entity,
+                // but just in case lets check for it.
                 var personEntityTypeId = EntityTypeCache.Get<Rock.Model.Person>().Id;
 
                 if ( entitySet.EntityTypeId != personEntityTypeId )
@@ -282,6 +285,7 @@ namespace Rock.Blocks.Types.Mobile.Communication
                 var publicUrl = GlobalAttributesCache.Get().GetValue( "PublicApplicationRoot" );
                 var personService = new PersonService( rockContext ).Queryable();
 
+                // Load the actual "recipients".
                 var entitySetItems = new EntitySetItemService( rockContext )
                     .GetByEntitySetId( entitySet.Id, true )
                     .Select( esi => new
@@ -334,8 +338,8 @@ namespace Rock.Blocks.Types.Mobile.Communication
         {
             using ( var rockContext = new RockContext() )
             {
+                // Load our recipient.
                 var entitySetItemService = new EntitySetItemService( rockContext );
-
                 var entitySetItem = entitySetItemService.Queryable()
                     .Where( esi => esi.Guid == entitySetItemGuid && esi.EntitySet.Guid == entitySetGuid )
                     .FirstOrDefault();
@@ -381,20 +385,21 @@ namespace Rock.Blocks.Types.Mobile.Communication
         /// <returns>A collection of objects representing the SMS phone numbers.</returns>
         private IEnumerable<PhoneNumberBag> LoadPhoneNumbers()
         {
-            // First load up all of the available numbers
+            // First load up all of the available numbers.
             var smsNumbers = SystemPhoneNumberCache.All()
                 .OrderBy( spn => spn.Order )
                 .ThenBy( spn => spn.Name )
                 .ThenBy( spn => spn.Id )
                 .Where( spn => spn.IsAuthorized( Rock.Security.Authorization.VIEW, RequestContext.CurrentPerson ) );
 
+            // Filter to the numbers that are specifically configured for use with this block.
             var selectedNumberGuids = GetAttributeValue( AttributeKey.AllowedSmsNumbers ).SplitDelimitedValues( true ).AsGuidList();
             if ( selectedNumberGuids.Any() )
             {
                 smsNumbers = smsNumbers.Where( v => selectedNumberGuids.Contains( v.Guid ) );
             }
 
-            // filter personal numbers (any that have a response recipient) if the hide personal option is enabled
+            // Filter personal numbers (any that have a response recipient) if the hide personal option is enabled.
             if ( GetAttributeValue( AttributeKey.HidePersonalSmsNumbers ).AsBoolean() )
             {
                 smsNumbers = smsNumbers.Where( spn => !spn.AssignedToPersonAliasId.HasValue );
@@ -477,6 +482,7 @@ namespace Rock.Blocks.Types.Mobile.Communication
                     // receive the communication.
                     parents = personService
                        .GetParentsForChildren( recipientPeople.Select( a => a.Person ).ToList() )
+                       // We join the person alias service here to prevent an extra query for it later.
                        .Join( personAliasService.Queryable(),
                             p => p.Id,
                             pa => pa.AliasPersonId,
@@ -498,10 +504,11 @@ namespace Rock.Blocks.Types.Mobile.Communication
                         continue;
                     };
 
-                    // If this is enabled, we're going to send the communication to the
-                    // 'parents' of any children in the recipients list. 
-                    if ( communicationBag.SendToParents )
+                    // Include any parents in the communication.
+                    if ( parents.Any() )
                     {
+                        // If the parents we retrieved earlier contains an entry of this person's family,
+                        // we process adding them here.
                         if ( parents.TryGetValue( recipientPerson.Person.PrimaryFamilyId, out var parentAliasIds ) )
                         {
                             foreach ( var parentAliasId in parentAliasIds )
@@ -530,6 +537,7 @@ namespace Rock.Blocks.Types.Mobile.Communication
                 communication.CommunicationType = ( CommunicationType ) communicationBag.CommunicationType;
                 communication.IsBulkCommunication = communicationBag.IsBulk;
 
+                // If the communication type is email, we set the according properties.
                 if ( communication.CommunicationType == CommunicationType.Email )
                 {
                     var emailMediumEntityTypeId = EntityTypeCache.Get<Rock.Communication.Medium.Email>().Id;

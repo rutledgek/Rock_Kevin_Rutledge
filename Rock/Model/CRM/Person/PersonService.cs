@@ -4953,7 +4953,7 @@ FROM (
 
         /// <summary>
         /// This function will take a person, and if they're a child return a queryable of all
-        /// of the adults in their family. The term 'Parents' is iffy, we know.
+        /// of the adults in their primary family. The term 'Parents' is iffy, we know.
         /// </summary>
         /// <param name="people">The people.</param>
         /// <param name="filterByGender">The filter by gender.</param>
