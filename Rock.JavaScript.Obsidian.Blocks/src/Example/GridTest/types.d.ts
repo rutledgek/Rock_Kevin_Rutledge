@@ -15,7 +15,7 @@
 // </copyright>
 //
 
-import { Component, VNode } from "vue";
+import { Component, PropType, VNode } from "vue";
 
 /** A function that will be called in response to an action. */
 export type GridActionCallback = (event: Event) => void | Promise<void>;
@@ -76,12 +76,34 @@ type GridColumnDefinition = {
     sortField?: string;
 
     /** Gets the value to use when sorting. */
-    sortValue?: (row: Record<string, unknown>, column: GridColumnDefinition) => string | number | undefined;
+    sortValue?: ValueFormatterFunction;
 
     /** Determines if the value matches the custom column filter. */
-    filter?: (needle: unknown, haystack: unknown) => boolean;
+    filterValue?: ValueFormatterFunction;
+
+    filter?: IGridColumnFilter;
 
     props: Record<string, unknown>;
+};
+
+export type ValueFormatterFunction = (row: Record<string, unknown>, column: GridColumnDefinition) => string | number | undefined;
+
+export interface IGridColumnFilter {
+    component: Component<FilterComponentProps>;
+
+    matches: (needle: unknown, haystack: unknown, column: GridColumnDefinition) => boolean;
+}
+
+export type FilterComponentProps = {
+    modelValue: {
+        type: PropType<unknown>,
+        required: false
+    },
+
+    column: {
+        type: PropType<GridColumnDefinition>,
+        required: true
+    }
 };
 
 type GridDefinition = {

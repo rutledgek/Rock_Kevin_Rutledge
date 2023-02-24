@@ -1,13 +1,13 @@
 <!-- Copyright by the Spark Development Network; Licensed under the Rock Community License -->
 <template>
     <Grid :data="loadGridData">
-        <Column name="name" title="Name" sortValue="{{ row.name.lastName }} {{ row.name.firstName }}">
+        <Column name="name" title="Name" sortValue="{{ row.name.lastName }} {{ row.name.firstName }}" :filter="textColumnFilter" filterValue="{{ row.name.firstName }} {{  row.name.lastName }}">
             <template #body="{ row }">
                 {{ row.name.firstName }} {{ row.name.lastName }}
             </template>
         </Column>
 
-        <Column name="email" title="Email" field="email" sortField="email" />
+        <Column name="email" title="Email" field="email" sortField="email" :filter="textColumnFilter" />
 
         <Column name="enteredDateTime" title="Entered On" field="enteredDateTime" sortField="enteredDateTime">
             <template #body="{ row }">
@@ -19,15 +19,15 @@
 
         <!-- <BooleanColumn name="isUrgent" title="Urgent" field="isUrgent" sortField="isUrgent" /> -->
 
-        <!--
+    <!--
         <BadgeColumn name="isUrgent"
                           title="Urgent"
                           field="isUrgent"
                           sortField="isUrgent"
                           :classSource="badgeClassLookup" />
-        -->
+            -->
 
-        <!--
+    <!--
         <Column name="isUrgent"
                 title="Urgent"
                 field="isUrgent"
@@ -43,11 +43,11 @@
                 </span>
             </template>
         </Column>
-        -->
+            -->
 
         <ColoredBadgeColumn name="mode"
-            title="Mode"
-            field="mode" />
+                            title="Mode"
+                            field="mode" />
 
         <BooleanColumn name="isPublic"
                        title="Public"
@@ -60,17 +60,16 @@
 
 <script setup lang="ts">
     // #region Imports
+    import TextBox from "@Obsidian/Controls/textBox";
     import { useConfigurationValues, useInvokeBlockAction } from "@Obsidian/Utility/block";
-    import { computed, defineComponent, PropType, VNode } from "vue";
+    import { Component, computed, defineComponent, PropType, ref, VNode, watch } from "vue";
     import { RockDateTime } from "@Obsidian/Utility/rockDateTime";
     import Grid from "./GridTest/grid.obs";
-    import { AttributeColumnDefinition, GridColumnDefinition, GridData, GridDefinition } from "./GridTest/types";
+    import { AttributeColumnDefinition, FilterComponentProps, GridColumnDefinition, GridData, GridDefinition, IGridColumnFilter } from "./GridTest/types";
     import { ListItemBag } from "@Obsidian/ViewModels/Utility/listItemBag";
 
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    const Column = defineComponent({
-        props: {
-            name: {
+    const standardColumnProps = {
+        name: {
                 type: String as PropType<string>,
                 default: ""
             },
@@ -86,9 +85,25 @@
             },
 
             sortValue: {
-                type: Object as PropType<((row: Record<string, unknown>, column: GridColumnDefinition) => string | number | undefined)>,
+                type: Object as PropType<(((row: Record<string, unknown>, column: GridColumnDefinition) => string | number | undefined) | string)>,
+                required: false
+            },
+
+            filter: {
+                type: Object as PropType<IGridColumnFilter>,
+                required: false
+            },
+
+            filterValue: {
+                type: Object as PropType<(((row: Record<string, unknown>, column: GridColumnDefinition) => string | number | undefined) | string)>,
                 required: false
             }
+    };
+
+    // eslint-disable-next-line @typescript-eslint/naming-convention,@typescript-eslint/no-unused-vars
+    const Column = defineComponent({
+        props: {
+            ...standardColumnProps
         }
     });
 
@@ -125,25 +140,7 @@
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const DateColumn = defineComponent({
         props: {
-            name: {
-                type: String as PropType<string>,
-                default: ""
-            },
-
-            title: {
-                type: String as PropType<string>,
-                required: false
-            },
-
-            sortField: {
-                type: String as PropType<string>,
-                required: false
-            },
-
-            sortValue: {
-                type: Object as PropType<((row: Record<string, unknown>, column: GridColumnDefinition) => string | number | undefined)>,
-                required: false
-            },
+            ...standardColumnProps,
 
             format: {
                 type: Object as PropType<VNode>,
@@ -191,29 +188,10 @@
         return row[column.sortField] === true ? 1 : 0;
     }
 
-    // eslint-disable-next-line @typescript-eslint/naming-convention
+    // eslint-disable-next-line @typescript-eslint/naming-convention,@typescript-eslint/no-unused-vars
     const BooleanColumn = defineComponent({
         props: {
-            name: {
-                type: String as PropType<string>,
-                default: ""
-            },
-
-            title: {
-                type: String as PropType<string>,
-                required: false
-            },
-
-            sortField: {
-                type: String as PropType<string>,
-                required: false
-            },
-
-            sortValue: {
-                type: Object as PropType<((row: Record<string, unknown>, column: GridColumnDefinition) => string | number | undefined)>,
-                required: false,
-                default: booleanColumnSortValue
-            },
+            ...standardColumnProps,
 
             format: {
                 type: Object as PropType<VNode>,
@@ -266,23 +244,10 @@
         template: `<span :class="labelClass">{{ text }}</span>`
     });
 
-    // eslint-disable-next-line @typescript-eslint/naming-convention
+    // eslint-disable-next-line @typescript-eslint/naming-convention,@typescript-eslint/no-unused-vars
     const BadgeColumn = defineComponent({
         props: {
-            name: {
-                type: String as PropType<string>,
-                default: ""
-            },
-
-            title: {
-                type: String as PropType<string>,
-                required: false
-            },
-
-            sortField: {
-                type: String as PropType<string>,
-                required: false
-            },
+            ...standardColumnProps,
 
             format: {
                 type: Object as PropType<VNode>,
@@ -346,23 +311,10 @@
         template: `<span class="label label-default" :style="labelStyle">{{ text }}</span>`
     });
 
-    // eslint-disable-next-line @typescript-eslint/naming-convention
+    // eslint-disable-next-line @typescript-eslint/naming-convention,@typescript-eslint/no-unused-vars
     const BadgeColorColumn = defineComponent({
         props: {
-            name: {
-                type: String as PropType<string>,
-                default: ""
-            },
-
-            title: {
-                type: String as PropType<string>,
-                required: false
-            },
-
-            sortField: {
-                type: String as PropType<string>,
-                required: false
-            },
+            ...standardColumnProps,
 
             format: {
                 type: Object as PropType<VNode>,
@@ -424,23 +376,10 @@
         template: `<span class="label label-default" :style="labelStyle">{{ text }}</span>`
     });
 
-    // eslint-disable-next-line @typescript-eslint/naming-convention
+    // eslint-disable-next-line @typescript-eslint/naming-convention,@typescript-eslint/no-unused-vars
     const ColoredBadgeColumn = defineComponent({
         props: {
-            name: {
-                type: String as PropType<string>,
-                default: ""
-            },
-
-            title: {
-                type: String as PropType<string>,
-                required: false
-            },
-
-            sortField: {
-                type: String as PropType<string>,
-                required: false
-            },
+            ...standardColumnProps,
 
             format: {
                 type: Object as PropType<VNode>,
@@ -450,7 +389,66 @@
         }
     });
 
-    // eslint-disable-next-line @typescript-eslint/naming-convention
+    function textColumnFilterValue(needle: unknown, haystack: unknown): boolean {
+        if (!needle || typeof (needle) !== "string") {
+            return false;
+        }
+
+        const lowerNeedle = needle.toLowerCase();
+
+        if (haystack && typeof (haystack) === "string") {
+            return haystack.toLowerCase().includes(lowerNeedle);
+        }
+
+        return false;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/naming-convention,@typescript-eslint/no-unused-vars
+    const TextColumnFilterComponent: Component<FilterComponentProps> = defineComponent({
+        props: {
+            modelValue: {
+                type: Object as PropType<unknown>,
+                required: false
+            },
+
+            column: {
+                type: Object as PropType<GridColumnDefinition>,
+                required: true
+            }
+        },
+
+        components: {
+            TextBox
+        },
+
+        setup(props, { emit }) {
+            const internalValue = ref(typeof(props.modelValue) === "string" ? props.modelValue : "");
+
+            watch(() => props.modelValue, () => {
+                internalValue.value = typeof(props.modelValue) === "string" ? props.modelValue : "";
+            });
+
+            watch(internalValue, () => {
+                emit("update:modelValue", internalValue.value);
+            });
+
+            return {
+                internalValue
+            };
+        },
+
+        template: `
+<TextBox v-model="internalValue" />
+`
+    });
+
+    const textColumnFilter: IGridColumnFilter = {
+        component: TextColumnFilterComponent,
+
+        matches: textColumnFilterValue
+    };
+
+    // eslint-disable-next-line @typescript-eslint/naming-convention,@typescript-eslint/no-unused-vars
     const AttributeColumns = defineComponent({
         components: {
             Column
@@ -474,11 +472,13 @@
     const configuration = useConfigurationValues<{ gridDefinition: GridDefinition }>();
     const invokeBlockAction = useInvokeBlockAction();
 
+    // eslint-disable-next-line @typescript-eslint/naming-convention,@typescript-eslint/no-unused-vars
     const badgeClassLookup = {
         "true": "success",
         "false": "danger"
     };
 
+    // eslint-disable-next-line @typescript-eslint/naming-convention,@typescript-eslint/no-unused-vars
     const badgeColorLookup = {
         "true": "#00cc00",
         "false": "#cc0000"

@@ -15,7 +15,7 @@
         <div ref="resizeHandleElement" class="resize-handle"></div>
 
         <div v-if="isFilterVisible" ref="filterElement" class="grid-filter-popup">
-            <TextBox v-model="internalFilterValue" />
+            <component :is="column.filter!.component" v-model="filterValue" :column="column" />
 
             <div class="actions">
                 <button class="btn btn-primary btn-xs" @click.prevent="onFilterCloseClick">Close</button>
@@ -26,7 +26,6 @@
 </template>
 
 <script setup lang="ts">
-    import TextBox from "@Obsidian/Controls/textBox";
     import { useVModelPassthrough } from "@Obsidian/Utility/component";
     import { computed, nextTick, PropType, ref, watch } from "vue";
     import { GridColumnDefinition } from "./types";

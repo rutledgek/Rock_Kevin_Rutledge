@@ -39,7 +39,7 @@
     </table>
 </template>
 
-<style scoped>
+<style>
 table.table-obsidian th.grid-column-header {
     position: relative;
 }
@@ -66,7 +66,7 @@ table.table-obsidian th.grid-column-header .grid-filter-popup {
     position: absolute;
     padding: 12px;
     margin-top: 6px;
-    min-width: 120px;
+    min-width: 240px;
     max-width: 320px;
     background-color: white;
     border: 1px solid #c7c7c7;
@@ -75,6 +75,7 @@ table.table-obsidian th.grid-column-header .grid-filter-popup {
     border-bottom-left-radius: 6px;
     box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
     font-weight: initial;
+    z-index: 10;
 }
 
 table.table-obsidian th.grid-column-header .grid-filter-popup .actions {
@@ -97,7 +98,9 @@ table.table-obsidian th.grid-column-header:hover .resize-handle {
     background-color: #eee;
 }
 
-table.table-obsidian td.grid-paging {}
+/* table.table-obsidian td.grid-paging {
+
+} */
 
 table.table-obsidian td.grid-paging .grid-page-sizes {
     flex: 1 0;
@@ -167,12 +170,12 @@ table.table-obsidian th.grid-error > .alert {
     import { pluralConditional } from "@Obsidian/Utility/stringUtils";
     import Alert from "@Obsidian/Controls/alert.obs";
     import LoadingIndicator from "@Obsidian/Controls/loadingIndicator";
-    import { computed, defineComponent, PropType, ref, toRaw, useSlots, VNode, watch } from "vue";
+    import { computed, defineComponent, PropType, ref, shallowRef, toRaw, useSlots, VNode, watch } from "vue";
     import GridColumnHeaderRow from "./gridColumnHeaderRow.obs";
     import GridDataRows from "./gridDataRows.obs";
     import GridFilterHeaderRow from "./gridFilterHeaderRow.obs";
     import GridPagerRow from "./gridPagerRow.obs";
-    import { AttributeColumnDefinition, GridAction, GridColumnDefinition, GridData } from "./types";
+    import { AttributeColumnDefinition, GridAction, GridColumnDefinition, GridData, IGridColumnFilter, ValueFormatterFunction } from "./types";
 
     function getVNodeProp<T>(node: VNode, propName: string): T | undefined {
         if (node.props && node.props[propName] !== undefined) {
@@ -236,6 +239,25 @@ table.table-obsidian th.grid-error > .alert {
         }
     });
 
+    function resolveDynamicText(text: string, mergeFields: Record<string, unknown>): string {
+        return text.replace(/\{\{\s*([a-zA-Z.]+)\s*\}\}/g, (_, path: string) => {
+            let pathSegments = path.split(".");
+
+            let obj: unknown = mergeFields;
+            for (const segment of pathSegments) {
+                if (obj && typeof obj === "object") {
+                    obj = obj[segment];
+                }
+                else {
+                    obj = undefined;
+                }
+            }
+
+            return String(obj);
+        });
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     function textColumnSortValue(row: Record<string, unknown>, column: GridColumnDefinition): string | undefined {
         return column.sortField ? String(row[column.sortField]) : undefined;
     }
@@ -244,8 +266,6 @@ table.table-obsidian th.grid-error > .alert {
         const columns: GridColumnDefinition[] = [];
 
         for (const node of columnNodes) {
-            console.log("Column Node", node);
-
             const name = getVNodeProp<string>(node, "name");
 
             if (!name) {
@@ -263,7 +283,6 @@ table.table-obsidian th.grid-error > .alert {
                         continue;
                     }
 
-                    console.log("Attribute", attribute);
                     columns.push({
                         name: attribute.name,
                         title: attribute.title ?? undefined,
@@ -277,51 +296,37 @@ table.table-obsidian th.grid-error > .alert {
                 continue;
             }
 
-            let sortValue = getVNodeProp<((row: Record<string, unknown>, column: GridColumnDefinition) => string | number | undefined) | string>(node, "sortValue");
+            let sortValue = getVNodeProp<ValueFormatterFunction | string>(node, "sortValue");
 
             if (typeof sortValue === "string") {
                 const template = sortValue;
 
                 sortValue = (row): string | undefined => {
-                    const value = template.replace(/\{\{\s*([a-zA-Z.]+)\s*\}\}/g, (_, path: string) => {
-                        let pathSegments = path.split(".");
-
-                        if (pathSegments[0] !== "row") {
-                            return "";
-                        }
-                        else {
-                            pathSegments = pathSegments.slice(1);
-                        }
-
-                        let obj: unknown = row;
-                        for (const segment of pathSegments) {
-                            if (obj && typeof obj === "object") {
-                                obj = obj[segment];
-                            }
-                            else {
-                                obj = undefined;
-                            }
-                        }
-
-                        return String(obj);
-                    });
-
-                    return value;
+                    return resolveDynamicText(template, { row });
                 };
             }
 
+            let filterValue = getVNodeProp<ValueFormatterFunction | string>(node, "filterValue");
+
+            if (typeof filterValue === "string") {
+                const template = filterValue;
+
+                filterValue = (row): string | undefined => {
+                    return resolveDynamicText(template, { row });
+                };
+            }
             columns.push({
                 name,
                 title: getVNodeProp<string>(node, "title"),
                 field: getVNodeProp<string>(node, "field"),
                 format: node.children?.["body"] ?? getVNodeProp<VNode>(node, "format") ?? textColumnValueComponent,
+                filter: getVNodeProp<IGridColumnFilter>(node, "filter"),
                 sortField: getVNodeProp<string>(node, "sortField"),
                 sortValue: sortValue,
+                filterValue: filterValue,
                 props: getVNodeProps(node)
             });
         }
-
-        console.log("Columns", columns);
 
         return columns;
     }
@@ -354,7 +359,7 @@ table.table-obsidian th.grid-error > .alert {
     const gridErrorMessage = ref("");
     const columnFilterValues = ref<Record<string, unknown | undefined>>({});
     const columnSortDirection = ref<{ column: string, isDescending: boolean } | undefined>();
-    const visibleRows = ref<Record<string, unknown>[]>([]);
+    const visibleRows = shallowRef<Record<string, unknown>[]>([]);
     const pageCount = ref(0);
     const pagerMessage = ref("");
     const visibleColumnDefinitions = ref<GridColumnDefinition[]>([]);
@@ -375,10 +380,10 @@ table.table-obsidian th.grid-error > .alert {
         const start = Date.now();
         if (columns.value.length > 0) {
             const columns = toRaw(visibleColumnDefinitions.value);
-            const filterValue = quickFilterValue.value.toLowerCase();
+            const quickFilterRawValue = quickFilterValue.value.toLowerCase();
 
             const result = rows.filter(v => {
-                const quickFilterMatch = !filterValue || columns.some((column): boolean => {
+                const quickFilterMatch = !quickFilterRawValue || columns.some((column): boolean => {
                     const columnValue = v[column.name];
                     let value: string | undefined;
 
@@ -405,7 +410,7 @@ table.table-obsidian th.grid-error > .alert {
                         return false;
                     }
 
-                    return value.toLowerCase().includes(filterValue);
+                    return value.toLowerCase().includes(quickFilterRawValue);
                 });
 
                 const filtersMatch = columns.every(column => {
@@ -419,7 +424,20 @@ table.table-obsidian th.grid-error > .alert {
                         return true;
                     }
 
-                    return column.filter(columnFilterValue, v[column.name]);
+                    let value: unknown = undefined;
+
+                    if (column.filterValue) {
+                        value = column.filterValue(v, column);
+                    }
+                    else if (column.field) {
+                        value = v[column.field];
+                    }
+
+                    if (value === undefined) {
+                        return false;
+                    }
+
+                    return column.filter.matches(columnFilterValue, value, column);
                 });
 
                 return quickFilterMatch && filtersMatch;
