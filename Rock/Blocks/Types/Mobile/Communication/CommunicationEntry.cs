@@ -447,7 +447,7 @@ namespace Rock.Blocks.Types.Mobile.Communication
                 // Convert our recipients to CommunicationRecipients.
                 var entitySetId = new EntitySetService( rockContext ).Get( communicationBag.EntitySetGuid ).Id;
                 var recipientPeople = new EntitySetItemService( rockContext )
-                    .GetByEntitySetId( entitySetId, true )
+                    .GetByEntitySetId( entitySetId )
                     .Select( esi => new
                     {
                         esi.EntityId
