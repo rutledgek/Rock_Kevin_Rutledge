@@ -1031,6 +1031,7 @@ namespace RockWeb.Blocks.Groups
 
         protected void RegisterScript()
         {
+            // TODO JMH This should be done in the Obsidian client code.
             string script = string.Format(
                 @"
 

@@ -15,6 +15,7 @@
 // </copyright>
 //
 
+using System.Collections.Generic;
 using Rock.Attribute;
 using Rock.Model;
 using Rock.Net;
@@ -88,6 +89,18 @@ namespace Rock.Blocks
         public string GetAttributeValue( string key )
         {
             return BlockCache.GetAttributeValue( key );
+        }
+
+        /// <summary>
+        /// Returns a <see cref="System.Collections.Generic.List{String}"/> of the current block attribute values for the specified key. If the key is not
+        /// found an empty list will be returned.
+        /// </summary>
+        /// <param name="key">A <see cref="string"/> representing the block attribute key.</param>
+        /// <returns>A <see cref="System.Collections.Generic.List{String}"/> containing the current attribute values for the specified key. If the key is not
+        /// found, an empty list will be returned.</returns>
+        internal List<string> GetAttributeValues( string key )
+        {
+            return BlockCache.GetAttributeValues( key );
         }
 
         /// <summary>

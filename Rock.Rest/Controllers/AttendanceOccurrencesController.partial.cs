@@ -71,6 +71,43 @@ namespace Rock.Rest.Controllers
         }
 
         /// <summary>
+        /// Gets all the occurrences for a group for the selected dates, location and schedule, sorted by occurrence data in ascending order.
+        /// </summary>
+        /// <returns></returns>
+        [Authenticate, Secured]
+        [System.Web.Http.Route( "api/AttendanceOccurrences/GetGroupOccurrences" )]
+        [Rock.SystemGuid.RestActionGuid( "F933738F-DC4F-4F0F-AC6C-A69DB4610159" )]
+        public List<GroupOccurrenceResponse> GetGroupOccurrences( int groupId, DateTime? fromDateTime = null, DateTime? toDateTime = null, string locationIds = null, string scheduleIds = null )
+        {
+            using ( var rockContext = new RockContext() )
+            {
+                rockContext.Configuration.ProxyCreationEnabled = false;
+                var group = new GroupService( rockContext ).Get( groupId );
+                var locationIdList = new List<int>();
+                if ( !string.IsNullOrWhiteSpace( locationIds ) )
+                {
+                    locationIdList = locationIds.Split( ',' ).Select( int.Parse ).ToList();
+                }
+
+                var scheduleIdList = new List<int>();
+                if ( !string.IsNullOrWhiteSpace( scheduleIds ) )
+                {
+                    scheduleIdList = scheduleIds.Split( ',' ).Select( int.Parse ).ToList();
+                }
+
+                var occurrences = new AttendanceOccurrenceService( rockContext )
+                    .GetGroupOccurrences( group, fromDateTime, toDateTime, locationIdList, scheduleIdList );
+
+                var response = new List<GroupOccurrenceResponse>();
+                foreach ( var occurrence in occurrences )
+                {
+                    response.Add( new GroupOccurrenceResponse( occurrence ) );
+                }
+                return response;
+            }
+        }
+
+        /// <summary>
         /// Object used by GetFutureGroupOccurrences to return a formatted title along with the AttendanceOccurrence record.
         /// </summary>
         public class GroupOccurrenceResponse

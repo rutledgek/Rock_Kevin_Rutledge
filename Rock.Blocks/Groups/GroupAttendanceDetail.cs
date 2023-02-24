@@ -1,0 +1,1581 @@
+﻿// <copyright>
+// Copyright by the Spark Development Network
+//
+// Licensed under the Rock Community License (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.rockrms.com/license
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// </copyright>
+//
+using System;
+using System.CodeDom;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data.Entity;
+using System.IO;
+using System.Linq;
+using Rock.Address;
+using Rock.Attribute;
+using Rock.Communication;
+using Rock.Data;
+using Rock.Enums.Blocks.Groups.GroupAttendanceDetail;
+using Rock.MergeTemplates;
+using Rock.Model;
+using Rock.Security;
+using Rock.ViewModels.Blocks.Groups.GroupAttendanceDetail;
+using Rock.ViewModels.Utility;
+using Rock.Web.Cache;
+using Rock.Web.UI;
+using Rock.Web.UI.Controls;
+
+namespace Rock.Blocks.Groups
+{
+    [DisplayName( "Group Attendance Detail" )]
+    [Category( "Obsidian > Groups" )]
+    [Description( "Lists the group members for a specific occurrence date time and allows selecting if they attended or not." )]
+
+    #region Block Attributes
+
+    [BooleanField(
+        "Allow Add",
+        Category = AttributeCategory.None,
+        DefaultBooleanValue = true,
+        Description = "Should block support adding new attendance dates outside of the group's configured schedule and group type's exclusion dates?",
+        IsRequired = false,
+        Key = AttributeKey.AllowAdd,
+        Order = 0 )]
+
+    [BooleanField(
+        "Allow Adding Person",
+        Category = AttributeCategory.None,
+        DefaultBooleanValue = false,
+        Description = "Should block support adding new people as attendees?",
+        IsRequired = false,
+        Key = AttributeKey.AllowAddingPerson,
+        Order = 1 )]
+
+    [CustomDropdownListField(
+        "Add Person As",
+        Category = AttributeCategory.None,
+        DefaultValue = "Attendee",
+        Description = "'Attendee' will only add the person to attendance. 'Group Member' will add them to the group with the default group role.",
+        IsRequired = true,
+        Key = AttributeKey.AddPersonAs,
+        ListSource = "Attendee,Group Member",
+        Order = 2 )]
+
+    [LinkedPage(
+        "Group Member Add Page",
+        Category = AttributeCategory.Pages,
+        Description = "Page to use for adding a new group member. If no page is provided the built in group member edit panel will be used. This panel allows the individual to search the database.",
+        IsRequired = false,
+        Key = AttributeKey.GroupMemberAddPage,
+        Order = 3 )]
+
+    [BooleanField(
+        "Allow Campus Filter",
+        Category = AttributeCategory.None,
+        DefaultBooleanValue = false,
+        Description = "Should block add an option to allow filtering people and attendance counts by campus?",
+        IsRequired = false,
+        Key = AttributeKey.AllowCampusFilter,
+        Order = 4 )]
+
+    [WorkflowTypeField(
+        "Workflow",
+        AllowMultiple = false,
+        Category = AttributeCategory.None,
+        Description = "An optional workflow type to launch whenever attendance is saved. The Group will be used as the workflow 'Entity' when processing is started. Additionally if a 'StartDateTime' and/or 'Schedule' attribute exist, their values will be set with the corresponding saved attendance values.",
+        IsRequired = false,
+        Key = AttributeKey.Workflow,
+        Order = 5 )]
+
+    [MergeTemplateField(
+        "Attendance Roster Template",
+        Category = AttributeCategory.None,
+        IsRequired = false,
+        Key = AttributeKey.AttendanceRosterTemplate,
+        Order = 6 )]
+
+    [CodeEditorField(
+        "Lava Template",
+        Category = AttributeCategory.None,
+        Description = "An optional lava template to appear next to each person in the list.",
+        EditorMode = CodeEditorMode.Lava,
+        EditorTheme = CodeEditorTheme.Rock,
+        EditorHeight = 400,
+        IsRequired = false,
+        Key = AttributeKey.LavaTemplate,
+        Order = 7 )]
+
+    [BooleanField(
+        "Restrict Future Occurrence Date",
+        Category = AttributeCategory.None,
+        DefaultBooleanValue = false,
+        Description = "Should user be prevented from selecting a future Occurrence date?",
+        IsRequired = false,
+        Key = AttributeKey.RestrictFutureOccurrenceDate,
+        Order = 8 )]
+
+    [BooleanField(
+        "Show Notes",
+        Category = AttributeCategory.None,
+        DefaultBooleanValue = true,
+        Description = "Should the notes field be displayed?",
+        IsRequired = false,
+        Key = AttributeKey.ShowNotes,
+        Order = 9 )]
+
+    [TextField(
+        "Attendance Note Label",
+        Category = AttributeCategory.Labels,
+        DefaultValue = "Notes",
+        Description = "The text to use to describe the notes",
+        IsRequired = true,
+        Key = AttributeKey.AttendanceNoteLabel,
+        Order = 10 )]
+
+    [EnumsField(
+        "Send Summary Email To",
+        Category = AttributeCategory.None,
+        EnumSourceType = typeof( SendSummaryEmailType ),
+        IsRequired = false,
+        Key = AttributeKey.SendSummaryEmailTo,
+        Order = 11 )]
+
+    [SystemCommunicationField( "Attendance Email",
+        Category = AttributeCategory.CommunicationTemplates,
+        DefaultSystemCommunicationGuid = Rock.SystemGuid.SystemCommunication.ATTENDANCE_NOTIFICATION,
+        Description = "The System Email to use to send the attendance",
+        IsRequired = false,
+        Key = AttributeKey.AttendanceEmailTemplate,
+        Order = 12 )]
+
+    [BooleanField(
+        "Allow Sorting",
+        Category = AttributeCategory.None,
+        DefaultBooleanValue = true,
+        Description = "Should the block allow sorting the Members list by First Name or Last Name?",
+        IsRequired = false,
+        Key = AttributeKey.AllowSorting,
+        Order = 13 )]
+
+    [DefinedValueField(
+        "Configured Attendance Types",
+        AllowMultiple = true,
+        Category = AttributeCategory.None,
+        DefaultValue = "",
+        DefinedTypeGuid = Rock.SystemGuid.DefinedType.CHECK_IN_ATTENDANCE_TYPES,
+        Description = "The Attendance types that an occurrence can have. If no or one Attendance type is selected, then none will be shown.",
+        IsRequired = false,
+        Key = AttributeKey.AttendanceOccurrenceTypes,
+        Order = 14 )]
+
+    [TextField(
+        "Attendance Type Label",
+        Category = AttributeCategory.Labels,
+        DefaultValue = "Attendance Location",
+        Description = "The label that will be shown for the attendance types section.",
+        IsRequired = false,
+        Key = AttributeKey.AttendanceOccurrenceTypesLabel,
+        Order = 15 )]
+
+    #endregion
+
+    [Rock.SystemGuid.EntityTypeGuid( "64ECB2E0-218F-4EB4-8691-7DC94A767037" )]
+    [Rock.SystemGuid.BlockTypeGuid( "308DBA32-F656-418E-A019-9D18235027C1" )]
+
+    // TODO JMH Can this block play nicely with the WebForms block?
+
+    public class GroupAttendanceDetail : RockObsidianBlockType
+    {
+        #region Categories
+
+        private static class AttributeCategory
+        {
+            public const string None = "";
+
+            public const string CommunicationTemplates = "Communication Templates";
+
+            public const string Labels = "Labels";
+
+            public const string Pages = "Pages";
+        }
+
+        #endregion
+
+        #region Keys
+
+        /// <summary>
+        /// Keys for attributes.
+        /// </summary>
+        private static class AttributeKey
+        {
+            public const string AllowAdd = "AllowAdd";
+            public const string AllowAddingPerson = "AllowAddingPerson";
+            public const string AddPersonAs = "AddPersonAs";
+            public const string GroupMemberAddPage = "GroupMemberAddPage";
+            public const string AllowCampusFilter = "AllowCampusFilter";
+            public const string Workflow = "Workflow";
+            public const string AttendanceRosterTemplate = "AttendanceRosterTemplate";
+            public const string LavaTemplate = "LavaTemplate";
+            public const string RestrictFutureOccurrenceDate = "RestrictFutureOccurrenceDate";
+            public const string ShowNotes = "ShowNotes";
+            public const string AttendanceNoteLabel = "AttendanceNoteLabel";
+            public const string SendSummaryEmailTo = "SendSummaryEmailTo";
+            public const string AttendanceEmailTemplate = "AttendanceEmailTemplate";
+            public const string AllowSorting = "AllowSorting";
+            public const string AttendanceOccurrenceTypes = "AttendanceTypes";
+            public const string AttendanceOccurrenceTypesLabel = "AttendanceTypeLabel";
+        }
+
+        /// <summary>
+        /// Keys for page parameters.
+        /// </summary>
+        private static class PageParameterKey
+        {
+            public const string GroupId = "GroupId";
+            public const string GroupName = "GroupName";
+            public const string GroupTypeIds = "GroupTypeIds";
+            public const string OccurrenceId = "OccurrenceId";
+            public const string Occurrence = "Occurrence";
+            public const string Date = "Date";
+            public const string LocationId = "LocationId";
+            public const string ScheduleId = "ScheduleId";
+            public const string ReturnUrl = "ReturnUrl";
+        }
+
+        private static class UserPreferenceKeys
+        {
+            public const string AreGroupMembersSortedByFirstName = "Attendance_List_Sorting_Toggle";
+            public const string Campus = "Campus";
+        }
+
+        #endregion
+
+        // TODO JMH Remove this commented code.
+        //private RockContext _rockContext = null;
+        //private Group _group = null;
+        //private bool _canManageMembers = false;
+        //private bool _allowAdd = false;
+        //private bool _allowCampusFilter = false;
+        //private AttendanceOccurrence _occurrence = null;
+        //private List<GroupAttendanceAttendee> _attendees;
+
+        #region Properties
+
+        /// <summary>
+        /// Should block restrict adding new attendance dates outside of the group's configured schedule and group type's exclusion dates?
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if using new attendance dates is restricted; otherwise, <c>false</c>.
+        /// </value>
+        private bool IsNewAttendanceDateAdditionRestricted => !GetAttributeValue( AttributeKey.AllowAdd ).AsBoolean();
+
+        /// <summary>
+        /// Should block support adding new people as attendees?
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if new attendee addition is allowed; otherwise, <c>false</c>.
+        /// </value>
+        private bool IsNewAttendeeAdditionAllowed => GetAttributeValue( AttributeKey.AllowAddingPerson ).AsBoolean();
+
+        /// <summary>
+        /// 'Attendee' will only add the person to attendance. 'Group Member' will add them to the group with the default group role.
+        /// </summary>
+        private string AddPersonAs => GetAttributeValue( AttributeKey.AddPersonAs );
+
+        /// <summary>
+        /// Page to use for adding a new group member. If no page is provided the built in group member edit panel will be used. This panel allows the individual to search the database.
+        /// </summary>
+        private string AddGroupMemberPage => GetAttributeValue( AttributeKey.GroupMemberAddPage );
+
+        /// <summary>
+        /// Should block add an option to allow filtering people and attendance counts by campus?
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if filtering by campus is allowed; otherwise, <c>false</c>.
+        /// </value>
+        private bool IsCampusFilteringAllowed => GetAttributeValue( AttributeKey.AllowCampusFilter ).AsBoolean();
+
+        /// <summary>
+        /// An optional workflow type to launch whenever attendance is saved.
+        /// <para>The Group will be used as the workflow 'Entity' when processing is started. Additionally if a 'StartDateTime' and/or 'Schedule' attribute exist, their values will be set with the corresponding saved attendance values.</para>
+        /// </summary>
+        private Guid? WorkflowGuid => GetAttributeValue( AttributeKey.Workflow ).AsGuidOrNull();
+
+        /// <summary>
+        /// Gets the attendance roster template unique identifier.
+        /// </summary>
+        private Guid? AttendanceRosterTemplateGuid => GetAttributeValue( AttributeKey.AttendanceRosterTemplate ).AsGuidOrNull();
+
+        /// <summary>
+        /// An optional lava template to appear next to each person in the list.
+        /// </summary>
+        private string LavaTemplate => GetAttributeValue( AttributeKey.LavaTemplate );
+
+        /// <summary>
+        /// Should user be restricted from selecting a future Occurrence date?
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if future occurrence date selection is restricted; otherwise, <c>false</c>.
+        /// </value>
+        private bool IsFutureOccurrenceDateSelectionRestricted => GetAttributeValue( AttributeKey.RestrictFutureOccurrenceDate ).AsBoolean();
+
+        /// <summary>
+        /// Should the notes field be hidden?
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if the notes section is hidden; otherwise, <c>false</c>.
+        /// </value>
+        private bool IsNotesSectionHidden => !GetAttributeValue( AttributeKey.ShowNotes ).AsBoolean();
+
+        /// <summary>
+        /// Gets the notes section label.
+        /// </summary>
+        private string NotesSectionLabel => GetAttributeValue( AttributeKey.AttendanceNoteLabel );
+
+        /// <summary>
+        /// Gets the summary email recipients.
+        /// </summary>
+        private List<SendSummaryEmailType> SummaryEmailRecipients => GetAttributeValue( AttributeKey.SendSummaryEmailTo )
+            .SplitDelimitedValues()
+            .Select( a => a.ConvertToEnumOrNull<SendSummaryEmailType>() )
+            .Where( a => a.HasValue )
+            .Select( a => a.Value )
+            .ToList();
+
+        /// <summary>
+        /// Gets the System Communication template unique identifier of the attendance system email.
+        /// </summary>
+        private Guid AttendanceEmailTemplateGuid => GetAttributeValue( AttributeKey.AttendanceEmailTemplate ).AsGuid();
+
+        /// <summary>
+        /// Should the block allow sorting the Members list by First Name or Last Name?
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if is member sorting is hidden; otherwise, <c>false</c>.
+        /// </value>
+        private bool IsMemberSortingHidden => GetAttributeValue( AttributeKey.AllowSorting ).AsBoolean();
+
+        /// <summary>
+        /// The Attendance types that an occurrence can have.
+        /// <para>If no or one Attendance type is selected, then none will be shown.</para>
+        /// </summary>
+        private List<string> AttendanceOccurrenceTypes => GetAttributeValues( AttributeKey.AttendanceOccurrenceTypes );
+
+        /// <summary>
+        /// The Attendance type values that an occurrence can have.
+        /// <para>If no or one Attendance type is selected, then none will be shown.</para>
+        /// </summary>
+        private List<DefinedValueCache> AttendanceOccurrenceTypeValues => AttendanceOccurrenceTypes.Select( attendanceOccurrenceType => DefinedValueCache.Get( attendanceOccurrenceType ) ).ToList();
+
+        /// <summary>
+        /// The label that will be shown for the attendance types section.
+        /// </summary>
+        private string AttendanceOccurrenceTypesLabel => GetAttributeValue( AttributeKey.AttendanceOccurrenceTypesLabel );
+
+        /// <summary>
+        /// Gets the group identifier page parameter or null if missing.
+        /// </summary>
+        private int? GroupIdPageParameter => PageParameter( PageParameterKey.GroupId ).AsIntegerOrNull();
+
+        /// <summary>
+        /// Should Group Members be sorted by first name or last name?
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if members should be sorted by first name; otherwise, <c>false</c> to sort by last name.
+        /// </value>
+        private bool AreGroupMembersSortedByFirstNameUserPreference
+        {
+            get
+            {
+                return GetCurrentUserPreference( UserPreferenceKeys.AreGroupMembersSortedByFirstName ).AsBoolean();
+            }
+            set
+            {
+                SetCurrentUserPreference( UserPreferenceKeys.AreGroupMembersSortedByFirstName, value.ToString() );
+            }
+        }
+
+        /// <summary>
+        /// TODO JMH
+        /// </summary>
+        private int? CampusIdBlockUserPreference
+        {
+            get
+            {
+                return GetCurrentUserPreferenceForBlock( UserPreferenceKeys.Campus ).AsIntegerOrNull();
+            }
+            set
+            {
+                SetCurrentUserPreferenceForBlock( UserPreferenceKeys.Campus, value.ToString() );
+            }
+        }
+
+        /// <summary>
+        /// Gets the Occurrence ID page parameter or null if missing.
+        /// </summary>
+        private int? OccurrenceIdPageParameter => PageParameter( PageParameterKey.OccurrenceId ).AsIntegerOrNull();
+
+        /// <summary>
+        /// Gets the Date page parameter or null if missing.
+        /// </summary>
+        private DateTime? DatePageParameter => PageParameter( PageParameterKey.Date ).AsDateTime();
+
+        /// <summary>
+        /// Gets the Occurrence page parameter or null if missing.
+        /// </summary>
+        private DateTime? OccurrencePageParameter => PageParameter( PageParameterKey.Occurrence ).AsDateTime();
+
+        /// <summary>
+        /// Gets the Location ID page parameter or null if missing.
+        /// </summary>
+        private int? LocationIdPageParameter => PageParameter( PageParameterKey.LocationId ).AsIntegerOrNull();
+
+        /// <summary>
+        /// Gets the Schedule ID page parameter.
+        /// </summary>
+        private int? ScheduleIdPageParameter => PageParameter( PageParameterKey.ScheduleId ).AsIntegerOrNull();
+
+        #endregion
+
+        #region IRockObsidianBlockType Implementation
+
+        /// <inheritdoc/>
+        public override string BlockFileUrl => $"{base.BlockFileUrl}.obs";
+
+        /// <inheritdoc/>
+        public override object GetObsidianBlockInitialization()
+        {
+            return GetInitializationBox();
+        }
+
+        #endregion
+
+        #region Block Actions
+
+        /// <summary>
+        /// Saves the Attendance Occurrence.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
+        [BlockAction( "Save" )]
+        public BlockActionResult SaveAttendanceOccurrence( /*GroupAttendenceOccurrenceSaveRequestBag*/ object bag )
+        {
+            // TODO JMH Implement this.
+            throw new NotImplementedException();
+            //if ( _group != null && _occurrence != null )
+            //{
+            //    if ( SaveAttendance() )
+            //    {
+            //        EmailAttendanceSummary();
+
+            //        var qryParams = new Dictionary<string, string> { { "GroupId", _group.Id.ToString() } };
+
+            //        var groupTypeIds = PageParameter( PageParameterKey.GroupTypeIds );
+            //        if ( !string.IsNullOrWhiteSpace( groupTypeIds ) )
+            //        {
+            //            qryParams.Add( "GroupTypeIds", groupTypeIds );
+            //        }
+
+            //        NavigateToParentPage( qryParams );
+            //    }
+            //}
+        }
+
+        /// <summary>
+        /// Handles the Click event of the lbSave control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
+        // TODO JMH I think this can be done in the Obsidian client code, but revive if not.
+        //protected void lbCancel_Click( object sender, EventArgs e )
+        //{
+        //    if ( _group != null )
+        //    {
+        //        var qryParams = new Dictionary<string, string> { { "GroupId", _group.Id.ToString() } };
+
+        //        var groupTypeIds = PageParameter( PageParameterKey.GroupTypeIds );
+        //        if ( !string.IsNullOrWhiteSpace( groupTypeIds ) )
+        //        {
+        //            qryParams.Add( "GroupTypeIds", groupTypeIds );
+        //        }
+
+        //        NavigateToParentPage( qryParams );
+        //    }
+        //}
+
+        /// <summary>
+        /// Prints the group attendance occurrence roster.
+        /// </summary>
+        [BlockAction( "PrintRoster" )]
+        public BlockActionResult PrintRoster( /*GroupAttendanceDetailPrintRosterRequest*/ object bag )
+        {
+            // TODO JMH Implement this.
+            throw new NotImplementedException();
+            //nbPrintRosterWarning.Visible = false;
+            //var rockContext = new RockContext();
+
+            //Dictionary<int, object> mergeObjectsDictionary = new Dictionary<int, object>();
+            //if ( _attendees != null )
+            //{
+            //    var personIdList = _attendees.Select( a => a.PersonId ).ToList();
+            //    var personList = new PersonService( rockContext ).GetByIds( personIdList );
+            //    foreach ( var person in personList.OrderBy( a => a.LastName ).ThenBy( a => a.NickName ) )
+            //    {
+            //        mergeObjectsDictionary.AddOrIgnore( person.Id, person );
+            //    }
+            //}
+
+            //var mergeFields = Rock.Lava.LavaHelper.GetCommonMergeFields( this.RockPage, this.CurrentPerson );
+            //mergeFields.Add( "Group", this._group );
+            //mergeFields.Add( "AttendanceDate", this._occurrence.OccurrenceDate );
+
+            //var mergeTemplate = new MergeTemplateService( rockContext ).Get( this.GetAttributeValue( AttributeKey.AttendanceRosterTemplate ).AsGuid() );
+
+            //if ( mergeTemplate == null )
+            //{
+            //    this.LogException( new Exception( "Error printing Attendance Roster: No merge template selected. Please configure an 'Attendance Roster Template' in the block settings." ) );
+            //    nbPrintRosterWarning.Visible = true;
+            //    nbPrintRosterWarning.Text = "Unable to print Attendance Roster: No merge template selected. Please configure an 'Attendance Roster Template' in the block settings.";
+            //    return;
+            //}
+
+            //MergeTemplateType mergeTemplateType = mergeTemplate.GetMergeTemplateType();
+            //if ( mergeTemplateType == null )
+            //{
+            //    this.LogException( new Exception( "Error printing Attendance Roster: Unable to determine Merge Template Type from the 'Attendance Roster Template' in the block settings." ) );
+            //    nbPrintRosterWarning.Visible = true;
+            //    nbPrintRosterWarning.Text = "Error printing Attendance Roster: Unable to determine Merge Template Type from the 'Attendance Roster Template' in the block settings.";
+            //    return;
+            //}
+
+            //BinaryFile outputBinaryFileDoc = null;
+
+            //var mergeObjectList = mergeObjectsDictionary.Select( a => a.Value ).ToList();
+
+            //outputBinaryFileDoc = mergeTemplateType.CreateDocument( mergeTemplate, mergeObjectList, mergeFields );
+
+            //// Set the name of the output doc
+            //outputBinaryFileDoc = new BinaryFileService( rockContext ).Get( outputBinaryFileDoc.Id );
+            //outputBinaryFileDoc.FileName = _group.Name + " Attendance Roster" + Path.GetExtension( outputBinaryFileDoc.FileName ?? string.Empty ) ?? ".docx";
+            //rockContext.SaveChanges();
+
+            //if ( mergeTemplateType.Exceptions != null && mergeTemplateType.Exceptions.Any() )
+            //{
+            //    if ( mergeTemplateType.Exceptions.Count == 1 )
+            //    {
+            //        this.LogException( mergeTemplateType.Exceptions[0] );
+            //    }
+            //    else if ( mergeTemplateType.Exceptions.Count > 50 )
+            //    {
+            //        this.LogException( new AggregateException( string.Format( "Exceptions merging template {0}. See InnerExceptions for top 50.", mergeTemplate.Name ), mergeTemplateType.Exceptions.Take( 50 ).ToList() ) );
+            //    }
+            //    else
+            //    {
+            //        this.LogException( new AggregateException( string.Format( "Exceptions merging template {0}. See InnerExceptions", mergeTemplate.Name ), mergeTemplateType.Exceptions.ToList() ) );
+            //    }
+            //}
+
+            //var uri = new UriBuilder( outputBinaryFileDoc.Url );
+            //var qry = System.Web.HttpUtility.ParseQueryString( uri.Query );
+            //qry["attachment"] = true.ToTrueFalse();
+            //uri.Query = qry.ToString();
+            //Response.Redirect( uri.ToString(), false );
+            //Context.ApplicationInstance.CompleteRequest();
+        }
+
+        /// <summary>
+        /// Handles the SelectedIndexChanged event of the ddlLocation control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
+        // TODO JMH This should be done by the Obsidian client code, but revive if not.
+        //protected void ddlLocation_SelectedIndexChanged( object sender, EventArgs e )
+        //{
+        //    BindSchedules( ddlLocation.SelectedValueAsInt() );
+        //}
+
+        /// <summary>
+        /// Handles the SelectionChanged event of the bddlCampus control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
+        // TODO JMH This should be done by the Obsidian client code, but revive if not.
+        //protected void bddlCampus_SelectionChanged( object sender, EventArgs e )
+        //{
+        //    SetBlockUserPreference( "Campus", bddlCampus.SelectedValue );
+        //    var campus = CampusCache.Get( bddlCampus.SelectedValueAsInt() ?? 0 );
+        //    bddlCampus.Title = campus != null ? campus.Name : "All Campuses";
+        //    BindAttendees();
+        //}
+
+        /// <summary>
+        /// Handles the SelectPerson event of the ppAddPerson control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
+        [BlockAction( "AddPerson" )]
+        public BlockActionResult AddPerson( /* GroupAttendanceDetailAddPersonBag */ object bag )
+        {
+            // TODO JMH Implement this.
+            throw new NotImplementedException();
+            //string template = GetAttributeValue( AttributeKey.LavaTemplate );
+
+            //if ( ppAddPerson.PersonId.HasValue )
+            //{
+            //    if ( !_attendees.Any( a => a.PersonId == ppAddPerson.PersonId.Value ) )
+            //    {
+            //        var rockContext = new RockContext();
+            //        var person = new PersonService( rockContext ).Get( ppAddPerson.PersonId.Value );
+            //        if ( person != null )
+            //        {
+            //            string addPersonAs = GetAttributeValue( AttributeKey.AddPersonAs );
+            //            if ( !addPersonAs.IsNullOrWhiteSpace() && addPersonAs == "Group Member" )
+            //            {
+            //                AddPersonAsGroupMember( person, rockContext );
+            //            }
+
+            //            var attendee = new GroupAttendanceAttendee();
+            //            attendee.PersonId = person.Id;
+            //            attendee.NickName = person.NickName;
+            //            attendee.LastName = person.LastName;
+            //            attendee.Attended = true;
+            //            attendee.CampusIds = person.GetCampusIds();
+
+            //            var mergeFields = Rock.Lava.LavaHelper.GetCommonMergeFields( null );
+            //            mergeFields.Add( "Person", person );
+            //            mergeFields.Add( "Attended", true );
+            //            attendee.MergedTemplate = template.ResolveMergeFields( mergeFields );
+            //            _attendees.Add( attendee );
+            //            BindAttendees();
+            //        }
+            //    }
+            //}
+        }
+
+        /// <summary>
+        /// Handles the ItemCommand event of the lvPendingMembers control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="ListViewCommandEventArgs"/> instance containing the event data.</param>
+        // TODO JMH Per 1:1 with Nick on 2023-02-23, we might not need to change group member statuses in this block.
+        //protected void lvPendingMembers_ItemCommand( object sender, ListViewCommandEventArgs e )
+        //{
+        //    if ( _group != null && e.CommandName == "Add" )
+        //    {
+        //        int personId = e.CommandArgument.ToString().AsInteger();
+
+        //        var rockContext = new RockContext();
+
+        //        foreach ( var groupMember in new GroupMemberService( rockContext )
+        //            .GetByGroupIdAndPersonId( _group.Id, personId ) )
+        //        {
+        //            if ( groupMember.GroupMemberStatus == GroupMemberStatus.Pending )
+        //            {
+        //                groupMember.GroupMemberStatus = GroupMemberStatus.Active;
+        //            }
+        //        }
+
+        //        rockContext.SaveChanges();
+
+        //        ShowDetails();
+        //    }
+        //}
+
+        /// <summary>
+        /// Handles the Click event of the lbAddMember control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
+        // TODO JMH This should redirect from the Obsidian client code. The GroupMemberAddPageUrl should have been passed down via the block initialization box.
+        //protected void lbAddMember_Click( object sender, EventArgs e )
+        //{
+        //    var personAddPage = GetAttributeValue( AttributeKey.GroupMemberAddPage );
+
+        //    if ( !personAddPage.IsNullOrWhiteSpace() )
+        //    {
+        //        // Redirect to the add page provided
+        //        if ( _group != null && _occurrence != null )
+        //        {
+        //            if ( SaveAttendance() )
+        //            {
+        //                var queryParams = new Dictionary<string, string>();
+        //                queryParams.Add( "GroupId", _group.Id.ToString() );
+        //                queryParams.Add( "GroupName", _group.Name );
+        //                queryParams.Add( "ReturnUrl", Request.QueryString["returnUrl"] ?? Server.UrlEncode( Request.RawUrl ) );
+        //                NavigateToLinkedPage( AttributeKey.GroupMemberAddPage, queryParams );
+        //            }
+        //        }
+        //    }
+        //}
+
+        /// <summary>
+        /// Handles the DataBinding event of the cbMember control.
+        /// Set the Full Name Display of the cbMember check box
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
+        // TODO JMH THIS will save save the attendance occurrence with the latest member change and trigger the attendance event to update subscribers.
+        [BlockAction( "UpdateAttendee" )]
+        public BlockActionResult UpdateAttendee( /* GroupAttendanceDetailUpdateAttendeeRequestBag */ object bag )
+        {
+            // TODO JMH Maybe don't use the merge template here.
+            // What if someone is taking attendance, and they get the member item template in block initialization,
+            // then a second person comes in and changes the member item template for themselves, then starts taking attendance?
+            // We only want to signal the person whose attendance has changed and let those individual clients update their UI accordingly.
+            throw new NotImplementedException();
+            //var checkBox = sender as RockCheckBox;
+            //var parent = checkBox.Parent as ListViewDataItem;
+            //var data = parent.DataItem as GroupAttendanceAttendee;
+            //string displayName = string.Empty;
+
+            //if ( data != null )
+            //{
+            //    if ( tglSort.Visible && tglSort.Checked )
+            //    {
+            //        displayName = data.LastName + ", " + data.NickName;
+            //    }
+            //    else
+            //    {
+            //        displayName = data.NickName + " " + data.LastName;
+            //    }
+
+            //    checkBox.Text = string.Format( "{0} {1}", data.MergedTemplate, displayName );
+            //}
+        }
+
+        /// <summary>
+        /// Handles the CheckedChanged event of the tglSort UI control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
+        // TODO JMH This should be handled in the Obsidian client code, but revive if not.
+        //protected void tglSort_CheckedChanged( object sender, EventArgs e )
+        //{
+        //    SetUserPreference( TOGGLE_SETTING, tglSort.Checked.ToString() );
+        //    BindAttendees();
+        //}
+
+        #endregion
+
+        #region Private Methods
+
+        /// <summary>
+        /// Gets a user preference for the current user.
+        /// </summary>
+        /// <param name="key">The user preference key.</param>
+        /// <returns>The user preference.</returns>
+        private string GetCurrentUserPreference( string key )
+        {
+            return PersonService.GetUserPreference( this.GetCurrentPerson(), key );
+        }
+
+        /// <summary>
+        /// Gets a user preference for the current user and block instance.
+        /// </summary>
+        /// <param name="key">The user preference key that will be converted to a block user preference key.</param>
+        /// <returns>The user preference.</returns>
+        private string GetCurrentUserPreferenceForBlock( string key )
+        {
+            return GetCurrentUserPreference( GetUserPreferenceKeyForBlock( key ) );
+        }
+
+        /// <summary>
+        /// Sets a user preference for the current user.
+        /// </summary>
+        /// <param name="key">The user preference key.</param>
+        /// <param name="value">The user preference value.</param>
+        private void SetCurrentUserPreference( string key, string value )
+        {
+            PersonService.SaveUserPreference( this.GetCurrentPerson(), key, value );
+        }
+
+        /// <summary>
+        /// Sets a user preference for the current user and block instance.
+        /// </summary>
+        /// <param name="key">The user preference key that will be converted to a block user preference key.</param>
+        /// <param name="value">The user preference value.</param>
+        private void SetCurrentUserPreferenceForBlock( string key, string value )
+        {
+            SetCurrentUserPreference( GetUserPreferenceKeyForBlock( key ), value );
+        }
+
+        /// <summary>
+        /// Gets the user preference key for this block instance.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <returns>The block user preference key.</returns>
+        private string GetUserPreferenceKeyForBlock( string key )
+        {
+            return $"{PersonService.GetBlockUserPreferenceKeyPrefix( this.BlockId )}{key}";
+        }
+
+        // TODO JMH These error messages should appear in the Obsidian client code.
+        private bool IsGroupValid( Group group, out string errorMessage )
+        {
+            if ( group == null )
+            {
+                errorMessage = "No group was available from the querystring.";
+                return false;
+            }
+
+            var currentPerson = this.GetCurrentPerson();
+
+            if ( !group.IsAuthorized( Authorization.MANAGE_MEMBERS, currentPerson )
+                || !group.IsAuthorized( Authorization.EDIT, currentPerson ) )
+            {
+                errorMessage = "You're not authorized to update the attendance for the selected group.";
+                return false;
+            }
+
+            errorMessage = null;
+            return true;
+        }
+
+        /// <summary>
+        /// Gets the initialization box.
+        /// </summary>
+        private GroupAttendanceDetailInitializationBox GetInitializationBox()
+        {
+            using ( var rockContext = new RockContext() )
+            {
+                var groupId = this.GroupIdPageParameter;
+
+                if ( !groupId.HasValue )
+                {
+                    return null;
+                }
+
+                // TODO JMH Do we need to include at this point since we're not storing the group in a member field?
+                // JMH Yes for GroupType
+                var group = new GroupService( rockContext )
+                    .Queryable()
+                    .AsNoTracking()
+                    .Include( g => g.GroupType )
+                    .Include( g => g.Schedule )
+                    .FirstOrDefault( g => g.Id == groupId );
+
+                if ( group == null )
+                {
+                    return new GroupAttendanceDetailInitializationBox
+                    {
+                        IsGroupNotFoundError = true
+                    };
+                }
+
+                var currentPerson = this.GetCurrentPerson();
+
+                if ( !group.IsAuthorized( Authorization.MANAGE_MEMBERS, currentPerson )
+                    || !group.IsAuthorized( Authorization.EDIT, currentPerson ) )
+                {
+                    return new GroupAttendanceDetailInitializationBox
+                    {
+                        IsNotAuthorizedError = true
+                    };
+                }
+
+                var attendanceOccurrence = GetAttendanceOccurrence( rockContext, group );
+
+                if ( attendanceOccurrence == null )
+                {
+                    return new GroupAttendanceDetailInitializationBox
+                    {
+                        HasNoAttendanceOccurrencesError = true
+                    };
+
+                    // TODO JMH This should be done in the Obsidian client code.
+                    //nbNotice.Heading = "No Occurrences";
+                    //nbNotice.Text = "<p>There are currently not any active occurrences for selected group to take attendance for.</p>";
+                    //nbNotice.NotificationBoxType = NotificationBoxType.Warning;
+                    //nbNotice.Visible = true;
+
+                    //pnlDetails.Visible = false;
+                }
+
+                CampusCache campus = null;
+                if ( this.IsCampusFilteringAllowed )
+                {
+                    var campusId = this.CampusIdBlockUserPreference;
+
+                    if ( campusId.HasValue )
+                    {
+                        campus = CampusCache.Get( campusId.Value );
+                    }
+                }
+
+                var groupMembersTerm = group.GroupType.GroupMemberTerm.Pluralize();
+
+                var box = new GroupAttendanceDetailInitializationBox
+                {
+                    AreMembersSortedByFirstName = this.AreGroupMembersSortedByFirstNameUserPreference,
+                    CampusName = campus?.Name,
+                    CampusId = campus?.Id,
+                    GroupGuid = group.Guid,
+                    GroupMembersSectionLabel = groupMembersTerm,
+                    // TODO JMH The lHeading.Text should be `${GroupName} Attendance` in the Obsidian client code.
+                    GroupName = group.Name,
+                    IsCampusFilteringAllowed = this.IsCampusFilteringAllowed,
+                    IsFutureOccurrenceDateSelectionRestricted = this.IsFutureOccurrenceDateSelectionRestricted,
+                    IsMemberSortingHidden = this.IsMemberSortingHidden,
+                    IsNewAttendanceDateAdditionRestricted = this.IsNewAttendanceDateAdditionRestricted,
+                    IsNewAttendeeAdditionAllowed = this.IsNewAttendeeAdditionAllowed,
+                    IsNotesSectionHidden = this.IsNotesSectionHidden,
+                    NotesSectionLabel = this.NotesSectionLabel,
+                    PendingGroupMembersSectionLabel = $"Pending {groupMembersTerm}",
+                    AddPersonAs = this.AddPersonAs,
+                };
+
+                if ( this.AddGroupMemberPage.IsNotNullOrWhiteSpace() )
+                {
+                    var returnUrl = this.PageParameter( PageParameterKey.ReturnUrl );
+
+                    if ( returnUrl.IsNullOrWhiteSpace() )
+                    {
+                        returnUrl = this.RequestContext.RequestUri.AbsoluteUri;
+                    }
+
+                    var queryParams = new Dictionary<string, string>
+                    {
+                        { PageParameterKey.GroupId, group.Id.ToString() },
+                        { PageParameterKey.GroupName, group.Name },
+                        { PageParameterKey.ReturnUrl, returnUrl }
+                    };
+
+                    box.AddGroupMemberPageUrl = this.GetLinkedPageUrl( AttributeKey.GroupMemberAddPage, queryParams );
+                }
+
+                var attendanceOccurrenceIdPageParameter = this.OccurrenceIdPageParameter;
+
+                // TODO JMH Refactor below if possible.
+                // TODO JMH Load locations in block initialization IFF location selection mode is picker.
+
+                if ( attendanceOccurrenceIdPageParameter.HasValue )
+                {
+                    // If the OccurrenceId query parameter is set, then we want to force the date selection mode to specific.
+                    box.AttendanceOccurrenceDateSelectionMode = GroupAttendanceDetailDateSelectionMode.Specific;
+                    box.AttendanceOccurrenceDate = attendanceOccurrence.OccurrenceDate;
+
+                    if ( attendanceOccurrence.LocationId.HasValue )
+                    {
+                        box.LocationSelectionMode = GroupAttendanceDetailLocationSelectionMode.Specific;
+                        box.LocationLabel = new LocationService( rockContext ).GetPath( attendanceOccurrence.LocationId.Value );
+                        box.LocationId = attendanceOccurrence.LocationId.Value;
+                    }
+
+                    if ( attendanceOccurrence.Schedule != null )
+                    {
+                        box.ScheduleSelectionMode = GroupAttendanceDetailScheduleSelectionMode.Specific;
+                        box.ScheduleLabel = attendanceOccurrence.Schedule.Name;
+                    }
+                    else
+                    {
+                        box.ScheduleSelectionMode = GroupAttendanceDetailScheduleSelectionMode.None;
+                    }
+                }
+                else
+                {
+                    // TODO JMH Figure out when to use GroupAttendanceDetailDateSelectionMode.ScheduledDatePicker.
+                    box.AttendanceOccurrenceDateSelectionMode = GroupAttendanceDetailDateSelectionMode.DatePicker;
+                    box.AttendanceOccurrenceDate = attendanceOccurrence.OccurrenceDate;
+
+                    var locationId = this.LocationIdPageParameter;
+
+                    if ( locationId.HasValue )
+                    {
+                        box.LocationSelectionMode = GroupAttendanceDetailLocationSelectionMode.Specific;
+                        box.LocationLabel = new LocationService( rockContext ).GetPath( locationId.Value );
+                        box.LocationId = locationId.Value;
+
+                        Schedule schedule = null;
+                        var scheduleId = this.ScheduleIdPageParameter;
+
+                        if ( scheduleId.HasValue )
+                        {
+                            schedule = new ScheduleService( rockContext ).Get( scheduleId.Value );
+                        }
+
+                        if ( schedule != null )
+                        {
+                            box.ScheduleSelectionMode = GroupAttendanceDetailScheduleSelectionMode.Specific;
+                            box.ScheduleLabel = schedule.Name;
+                        }
+                        else
+                        {
+                            box.ScheduleSelectionMode = GroupAttendanceDetailScheduleSelectionMode.GroupLocationSchedulePicker;
+                        }
+                    }
+                    else
+                    {
+                        box.LocationSelectionMode = GroupAttendanceDetailLocationSelectionMode.GroupLocationPicker;
+                        box.ScheduleSelectionMode = GroupAttendanceDetailScheduleSelectionMode.GroupLocationSchedulePicker;
+                    }
+                }
+
+                var allowedAttendanceTypeValues = this.AttendanceOccurrenceTypeValues;
+
+                if ( allowedAttendanceTypeValues.Any() )
+                {
+                    box.IsAttendanceOccurrenceTypesSectionShown = allowedAttendanceTypeValues.Count > 1;
+                    box.AttendanceOccurrenceTypesSectionLabel = this.AttendanceOccurrenceTypesLabel;
+                    box.AttendanceOccurrenceTypes = allowedAttendanceTypeValues
+                        .Select( attendenceOccurrenceType => new ListItemBag
+                        {
+                            Text = attendenceOccurrenceType.Value,
+                            Value = attendenceOccurrenceType.Guid.ToString(),
+                        } )
+                        .ToList();
+                    if ( box.AttendanceOccurrenceTypes.Count == 1 )
+                    {
+                        box.SelectedAttendanceOccurrenceTypeValue = box.AttendanceOccurrenceTypes.First().Value;
+                    }
+                    else
+                    {
+                        var attendanceOccurrenceTypeValue = attendanceOccurrence?.AttendanceTypeValueId?.ToString();
+                        box.SelectedAttendanceOccurrenceTypeValue = box.AttendanceOccurrenceTypes
+                            .FirstOrDefault( attendanceOccurrenceType => attendanceOccurrenceType.Value == attendanceOccurrenceTypeValue )?.Value;
+                    }
+                }
+
+                // Load the attendance for the selected attendance occurrence.
+                var attendedPersonIds = new List<int>();
+
+                if ( attendanceOccurrence.Id > 0 )
+                {
+                    box.Notes = attendanceOccurrence.Notes;
+                    box.IsDidNotMeetChecked = attendanceOccurrence.DidNotOccur ?? false;
+
+                    // Get the list of people who attended.
+                    // These may or may not be group members.
+                    attendedPersonIds = new AttendanceService( rockContext )
+                        .Queryable()
+                        .AsNoTracking()
+                        .Where( a =>
+                            a.OccurrenceId == attendanceOccurrence.Id &&
+                            a.DidAttend.HasValue &&
+                            a.DidAttend.Value &&
+                            a.PersonAlias != null )
+                        .Select( a => a.PersonAlias.PersonId )
+                        .Distinct()
+                        .ToList();
+                }
+
+                // Get the group members.
+                var groupMemberService = new GroupMemberService( rockContext );
+
+                // Add any existing active members not on that list.
+                var unattendedPersonIds = groupMemberService
+                    .Queryable()
+                    .AsNoTracking()
+                    .Where( m =>
+                        m.GroupId == group.Id &&
+                        m.GroupMemberStatus == GroupMemberStatus.Active &&
+                        !attendedPersonIds.Contains( m.PersonId ) )
+                    .Select( m => m.PersonId )
+                    .Distinct()
+                    .ToList();
+
+                var lavaTemplate = this.LavaTemplate;
+                var mergeFields = this.RequestContext.GetCommonMergeFields( null );
+
+                // Set the roster.
+                box.Roster = new PersonService( rockContext )
+                    .Queryable()
+                    .AsNoTracking()
+                    .Where( p => attendedPersonIds.Contains( p.Id ) || unattendedPersonIds.Contains( p.Id ) )
+                    .Select( p => new GroupAttendanceDetailRosterAttendeeBag
+                    {
+                        PersonGuid = p.Guid,
+                        NickName = p.NickName,
+                        LastName = p.LastName,
+                        HasAttended = attendedPersonIds.Contains( p.Id ),
+                        CampusGuid = p.PrimaryCampusId.HasValue ? p.PrimaryCampus.Guid : ( Guid? )null
+                    } )
+                    .ToList();
+
+                // TODO JMH Remove pending members functionality.
+                // TODO JMH Per 2023-02-23 1:1 w/ Nick, we should return Active and Pending GroupMembers (as well as current attendees) in the regular Members list (only Inactive should be omitted).
+                // Add the pending members.
+                box.PendingGroupMembers = groupMemberService
+                    .Queryable()
+                    .AsNoTracking()
+                    .Where( m =>
+                        m.GroupId == group.Id &&
+                        m.GroupMemberStatus == GroupMemberStatus.Pending )
+                    .OrderBy( m => m.Person.LastName )
+                    .ThenBy( m => m.Person.NickName )
+                    .Select( m => new GroupAttendancePendingGroupMemberBag
+                    {
+                        PersonId = m.PersonId,
+                        FullName = m.Person.NickName + " " + m.Person.LastName
+                    } )
+                    .ToList();
+
+                return box;
+            }
+        }
+
+        /// <summary>
+        /// Adds the person as group member.
+        /// </summary>
+        /// <param name="person">The person.</param>
+        /// <param name="rockContext">The rock context.</param>
+        private void AddPersonAsGroupMember( Group group, Person person, RockContext rockContext )
+        {
+            GroupMemberService groupMemberService = new GroupMemberService( rockContext );
+            GroupTypeRole role = new GroupTypeRoleService( rockContext ).Get( group.GroupType.DefaultGroupRoleId ?? 0 );
+
+            var groupMember = new GroupMember { Id = 0 };
+            groupMember.GroupId = group.Id;
+
+            // Check to see if the person is already a member of the group/role.
+            var existingGroupMember = groupMemberService.GetByGroupIdAndPersonIdAndGroupRoleId( group.Id, person.Id, group.GroupType.DefaultGroupRoleId ?? 0 );
+
+            if ( existingGroupMember != null )
+            {
+                return;
+            }
+
+            groupMember.PersonId = person.Id;
+            groupMember.GroupRoleId = role.Id;
+            groupMember.GroupMemberStatus = GroupMemberStatus.Active;
+
+            if ( groupMember.Id.Equals( 0 ) )
+            {
+                groupMemberService.Add( groupMember );
+            }
+
+            rockContext.SaveChanges();
+        }
+
+        /// <summary>
+        /// Gets the occurrence items.
+        /// </summary>
+        private AttendanceOccurrence GetAttendanceOccurrence( RockContext rockContext, Group group )
+        {
+            AttendanceOccurrence attendanceOccurrence = null;
+
+            var attendanceOccurrenceService = new AttendanceOccurrenceService( rockContext );
+
+            // Check to see if a occurrence id was specified on the query string, and if so, query for it
+            int? attendanceOccurrenceId = this.OccurrenceIdPageParameter;
+            if ( attendanceOccurrenceId.HasValue && attendanceOccurrenceId.Value > 0 )
+            {
+                attendanceOccurrence = attendanceOccurrenceService.Get( attendanceOccurrenceId.Value );
+
+                // If we have a valid attendance occurrence return it now (the date, location, and schedule cannot be changed for an existing attendance occurrence).
+                if ( attendanceOccurrence != null )
+                {
+                    return attendanceOccurrence;
+                }
+            }
+
+            // Set attendance occurrence values from query string.
+            var attendanceOccurrenceDate = this.DatePageParameter ?? this.OccurrencePageParameter;
+            var locationId = this.LocationIdPageParameter;
+
+            // If no specific schedule was specified in the URL, use the group's scheduleId.
+            var scheduleId = this.ScheduleIdPageParameter ?? group.ScheduleId;
+
+            // TODO JMH Which block action do we have this logic in, if any?
+            //// If this is a postback, check to see if date/location/schedule were updated
+            //if ( Page.IsPostBack && _allowAdd )
+            //{
+            //    if ( dpOccurrenceDate.Visible && dpOccurrenceDate.SelectedDate.HasValue )
+            //    {
+            //        attendanceOccurrenceDate = dpOccurrenceDate.SelectedDate.Value;
+            //    }
+
+            //    if ( ddlLocation.Visible && ddlLocation.SelectedValueAsInt().HasValue )
+            //    {
+            //        locationId = ddlLocation.SelectedValueAsInt().Value;
+            //    }
+
+            //    if ( ddlSchedule.Visible && ddlSchedule.SelectedValueAsInt().HasValue )
+            //    {
+            //        scheduleId = ddlSchedule.SelectedValueAsInt().Value;
+            //    }
+            //}
+
+            if ( attendanceOccurrence == null && attendanceOccurrenceDate.HasValue )
+            {
+                // If no specific Attendance Occurrence ID was specified, try to find a matching occurrence from Date, GroupId, Location, ScheduleId
+                attendanceOccurrence = attendanceOccurrenceService.Get( attendanceOccurrenceDate.Value.Date, group.Id, locationId, scheduleId );
+
+                if ( attendanceOccurrence != null )
+                {
+                    return attendanceOccurrence;
+                }
+            }
+
+            // If an occurrence date was included, but no occurrence was found with that date, and new
+            // occurrences can be added, create a new one
+            if ( !this.IsNewAttendanceDateAdditionRestricted )
+            {
+                // Create a new occurrence record and return it
+                return new AttendanceOccurrence
+                {
+                    Group = group,
+                    GroupId = group.Id,
+                    OccurrenceDate = attendanceOccurrenceDate ?? RockDateTime.Today,
+                    LocationId = locationId,
+                    ScheduleId = scheduleId,
+                };
+            }
+
+            return null;
+        }
+
+        // TODO JMH Need a modal when adding pending group member with text, "Add {memberName} to your group?" and with OK, Cancel, and X (close) buttons.
+
+        /// <summary>
+        /// Method to save attendance for use in two separate areas.
+        /// </summary>
+        protected bool SaveAttendance()
+        {
+            // TODO JMH Implement save.
+            //using ( var rockContext = new RockContext() )
+            //{
+            //    var groupId = this.GroupIdPageParameter;
+
+            //    if ( !groupId.HasValue )
+            //    {
+            //        // JMH Is this necessary or can this be a block action where we pass in the group ID?
+            //        // JMH If the latter, we should probably be authorizing the action against the current user.
+            //        throw new InvalidOperationException( "TODO JMH - GroupId not found in query string." );
+            //    }
+
+            //    // TODO JMH Group ID should come from the request at this point, not the page parameter.
+            //    // TODO JMH Are these includes necessary?
+            //    var group = new GroupService( rockContext )
+            //        .Queryable()
+            //        .AsNoTracking()
+            //        .Include( g => g.GroupType )
+            //        .Include( g => g.Schedule )
+            //        .FirstOrDefault( g => g.Id == groupId );
+
+            //    var attendanceOccrrence = GetAttendanceOccurrence( rockContext, group );
+
+            //    var attendanceOccurrenceService = new AttendanceOccurrenceService( rockContext );
+            //    var attendanceService = new AttendanceService( rockContext );
+            //    var personAliasService = new PersonAliasService( rockContext );
+            //    var locationService = new LocationService( rockContext );
+
+            //    if ( attendanceOccurrence == null )
+            //    {
+            //        var existingOccurrence = attendanceOccurrenceService.Get( attendanceOccurrence.OccurrenceDate, _group.Id, attendanceOccurrence.LocationId, attendanceOccurrence.ScheduleId );
+            //        if ( existingOccurrence != null )
+            //        {
+            //            nbNotice.Heading = "Occurrence Already Exists";
+            //            nbNotice.Text = "<p>An occurrence already exists for this group for the selected date, location, and schedule that you've selected. Please return to the list and select that occurrence to update it's attendance.</p>";
+            //            nbNotice.NotificationBoxType = NotificationBoxType.Danger;
+            //            nbNotice.Visible = true;
+
+            //            return false;
+            //        }
+            //        else
+            //        {
+            //            attendanceOccurrence = new AttendanceOccurrence();
+            //            attendanceOccurrence.GroupId = attendanceOccurrence.GroupId;
+            //            attendanceOccurrence.LocationId = attendanceOccurrence.LocationId;
+            //            attendanceOccurrence.ScheduleId = attendanceOccurrence.ScheduleId;
+            //            attendanceOccurrence.OccurrenceDate = attendanceOccurrence.OccurrenceDate;
+            //            attendanceOccurrenceService.Add( attendanceOccurrence );
+            //        }
+            //    }
+
+            //    attendanceOccurrence.Notes = GetAttributeValue( AttributeKey.ShowNotes ).AsBoolean() ? dtNotes.Text : string.Empty;
+            //    attendanceOccurrence.DidNotOccur = cbDidNotMeet.Checked;
+
+            //    SetOccurrenceAttendanceTypeId( attendanceOccurrence );
+
+            //    var existingAttendees = attendanceOccurrence.Attendees.ToList();
+
+            //    // If did not meet was selected and this was a manually entered occurrence (not based on a schedule/location)
+            //    // then just delete all the attendance records instead of tracking a 'did not meet' value
+            //    if ( cbDidNotMeet.Checked && !attendanceOccurrence.ScheduleId.HasValue )
+            //    {
+            //        foreach ( var attendance in existingAttendees )
+            //        {
+            //            attendanceService.Delete( attendance );
+            //        }
+            //    }
+            //    else
+            //    {
+            //        int? campusId = locationService.GetCampusIdForLocation( attendanceOccurrence.LocationId ) ?? _group.CampusId;
+            //        if ( !campusId.HasValue && _allowCampusFilter )
+            //        {
+            //            var campus = CampusCache.Get( bddlCampus.SelectedValueAsInt() ?? 0 );
+            //            if ( campus != null )
+            //            {
+            //                campusId = campus.Id;
+            //            }
+            //        }
+
+            //        if ( cbDidNotMeet.Checked )
+            //        {
+            //            // If the occurrence is based on a schedule, set the did not meet flags
+            //            foreach ( var attendance in existingAttendees )
+            //            {
+            //                attendance.DidAttend = null;
+            //            }
+            //        }
+            //        else
+            //        {
+            //            attendanceOccurrence.Schedule = attendanceOccurrence.Schedule == null && attendanceOccurrence.ScheduleId.HasValue ? new ScheduleService( rockContext ).Get( attendanceOccurrence.ScheduleId.Value ) : attendanceOccurrence.Schedule;
+
+            //            cvAttendance.IsValid = attendanceOccurrence.IsValid;
+            //            if ( !cvAttendance.IsValid )
+            //            {
+            //                cvAttendance.ErrorMessage = attendanceOccurrence.ValidationResults.Select( a => a.ErrorMessage ).ToList().AsDelimited( "<br />" );
+            //                return false;
+            //            }
+
+            //            foreach ( var attendee in _attendees )
+            //            {
+            //                var attendance = existingAttendees
+            //                    .Where( a => a.PersonAlias.PersonId == attendee.PersonId )
+            //                    .FirstOrDefault();
+
+            //                if ( attendance == null )
+            //                {
+            //                    int? personAliasId = personAliasService.GetPrimaryAliasId( attendee.PersonId );
+            //                    if ( personAliasId.HasValue )
+            //                    {
+            //                        attendance = new Attendance();
+            //                        attendance.PersonAliasId = personAliasId;
+            //                        attendance.CampusId = campusId;
+            //                        attendance.StartDateTime = attendanceOccurrence.Schedule != null && attendanceOccurrence.Schedule.HasSchedule() ? attendanceOccurrence.OccurrenceDate.Date.Add( attendanceOccurrence.Schedule.StartTimeOfDay ) : attendanceOccurrence.OccurrenceDate;
+            //                        attendance.DidAttend = attendee.Attended;
+
+            //                        // Check that the attendance record is valid
+            //                        cvAttendance.IsValid = attendance.IsValid;
+            //                        if ( !cvAttendance.IsValid )
+            //                        {
+            //                            cvAttendance.ErrorMessage = attendance.ValidationResults.Select( a => a.ErrorMessage ).ToList().AsDelimited( "<br />" );
+            //                            return false;
+            //                        }
+
+            //                        attendanceOccurrence.Attendees.Add( attendance );
+            //                    }
+            //                }
+            //                else
+            //                {
+            //                    // Otherwise, only record that they attended -- don't change their attendance startDateTime
+            //                    attendance.DidAttend = attendee.Attended;
+            //                }
+            //            }
+            //        }
+            //    }
+
+            //    rockContext.SaveChanges();
+
+            //    if ( attendanceOccurrence.LocationId.HasValue )
+            //    {
+            //        Rock.CheckIn.KioskLocationAttendance.Remove( attendanceOccurrence.LocationId.Value );
+            //    }
+
+            //    Guid? workflowTypeGuid = GetAttributeValue( AttributeKey.Workflow ).AsGuidOrNull();
+            //    if ( workflowTypeGuid.HasValue )
+            //    {
+            //        var workflowType = WorkflowTypeCache.Get( workflowTypeGuid.Value );
+            //        if ( workflowType != null && ( workflowType.IsActive ?? true ) )
+            //        {
+            //            try
+            //            {
+            //                var workflow = WorkflowGuid.Activate( workflowType, _group.Name );
+
+            //                workflow.SetAttributeValue( "StartDateTime", attendanceOccurrence.OccurrenceDate.ToString( "o" ) );
+
+            //                if ( _group.Schedule != null )
+            //                {
+            //                    workflow.SetAttributeValue( "Schedule", _group.Schedule.Guid.ToString() );
+            //                }
+
+            //                List<string> workflowErrors;
+            //                new WorkflowService( rockContext ).Process( workflow, _group, out workflowErrors );
+            //            }
+            //            catch ( Exception ex )
+            //            {
+            //                ExceptionLogService.LogException( ex, this.Context );
+            //            }
+            //        }
+            //    }
+
+            //    attendanceOccurrence.Id = attendanceOccurrence.Id;
+            //}
+
+            return true;
+        }
+
+        /// <summary>
+        /// Method to email attendance summary.
+        /// </summary>
+        private void EmailAttendanceSummary()
+        {
+            // TODO JMH Implement email method.
+            //try
+            //{
+            //    var rockContext = new RockContext();
+            //    var occurrence = new AttendanceOccurrenceService( rockContext ).Get( _occurrence.Id );
+            //    var mergeObjects = Rock.Lava.LavaHelper.GetCommonMergeFields( this.RockPage, this.CurrentPerson );
+            //    mergeObjects.Add( "Group", _group );
+            //    mergeObjects.Add( "AttendanceOccurrence", occurrence );
+            //    mergeObjects.Add( "AttendanceNoteLabel", GetAttributeValue( AttributeKey.AttendanceNoteLabel ) );
+
+            //    List<Person> recipients = new List<Person>();
+
+            //    var notificationOptions = GetAttributeValue( AttributeKey.SendSummaryEmailTo ).SplitDelimitedValues().Select( a => a.ConvertToEnumOrNull<SendSummaryEmailType>() ).ToList();
+            //    foreach ( var notificationOption in notificationOptions )
+            //    {
+            //        if ( !notificationOption.HasValue )
+            //        {
+            //            continue;
+            //        }
+
+            //        switch ( notificationOption )
+            //        {
+            //            case SendSummaryEmailType.GroupLeaders:
+            //                var leaders = new GroupMemberService( _rockContext )
+            //                    .Queryable( "Person" )
+            //                    .AsNoTracking()
+            //                    .Where( m => m.GroupId == _group.Id )
+            //                    .Where( m => m.IsArchived == false )
+            //                    .Where( m => m.GroupMemberStatus != GroupMemberStatus.Inactive )
+            //                    .Where( m => m.GroupRole.IsLeader );
+
+            //                recipients.AddRange( leaders.Where( a => !string.IsNullOrEmpty( a.Person.Email ) ).Select( a => a.Person ) );
+            //                break;
+
+            //            case SendSummaryEmailType.AllGroupMembers:
+            //                var allGroupMembers = new GroupMemberService( _rockContext )
+            //                    .Queryable( "Person" )
+            //                    .AsNoTracking()
+            //                    .Where( m => m.GroupId == _group.Id )
+            //                    .Where( m => m.IsArchived == false )
+            //                    .Where( m => m.GroupMemberStatus != GroupMemberStatus.Inactive );
+
+            //                recipients.AddRange( allGroupMembers.Where( a => !string.IsNullOrEmpty( a.Person.Email ) ).Select( a => a.Person ) );
+            //                break;
+
+            //            case SendSummaryEmailType.GroupAdministrator:
+            //                if ( _group.GroupType.ShowAdministrator && _group.GroupAdministratorPersonAliasId.HasValue && _group.GroupAdministratorPersonAlias.Person.Email.IsNotNullOrWhiteSpace() )
+            //                {
+            //                    recipients.Add( _group.GroupAdministratorPersonAlias.Person );
+            //                }
+
+            //                break;
+
+            //            case SendSummaryEmailType.ParentGroupLeaders:
+            //                if ( _group.ParentGroupId.HasValue )
+            //                {
+            //                    var parentLeaders = new GroupMemberService( _rockContext )
+            //                    .Queryable( "Person" )
+            //                    .AsNoTracking()
+            //                    .Where( m => m.GroupId == _group.ParentGroupId.Value )
+            //                    .Where( m => m.IsArchived == false )
+            //                    .Where( m => m.GroupMemberStatus != GroupMemberStatus.Inactive )
+            //                    .Where( m => m.GroupRole.IsLeader );
+
+            //                    recipients.AddRange( parentLeaders.Where( a => !string.IsNullOrEmpty( a.Person.Email ) ).Select( a => a.Person ) );
+            //                }
+
+            //                break;
+
+            //            case SendSummaryEmailType.IndividualEnteringAttendance:
+            //                if ( !string.IsNullOrEmpty( this.CurrentPerson.Email ) )
+            //                {
+            //                    recipients.Add( this.CurrentPerson );
+            //                }
+
+            //                break;
+
+            //            default:
+            //                break;
+            //        }
+            //    }
+
+            //    foreach ( var recipient in recipients )
+            //    {
+            //        var emailMessage = new RockEmailMessage( GetAttributeValue( AttributeKey.AttendanceEmailTemplate ).AsGuid() );
+            //        emailMessage.AddRecipient( new RockEmailMessageRecipient( recipient, mergeObjects ) );
+            //        emailMessage.CreateCommunicationRecord = false;
+            //        emailMessage.Send();
+            //    }
+            //}
+            //catch ( SystemException ex )
+            //{
+            //    ExceptionLogService.LogException( ex, Context, RockPage.PageId, RockPage.Site.Id, CurrentPersonAlias );
+            //}
+        }
+
+        private void SetOccurrenceAttendanceTypeId( AttendanceOccurrence occurrence )
+        {
+            // TODO JMH This should live in the Obsidian client code.
+            //var allowedAttendanceTypes = GetAttributeValues( AttributeKey.AttendanceOccurrenceTypes );
+            //if ( allowedAttendanceTypes.Any() )
+            //{
+            //    var allowedAttendanceTypeValues = allowedAttendanceTypes.Select( at => DefinedValueCache.Get( at ) );
+            //    var selectedAttendanceTypeValue = rblAttendanceType.SelectedValueAsId();
+
+            //    if ( selectedAttendanceTypeValue == null )
+            //    {
+            //        occurrence.AttendanceTypeValueId = null;
+            //        return;
+            //    }
+
+            //    if ( allowedAttendanceTypeValues.Where( atv => atv.Id == selectedAttendanceTypeValue.Value ).Any() )
+            //    {
+            //        occurrence.AttendanceTypeValueId = selectedAttendanceTypeValue;
+            //        return;
+            //    }
+            //}
+            //occurrence.AttendanceTypeValueId = null;
+        }
+
+        #endregion
+
+        #region Helper Classes and Enums
+
+        /// <summary>
+        /// Represents an attendance summary email recipient type.
+        /// </summary>
+        private enum SendSummaryEmailType
+        {
+            /// <summary>
+            /// Group Leaders
+            /// </summary>
+            GroupLeaders = 1,
+
+            /// <summary>
+            /// All Group Members (note: all active group members)
+            /// </summary>
+            AllGroupMembers = 2,
+
+            /// <summary>
+            /// Parent Group Leaders
+            /// </summary>
+            ParentGroupLeaders = 3,
+
+            /// <summary>
+            /// Individual Entering Attendance
+            /// </summary>
+            IndividualEnteringAttendance = 4,
+
+            /// <summary>
+            /// Group Administrator
+            /// </summary>
+            GroupAdministrator = 5
+        }
+
+        #endregion
+    }
+}

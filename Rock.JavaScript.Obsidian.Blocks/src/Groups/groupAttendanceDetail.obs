@@ -1,0 +1,333 @@
+<template>
+    <div>
+        <Panel titleIconCssClass="fa fa-check-square-o" title="Group Attendance">
+            <template #headerActions>
+                <CampusPicker blankValue="All Campuses" :includeInactive="true" :multiple="false" :showBlankItem="true" @update:modelValue="onCampusUpdated($event)"></CampusPicker>
+            </template>
+
+            <template #default>
+                <Alert v-if="false" id="nbNotice" />
+                <asp:ValidationSummary ID="ValidationSummary1" runat="server" HeaderText="Please correct the following:" CssClass="alert alert-validation" />
+                <Alert v-if="false" id="cvAttendance" alertType="danger" />
+
+                <div id="pnlDetails">
+
+                    <div class="row">
+                        <div class="col-sm-3">
+                            <DatePicker
+                                v-if="config.attendanceOccurrenceDateSelectionMode === GroupAttendanceDetailDateSelectionMode.DatePicker"
+                                v-model="attendanceForDate"
+                                :displayCurrentOption="false"
+                                :isCurrentDateOffset="false"
+                                :disableForceParse="false"
+                                :disableShowOnFocus="false"
+                                :disableHighlightToday="false"
+                                :disallowFutureDateSelection="config.isFutureOccurrenceDateSelectionRestricted"
+                                :disallowPastDateSelection="false"
+                                label="Attendance For"
+                            />
+                            <div v-else-if="config.attendanceOccurrenceDateSelectionMode === GroupAttendanceDetailDateSelectionMode.Specific">
+                                <RockLabel>Attendance For</RockLabel>
+                                <div>{{ attendanceForDate }}</div>
+                            </div>
+                            <!--
+                                if (attendanceDateSelectionMode === AttendanceForMode.PickFromSchedule
+                                    ||
+                                    (
+                                        groupLocationConfigHasSchedule
+                                        &&
+                                        (
+                                            attendanceDateSelectionMode === AttendanceForMode.CurrentDate
+                                            ||
+                                            location.queryString["date"]
+                                        )
+                                    )) {
+                                    //  then present the schedule options that match the block setting constraints.
+                                }
+                            -->
+                            <AttendanceOccurrencePicker
+                                v-else-if="config.attendanceOccurrenceDateSelectionMode === GroupAttendanceDetailDateSelectionMode.ScheduledDatePicker"
+                                Label="Attendance For"
+                                rules="required" />
+                        </div>
+                        <div class="col-sm-3">
+                            <GroupLocationPicker
+                                v-if="config.locationSelectionMode === GroupAttendanceDetailLocationSelectionMode.GroupLocationPicker"
+                                :groupGuid="config.groupGuid"
+                                label="Location"
+                                :showBlankItem="true"
+                                @update:modelValue="onGroupLocationPickerChanged" />
+                            <div v-else-if="config.locationSelectionMode === GroupAttendanceDetailLocationSelectionMode.Specific">
+                                <RockLabel>Location</RockLabel>
+                                <div>{{ config.locationLabel }}</div>
+                            </div>
+                        </div>
+                        <div class="col-sm-3">
+                            <GroupLocationSchedulePicker
+                                v-if="config.scheduleSelectionMode === GroupAttendanceDetailScheduleSelectionMode.GroupLocationSchedulePicker"
+
+                                :groupGuid="config.groupGuid"
+                                label="Schedule"
+                                :locationGuid="locationGuid"
+                                :showBlankItem="true"
+                                />
+                            <div v-else-if="config.scheduleSelectionMode === GroupAttendanceDetailScheduleSelectionMode.Specific">
+                                <RockLabel>Schedule</RockLabel>
+                                <div>{{ config.scheduleLabel }}</div>
+                            </div>
+                        </div>
+                        <div class="col-sm-3">
+                            <template v-if="attendedPeople.length > 0">
+                                <RockLabel>Attendance Count</RockLabel>
+                                <div>{{ attendedPeople.length }}</div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <RadioButtonList
+                                v-if="config.attendanceOccurrenceTypes && config.isAttendanceOccurrenceTypesSectionShown"
+                                v-model="attendanceOccurrenceType"
+                                label="Attendance Type"
+                                :horizontal="true"
+                                :items="config.attendanceOccurrenceTypes" />
+                        </div>
+                        <div class="col-sm-12">
+                            <InlineCheckBox
+                                v-model="didNotMeet"
+                                label="We Did Not Meet" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+
+                            <div class="js-roster">
+                                <div class="panel-labels clearfix">
+                                    <h4 class="js-members-label cursor-pointer" @click="onSelectAllMembers()">
+                                        {{ config.groupMembersSectionLabel }}
+                                    </h4>
+                                    <ButtonGroup
+                                        v-model="sortByFirstNameString"
+                                        label="Sort by"
+                                        :items="[{ text: 'First Name', value: 'True' }, { text: 'Last Name', value: 'False' }]" />
+                                </div>
+                                <CheckBoxList
+                                    v-if="config.roster"
+                                    v-model="internalAttendeeStringIds"
+                                    :items="rosterCheckBoxItems" />
+                                <div class="pull-left margin-b-md margin-r-md">
+                                    <PersonPicker @update:modelValue="onAddPerson($event)"></PersonPicker>
+                                </div>
+                                <div class="pull-left margin-b-lg">
+                                    <RockButton v-if="config.addGroupMemberPageUrl" btnType="default" @click="onAddGroupMemberClicked"><i class="fa fa-plus"></i> Add Group Member</RockButton>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <TextBox
+                                v-model="notes"
+                                label="Notes"
+                                :rows="3"
+                                textMode="multiline" />
+                        </div>
+                    </div>
+
+
+                    <Alert v-if="false" id="printRosterAlert" alertType="warning" />
+
+                    <div class="actions">
+                        <RockButton tooltip="Print Attendance Roster" CssClass="btn btn-default btn-sm btn-square pull-right" @click="onPrintAttendanceRosterClicked()"><i class="fa fa-print"></i></RockButton>
+                    </div>
+
+                </div>
+            </template>
+        </Panel>
+    </div>
+</template>
+
+<script setup lang="ts">
+    import { computed, ref } from "vue";
+    import AttendanceOccurrencePicker from "./GroupAttendanceDetail/attendanceOccurrencePicker.partial.obs";
+    import GroupLocationPicker from "./GroupAttendanceDetail/groupLocationPicker.partial.obs";
+    import GroupLocationSchedulePicker from "./GroupAttendanceDetail/groupLocationSchedulePicker.partial.obs";
+    import Alert from "@Obsidian/Controls/alert.obs";
+    import ButtonGroup from "@Obsidian/Controls/buttonGroup.obs";
+    import CampusPicker from "@Obsidian/Controls/campusPicker.obs";
+    import CheckBoxList from "@Obsidian/Controls/checkBoxList";
+    import DatePicker from "@Obsidian/Controls/datePicker.obs";
+    import InlineCheckBox from "@Obsidian/Controls/inlineCheckBox";
+    import Panel from "@Obsidian/Controls/panel";
+    import PersonPicker from "@Obsidian/Controls/personPicker";
+    import RadioButtonList from "@Obsidian/Controls/radioButtonList";
+    import RockButton from "@Obsidian/Controls/rockButton";
+    import RockLabel from "@Obsidian/Controls/rockLabel";
+    import TextBox from "@Obsidian/Controls/textBox";
+    import { GroupAttendanceDetailDateSelectionMode } from "@Obsidian/Enums/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailDateSelectionMode";
+    import { GroupAttendanceDetailLocationSelectionMode } from "@Obsidian/Enums/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailLocationSelectionMode";
+    import { GroupAttendanceDetailScheduleSelectionMode } from "@Obsidian/Enums/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailScheduleSelectionMode";
+    import { Guid } from "@Obsidian/Types";
+    import { onConfigurationValuesChanged, useConfigurationValues, useInvokeBlockAction, useReloadBlock } from "@Obsidian/Utility/block";
+    import { RockDateTime } from "@Obsidian/Utility/rockDateTime";
+    import { GroupAttendanceDetailInitializationBox } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailInitializationBox";
+    import { GroupAttendanceDetailRosterAttendeeBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailRosterAttendeeBag";
+    import { ListItemBag } from "@Obsidian/ViewModels/Utility/listItemBag";
+
+    // TODO JMH This config should contain the group GUID for use in the specific group controls.
+    const config = useConfigurationValues<GroupAttendanceDetailInitializationBox>();
+    const invokeBlockAction = useInvokeBlockAction();
+
+    type NullableListItemBags = ListItemBag | ListItemBag[] | null;
+
+    enum AttendanceForMode {
+        Picker,
+        DropDown,
+        Current
+    }
+
+    const roster = ref<GroupAttendanceDetailRosterAttendeeBag[]>(config?.roster ?? []);
+    const dateFormat = config.attendanceOccurrenceDateSelectionMode === GroupAttendanceDetailDateSelectionMode.DatePicker ? "yyyy-MM-dd" : "MM/dd/yyyy";
+    const attendanceForDate = ref<string>(RockDateTime.now().toASPString(dateFormat));
+    const attendanceOccurrenceType = ref<Guid | undefined>();
+    const locationGuid = ref<Guid | undefined | null>(null);
+    const didNotMeet = ref<boolean>(config.isDidNotMeetChecked);
+    const attendedPeople = computed<GroupAttendanceDetailRosterAttendeeBag[]>(() => roster.value.filter(m => m.personGuid && m.hasAttended) ?? []);
+    const sortByFirstNameString = ref<string>("False");
+    const sortByFirstName = computed<boolean>(() => sortByFirstNameString.value === "True");
+    const internalAttendeeStringIds = computed<string[]>({
+        get(): string[] {
+            return attendedPeople.value.map(r => r.personGuid!) ?? [];
+        },
+        set(newValue: string[]) {
+            const oldValue = attendedPeople.value.map(r => r.personGuid!) ?? [];
+
+            const membersToMarkAsUnattended = oldValue.filter(m => !newValue.includes(m));
+            const membersToMarkAsAttended = newValue.filter(m => !oldValue.includes(m));
+
+            if (membersToMarkAsAttended.length || membersToMarkAsUnattended.length) {
+                roster.value.forEach(r => {
+                    if (membersToMarkAsUnattended.includes(r.personGuid!)) {
+                        r.hasAttended = false;
+                    }
+                    else if (membersToMarkAsAttended.includes(r.personGuid!)) {
+                        r.hasAttended = true;
+                    }
+                });
+
+                console.log("Update attended and unattended", membersToMarkAsAttended, membersToMarkAsUnattended);
+            }
+        }
+    });
+    const rosterComparer = computed<RosterComparer>(() => {
+        if (sortByFirstName.value) {
+            return compare(byFirstName, byLastName);
+        }
+        return compare(byLastName, byFirstName);
+    });
+    const rosterFilterPredicate = computed<RosterFilterPredicate>(() => {
+        if (filterByCampusGuid.value) {
+            return (member) => {
+                if (member.campusGuid && filterByCampusGuid.value) {
+                    return member.campusGuid == filterByCampusGuid.value;
+                }
+                return false;
+            };
+        }
+        return _ => true;
+    });
+    const rosterCheckBoxItems = computed<ListItemBag[]>(() =>
+        roster.value
+            .filter(rosterFilterPredicate.value)
+            .sort(rosterComparer.value)
+            .map(r => ({
+                text: r.fullName,
+                value: r.personGuid
+            })) ?? []);
+    const notes = ref<string>(config.notes ?? "");
+    const filterByCampusGuid = ref<Guid | null | undefined>();
+
+    //#region Event Handlers
+
+    function onCampusUpdated(campusPickerSelection: NullableListItemBags): void {
+        filterByCampusGuid.value = (campusPickerSelection as ListItemBag)?.value;
+    }
+
+    async function onGroupLocationPickerChanged(locationPickerSelection: NullableListItemBags): Promise<void> {
+        await updateSchedulePicker(locationPickerSelection as ListItemBag);
+    }
+
+    async function onPrintAttendanceRosterClicked(): Promise<void> {
+        await printAttendanceRoster();
+    }
+
+    function onSelectAllMembers(): void {
+        let hasAttended = roster.value.some(r => !r.hasAttended);
+        roster.value = roster.value.map(r => ({...r, hasAttended }) as GroupAttendanceDetailRosterAttendeeBag);
+    }
+
+    function onAddPerson(person: ListItemBag): void {
+        console.log(person);
+    }
+
+    function onAddGroupMemberClicked(): void {
+        if (config.addGroupMemberPageUrl) {
+            location.href = config.addGroupMemberPageUrl;
+        }
+    }
+
+    //#endregion
+
+    //#region Functions
+
+    type RosterFilterPredicate = (rosterMember: GroupAttendanceDetailRosterAttendeeBag) => boolean;
+    type RosterComparer = (m1: GroupAttendanceDetailRosterAttendeeBag, m2: GroupAttendanceDetailRosterAttendeeBag) => number;
+
+    function compare(comparer: RosterComparer, thenBy?: RosterComparer): RosterComparer {
+        return (m1: GroupAttendanceDetailRosterAttendeeBag, m2: GroupAttendanceDetailRosterAttendeeBag): number => {
+            const comparison = comparer(m1, m2);
+
+            if (comparison === 0 && thenBy) {
+                return thenBy(m1, m2);
+            }
+
+            return comparison;
+        };
+    }
+
+    const byFirstName: RosterComparer = (member1: GroupAttendanceDetailRosterAttendeeBag, member2: GroupAttendanceDetailRosterAttendeeBag): number => {
+        return compareStrings(member1.nickName, member2.nickName);
+    };
+
+    const byLastName: RosterComparer = (member1: GroupAttendanceDetailRosterAttendeeBag, member2: GroupAttendanceDetailRosterAttendeeBag): number => {
+        return compareStrings(member1.lastName, member2.lastName);
+    };
+
+    function compareStrings(str1: string | null | undefined, str2: string | null | undefined, thenBy?: () => number): number {
+        const comparison = (str1 ?? "").localeCompare(str2 ?? "");
+
+        if (comparison === 0 && thenBy) {
+            return thenBy();
+        }
+
+        return comparison;
+    }
+
+    async function printAttendanceRoster(): Promise<void> {
+        await invokeBlockAction<void>("JMH TBD");
+    }
+
+    async function updateSchedulePicker(locationPickerSelection: ListItemBag | null): Promise<void> {
+        locationGuid.value = locationPickerSelection?.value;
+    }
+
+    async function saveAttendanceOccurrence(): Promise<void> {
+    }
+
+    //#endregion
+
+    onConfigurationValuesChanged(useReloadBlock());
+</script>

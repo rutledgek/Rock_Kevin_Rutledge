@@ -84,6 +84,41 @@ namespace Rock.Rest.v2
 
         #endregion
 
+        #region Attendance Occurrence Picker
+
+        /// <summary>
+        /// Gets the attendance occurrences that can be displayed in the achievement type picker.
+        /// </summary>
+        /// <param name="options">The options that describe which items to load.</param>
+        /// <returns>A List of <see cref="ListItemBag"/> objects that represent the achievement types.</returns>
+        [HttpPost]
+        [System.Web.Http.Route( "AttendanceOccurrencePickerGetAttendanceOccurrences" )]
+        [Authenticate]
+        [Rock.SystemGuid.RestActionGuid( "0370D447-D523-4508-94CA-7E1EFAC77F90" )]
+        public IHttpActionResult AttendanceOccurrencePickerGetAttendanceOccurrences( [FromBody] AttendanceOccurrencePickerGetAttendanceOccurrencesOptionsBag options )
+        {
+            using ( var rockContext = new RockContext() )
+            {
+                var group = new GroupService( rockContext ).Get( options.GroupGuid );
+
+                // TODO JMH This will need to be populated with complex logic as seen in figma.
+                var occurrences = new AttendanceOccurrenceService( rockContext )
+                    .GetGroupOccurrences( group, options.FromDateTime, options.ToDateTime, options.LocationIds, options.ScheduleIds );
+
+                var items = occurrences
+                    .Select( o => new ListItemBag
+                    {
+                        Value = o.Guid.ToString(),
+                        Text = o.OccurrenceDate.ToString( "s" )
+                    } )
+                    .ToList();
+
+                return Ok( items );
+            }
+        }
+
+        #endregion
+
         #region Address Control
 
         /// <summary>
@@ -2077,6 +2112,153 @@ namespace Rock.Rest.v2
 
         #endregion
 
+        #region Group Location Picker
+
+        /// <summary>
+        /// Gets the group locations that can be displayed in the group location picker.
+        /// </summary>
+        /// <param name="options">The options that describe which items to load.</param>
+        /// <returns>A List of <see cref="ListItemBag"/> objects that represent the group locations.</returns>
+        [HttpPost]
+        [System.Web.Http.Route( "GroupLocationPickerGetGroupLocations" )]
+        [Authenticate]
+        [Rock.SystemGuid.RestActionGuid( "4261FA48-A704-48AD-A24A-C3290522584B" )]
+        public IHttpActionResult GroupLocationPickerGetGroupLocations( GroupLocationPickerGetGroupLocationsOptionsBag options )
+        {
+            if ( !options.GroupGuid.HasValue )
+            {
+                return NotFound();
+            }
+
+            var locations = new GroupService( new RockContext() )
+                .Queryable()
+                .AsNoTracking()
+                .Include( g => g.GroupLocations )
+                .Include( g => g.GroupLocations.Select( gl => gl.Location ) )
+                .Include( g => g.GroupLocations.Select( gl => gl.Location ).Select( l => l.ParentLocation ) )
+                .Where( g => g.Guid == options.GroupGuid.Value && g.GroupLocations.Any() )
+                .SelectMany( g => g.GroupLocations )
+                .Where( gl => gl.Location != null )
+                .Select( gl => gl.Location )
+                .Where( l => l.Name != null && !string.IsNullOrEmpty( l.Name.Trim() ) )
+                .Select( l => new
+                {
+                    Id = l.Id,
+                    Guid = l.Guid,
+                    Name = l.Name,
+                    ParentLocationId = l.ParentLocationId,
+                    ParentLocationGuid = l.ParentLocationId.HasValue ? l.ParentLocation.Guid : ( Guid? ) null
+                } )
+                .ToList();
+
+            if ( !locations.Any() )
+            {
+                return NotFound();
+            }
+
+            var locationPaths = new Dictionary<Guid, string>();
+            var locationValues = new Dictionary<Guid, string>();
+
+            using ( var rockContext = new RockContext() )
+            {
+                var locationService = new LocationService( rockContext );
+
+                foreach ( var location in locations )
+                {
+                    // Get location path
+                    var parentLocationPath = string.Empty;
+                    if ( location.ParentLocationId.HasValue && location.ParentLocationGuid.HasValue )
+                    {
+                        var parentLocationGuid = location.ParentLocationGuid.Value;
+
+                        if ( !locationPaths.ContainsKey( parentLocationGuid ) )
+                        {
+                            locationPaths.Add( parentLocationGuid, locationService.GetPath( location.ParentLocationId.Value ) );
+                        }
+
+                        parentLocationPath = locationPaths[parentLocationGuid];
+                    }
+
+                    if ( !locationValues.ContainsKey( location.Guid ) )
+                    {
+                        locationValues.Add( location.Guid, new List<string> { parentLocationPath, location.Name }.AsDelimited( " > " ) );
+                    }
+                }
+
+                var list = locationValues.Select( kvp => new ListItemBag
+                {
+                    Value = kvp.Key.ToString(),
+                    Text = kvp.Value
+                } );
+
+                return Ok( list );
+            }
+        }
+
+        #endregion
+
+        #region Group Location Schedule Picker
+
+        /// <summary>
+        /// Gets the group location schedules that can be displayed in the group location schedule picker.
+        /// </summary>
+        /// <param name="options">The options that describe which items to load.</param>
+        /// <returns>A List of <see cref="ListItemBag"/> objects that represent the group location schedules.</returns>
+        [HttpPost]
+        [System.Web.Http.Route( "GroupLocationSchedulePickerGetGroupLocationSchedules" )]
+        [Authenticate]
+        [Rock.SystemGuid.RestActionGuid( "A81A84E8-D24C-4E0F-9BA9-B71232D3F76A" )]
+        public IHttpActionResult GroupLocationSchedulePickerGetGroupLocationSchedules( GroupLocationSchedulePickerGetGroupLocationSchedulesOptionsBag options )
+        {
+            if ( !options.GroupGuid.HasValue || !options.LocationGuid.HasValue )
+            {
+                return NotFound();
+            }
+
+            using ( var rockContext = new RockContext() )
+            {
+                var groupLocationSchedules = new GroupLocationService( new RockContext() )
+                    .Queryable()
+                    .AsNoTracking()
+                    .Include( gl => gl.Location )
+                    .Include( gl => gl.Schedules )
+                    .Where( gl => gl.Group.Guid == options.GroupGuid.Value )
+                    .Where( gl => gl.Location.Guid == options.LocationGuid.Value )
+                    .Where( gl => gl.Schedules.Any() )
+                    .SelectMany( gl => gl.Schedules )
+                    .OrderBy( s => s.Name )
+                    .Distinct()
+                    .Select( s => new
+                    {
+                        ScheduleGuid = s.Guid,
+                        ScheduleName = s.Name
+                    } )
+                    .ToList();
+
+                if ( !groupLocationSchedules.Any() )
+                {
+                    return NotFound();
+                }
+
+                var schedules = new Dictionary<Guid, string>();
+
+                foreach ( var groupLocationSchedule in groupLocationSchedules )
+                {
+                    schedules.AddOrIgnore( groupLocationSchedule.ScheduleGuid, groupLocationSchedule.ScheduleName );
+                }
+
+                var list = schedules.Select( kvp => new ListItemBag
+                {
+                    Value = kvp.Key.ToString(),
+                    Text = kvp.Value
+                } );
+
+                return Ok( list );
+            }
+        }
+
+        #endregion
+
         #region Group Member Picker
 
         /// <summary>
@@ -2099,7 +2281,7 @@ namespace Rock.Rest.v2
 
             group = new GroupService( new RockContext() ).Get( options.GroupGuid.Value );
 
-            if ( group == null && !group.Members.Any() )
+            if ( group == null || !group.Members.Any() )
             {
                 return NotFound();
             }

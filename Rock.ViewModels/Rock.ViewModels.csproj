@@ -47,6 +47,9 @@
     <Compile Include="Blocks\Engagement\SignUp\SignUpDetail\SignUpDetailInitializationBox.cs" />
     <Compile Include="Blocks\Engagement\SignUp\SignUpRegister\SignUpRegisterRequestBag.cs" />
     <Compile Include="Blocks\Engagement\SignUp\SignUpRegister\SignUpRegisterResponseBag.cs" />
+    <Compile Include="Blocks\Groups\GroupAttendanceDetail\GroupAttendancePendingGroupMemberBag.cs" />
+    <Compile Include="Blocks\Groups\GroupAttendanceDetail\GroupAttendanceDetailRosterAttendeeBag.cs" />
+    <Compile Include="Blocks\Groups\GroupAttendanceDetail\GroupAttendanceDetailInitializationBox.cs" />
     <Compile Include="Blocks\Security\AccountEntry\AccountEntryAccountInfoBag.cs" />
     <Compile Include="Blocks\Security\AccountEntry\AccountEntryCompletedStepBag.cs" />
     <Compile Include="Blocks\Security\AccountEntry\AccountEntryConfirmationSentStepBag.cs" />
@@ -172,6 +175,9 @@
     <Compile Include="Rest\Controls\CategorizedValuePickerGetTreeResultsBag.cs" />
     <Compile Include="Rest\Controls\CategorizedValuePickerGetChildrenOptionsBag.cs" />
     <Compile Include="Rest\Controls\CategorizedValuePickerNodeBag.cs" />
+    <Compile Include="Rest\Controls\AttendanceOccurrencePickerGetAttendanceOccurrencesOptionsBag.cs" />
+    <Compile Include="Rest\Controls\GroupLocationSchedulePickerGetGroupLocationSchedulesOptionsBag.cs" />
+    <Compile Include="Rest\Controls\GroupLocationPickerGetGroupLocationsOptionsBag.cs" />
     <Compile Include="Rest\Controls\MergeFieldPickerFormatSelectedValueOptionsBag.cs" />
     <Compile Include="Rest\Controls\MergeFieldPickerGetChildrenOptionsBag.cs" />
     <Compile Include="Rest\Controls\PhoneNumberBoxGetConfigurationResultsBag.cs" />

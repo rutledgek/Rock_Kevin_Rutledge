@@ -107,6 +107,7 @@
     <Folder Include="Framework\Enums\Blocks\Cms\ContentCollectionView\" />
     <Folder Include="Framework\Enums\Blocks\Engagement\" />
     <Folder Include="Framework\Enums\Blocks\Engagement\SignUp\" />
+    <Folder Include="Framework\Enums\Blocks\Groups\" />
     <Folder Include="Framework\Enums\Blocks\Security\" />
     <Folder Include="Framework\Enums\Blocks\Security\AccountEntry\" />
     <Folder Include="Framework\Enums\Blocks\Security\Login\" />
@@ -168,6 +169,7 @@
     <Folder Include="Framework\ViewModels\Blocks\Event\InteractiveExperiences\LiveExperienceOccurrences\" />
     <Folder Include="Framework\ViewModels\Blocks\Event\InteractiveExperiences\LiveExperience\" />
     <Folder Include="Framework\ViewModels\Blocks\Groups\" />
+    <Folder Include="Framework\ViewModels\Blocks\Groups\GroupAttendanceDetail\" />
     <Folder Include="Framework\ViewModels\Blocks\Groups\GroupSchedulePreference\" />
     <Folder Include="Framework\ViewModels\Blocks\Groups\GroupScheduleSignup\" />
     <Folder Include="Framework\ViewModels\Blocks\Groups\GroupScheduleToolbox\" />
@@ -193,6 +195,9 @@
     <Folder Include="Framework\ViewModels\Reporting\" />
     <Folder Include="Framework\ViewModels\Rest\" />
     <Folder Include="Framework\ViewModels\Rest\Controls\" />
+    <Folder Include="Framework\ViewModels\Rock\" />
+    <Folder Include="Framework\ViewModels\Rock\Enums\Blocks\" />
+    <Folder Include="Framework\ViewModels\Rock\Enums\Blocks\Groups\GroupAttendanceDetail\" />
     <Folder Include="Framework\ViewModels\Utility\" />
     <Folder Include="System\" />
     <Folder Include="Tests\" />
@@ -296,6 +301,9 @@
     <TypeScriptCompile Include="Framework\Controls\urlLinkBox.ts" />
     <TypeScriptCompile Include="Framework\Enums\Blocks\Cms\ContentCollectionView\searchOrder.ts" />
     <TypeScriptCompile Include="Framework\Enums\Blocks\Engagement\SignUp\registerMode.ts" />
+    <TypeScriptCompile Include="Framework\Enums\Blocks\Groups\GroupAttendanceDetail\groupAttendanceDetailDateSelectionMode.ts" />
+    <TypeScriptCompile Include="Framework\Enums\Blocks\Groups\GroupAttendanceDetail\groupAttendanceDetailLocationSelectionMode.ts" />
+    <TypeScriptCompile Include="Framework\Enums\Blocks\Groups\GroupAttendanceDetail\groupAttendanceDetailScheduleSelectionMode.ts" />
     <TypeScriptCompile Include="Framework\Enums\Blocks\Security\AccountEntry\accountEntryStep.ts" />
     <TypeScriptCompile Include="Framework\Enums\Blocks\Security\Login\loginMethod.ts" />
     <TypeScriptCompile Include="Framework\Enums\Blocks\Security\Login\passwordlessLoginStep.ts" />
@@ -627,6 +635,9 @@
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Event\InteractiveExperiences\InteractiveExperienceDetail\interactiveExperienceVisualizerTypeBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Event\InteractiveExperiences\LiveExperienceOccurrences\liveExperienceOccurrencesInitializationBox.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Event\InteractiveExperiences\LiveExperience\liveExperienceInitializationBox.d.ts" />
+    <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupAttendanceDetail\groupAttendanceAttendeeBag.d.ts" />
+    <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupAttendanceDetail\groupAttendanceDetailInitializationBox.d.ts" />
+    <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupAttendanceDetail\groupAttendanceDetailRosterAttendeeBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupSchedulePreference\assignmentScheduleAndLocationBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupSchedulePreference\preferencePageContentBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupScheduleSignup\personScheduleSignupBag.d.ts" />
@@ -946,6 +957,7 @@
     <TypeScriptCompile Include="Framework\ViewModels\Rest\Controls\addressControlValidateAddressResultsBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Rest\Controls\assessmentTypePickerGetAssessmentTypesOptionsBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Rest\Controls\assetStorageProviderPickerGetAssetStorageProvidersOptionsBag.d.ts" />
+    <TypeScriptCompile Include="Framework\ViewModels\Rest\Controls\attendanceOccurrencePickerGetAttendanceOccurrencesOptionsBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Rest\Controls\auditDetailGetAuditDetailsOptionsBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Rest\Controls\achievementTypePickerGetAchievementTypesOptionsBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Rest\Controls\badgeComponentPickerGetBadgeComponentsOptionsBag.d.ts" />
@@ -982,6 +994,8 @@
     <TypeScriptCompile Include="Framework\ViewModels\Rest\Controls\geoPickerGoogleMapSettingsBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Rest\Controls\geoPickerSettingsBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Rest\Controls\gradePickerGetGradesOptionsBag.d.ts" />
+    <TypeScriptCompile Include="Framework\ViewModels\Rest\Controls\groupLocationPickerGetGroupLocationsOptionsBag.d.ts" />
+    <TypeScriptCompile Include="Framework\ViewModels\Rest\Controls\groupLocationSchedulePickerGetGroupLocationSchedulesOptionsBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Rest\Controls\groupMemberPickerGetGroupMembersOptionsBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Rest\Controls\groupPickerGetChildrenOptionsBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Rest\Controls\groupTypePickerGetGroupTypesOptionsBag.d.ts" />
@@ -1017,6 +1031,8 @@
     <TypeScriptCompile Include="Framework\ViewModels\Rest\Controls\stepTypePickerGetStepTypesOptionsBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Rest\Controls\workflowActionTypePickerGetChildrenOptionsBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Rest\Controls\workflowTypePickerGetWorkflowTypesOptionsBag.d.ts" />
+    <TypeScriptCompile Include="Framework\ViewModels\Rock\Enums\Blocks\Groups\GroupAttendanceDetail\groupAttendanceAttendeeBag.d.ts" />
+    <TypeScriptCompile Include="Framework\ViewModels\Rock\Enums\Blocks\Groups\GroupAttendanceDetail\groupAttendancePendingGroupMemberBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Utility\debugTiming.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Utility\entityAuditBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Utility\listItemBag.d.ts" />

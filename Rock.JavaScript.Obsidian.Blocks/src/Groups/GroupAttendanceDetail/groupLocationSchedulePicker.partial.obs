@@ -1,0 +1,114 @@
+<template>
+    <BaseAsyncPicker v-model="internalValue"
+        v-bind="standardProps"
+        :items="actualItems" />
+</template>
+
+<script setup lang="ts">
+    import { Guid } from "@Obsidian/Types";
+    import { standardAsyncPickerProps, useStandardAsyncPickerProps, useVModelPassthrough } from "@Obsidian/Utility/component";
+    import { useHttp } from "@Obsidian/Utility/http";
+    import { GroupLocationSchedulePickerGetGroupLocationSchedulesOptionsBag } from "@Obsidian/ViewModels/Rest/Controls/groupLocationSchedulePickerGetGroupLocationSchedulesOptionsBag";
+    import { ListItemBag } from "@Obsidian/ViewModels/Utility/listItemBag";
+    import { computed, PropType, ref, watch } from "vue";
+    import BaseAsyncPicker from "@Obsidian/Controls/baseAsyncPicker";
+
+    const props = defineProps({
+        modelValue: {
+            type: Object as PropType<ListItemBag | ListItemBag[] | null>,
+            required: false
+        },
+
+        groupGuid: {
+            type: String as PropType<Guid | null | undefined>,
+            default: null
+        },
+
+        locationGuid: {
+            type: String as PropType<Guid | null | undefined>,
+            default: null
+        },
+
+        shouldLogNotFoundError: {
+            type: Boolean as PropType<boolean>,
+            default: false
+        },
+
+        shouldLoadItemsWhetherValuesAreSet: {
+            type: Boolean as PropType<boolean>,
+            default: false
+        },
+
+        ...standardAsyncPickerProps
+    });
+
+    const emit = defineEmits<{
+        (e: "update:modelValue", _value: ListItemBag | ListItemBag[] | null): void
+    }>();
+
+    // #region Values
+
+    const internalValue = useVModelPassthrough(props, "modelValue", emit);
+    const standardProps = useStandardAsyncPickerProps(props);
+    const http = useHttp();
+    const loadedItems = ref<ListItemBag[] | null>(null);
+
+    // #endregion
+
+    // #region Computed Values
+
+    /**
+     * The actual items to make available to the picker. This allows us to do any
+     * post-processing, such as adding additional items, and still be lazy loaded as well.
+     */
+    const actualItems = computed((): ListItemBag[] | (() => Promise<ListItemBag[]>) => {
+        return loadedItems.value || loadOptions;
+    });
+
+    // #endregion
+
+    // #region Functions
+
+    /**
+     * Loads the items from the server.
+     */
+    const loadOptions = async (): Promise<ListItemBag[]> => {
+        const options: Partial<GroupLocationSchedulePickerGetGroupLocationSchedulesOptionsBag> = {
+            groupGuid: props.groupGuid,
+            locationGuid: props.locationGuid
+        };
+
+        if (!props.shouldLoadItemsWhetherValuesAreSet
+            && (!options.groupGuid || !options.locationGuid)) {
+            loadedItems.value = [];
+            return [];
+        }
+
+        const result = await http.post<ListItemBag[]>("/api/v2/Controls/GroupLocationSchedulePickerGetGroupLocationSchedules", undefined, options);
+
+        if (result.isSuccess && result.data) {
+            loadedItems.value = result.data;
+            return result.data;
+        }
+        else {
+            if (props.shouldLogNotFoundError) {
+                console.error(result.errorMessage ?? "Unknown error while loading data.");
+            }
+
+            loadedItems.value = [];
+            return [];
+        }
+    };
+
+    // #endregion
+
+    // #region Watchers
+
+    watch(() => [props.groupGuid, props.locationGuid], () => {
+        loadedItems.value = null;
+    });
+
+    // #endregion
+
+
+</script>
