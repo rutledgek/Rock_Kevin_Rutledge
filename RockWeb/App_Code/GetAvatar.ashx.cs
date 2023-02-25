@@ -230,7 +230,7 @@ namespace RockWeb
 
             return RoleCache.AllRoles()
                         .Where( r =>
-                            AvatarHelper.RoleGuidsAuthorizedToRefreshCache.Contains( r.Guid )
+                            AvatarHelper.AuthorizedRefreshCacheRoleGuids.Contains( r.Guid )
                             && r.IsPersonInRole( currentPerson.Guid )
                         )
                         .Any();
@@ -259,12 +259,42 @@ namespace RockWeb
                 settings.Size = request.QueryString["Size"].AsInteger();
             }
 
+            if ( request.QueryString["w"] != null )
+            {
+                settings.Size = request.QueryString["w"].AsInteger();
+            }
+
+            if ( request.QueryString["h"] != null )
+            {
+                settings.Size = request.QueryString["h"].AsInteger();
+            }
+
+            if ( request.QueryString["width"] != null )
+            {
+                settings.Size = request.QueryString["width"].AsInteger();
+            }
+
+            if ( request.QueryString["height"] != null )
+            {
+                settings.Size = request.QueryString["height"].AsInteger();
+            }
+
+            if ( request.QueryString["maxwidth"] != null )
+            {
+                settings.Size = request.QueryString["maxwidth"].AsInteger();
+            }
+
+            if ( request.QueryString["maxheight"] != null )
+            {
+                settings.Size = request.QueryString["maxheight"].AsInteger();
+            }
+
             // Style
             if ( request.QueryString["Style"] != null )
             {
-                if ( request.QueryString["Style"].ToLower() == "initials" )
+                if ( request.QueryString["Style"].ToLower() == "icon" )
                 {
-                    settings.AvatarStyle = AvatarStyle.Initials;
+                    settings.AvatarStyle = AvatarStyle.Icon;
                 }
             }
 
@@ -393,24 +423,67 @@ namespace RockWeb
 
     public static class AvatarHelper
     {
-        // Reuseable masks
+        #region Reusable Mask Properties
+        /// <summary>
+        /// Mask for adult males
+        /// </summary>
         public static Image AdultMaleMask { get; } = new Image<Rgba32>( 1, 1 );
+
+        /// <summary>
+        /// Mask for adult females
+        /// </summary>
         public static Image AdultFemaleMask { get; } = new Image<Rgba32>( 1, 1 );
+
+        /// <summary>
+        /// Mask for male children
+        /// </summary>
         public static Image ChildMaleMask { get; } = new Image<Rgba32>( 1, 1 );
+
+        /// <summary>
+        /// Mask for female children
+        /// </summary>
         public static Image ChildFemaleMask { get; } = new Image<Rgba32>( 1, 1 );
+
+        /// <summary>
+        /// Mask for unknow genders
+        /// </summary>
         public static Image UnknownGenderMask { get; } = new Image<Rgba32>( 1, 1 );
+
+        /// <summary>
+        /// Mask for businesses
+        /// </summary>
         public static Image BusinessMask { get; } = new Image<Rgba32>( 1, 1 );
 
-        public static int RecordTypeIdBusiness { get; } = 0;
+        #endregion
 
-        public static int RecordTypeIdNamelessPerson { get; } = 0;
+        #region Public Properties
+        /// <summary>
+        /// List of security roles that are allowed to clear cached avatars
+        /// </summary>
+        public static List<Guid> AuthorizedRefreshCacheRoleGuids { get; } = new List<Guid>();
+        #endregion
 
-        public static int RecordTypeIdPerson { get; } = 0;
-
-        public static List<Guid> RoleGuidsAuthorizedToRefreshCache { get; } = new List<Guid>();
-
-        // Fonts for avatars
+        #region Private Memebers
+        /// <summary>
+        /// Collection of fonts to be used for avatars
+        /// </summary>
         private static FontCollection _fontCollection = null;
+
+        /// <summary>
+        /// The record type id for businesses
+        /// </summary>
+        private static int BusinessRecordTypeId { get; } = 0;
+
+        /// <summary>
+        /// The record type id for nameless people
+        /// </summary>
+        private static int NamelessPersonRecordTypeId { get; } = 0;
+
+        /// <summary>
+        /// The record type id for people
+        /// </summary>
+        private static int PersonRecordTypeId { get; } = 0;
+        #endregion
 
         static AvatarHelper() {
 
@@ -418,8 +491,8 @@ namespace RockWeb
             var folderPath = System.Web.Hosting.HostingEnvironment.MapPath( "~\\App_Data\\Avatar\\" );
 
             // Load role guids that are allowed to refresh the cache
-            RoleGuidsAuthorizedToRefreshCache.Add( Rock.SystemGuid.Group.GROUP_ADMINISTRATORS.AsGuid() );
-            RoleGuidsAuthorizedToRefreshCache.Add( Rock.SystemGuid.Group.GROUP_WEB_ADMINISTRATORS.AsGuid() );
+            AuthorizedRefreshCacheRoleGuids.Add( Rock.SystemGuid.Group.GROUP_ADMINISTRATORS.AsGuid() );
+            AuthorizedRefreshCacheRoleGuids.Add( Rock.SystemGuid.Group.GROUP_WEB_ADMINISTRATORS.AsGuid() );
 
             try
             {
@@ -433,16 +506,14 @@ namespace RockWeb
                 // Load Fonts
                 _fontCollection = new FontCollection();
                 _fontCollection.Add( folderPath + "\\Fonts\\Inter-Regular.ttf" );
-                _fontCollection.Add( folderPath + "\\Fonts\\Inter-ExtraBold.ttf" );
                 _fontCollection.Add( folderPath + "\\Fonts\\Inter-Bold.ttf" );
-                _fontCollection.Add( folderPath + "\\Fonts\\Inter-Thin.ttf" );
             }
             catch { }
 
             // Load cache of record types
-            RecordTypeIdBusiness = DefinedValueCache.Get( Rock.SystemGuid.DefinedValue.PERSON_RECORD_TYPE_BUSINESS.AsGuid() ).Id;
-            RecordTypeIdNamelessPerson = DefinedValueCache.Get( Rock.SystemGuid.DefinedValue.PERSON_RECORD_TYPE_NAMELESS.AsGuid() ).Id;
-            RecordTypeIdPerson = DefinedValueCache.Get( Rock.SystemGuid.DefinedValue.PERSON_RECORD_TYPE_PERSON.AsGuid() ).Id;
+            BusinessRecordTypeId = DefinedValueCache.Get( Rock.SystemGuid.DefinedValue.PERSON_RECORD_TYPE_BUSINESS.AsGuid() ).Id;
+            NamelessPersonRecordTypeId = DefinedValueCache.Get( Rock.SystemGuid.DefinedValue.PERSON_RECORD_TYPE_NAMELESS.AsGuid() ).Id;
+            PersonRecordTypeId = DefinedValueCache.Get( Rock.SystemGuid.DefinedValue.PERSON_RECORD_TYPE_PERSON.AsGuid() ).Id;
         }
 
 
@@ -561,13 +632,13 @@ namespace RockWeb
         private static Image GetIconMask( AvatarSettings settings )
         {
             // Business
-            if ( settings.RecordTypeId == AvatarHelper.RecordTypeIdBusiness )
+            if ( settings.RecordTypeId == AvatarHelper.BusinessRecordTypeId )
             {
                 return AvatarHelper.BusinessMask.CloneAs<Rgba32>();
             }
 
             // Nameless person
-            if ( settings.RecordTypeId == AvatarHelper.RecordTypeIdNamelessPerson )
+            if ( settings.RecordTypeId == AvatarHelper.NamelessPersonRecordTypeId )
             {
                 return AvatarHelper.UnknownGenderMask.CloneAs<Rgba32>();
             }
@@ -600,6 +671,11 @@ namespace RockWeb
             return AvatarHelper.UnknownGenderMask.CloneAs<Rgba32>();
         }
 
+        /// <summary>
+        /// Creates the avatar based on the initials in the Text setting.
+        /// </summary>
+        /// <param name="settings"></param>
+        /// <returns></returns>
         private static Image CreateInitialsAvatar( AvatarSettings settings )
         {
             // Create the background
@@ -624,9 +700,6 @@ namespace RockWeb
             // https://www.adamrussell.com/adding-image-watermark-text-in-c-with-imagesh
             var textOptions = new TextOptions( font )
             {
-                VerticalAlignment = VerticalAlignment.Center,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                WrappingLength = settings.Size,
                 Dpi = (float) backgroundImage.Metadata.VerticalResolution
             };
 
@@ -634,18 +707,25 @@ namespace RockWeb
             var textSize = TextMeasurer.Measure( settings.Text, textOptions );
 
             // Calculate margins
-            var leftMargin = (settings.Size - textSize.Width ) / 2;
+            var leftMargin = ( settings.Size - textSize.Width ) / 2;
             var topMargin = ( settings.Size - textSize.Height ) / 2;
 
-            textOptions.Origin = new System.Numerics.Vector2(topMargin, leftMargin);
+            // We needed to create the TextOptions above to be able to measure the size of the Text. One
+            // would think you could update that object's Origin property to tell it where to place the text
+            // but you can't. The Orgin will appear to be updated, but the text will be place at the original
+            // Origin (possible bug? 🤷‍). To get around that we'll need to create a new TextOption.
 
-            backgroundImage.Mutate( o => o.DrawText( textOptions, settings.Text, Color.ParseHex( settings.AvatarColors.ForegroundColor) ) );
-            //backgroundImage.Mutate( o => o.DrawText( settings.Text, font, Color.ParseHex( settings.AvatarColors.ForegroundColor ), new PointF( topMargin, leftMargin ) ) );
+            var renderTextOptions = new TextOptions( font )
+            {
+                Dpi = ( float ) backgroundImage.Metadata.VerticalResolution,
+                Origin = new System.Numerics.Vector2( leftMargin, topMargin )
+            };
 
+            backgroundImage.Mutate( o => o.DrawText( renderTextOptions, settings.Text, Color.ParseHex( settings.AvatarColors.ForegroundColor) ) );
+            // alignment testing box backgroundImage.Mutate( o => o.Draw( Color.Red, 1, new RectangleF( new PointF( textOptions.Origin.X, textOptions.Origin.Y ), new SizeF( textSize.Width , textSize.Height ) ) ) ); 
+            
             return backgroundImage;
         }
-
-        
     }
 
     public static class RockImage
@@ -786,7 +866,7 @@ namespace RockWeb
         /// Gets or sets the avatar style.
         /// </summary>
         /// <value>The avatar style.</value>
-        public AvatarStyle AvatarStyle { get; set; } = AvatarStyle.Icon;
+        public AvatarStyle AvatarStyle { get; set; } = AvatarStyle.Initials;
 
         /// <summary>
         /// Gets or sets a value indicating whether this instance is bold.
