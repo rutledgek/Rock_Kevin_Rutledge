@@ -4,6 +4,7 @@
                               :column="column"
                               :filterValue="columnFilters[column.name]"
                               :sortDirection="columnSortLookup[column.name]"
+                              :rows="rows"
                               @update:filterValue="onUpdateFilterValue(column.name, $event)"
                               @update:sortDirection="onUpdateSortDirection(column.name, $event)" />
     </tr>
@@ -29,6 +30,11 @@
         columnSort: {
             type: Object as PropType<{ column: string, isDescending: boolean }>,
             required: false
+        },
+
+        rows: {
+            type: Array as PropType<Record<string, unknown>[]>,
+            default: []
         }
     });
 

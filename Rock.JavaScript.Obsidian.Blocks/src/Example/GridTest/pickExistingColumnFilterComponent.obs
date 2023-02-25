@@ -1,0 +1,119 @@
+<template>
+    <div class="grid-filter-popup-body">
+        <div v-for="value in distinctValues" class="d-flex align-items-center mb-2">
+            <label class="checkbox-inline">
+                <input type="checkbox" :checked="value.selected" @change="onSelected(value, $event)" />
+                <span class="label-text">&nbsp;</span>
+            </label>
+            <component :is="column.format" :row="value.row" :column="column" />
+        </div>
+    </div>
+</template>
+
+<script setup lang="ts">
+    import { ref, PropType, watch } from "vue";
+    import { GridColumnDefinition } from "./types";
+
+    const props = defineProps({
+        modelValue: {
+            type: Object as PropType<unknown>,
+            required: false
+        },
+
+        column: {
+            type: Object as PropType<GridColumnDefinition>,
+            required: true
+        },
+
+        rows: {
+            type: Array as PropType<Record<string, unknown>[]>,
+            required: true
+        }
+    });
+
+    const emit = defineEmits<{
+        (event: "update:modelValue", value: unknown): void
+    }>();
+
+    type DistinctValue = {
+        row: Record<string, unknown>;
+
+        selected: boolean
+    };
+
+    const distinctValues = ref<DistinctValue[]>([]);
+
+    function getDistinctValues(): DistinctValue[] {
+        const valueRows: DistinctValue[] = [];
+        const field = props.column.field;
+
+        if (!field) {
+            return valueRows;
+        }
+
+        for (let i = 0; i < props.rows.length; i++) {
+            const value = props.rows[i][field];
+            const valueJson = JSON.stringify(value);
+
+            if (!valueRows.some(v => JSON.stringify(v.row[field]) == valueJson)) {
+                valueRows.push({
+                    row: props.rows[i],
+                    selected: false
+                });
+            }
+
+            if (valueRows.length > 50) {
+                break;
+            }
+        }
+
+        return valueRows;
+    }
+
+    function onSelected(value: DistinctValue, event: Event): void {
+        const selected = (event.target as HTMLInputElement).checked;
+
+        if (value.selected !== selected) {
+            value.selected = selected;
+
+            updateModelValue();
+        }
+    }
+
+    function updateModelValue(): void {
+        const values: string[] = [];
+
+        if (props.column.field) {
+            for (const value of distinctValues.value) {
+                if (value.selected) {
+                    values.push(JSON.stringify(value.row[props.column.field]));
+                }
+            }
+        }
+
+        emit("update:modelValue", values.length > 0 ? values : undefined);
+    }
+
+    function updateSelectedValues(): void {
+        if (!props.modelValue || !Array.isArray(props.modelValue) || !props.column.field) {
+            for (const value of distinctValues.value) {
+                value.selected = false;
+            }
+
+            return;
+        }
+
+        for (const value of distinctValues.value) {
+            value.selected = props.modelValue.includes(JSON.stringify(value.row[props.column.field]));
+        }
+    }
+
+    watch(() => props.rows, () => {
+        distinctValues.value = getDistinctValues();
+    });
+
+    watch(() => props.modelValue, () => updateSelectedValues());
+
+    distinctValues.value = getDistinctValues();
+    updateSelectedValues();
+</script>

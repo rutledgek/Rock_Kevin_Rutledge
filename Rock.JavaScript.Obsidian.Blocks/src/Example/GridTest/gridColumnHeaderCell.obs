@@ -15,11 +15,13 @@
         <div ref="resizeHandleElement" class="resize-handle"></div>
 
         <div v-if="isFilterVisible" ref="filterElement" class="grid-filter-popup">
-            <component :is="column.filter!.component" v-model="filterValue" :column="column" />
+            <div class="grid-filter-popup-content">
+                <component :is="column.filter!.component" v-model="internalFilterValue" :column="column" :rows="rows" />
+            </div>
 
             <div class="actions">
-                <button class="btn btn-primary btn-xs" @click.prevent="onFilterCloseClick">Close</button>
-                <button class="btn btn-link btn-xs" @click.prevent="onFilterClearClick">Clear</button>
+                <button class="btn btn-primary btn-sm" @click.prevent="onFilterApplyClick">Apply</button>
+                <button class="btn btn-link btn-sm" @click.prevent="onFilterClearClick">Clear</button>
             </div>
         </div>
     </th>
@@ -32,7 +34,7 @@
 
     const props = defineProps({
         filterValue: {
-            type: Object as PropType<any>,
+            type: Object as PropType<unknown>,
             required: false
         },
 
@@ -45,6 +47,11 @@
         column: {
             type: Object as PropType<GridColumnDefinition>,
             required: true
+        },
+
+        rows: {
+            type: Array as PropType<Record<string, unknown>[]>,
+            default: []
         }
     });
 
@@ -53,9 +60,8 @@
         (event: "update:sortDirection", value: number): void
     }>();
 
-    const filterValue = useVModelPassthrough(props, "filterValue", emit);
+    const internalFilterValue = ref(props.filterValue);
     const sortDirection = useVModelPassthrough(props, "sortDirection", emit);
-    const internalFilterValue = ref(filterValue.value ? filterValue.value.toString() : "");
     const isFilterVisible = ref(false);
     const filterElement = ref<HTMLElement | null>(null);
     const filterButtonElement = ref<HTMLElement | null>(null);
@@ -67,7 +73,7 @@
     const hasFilter = computed((): boolean => props.column.filter !== undefined);
 
     const buttonCssClass = computed((): string => {
-        return filterValue.value !== undefined ? "btn-grid-column-filter active" : "btn-grid-column-filter";
+        return internalFilterValue.value !== undefined ? "btn-grid-column-filter active" : "btn-grid-column-filter";
     });
 
     const isSortAscending = computed((): boolean => sortDirection.value > 0);
@@ -85,6 +91,7 @@
         }
 
         isFilterVisible.value = false;
+        internalFilterValue.value = props.filterValue;
     };
 
     const onFilterClick = (): void => {
@@ -93,11 +100,13 @@
 
     const onFilterClearClick = (): void => {
         isFilterVisible.value = false;
-        filterValue.value = undefined;
+        internalFilterValue.value = undefined;
+        emit("update:filterValue", internalFilterValue.value);
     };
 
-    const onFilterCloseClick = (): void => {
+    const onFilterApplyClick = (): void => {
         isFilterVisible.value = false;
+        emit("update:filterValue", internalFilterValue.value);
     };
 
     const onResizeMouseDown = (e: MouseEvent): void => {
@@ -135,17 +144,6 @@
             sortDirection.value = 1;
         }
     };
-
-    watch(filterValue, () => internalFilterValue.value = filterValue.value ? filterValue.value.toString() : "");
-    watch(internalFilterValue, () => {
-        // Temporary hack until we have actual filter components.
-        if (internalFilterValue.value === "") {
-            filterValue.value = undefined;
-        }
-        else {
-            filterValue.value = internalFilterValue.value;
-        }
-    });
 
     watch(isFilterVisible, () => {
         if (isFilterVisible.value) {

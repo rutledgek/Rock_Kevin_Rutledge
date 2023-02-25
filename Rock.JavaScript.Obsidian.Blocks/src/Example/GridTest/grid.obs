@@ -6,7 +6,10 @@
                                  :gridActions="gridActions"
                                  :visibleColumnCount="visibleColumnCount" />
 
-            <GridColumnHeaderRow :columns="visibleColumnDefinitions" v-model:columnFilters="columnFilterValues" v-model:columnSort="columnSortDirection" />
+            <GridColumnHeaderRow :columns="visibleColumnDefinitions"
+                                 v-model:columnFilters="columnFilterValues"
+                                 v-model:columnSort="columnSortDirection"
+                                 :rows="rows" />
         </thead>
 
         <tbody>
@@ -64,10 +67,12 @@ table.table-obsidian th.grid-column-header:hover .btn-grid-column-filter {
 
 table.table-obsidian th.grid-column-header .grid-filter-popup {
     position: absolute;
-    padding: 12px;
+    display: flex;
+    flex-direction: column;
     margin-top: 6px;
     min-width: 240px;
     max-width: 320px;
+    max-height: 400px;
     background-color: white;
     border: 1px solid #c7c7c7;
     border-radius: 0px;
@@ -78,10 +83,19 @@ table.table-obsidian th.grid-column-header .grid-filter-popup {
     z-index: 10;
 }
 
+table.table-obsidian th.grid-column-header .grid-filter-popup .grid-filter-popup-content {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+table.table-obsidian th.grid-column-header .grid-filter-popup .grid-filter-popup-body {
+    margin: 12px;
+    overflow-x: clip;
+}
+
 table.table-obsidian th.grid-column-header .grid-filter-popup .actions {
     border-top: 1px solid #eee;
-    margin: 18px -12px 0px -12px;
-    padding: 12px 12px 0px 12px;
+    padding: 12px;
 }
 
 table.table-obsidian th.grid-column-header .resize-handle {
@@ -202,7 +216,6 @@ table.table-obsidian th.grid-error > .alert {
 
             for (const p in defaultProps) {
                 const defaultProp = defaultProps[p];
-                console.log("defaultProp", p, defaultProp);
 
                 if (defaultProp && typeof defaultProp === "object" && defaultProp["default"] !== undefined) {
                     props[p] = defaultProp["default"];
@@ -213,8 +226,6 @@ table.table-obsidian th.grid-error > .alert {
         // Get specified values.
         if (node.props) {
             for (const p in node.props) {
-                console.log("prop", p, node.props[p]);
-
                 props[p] = node.props[p];
             }
         }
@@ -352,7 +363,7 @@ table.table-obsidian th.grid-error > .alert {
 
     const gridActions = ref<GridAction[]>([]);
     const currentPage = ref(1);
-    const pageSize = ref(500);
+    const pageSize = ref(50);
     const pageSizes = [50, 500, 5000];
     const quickFilterValue = ref("");
     const loadingData = ref(false);
@@ -363,9 +374,8 @@ table.table-obsidian th.grid-error > .alert {
     const pageCount = ref(0);
     const pagerMessage = ref("");
     const visibleColumnDefinitions = ref<GridColumnDefinition[]>([]);
-    let rows: Record<string, unknown>[] = [];
+    const rows = shallowRef<Record<string, unknown>[]>([]);
     const columns = computed((): GridColumnDefinition[] => {
-        console.log("compute columns");
         return getColumnDefinitions(slots["default"]?.() ?? []);
     });
 
@@ -382,7 +392,7 @@ table.table-obsidian th.grid-error > .alert {
             const columns = toRaw(visibleColumnDefinitions.value);
             const quickFilterRawValue = quickFilterValue.value.toLowerCase();
 
-            const result = rows.filter(v => {
+            const result = rows.value.filter(v => {
                 const quickFilterMatch = !quickFilterRawValue || columns.some((column): boolean => {
                     const columnValue = v[column.name];
                     let value: string | undefined;
@@ -550,12 +560,12 @@ table.table-obsidian th.grid-error > .alert {
 
         if (typeof props.data === "object") {
             const data = props.data;
-            rows = data.rows;
+            rows.value = data.rows;
         }
         else if (typeof props.data === "function") {
             try {
                 const data = await props.data();
-                rows = data.rows;
+                rows.value = data.rows;
             }
             catch (error) {
                 gridErrorMessage.value = error instanceof Error ? error.message : new String(error).toString();

@@ -7,7 +7,7 @@
             </template>
         </Column>
 
-        <Column name="email" title="Email" field="email" sortField="email" :filter="textColumnFilter" />
+        <Column name="email" title="Email" field="email" sortField="email" :filter="pickExistingColumnFilter" />
 
         <Column name="enteredDateTime" title="Entered On" field="enteredDateTime" sortField="enteredDateTime">
             <template #body="{ row }">
@@ -47,7 +47,8 @@
 
         <ColoredBadgeColumn name="mode"
                             title="Mode"
-                            field="mode" />
+                            field="mode"
+                            :filter="pickExistingColumnFilter" />
 
         <BooleanColumn name="isPublic"
                        title="Public"
@@ -67,6 +68,7 @@
     import Grid from "./GridTest/grid.obs";
     import { AttributeColumnDefinition, FilterComponentProps, GridColumnDefinition, GridData, GridDefinition, IGridColumnFilter } from "./GridTest/types";
     import { ListItemBag } from "@Obsidian/ViewModels/Utility/listItemBag";
+    import PickExistingColumnFilterComponent from "./GridTest/pickExistingColumnFilterComponent.obs";
 
     const standardColumnProps = {
         name: {
@@ -390,8 +392,12 @@
     });
 
     function textColumnFilterValue(needle: unknown, haystack: unknown): boolean {
-        if (!needle || typeof (needle) !== "string") {
+        if (typeof (needle) !== "string") {
             return false;
+        }
+
+        if (!needle) {
+            return true;
         }
 
         const lowerNeedle = needle.toLowerCase();
@@ -413,6 +419,11 @@
 
             column: {
                 type: Object as PropType<GridColumnDefinition>,
+                required: true
+            },
+
+            rows: {
+                type: Array as PropType<Record<string, unknown>[]>,
                 required: true
             }
         },
@@ -446,6 +457,26 @@
         component: TextColumnFilterComponent,
 
         matches: textColumnFilterValue
+    };
+
+    function pickExistingColumnFilterValue(needle: unknown, haystack: unknown): boolean {
+        if (!Array.isArray(needle)) {
+            return false;
+        }
+
+        if (needle.length === 0) {
+            return true;
+        }
+
+        const haystackJson = JSON.stringify(haystack);
+
+        return needle.some(n => n === haystackJson);
+    }
+
+    const pickExistingColumnFilter: IGridColumnFilter = {
+        component: PickExistingColumnFilterComponent,
+
+        matches: pickExistingColumnFilterValue
     };
 
     // eslint-disable-next-line @typescript-eslint/naming-convention,@typescript-eslint/no-unused-vars

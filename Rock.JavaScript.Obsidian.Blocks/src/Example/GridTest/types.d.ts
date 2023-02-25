@@ -15,7 +15,7 @@
 // </copyright>
 //
 
-import { Component, PropType, VNode } from "vue";
+import { Component, DefineComponent, PropType, VNode } from "vue";
 
 /** A function that will be called in response to an action. */
 export type GridActionCallback = (event: Event) => void | Promise<void>;
@@ -67,7 +67,7 @@ type GridColumnDefinition = {
      * content, meaning if you intend to display the < character you need
      * to HTML encode it as &lt;.
      */
-    format?: VNode | Component;
+    format: VNode | Component;
 
     /** Gets the value to use when filtering on the quick filter. */
     quickFilterValue?: (value: unknown) => string | undefined;
@@ -89,7 +89,7 @@ type GridColumnDefinition = {
 export type ValueFormatterFunction = (row: Record<string, unknown>, column: GridColumnDefinition) => string | number | undefined;
 
 export interface IGridColumnFilter {
-    component: Component<FilterComponentProps>;
+    component: Component;
 
     matches: (needle: unknown, haystack: unknown, column: GridColumnDefinition) => boolean;
 }
@@ -102,6 +102,11 @@ export type FilterComponentProps = {
 
     column: {
         type: PropType<GridColumnDefinition>,
+        required: true
+    },
+
+    rows: {
+        type: PropType<Record<string, unknown>[]>,
         required: true
     }
 };
