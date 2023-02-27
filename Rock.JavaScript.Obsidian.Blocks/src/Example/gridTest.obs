@@ -17,7 +17,7 @@
 
         <DateColumn name="expirationDateTime" title="Expires" field="expirationDateTime" sortField="expirationDateTime" />
 
-        <!-- <BooleanColumn name="isUrgent" title="Urgent" field="isUrgent" sortField="isUrgent" /> -->
+        <BooleanColumn name="isUrgent" title="Urgent" field="isUrgent" sortField="isUrgent" />
 
     <!--
         <BadgeColumn name="isUrgent"
@@ -25,7 +25,7 @@
                           field="isUrgent"
                           sortField="isUrgent"
                           :classSource="badgeClassLookup" />
-            -->
+                    -->
 
     <!--
         <Column name="isUrgent"
@@ -43,7 +43,7 @@
                 </span>
             </template>
         </Column>
-            -->
+                    -->
 
         <ColoredBadgeColumn name="mode"
                             title="Mode"
@@ -63,7 +63,7 @@
     // #region Imports
     import TextBox from "@Obsidian/Controls/textBox";
     import { useConfigurationValues, useInvokeBlockAction } from "@Obsidian/Utility/block";
-    import { Component, computed, defineComponent, PropType, ref, VNode, watch } from "vue";
+    import { Component, computed, defineComponent, PropType, reactive, ref, VNode, watch } from "vue";
     import { RockDateTime } from "@Obsidian/Utility/rockDateTime";
     import Grid from "./GridTest/grid.obs";
     import { AttributeColumnDefinition, FilterComponentProps, GridColumnDefinition, GridData, GridDefinition, IGridColumnFilter } from "./GridTest/types";
@@ -72,34 +72,39 @@
 
     const standardColumnProps = {
         name: {
-                type: String as PropType<string>,
-                default: ""
-            },
+            type: String as PropType<string>,
+            default: ""
+        },
 
-            title: {
-                type: String as PropType<string>,
-                required: false
-            },
+        title: {
+            type: String as PropType<string>,
+            required: false
+        },
 
-            sortField: {
-                type: String as PropType<string>,
-                required: false
-            },
+        textValue: {
+            type: Object as PropType<(((row: Record<string, unknown>, column: GridColumnDefinition) => string | number | undefined) | string)>,
+            required: false
+        },
 
-            sortValue: {
-                type: Object as PropType<(((row: Record<string, unknown>, column: GridColumnDefinition) => string | number | undefined) | string)>,
-                required: false
-            },
+        sortField: {
+            type: String as PropType<string>,
+            required: false
+        },
 
-            filter: {
-                type: Object as PropType<IGridColumnFilter>,
-                required: false
-            },
+        sortValue: {
+            type: Object as PropType<(((row: Record<string, unknown>, column: GridColumnDefinition) => string | number | undefined) | string)>,
+            required: false
+        },
 
-            filterValue: {
-                type: Object as PropType<(((row: Record<string, unknown>, column: GridColumnDefinition) => string | number | undefined) | string)>,
-                required: false
-            }
+        filter: {
+            type: Object as PropType<IGridColumnFilter>,
+            required: false
+        },
+
+        filterValue: {
+            type: Object as PropType<(((row: Record<string, unknown>, column: GridColumnDefinition) => string | number | undefined) | string)>,
+            required: false
+        }
     };
 
     // eslint-disable-next-line @typescript-eslint/naming-convention,@typescript-eslint/no-unused-vars
@@ -181,14 +186,6 @@
 
         template: `<i v-if="isTrue" class="fa fa-check"></i>`
     });
-
-    function booleanColumnSortValue(row: Record<string, unknown>, column: GridColumnDefinition): number | undefined {
-        if (!column.sortField) {
-            return undefined;
-        }
-
-        return row[column.sortField] === true ? 1 : 0;
-    }
 
     // eslint-disable-next-line @typescript-eslint/naming-convention,@typescript-eslint/no-unused-vars
     const BooleanColumn = defineComponent({
@@ -388,8 +385,8 @@
                 required: false,
                 default: coloredBadgeColumnValueComponent
             }
-        }
-    });
+    }
+});
 
     function textColumnFilterValue(needle: unknown, haystack: unknown): boolean {
         if (typeof (needle) !== "string") {
@@ -433,10 +430,10 @@
         },
 
         setup(props, { emit }) {
-            const internalValue = ref(typeof(props.modelValue) === "string" ? props.modelValue : "");
+            const internalValue = ref(typeof (props.modelValue) === "string" ? props.modelValue : "");
 
             watch(() => props.modelValue, () => {
-                internalValue.value = typeof(props.modelValue) === "string" ? props.modelValue : "";
+                internalValue.value = typeof (props.modelValue) === "string" ? props.modelValue : "";
             });
 
             watch(internalValue, () => {
@@ -449,8 +446,8 @@
         },
 
         template: `
-<TextBox v-model="internalValue" />
-`
+        <TextBox v-model="internalValue" />
+        `
     });
 
     const textColumnFilter: IGridColumnFilter = {
@@ -523,8 +520,10 @@
         const result = await invokeBlockAction<GridData>("GetGridData");
 
         if (result.isSuccess && result.data) {
+            const d = ref(result.data.rows);
+            setTimeout(() => (d.value[0] as Record<string, Record<string, string>>)["name"]["firstName"] = "Daniel", 2000);
             return {
-                rows: result.data.rows
+                rows: d.value
             };
         }
         else {

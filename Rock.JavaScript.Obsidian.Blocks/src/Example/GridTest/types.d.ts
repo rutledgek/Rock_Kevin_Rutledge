@@ -52,7 +52,7 @@ type GridData = {
     rows: Record<string, unknown>[];
 };
 
-type GridColumnDefinition = {
+export type GridColumnDefinition = {
     /** The unique name of this column. */
     name: string;
 
@@ -72,13 +72,16 @@ type GridColumnDefinition = {
     /** Gets the value to use when filtering on the quick filter. */
     quickFilterValue?: (value: unknown) => string | undefined;
 
-    /** The name of the field to use for the sort value. */
-    sortField?: string;
+    /**
+     * Gets the unique value representation of the cell value. For example,
+     * a Person column might return the person Guid.
+     */
+    uniqueValue: ValueFormatterFunction;
 
     /** Gets the value to use when sorting. */
     sortValue?: ValueFormatterFunction;
 
-    /** Determines if the value matches the custom column filter. */
+    /** Gets the value to use when filtering. */
     filterValue?: ValueFormatterFunction;
 
     filter?: IGridColumnFilter;

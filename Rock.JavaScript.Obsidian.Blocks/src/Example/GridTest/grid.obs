@@ -180,6 +180,7 @@ table.table-obsidian th.grid-error > .alert {
 </style>
 
 <script setup lang="ts">
+    import { resolveMergeFields } from "@Obsidian/Utility/lava";
     import { asFormattedString } from "@Obsidian/Utility/numberUtils";
     import { pluralConditional } from "@Obsidian/Utility/stringUtils";
     import Alert from "@Obsidian/Controls/alert.obs";
@@ -190,6 +191,14 @@ table.table-obsidian th.grid-error > .alert {
     import GridFilterHeaderRow from "./gridFilterHeaderRow.obs";
     import GridPagerRow from "./gridPagerRow.obs";
     import { AttributeColumnDefinition, GridAction, GridColumnDefinition, GridData, IGridColumnFilter, ValueFormatterFunction } from "./types";
+
+    // const startStamp = Date.now();
+    // const mergeF = { row: { name: { firstName: "Daniel", lastName: "Hazelbaker" }}};
+    // for (let i = 0; i < 10000; i++) {
+    //     resolveMergeFields("{{ row.name.firstName }} {{ row.name.lastName }}", mergeF);
+    // }
+    // const endStamp = Date.now();
+    // console.log(`Test took ${endStamp - startStamp}ms.`);
 
     function getVNodeProp<T>(node: VNode, propName: string): T | undefined {
         if (node.props && node.props[propName] !== undefined) {
@@ -251,26 +260,7 @@ table.table-obsidian th.grid-error > .alert {
     });
 
     function resolveDynamicText(text: string, mergeFields: Record<string, unknown>): string {
-        return text.replace(/\{\{\s*([a-zA-Z.]+)\s*\}\}/g, (_, path: string) => {
-            let pathSegments = path.split(".");
-
-            let obj: unknown = mergeFields;
-            for (const segment of pathSegments) {
-                if (obj && typeof obj === "object") {
-                    obj = obj[segment];
-                }
-                else {
-                    obj = undefined;
-                }
-            }
-
-            return String(obj);
-        });
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    function textColumnSortValue(row: Record<string, unknown>, column: GridColumnDefinition): string | undefined {
-        return column.sortField ? String(row[column.sortField]) : undefined;
+        return resolveMergeFields(text, mergeFields);
     }
 
     function getColumnDefinitions(columnNodes: VNode[]): GridColumnDefinition[] {
@@ -298,7 +288,8 @@ table.table-obsidian th.grid-error > .alert {
                         name: attribute.name,
                         title: attribute.title ?? undefined,
                         field: attribute.name,
-                        sortField: attribute.name,
+                        uniqueValue: (r, c) => c.field ? String(r[c.field]) : "",
+                        sortValue: (r, c) => c.field ? String(r[c.field]) : undefined,
                         format: getVNodeProp<VNode>(node, "format") ?? textColumnValueComponent,
                         props: {}
                     });
@@ -307,9 +298,15 @@ table.table-obsidian th.grid-error > .alert {
                 continue;
             }
 
+            const field = getVNodeProp<string>(node, "field");
             let sortValue = getVNodeProp<ValueFormatterFunction | string>(node, "sortValue");
 
-            if (typeof sortValue === "string") {
+            if (!sortValue) {
+                const sortField = getVNodeProp<string>(node, "sortField") || field;
+
+                sortValue = sortField ? (r) => String(r[sortField]) : undefined;
+            }
+            else if (typeof sortValue === "string") {
                 const template = sortValue;
 
                 sortValue = (row): string | undefined => {
@@ -326,13 +323,14 @@ table.table-obsidian th.grid-error > .alert {
                     return resolveDynamicText(template, { row });
                 };
             }
+
             columns.push({
                 name,
                 title: getVNodeProp<string>(node, "title"),
                 field: getVNodeProp<string>(node, "field"),
                 format: node.children?.["body"] ?? getVNodeProp<VNode>(node, "format") ?? textColumnValueComponent,
                 filter: getVNodeProp<IGridColumnFilter>(node, "filter"),
-                sortField: getVNodeProp<string>(node, "sortField"),
+                uniqueValue: (r, c) => c.field && r[c.field] !== undefined ? String(r[c.field]) : undefined,
                 sortValue: sortValue,
                 filterValue: filterValue,
                 props: getVNodeProps(node)
@@ -466,78 +464,65 @@ table.table-obsidian th.grid-error > .alert {
     };
 
     const updateSortedRows = (): void => {
-        const start = Date.now();
         const sortDirection = columnSortDirection.value;
 
-        if (sortDirection) {
-            const column = visibleColumnDefinitions.value.find(c => c.name === sortDirection.column);
-            const order = sortDirection.isDescending ? -1 : 1;
-
-            if (!column) {
-                throw new Error("Invalid sort definition");
-            }
-
-            const sortValue = column.sortValue;
-            const sortField = column.sortField;
-
-            const rows = [...filteredRows];
-
-            if (sortValue || sortField) {
-                rows.sort((a, b) => {
-                    let valueA: string | number | undefined;
-                    let valueB: string | number | undefined;
-
-                    if (sortValue) {
-                        valueA = sortValue(a, column);
-                        valueB = sortValue(b, column);
-                    }
-                    else if (sortField) {
-                        const columnValueA = a[sortField];
-                        const columnValueB = b[sortField];
-
-                        if (typeof columnValueA === "string" || typeof columnValueA === "number") {
-                            valueA = columnValueA;
-                        }
-                        else {
-                            valueA = undefined;
-                        }
-
-                        if (typeof columnValueB === "string" || typeof columnValueB === "number") {
-                            valueB = columnValueB;
-                        }
-                        else {
-                            valueB = undefined;
-                        }
-                    }
-                    else {
-                        return 0;
-                    }
-
-                    if (valueA === undefined) {
-                        return -order;
-                    }
-                    else if (valueB === undefined) {
-                        return order;
-                    }
-                    else if (valueA < valueB) {
-                        return -order;
-                    }
-                    else if (valueA > valueB) {
-                        return order;
-                    }
-                    else {
-                        return 0;
-                    }
-                });
-            }
-
-            sortedRows = rows;
-        }
-        else {
+        if (!sortDirection) {
             sortedRows = filteredRows;
-        }
-        console.log(`sortedRows took ${Date.now() - start}ms.`);
+            updateVisibleRows();
 
+            return;
+        }
+
+        const start = Date.now();
+        const column = visibleColumnDefinitions.value.find(c => c.name === sortDirection.column);
+        const order = sortDirection.isDescending ? -1 : 1;
+
+        if (!column) {
+            throw new Error("Invalid sort definition");
+        }
+
+        const sortValue = column.sortValue;
+
+        // Pre-process each row to calculate the sort value. Otherwise it will
+        // be calculated exponentially during sort. This provides a serious
+        // performance boost when sorting Lava columns.
+        const rows = filteredRows.map(r => {
+            let value: string | number | undefined;
+
+            if (sortValue) {
+                value = sortValue(r, column);
+            }
+            else {
+                value = undefined;
+            }
+
+            return {
+                row: r,
+                value
+            };
+        });
+
+        rows.sort((a, b) => {
+            if (a.value === undefined) {
+                return -order;
+            }
+            else if (b.value === undefined) {
+                return order;
+            }
+            else if (a.value < b.value) {
+                return -order;
+            }
+            else if (a.value > b.value) {
+                return order;
+            }
+            else {
+                return 0;
+            }
+        });
+
+        sortedRows = rows.map(r => r.row);
+
+        console.log(`sortedRows took ${Date.now() - start}ms.`);
         updateVisibleRows();
     };
 

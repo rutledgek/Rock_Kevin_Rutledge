@@ -55,16 +55,21 @@
             const value = props.rows[i][field];
             const valueJson = JSON.stringify(value);
 
-            if (!valueRows.some(v => JSON.stringify(v.row[field]) == valueJson)) {
+            //if (!valueRows.some(v => JSON.stringify(v.row[field]) == valueJson)) {
+            if (!valueRows.some(v => v.row[field] === value)) {
                 valueRows.push({
                     row: props.rows[i],
                     selected: false
                 });
             }
 
-            if (valueRows.length > 50) {
-                break;
-            }
+            // if (valueRows.length > 50) {
+            //     break;
+            // }
+        }
+
+        if (valueRows.length > 50) {
+            return valueRows.slice(0, 50);
         }
 
         return valueRows;
