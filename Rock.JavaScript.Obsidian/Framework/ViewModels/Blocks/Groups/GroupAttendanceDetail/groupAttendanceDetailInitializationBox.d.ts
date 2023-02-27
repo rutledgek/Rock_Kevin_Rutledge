@@ -43,7 +43,7 @@ export type GroupAttendanceDetailInitializationBox = {
 
     attendanceOccurrenceTypesSectionLabel?: string | null;
 
-    campusId?: number | null;
+    campusGuid?: Guid | null;
 
     campusName?: string | null;
 

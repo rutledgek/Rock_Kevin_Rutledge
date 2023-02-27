@@ -500,7 +500,7 @@ namespace Rock.Blocks.Groups
             using ( var rockContext = new RockContext() )
             {
                 var occurrenceDataClientService = GetOccurrenceDataClientService( rockContext );
-                var searchParameters = occurrenceDataClientService.GetAttendanceOccurrenceSearchParameters( bag.AttendanceOccurrenceDate, bag.LocationGuid, bag.ScheduleGuid );
+                var searchParameters = occurrenceDataClientService.GetAttendanceOccurrenceSearchParameters( bag.AttendanceOccurrenceDate, bag.LocationGuid, bag.ScheduleGuid, bag.CampusGuid.HasValue ? CampusCache.GetId( bag.CampusGuid.Value ) : null );
                 var occurrenceData = occurrenceDataClientService.GetOccurrenceData( searchParameters, asNoTracking: false );
 
                 if ( !occurrenceData.IsValid )
@@ -962,7 +962,7 @@ namespace Rock.Blocks.Groups
             using ( var rockContext = new RockContext() )
             {
                 var occurrenceDataClientService = GetOccurrenceDataClientService( rockContext );
-                var searchParameters = occurrenceDataClientService.GetAttendanceOccurrenceSearchParameters();
+                var searchParameters = occurrenceDataClientService.GetAttendanceOccurrenceSearchParameters( campusIdOverride: this.CampusIdBlockUserPreference );
                 var occurrenceData = occurrenceDataClientService.GetOccurrenceData( searchParameters, asNoTracking: false );
 
                 if ( !occurrenceData.IsValid )
@@ -977,7 +977,7 @@ namespace Rock.Blocks.Groups
                 {
                     AreMembersSortedByFirstName = this.AreGroupMembersSortedByFirstNameUserPreference,
                     CampusName = occurrenceData.Campus?.Name,
-                    CampusId = occurrenceData.Campus?.Id,
+                    CampusGuid = occurrenceData.Campus?.Guid,
                     GroupGuid = occurrenceData.Group.Guid,
                     // TODO JMH The lHeading.Text should be `${GroupName} Attendance` in the Obsidian client code.
                     GroupName = occurrenceData.Group.Name,
@@ -1329,14 +1329,14 @@ namespace Rock.Blocks.Groups
                     return occurrenceData;
                 }
 
-                occurrenceData.Campus = GetCampus();
+                occurrenceData.Campus = GetCampus( occurrenceDataSearchParameters );
 
                 // TODO JMH Other stuff should be loaded up here.
 
                 return occurrenceData;
             }
 
-            internal AttendanceOccurrenceSearchParameters GetAttendanceOccurrenceSearchParameters( DateTime? attendanceOccurrenceDateOverride = null, Guid? locationGuidOverride = null, Guid? scheduleGuidOverride = null )
+            internal AttendanceOccurrenceSearchParameters GetAttendanceOccurrenceSearchParameters( DateTime? attendanceOccurrenceDateOverride = null, Guid? locationGuidOverride = null, Guid? scheduleGuidOverride = null, int? campusIdOverride = null )
             {
                 // Get defaults.
                 var occurrenceDataSearchParameters = new AttendanceOccurrenceSearchParameters
@@ -1370,6 +1370,19 @@ namespace Rock.Blocks.Groups
                     if ( scheduleGuidOverride.HasValue )
                     {
                         occurrenceDataSearchParameters.ScheduleId = _scheduleService.GetId( scheduleGuidOverride.Value );
+                    }
+
+                    if ( _block.IsCampusFilteringAllowed )
+                    {
+                        // Set the search parameter.
+                        occurrenceDataSearchParameters.CampusId = campusIdOverride;
+
+                        // Update the user preference.
+                        var campusIdUserPreference = _block.CampusIdBlockUserPreference;
+                        if ( campusIdUserPreference != campusIdOverride )
+                        {
+                            _block.CampusIdBlockUserPreference = campusIdOverride;
+                        }
                     }
                 }
 
@@ -1626,16 +1639,13 @@ namespace Rock.Blocks.Groups
                 return occurrenceData.AttendanceOccurrence != null;
             }
 
-            private CampusCache GetCampus()
+            private CampusCache GetCampus( AttendanceOccurrenceSearchParameters occurrenceDataSearchParameters )
             {
-                if ( _block.IsCampusFilteringAllowed )
-                {
-                    var campusId = _block.CampusIdBlockUserPreference;
+                var campusId = occurrenceDataSearchParameters.CampusId;
 
-                    if ( campusId.HasValue )
-                    {
-                        return CampusCache.Get( campusId.Value );
-                    }
+                if ( campusId.HasValue )
+                {
+                    return CampusCache.Get( campusId.Value );
                 }
 
                 return null;
@@ -1746,6 +1756,8 @@ namespace Rock.Blocks.Groups
             public int? LocationId { get; set; }
 
             public int? ScheduleId { get; set; }
+
+            public int? CampusId { get; set; }
         }
 
         /// <summary>

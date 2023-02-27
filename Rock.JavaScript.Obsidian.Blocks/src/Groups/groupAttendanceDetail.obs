@@ -2,7 +2,12 @@
     <div>
         <Panel titleIconCssClass="fa fa-check-square-o" :title="title">
             <template #headerActions>
-                <CampusPicker blankValue="All Campuses" :includeInactive="true" :multiple="false" :showBlankItem="true" @update:modelValue="onCampusUpdated($event)"></CampusPicker>
+                <CampusPicker
+                    v-model="campusGuid"
+                    blankValue="All Campuses"
+                    :includeInactive="true"
+                    :multiple="false"
+                    :showBlankItem="true" />
             </template>
 
             <template #default>
@@ -240,10 +245,10 @@
         return compare(byLastName, byFirstName);
     });
     const rosterFilterPredicate = computed<RosterFilterPredicate>(() => {
-        if (filterByCampusGuid.value) {
+        if (campusGuid.value) {
             return (member) => {
-                if (member.campusGuid && filterByCampusGuid.value) {
-                    return member.campusGuid == filterByCampusGuid.value;
+                if (member.campusGuid && campusGuid.value?.value) {
+                    return member.campusGuid == campusGuid.value?.value;
                 }
                 return false;
             };
@@ -259,13 +264,9 @@
                 value: r.personGuid
             })) ?? []);
     const notes = ref<string>(config.notes ?? "");
-    const filterByCampusGuid = ref<Guid | null | undefined>();
+    const campusGuid = ref<ListItemBag | null>(config.campusGuid ? ({ text: config.campusName, value: config.campusGuid }) : null);
 
     //#region Event Handlers
-
-    function onCampusUpdated(campusPickerSelection: NullableListItemBags): void {
-        filterByCampusGuid.value = (campusPickerSelection as ListItemBag)?.value;
-    }
 
     async function onGroupLocationPickerChanged(locationPickerSelection: NullableListItemBags): Promise<void> {
         await updateSchedulePicker(locationPickerSelection as ListItemBag);
@@ -300,7 +301,7 @@
             attendanceOccurrenceDate: attendanceForDate.value,
             attendanceTypeGuid: attendanceOccurrenceType.value,
             attendees: roster.value,
-            campusGuid: filterByCampusGuid.value,
+            campusGuid: campusGuid.value?.value,
             locationGuid: locationGuid.value,
             notes: notes.value,
             scheduleGuid: scheduleGuid.value

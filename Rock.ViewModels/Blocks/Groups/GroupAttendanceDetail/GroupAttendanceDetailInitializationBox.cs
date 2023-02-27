@@ -26,7 +26,7 @@ namespace Rock.ViewModels.Blocks.Groups.GroupAttendanceDetail
     {
         public bool AreMembersSortedByFirstName { get; set; }
         public string CampusName { get; set; }
-        public int? CampusId { get; set; }
+        public Guid? CampusGuid { get; set; }
         public Guid GroupGuid { get; set; }
         public string GroupName { get; set; }
         public bool IsNewAttendanceDateAdditionRestricted { get; set; }
