@@ -113,7 +113,8 @@ function generateBundle(srcPath, outPath, autoIndex) {
             virtualPlugin,
 
             resolve({
-                extensions: [".js", ".ts"]
+                extensions: [".js", ".ts"],
+                browser: true
             }),
 
             commonjs()
@@ -187,7 +188,8 @@ function generateAutoBundles(srcPath, outPath, alwaysBundleExternals, minify) {
             }),
 
             resolve({
-                extensions: [".js", ".ts"]
+                extensions: [".js", ".ts"],
+                browser: true
             }),
 
             commonjs()
