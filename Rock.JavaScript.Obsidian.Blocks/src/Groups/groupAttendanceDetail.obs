@@ -6,7 +6,7 @@
             </template>
 
             <template #default>
-                <Alert v-if="false" id="nbNotice" />
+                <Alert v-if="errorMessage" id="nbNotice" alertType="danger">{{ errorMessage }}</Alert>
                 <asp:ValidationSummary ID="ValidationSummary1" runat="server" HeaderText="Please correct the following:" CssClass="alert alert-validation" />
                 <Alert v-if="false" id="cvAttendance" alertType="danger" />
 
@@ -194,6 +194,7 @@
         Current
     }
 
+    const errorMessage = ref<string>("");
     const title = computed<string>(() => config.groupName ? `${config.groupName} Attendance` : "Group Attendance");
     const roster = ref<GroupAttendanceDetailRosterAttendeeBag[]>(config?.roster ?? []);
     const dateFormat = config.attendanceOccurrenceDateSelectionMode === GroupAttendanceDetailDateSelectionMode.DatePicker ? "yyyy-MM-dd" : "MM/dd/yyyy";
@@ -293,6 +294,31 @@
         }
     }
 
+    async function onSave(): Promise<void> {
+        const bag: GroupAttendanceDetailSaveAttendanceOccurrenceRequestBag = {
+            didNotOccur: didNotMeet.value,
+            attendanceOccurrenceDate: attendanceForDate.value,
+            attendanceTypeGuid: attendanceOccurrenceType.value,
+            attendees: roster.value,
+            campusGuid: filterByCampusGuid.value,
+            locationGuid: locationGuid.value,
+            notes: notes.value,
+            scheduleGuid: scheduleGuid.value
+        };
+
+        // Clear the error before saving.
+        errorMessage.value = "";
+
+        const response = await invokeBlockAction<GroupAttendanceDetailSaveAttendanceOccurrenceResponseBag>("SaveAttendanceOccurrence", { bag });
+
+        if (response?.data?.redirectUrl) {
+            window.location.href = response.data.redirectUrl;
+        }
+        else {
+            errorMessage.value = response.errorMessage || "An unexpected error occurred. Please try again.";
+        }
+    }
+
     //#endregion
 
     //#region Functions
@@ -336,24 +362,6 @@
 
     async function updateSchedulePicker(locationPickerSelection: ListItemBag | null): Promise<void> {
         locationGuid.value = locationPickerSelection?.value;
-    }
-
-    async function onSave(): Promise<void> {
-        const bag: GroupAttendanceDetailSaveAttendanceOccurrenceRequestBag = {
-            didNotOccur: didNotMeet.value,
-            attendanceOccurrenceDate: attendanceForDate.value,
-            attendanceTypeGuid: attendanceOccurrenceType.value,
-            attendees: roster.value,
-            campusGuid: filterByCampusGuid.value,
-            locationGuid: locationGuid.value,
-            notes: notes.value,
-            scheduleGuid: scheduleGuid.value
-        };
-        const response = await invokeBlockAction<GroupAttendanceDetailSaveAttendanceOccurrenceResponseBag>("SaveAttendanceOccurrence", { bag });
-
-        if (response?.data?.redirectUrl) {
-            window.location.href = response.data.redirectUrl;
-        }
     }
 
     //#endregion
