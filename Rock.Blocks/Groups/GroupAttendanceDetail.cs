@@ -433,7 +433,7 @@ namespace Rock.Blocks.Groups
         }
 
         /// <summary>
-        /// TODO JMH
+        /// The Campus ID filter
         /// </summary>
         private int? CampusIdBlockUserPreference
         {
@@ -511,6 +511,12 @@ namespace Rock.Blocks.Groups
                 if ( occurrenceDataClientService.Save( occurrenceData, bag ) )
                 {
                     rockContext.SaveChanges();
+
+                    // Update the sort user preference.
+                    if ( !this.IsMemberSortingHidden && bag.AreMembersSortedByFirstName != this.AreGroupMembersSortedByFirstNameUserPreference )
+                    {
+                        this.AreGroupMembersSortedByFirstNameUserPreference = bag.AreMembersSortedByFirstName;
+                    }
 
                     if ( occurrenceData.AttendanceOccurrence.LocationId.HasValue )
                     {
@@ -975,11 +981,10 @@ namespace Rock.Blocks.Groups
 
                 var box = new GroupAttendanceDetailInitializationBox
                 {
-                    AreMembersSortedByFirstName = this.AreGroupMembersSortedByFirstNameUserPreference,
+                    AreMembersSortedByFirstName = this.IsMemberSortingHidden ? false : this.AreGroupMembersSortedByFirstNameUserPreference,
                     CampusName = occurrenceData.Campus?.Name,
                     CampusGuid = occurrenceData.Campus?.Guid,
                     GroupGuid = occurrenceData.Group.Guid,
-                    // TODO JMH The lHeading.Text should be `${GroupName} Attendance` in the Obsidian client code.
                     GroupName = occurrenceData.Group.Name,
                     IsCampusFilteringAllowed = this.IsCampusFilteringAllowed,
                     IsFutureOccurrenceDateSelectionRestricted = this.IsFutureOccurrenceDateSelectionRestricted,

@@ -113,9 +113,10 @@
                                             {{ config.groupMembersSectionLabel }}
                                         </h4>
                                         <ButtonGroup
-                                            v-model="sortByFirstNameString"
+                                            v-if="config.isMemberSortingHidden"
+                                            v-model="sortBy"
                                             label="Sort by"
-                                            :items="[{ text: 'First Name', value: 'True' }, { text: 'Last Name', value: 'False' }]" />
+                                            :items="[{ text: 'First Name', value: SortType.FirstNameFirst }, { text: 'Last Name', value: SortType.LastNameFirst }]" />
                                     </div>
                                     <CheckBoxList
                                         v-if="config.roster"
@@ -162,6 +163,7 @@
     import AttendanceOccurrencePicker from "./GroupAttendanceDetail/attendanceOccurrencePicker.partial.obs";
     import GroupLocationPicker from "./GroupAttendanceDetail/groupLocationPicker.partial.obs";
     import GroupLocationSchedulePicker from "./GroupAttendanceDetail/groupLocationSchedulePicker.partial.obs";
+    import { SortType } from "./GroupAttendanceDetail/sortType";
     import Alert from "@Obsidian/Controls/alert.obs";
     import ButtonGroup from "@Obsidian/Controls/buttonGroup.obs";
     import CampusPicker from "@Obsidian/Controls/campusPicker.obs";
@@ -212,8 +214,7 @@
     const scheduleGuid = ref<Guid | undefined | null>(null);
     const didNotMeet = ref<boolean>(config.isDidNotMeetChecked);
     const attendedPeople = computed<GroupAttendanceDetailRosterAttendeeBag[]>(() => roster.value.filter(m => m.personGuid && m.hasAttended) ?? []);
-    const sortByFirstNameString = ref<string>("False");
-    const sortByFirstName = computed<boolean>(() => sortByFirstNameString.value === "True");
+    const sortBy = ref<SortType>(config.areMembersSortedByFirstName ? SortType.FirstNameFirst : SortType.LastNameFirst);
     const internalAttendeeStringIds = computed<string[]>({
         get(): string[] {
             return attendedPeople.value.map(r => r.personGuid!) ?? [];
@@ -239,7 +240,7 @@
         }
     });
     const rosterComparer = computed<RosterComparer>(() => {
-        if (sortByFirstName.value) {
+        if (sortBy.value === SortType.FirstNameFirst) {
             return compare(byFirstName, byLastName);
         }
         return compare(byLastName, byFirstName);
@@ -304,7 +305,8 @@
             campusGuid: campusGuid.value?.value,
             locationGuid: locationGuid.value,
             notes: notes.value,
-            scheduleGuid: scheduleGuid.value
+            scheduleGuid: scheduleGuid.value,
+            areMembersSortedByFirstName: sortBy.value === SortType.FirstNameFirst
         };
 
         // Clear the error before saving.
