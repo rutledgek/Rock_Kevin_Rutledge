@@ -101,28 +101,29 @@
                     </div>
                     <div class="row">
                         <div class="col-md-6">
-                            <div v-if="!didNotMeet" class="js-roster">
-                                <div class="panel-labels clearfix">
-                                    <h4 class="js-members-label cursor-pointer" @click="onSelectAllMembers()">
-                                        {{ config.groupMembersSectionLabel }}
-                                    </h4>
-                                    <ButtonGroup
-                                        v-model="sortByFirstNameString"
-                                        label="Sort by"
-                                        :items="[{ text: 'First Name', value: 'True' }, { text: 'Last Name', value: 'False' }]" />
+                            <TransitionVerticalCollapse speed="fast">
+                                <div v-show="!didNotMeet" class="js-roster">
+                                    <div class="panel-labels clearfix">
+                                        <h4 class="js-members-label cursor-pointer" @click="onSelectAllMembers()">
+                                            {{ config.groupMembersSectionLabel }}
+                                        </h4>
+                                        <ButtonGroup
+                                            v-model="sortByFirstNameString"
+                                            label="Sort by"
+                                            :items="[{ text: 'First Name', value: 'True' }, { text: 'Last Name', value: 'False' }]" />
+                                    </div>
+                                    <CheckBoxList
+                                        v-if="config.roster"
+                                        v-model="internalAttendeeStringIds"
+                                        :items="rosterCheckBoxItems" />
+                                    <div class="pull-left margin-b-md margin-r-md">
+                                        <PersonPicker @update:modelValue="onAddPerson($event)"></PersonPicker>
+                                    </div>
+                                    <div class="pull-left margin-b-lg">
+                                        <RockButton v-if="config.addGroupMemberPageUrl" btnType="default" @click="onAddGroupMemberClicked"><i class="fa fa-plus"></i> Add Group Member</RockButton>
+                                    </div>
                                 </div>
-                                <CheckBoxList
-                                    v-if="config.roster"
-                                    v-model="internalAttendeeStringIds"
-                                    :items="rosterCheckBoxItems" />
-                                <div class="pull-left margin-b-md margin-r-md">
-                                    <PersonPicker @update:modelValue="onAddPerson($event)"></PersonPicker>
-                                </div>
-                                <div class="pull-left margin-b-lg">
-                                    <RockButton v-if="config.addGroupMemberPageUrl" btnType="default" @click="onAddGroupMemberClicked"><i class="fa fa-plus"></i> Add Group Member</RockButton>
-                                </div>
-                            </div>
-
+                            </TransitionVerticalCollapse>
                         </div>
                     </div>
 
@@ -168,6 +169,7 @@
     import RockButton from "@Obsidian/Controls/rockButton";
     import RockLabel from "@Obsidian/Controls/rockLabel";
     import TextBox from "@Obsidian/Controls/textBox";
+    import TransitionVerticalCollapse from "@Obsidian/Controls/transitionVerticalCollapse";
     import { GroupAttendanceDetailDateSelectionMode } from "@Obsidian/Enums/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailDateSelectionMode";
     import { GroupAttendanceDetailLocationSelectionMode } from "@Obsidian/Enums/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailLocationSelectionMode";
     import { GroupAttendanceDetailScheduleSelectionMode } from "@Obsidian/Enums/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailScheduleSelectionMode";
