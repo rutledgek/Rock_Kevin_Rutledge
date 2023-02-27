@@ -81,7 +81,7 @@ export type GroupAttendanceDetailInitializationBox = {
 
     isNotesSectionHidden: boolean;
 
-    locationId: number;
+    locationId?: number | null;
 
     locationLabel?: string | null;
 

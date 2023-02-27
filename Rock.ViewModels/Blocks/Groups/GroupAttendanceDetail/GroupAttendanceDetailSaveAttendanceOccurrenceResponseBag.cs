@@ -15,12 +15,14 @@
 // </copyright>
 //
 
-namespace Rock.Enums.Blocks.Groups.GroupAttendanceDetail
-{
-    public enum GroupAttendanceDetailScheduleSelectionMode
-    {
-        Specific = 1,
+using System;
 
-        GroupLocationSchedulePicker = 2
+namespace Rock.ViewModels.Blocks.Groups.GroupAttendanceDetail
+{
+    public class GroupAttendanceDetailSaveAttendanceOccurrenceResponseBag
+    {
+        public bool IsGroupNotFoundError { get; set; }
+        public bool IsNotAuthorizedError { get; set; }
+        public string RedirectUrl { get; set; }
     }
 }

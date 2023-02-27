@@ -15,12 +15,27 @@
 // </copyright>
 //
 
-namespace Rock.Enums.Blocks.Groups.GroupAttendanceDetail
-{
-    public enum GroupAttendanceDetailScheduleSelectionMode
-    {
-        Specific = 1,
+using System;
+using System.Collections.Generic;
 
-        GroupLocationSchedulePicker = 2
+namespace Rock.ViewModels.Blocks.Groups.GroupAttendanceDetail
+{
+    public class GroupAttendanceDetailSaveAttendanceOccurrenceRequestBag
+    {
+        public DateTime? AttendanceOccurrenceDate { get; set; }
+
+        public Guid? LocationGuid { get; set; }
+
+        public Guid? ScheduleGuid { get; set; }
+
+        public string Notes { get; set; }
+
+        public bool DidNotOccur { get; set; }
+
+        public Guid? AttendanceTypeGuid { get; set; }
+
+        public Guid? CampusGuid { get; set; }
+
+        public List<GroupAttendanceDetailRosterAttendeeBag> Attendees { get; set; }
     }
 }

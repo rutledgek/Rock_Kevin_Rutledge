@@ -28,6 +28,11 @@ namespace Rock.ViewModels.Blocks.Groups.GroupAttendanceDetail
         public Guid PersonGuid { get; set; }
 
         /// <summary>
+        /// Gets or sets the person alias identifier.
+        /// </summary>
+        public int? PersonAliasId { get; set; }
+
+        /// <summary>
         /// Gets or sets the Person's nick name.
         /// </summary>
         public string NickName { get; set; }

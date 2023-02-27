@@ -22,26 +22,22 @@
 //
 
 import { Guid } from "@Obsidian/Types";
+import { GroupAttendanceDetailRosterAttendeeBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailRosterAttendeeBag";
 
-export type GroupAttendanceDetailRosterAttendeeBag = {
-    /** Gets or sets the campus ids that a person's families belong to. */
+export type GroupAttendanceDetailSaveAttendanceOccurrenceRequestBag = {
+    attendanceOccurrenceDate?: string | null;
+
+    attendanceTypeGuid?: Guid | null;
+
+    attendees?: GroupAttendanceDetailRosterAttendeeBag[] | null;
+
     campusGuid?: Guid | null;
 
-    /** Gets or sets the Person's full name. */
-    fullName?: string | null;
+    didNotOccur: boolean;
 
-    /** Indicates whether the Person has attended. */
-    hasAttended: boolean;
+    locationGuid?: Guid | null;
 
-    /** Gets or sets the Person's last name. */
-    lastName?: string | null;
+    notes?: string | null;
 
-    /** Gets or sets the Person's nick name. */
-    nickName?: string | null;
-
-    /** Gets or sets the person alias identifier. */
-    personAliasId?: number | null;
-
-    /** Gets or sets the Person's unique identifier. */
-    personGuid?: Guid | null;
+    scheduleGuid?: Guid | null;
 };

@@ -1,6 +1,6 @@
 <template>
     <div>
-        <Panel titleIconCssClass="fa fa-check-square-o" title="Group Attendance">
+        <Panel titleIconCssClass="fa fa-check-square-o" :title="title">
             <template #headerActions>
                 <CampusPicker blankValue="All Campuses" :includeInactive="true" :multiple="false" :showBlankItem="true" @update:modelValue="onCampusUpdated($event)"></CampusPicker>
             </template>
@@ -65,7 +65,7 @@
                         <div class="col-sm-3">
                             <GroupLocationSchedulePicker
                                 v-if="config.scheduleSelectionMode === GroupAttendanceDetailScheduleSelectionMode.GroupLocationSchedulePicker"
-
+                                @update:modelValue="onGroupLocationSchedulePickerChanged"
                                 :groupGuid="config.groupGuid"
                                 label="Schedule"
                                 :locationGuid="locationGuid"
@@ -89,7 +89,7 @@
                             <RadioButtonList
                                 v-if="config.attendanceOccurrenceTypes && config.isAttendanceOccurrenceTypesSectionShown"
                                 v-model="attendanceOccurrenceType"
-                                label="Attendance Type"
+                                :label="config.attendanceOccurrenceTypesSectionLabel"
                                 :horizontal="true"
                                 :items="config.attendanceOccurrenceTypes" />
                         </div>
@@ -101,8 +101,7 @@
                     </div>
                     <div class="row">
                         <div class="col-md-6">
-
-                            <div class="js-roster">
+                            <div v-if="!didNotMeet" class="js-roster">
                                 <div class="panel-labels clearfix">
                                     <h4 class="js-members-label cursor-pointer" @click="onSelectAllMembers()">
                                         {{ config.groupMembersSectionLabel }}
@@ -144,6 +143,8 @@
                         <RockButton tooltip="Print Attendance Roster" CssClass="btn btn-default btn-sm btn-square pull-right" @click="onPrintAttendanceRosterClicked()"><i class="fa fa-print"></i></RockButton>
                     </div>
 
+                    <RockButton @click="onSave">Save</RockButton>
+
                 </div>
             </template>
         </Panel>
@@ -175,6 +176,8 @@
     import { RockDateTime } from "@Obsidian/Utility/rockDateTime";
     import { GroupAttendanceDetailInitializationBox } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailInitializationBox";
     import { GroupAttendanceDetailRosterAttendeeBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailRosterAttendeeBag";
+    import { GroupAttendanceDetailSaveAttendanceOccurrenceRequestBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailSaveAttendanceOccurrenceRequestBag";
+    import { GroupAttendanceDetailSaveAttendanceOccurrenceResponseBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailSaveAttendanceOccurrenceResponseBag";
     import { ListItemBag } from "@Obsidian/ViewModels/Utility/listItemBag";
 
     // TODO JMH This config should contain the group GUID for use in the specific group controls.
@@ -189,11 +192,16 @@
         Current
     }
 
+    const title = computed<string>(() => config.groupName ? `${config.groupName} Attendance` : "Group Attendance");
     const roster = ref<GroupAttendanceDetailRosterAttendeeBag[]>(config?.roster ?? []);
     const dateFormat = config.attendanceOccurrenceDateSelectionMode === GroupAttendanceDetailDateSelectionMode.DatePicker ? "yyyy-MM-dd" : "MM/dd/yyyy";
-    const attendanceForDate = ref<string>(RockDateTime.now().toASPString(dateFormat));
-    const attendanceOccurrenceType = ref<Guid | undefined>();
+    const attendanceForDate = ref<string>(
+        config.attendanceOccurrenceDate
+            ? RockDateTime.parseISO(config.attendanceOccurrenceDate)!.toASPString(dateFormat)
+            : RockDateTime.now().toASPString(dateFormat));
+    const attendanceOccurrenceType = ref<Guid | undefined>(config.selectedAttendanceOccurrenceTypeValue ?? undefined);
     const locationGuid = ref<Guid | undefined | null>(null);
+    const scheduleGuid = ref<Guid | undefined | null>(null);
     const didNotMeet = ref<boolean>(config.isDidNotMeetChecked);
     const attendedPeople = computed<GroupAttendanceDetailRosterAttendeeBag[]>(() => roster.value.filter(m => m.personGuid && m.hasAttended) ?? []);
     const sortByFirstNameString = ref<string>("False");
@@ -260,6 +268,10 @@
         await updateSchedulePicker(locationPickerSelection as ListItemBag);
     }
 
+    function onGroupLocationSchedulePickerChanged(schedulePickerSelection: NullableListItemBags): void {
+        scheduleGuid.value = (schedulePickerSelection as ListItemBag)?.value;
+    }
+
     async function onPrintAttendanceRosterClicked(): Promise<void> {
         await printAttendanceRoster();
     }
@@ -324,7 +336,22 @@
         locationGuid.value = locationPickerSelection?.value;
     }
 
-    async function saveAttendanceOccurrence(): Promise<void> {
+    async function onSave(): Promise<void> {
+        const bag: GroupAttendanceDetailSaveAttendanceOccurrenceRequestBag = {
+            didNotOccur: didNotMeet.value,
+            attendanceOccurrenceDate: attendanceForDate.value,
+            attendanceTypeGuid: attendanceOccurrenceType.value,
+            attendees: roster.value,
+            campusGuid: filterByCampusGuid.value,
+            locationGuid: locationGuid.value,
+            notes: notes.value,
+            scheduleGuid: scheduleGuid.value
+        };
+        const response = await invokeBlockAction<GroupAttendanceDetailSaveAttendanceOccurrenceResponseBag>("SaveAttendanceOccurrence", { bag });
+
+        if (response?.data?.redirectUrl) {
+            window.location.href = response.data.redirectUrl;
+        }
     }
 
     //#endregion

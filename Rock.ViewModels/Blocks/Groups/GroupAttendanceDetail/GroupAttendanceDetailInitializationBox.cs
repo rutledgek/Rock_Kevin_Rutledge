@@ -44,7 +44,7 @@ namespace Rock.ViewModels.Blocks.Groups.GroupAttendanceDetail
         public GroupAttendanceDetailScheduleSelectionMode ScheduleSelectionMode { get; set; }
         public string ScheduleLabel { get; set; }
         public DateTime AttendanceOccurrenceDate { get; set; }
-        public int LocationId { get; set; }
+        public int? LocationId { get; set; }
         public bool IsAttendanceOccurrenceTypesSectionShown { get; set; }
         public string AttendanceOccurrenceTypesSectionLabel { get; set; }
         public List<ListItemBag> AttendanceOccurrenceTypes { get; set; }
