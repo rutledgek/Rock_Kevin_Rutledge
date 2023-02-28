@@ -989,8 +989,6 @@ namespace Rock.Blocks.Groups
                 .Select( p => GetRosterAttendeeBag( p, attendedPersonIds.Contains( p.Id ) ) )
                 .ToList();
 
-            // TODO JMH Remove pending members functionality.
-            // TODO JMH Per 2023-02-23 1:1 w/ Nick, we should return Active and Pending GroupMembers (as well as current attendees) in the regular Members list (only Inactive should be omitted).
             // Add the pending members.
             box.PendingGroupMembers = groupMemberService
                 .Queryable()
@@ -1113,8 +1111,6 @@ namespace Rock.Blocks.Groups
             }
         }
 
-        // TODO JMH Need a modal when adding pending group member with text, "Add {memberName} to your group?" and with OK, Cancel, and X (close) buttons.
-
         /// <summary>
         /// Method to email attendance summary.
         /// </summary>
@@ -1214,8 +1210,7 @@ namespace Rock.Blocks.Groups
             }
             catch ( SystemException ex )
             {
-                // TODO JMH Log exceptions.
-                //ExceptionLogService.LogException( ex, Context, RockPage.PageId, RockPage.Site.Id, CurrentPersonAlias );
+                RockLogger.Log.Error( RockLogDomains.Group, ex );
             }
         }
 
@@ -1257,8 +1252,6 @@ namespace Rock.Blocks.Groups
                 }
 
                 occurrenceData.Campus = GetCampus( occurrenceDataSearchParameters );
-
-                // TODO JMH Other stuff should be loaded up here.
 
                 return occurrenceData;
             }
@@ -1323,7 +1316,6 @@ namespace Rock.Blocks.Groups
                     return false;
                 }
 
-                // TODO JMH Implement save.
                 if ( occurrenceData.IsNewOccurrence )
                 {
                     _attendanceOccurrenceService.Add( occurrenceData.AttendanceOccurrence );
@@ -1453,43 +1445,6 @@ namespace Rock.Blocks.Groups
                         }
                     }
                 }
-
-                // JMH Save outside of this method.
-                //rockContext.SaveChanges();
-
-                //if ( attendanceOccurrence.LocationId.HasValue )
-                //{
-                //    Rock.CheckIn.KioskLocationAttendance.Remove( attendanceOccurrence.LocationId.Value );
-                //}
-
-                //Guid? workflowTypeGuid = GetAttributeValue( AttributeKey.Workflow ).AsGuidOrNull();
-                //if ( workflowTypeGuid.HasValue )
-                //{
-                //    var workflowType = WorkflowTypeCache.Get( workflowTypeGuid.Value );
-                //    if ( workflowType != null && ( workflowType.IsActive ?? true ) )
-                //    {
-                //        try
-                //        {
-                //            var workflow = WorkflowGuid.Activate( workflowType, _group.Name );
-
-                //            workflow.SetAttributeValue( "StartDateTime", attendanceOccurrence.OccurrenceDate.ToString( "o" ) );
-
-                //            if ( _group.Schedule != null )
-                //            {
-                //                workflow.SetAttributeValue( "Schedule", _group.Schedule.Guid.ToString() );
-                //            }
-
-                //            List<string> workflowErrors;
-                //            new WorkflowService( rockContext ).Process( workflow, _group, out workflowErrors );
-                //        }
-                //        catch ( Exception ex )
-                //        {
-                //            ExceptionLogService.LogException( ex, this.Context );
-                //        }
-                //    }
-                //}
-                //
-                //attendanceOccurrence.Id = attendanceOccurrence.Id;
 
                 return true;
             }
