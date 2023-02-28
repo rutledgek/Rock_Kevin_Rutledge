@@ -176,5 +176,46 @@ Occurrence Collection Type = {{ occurrence | TypeName }}
                 Assert.That.DoesNotContain( output, "Ted Decker" );
             } );
         }
+
+        [DataTestMethod]
+        [DataRow( @"LastName == ""Decker"" && NickName ==""Ted""", "Ted Decker" )]
+        [DataRow( @"LastName == ""Decker"" && NickName !=""Ted""", "Cindy Decker" )]
+        [DataRow( @"LastName == ""Decker"" && NickName ^=""T""", "Ted Decker" )]
+        [DataRow( @"LastName == ""Decker"" && NickName *=""e""", "Ted Decker" )]
+        [DataRow( @"LastName == ""Decker"" && NickName *!""e""", "Cindy Decker" )]
+        [DataRow( @"LastName == ""Decker"" && NickName *!""e""", "Cindy Decker" )]
+        [DataRow( @"LastName == ""Decker"" && Employer _= """"", "Cindy Decker" )]
+        [DataRow( @"LastName == ""Decker"" && Employer _! ""*""", "Ted Decker" )]
+        [DataRow( @"LastName == ""Decker"" && BirthYear > 2000", "Alex Decker" )]
+        [DataRow( @"LastName == ""Decker"" && BirthYear >= 2000", "Alex Decker" )]
+        [DataRow( @"LastName == ""Decker"" && BirthYear < 2000", "Ted Decker" )]
+        [DataRow( @"LastName == ""Decker"" && BirthYear <= 2000", "Ted Decker" )]
+        [DataRow( @"LastName == ""Decker"" && NickName $=""dy""", "Cindy Decker" )]
+        [DataRow( @"LastName == ""Decker"" || NickName ==""Bill""", "Bill Marble" )]
+        public void EntityCommandBlock_WhereFilterOperators_AreProcessedCorrectly( string whereClause, string expectedOutputItem )
+        {
+            var template = @"
+{% person where:'<whereClause>' iterator:'items' %}
+<ul>
+  {% for item in items %}
+    <li>{{ item.NickName }} {{ item.LastName }}</li>
+  {% endfor %}
+</ul>
+{% endperson %}
+";
+
+            template = template.Replace( "<whereClause>", whereClause );
+
+            TestHelper.ExecuteForActiveEngines( ( engine ) =>
+            {
+                var options = new LavaTestRenderOptions
+                {
+                    EnabledCommands = "rockentity",
+                    OutputMatchType = LavaTestOutputMatchTypeSpecifier.Contains
+                };
+                TestHelper.AssertTemplateOutput( engine, expectedOutputItem, template, options );
+            } );
+        }
+
     }
 }
