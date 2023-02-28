@@ -640,6 +640,7 @@
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupAttendanceDetail\groupAttendanceDetailRosterAttendeeBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupAttendanceDetail\groupAttendanceDetailSaveAttendanceOccurrenceRequestBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupAttendanceDetail\groupAttendanceDetailSaveAttendanceOccurrenceResponseBag.d.ts" />
+    <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupAttendanceDetail\groupAttendancePendingGroupMemberBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupSchedulePreference\assignmentScheduleAndLocationBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupSchedulePreference\preferencePageContentBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupScheduleSignup\personScheduleSignupBag.d.ts" />

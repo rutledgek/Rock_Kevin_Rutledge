@@ -433,7 +433,7 @@ namespace Rock.Blocks.Groups
         }
 
         /// <summary>
-        /// The Campus ID filter
+        /// The Campus ID filter.
         /// </summary>
         private int? CampusIdBlockUserPreference
         {
@@ -576,28 +576,6 @@ namespace Rock.Blocks.Groups
         }
 
         /// <summary>
-        /// Handles the Click event of the lbSave control.
-        /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        // TODO JMH I think this can be done in the Obsidian client code, but revive if not.
-        //protected void lbCancel_Click( object sender, EventArgs e )
-        //{
-        //    if ( _group != null )
-        //    {
-        //        var qryParams = new Dictionary<string, string> { { "GroupId", _group.Id.ToString() } };
-
-        //        var groupTypeIds = PageParameter( PageParameterKey.GroupTypeIds );
-        //        if ( !string.IsNullOrWhiteSpace( groupTypeIds ) )
-        //        {
-        //            qryParams.Add( "GroupTypeIds", groupTypeIds );
-        //        }
-
-        //        NavigateToParentPage( qryParams );
-        //    }
-        //}
-
-        /// <summary>
         /// Prints the group attendance occurrence roster.
         /// </summary>
         [BlockAction( "PrintRoster" )]
@@ -676,31 +654,6 @@ namespace Rock.Blocks.Groups
             //Response.Redirect( uri.ToString(), false );
             //Context.ApplicationInstance.CompleteRequest();
         }
-
-        /// <summary>
-        /// Handles the SelectedIndexChanged event of the ddlLocation control.
-        /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        // TODO JMH This should be done by the Obsidian client code, but revive if not.
-        //protected void ddlLocation_SelectedIndexChanged( object sender, EventArgs e )
-        //{
-        //    BindSchedules( ddlLocation.SelectedValueAsInt() );
-        //}
-
-        /// <summary>
-        /// Handles the SelectionChanged event of the bddlCampus control.
-        /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        // TODO JMH This should be done by the Obsidian client code, but revive if not.
-        //protected void bddlCampus_SelectionChanged( object sender, EventArgs e )
-        //{
-        //    SetBlockUserPreference( "Campus", bddlCampus.SelectedValue );
-        //    var campus = CampusCache.Get( bddlCampus.SelectedValueAsInt() ?? 0 );
-        //    bddlCampus.Title = campus != null ? campus.Name : "All Campuses";
-        //    BindAttendees();
-        //}
 
         /// <summary>
         /// Handles the SelectPerson event of the ppAddPerson control.
@@ -800,53 +753,6 @@ namespace Rock.Blocks.Groups
         //            }
         //        }
         //    }
-        //}
-
-        /// <summary>
-        /// Handles the DataBinding event of the cbMember control.
-        /// Set the Full Name Display of the cbMember check box
-        /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        // TODO JMH THIS will save save the attendance occurrence with the latest member change and trigger the attendance event to update subscribers.
-        [BlockAction( "UpdateAttendee" )]
-        public BlockActionResult UpdateAttendee( /* GroupAttendanceDetailUpdateAttendeeRequestBag */ object bag )
-        {
-            // TODO JMH Maybe don't use the merge template here.
-            // What if someone is taking attendance, and they get the member item template in block initialization,
-            // then a second person comes in and changes the member item template for themselves, then starts taking attendance?
-            // We only want to signal the person whose attendance has changed and let those individual clients update their UI accordingly.
-            throw new NotImplementedException();
-            //var checkBox = sender as RockCheckBox;
-            //var parent = checkBox.Parent as ListViewDataItem;
-            //var data = parent.DataItem as GroupAttendanceAttendee;
-            //string displayName = string.Empty;
-
-            //if ( data != null )
-            //{
-            //    if ( tglSort.Visible && tglSort.Checked )
-            //    {
-            //        displayName = data.LastName + ", " + data.NickName;
-            //    }
-            //    else
-            //    {
-            //        displayName = data.NickName + " " + data.LastName;
-            //    }
-
-            //    checkBox.Text = string.Format( "{0} {1}", data.MergedTemplate, displayName );
-            //}
-        }
-
-        /// <summary>
-        /// Handles the CheckedChanged event of the tglSort UI control.
-        /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        // TODO JMH This should be handled in the Obsidian client code, but revive if not.
-        //protected void tglSort_CheckedChanged( object sender, EventArgs e )
-        //{
-        //    SetUserPreference( TOGGLE_SETTING, tglSort.Checked.ToString() );
-        //    BindAttendees();
         //}
 
         #endregion

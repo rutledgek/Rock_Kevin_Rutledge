@@ -131,6 +131,16 @@
                                 </div>
                             </TransitionVerticalCollapse>
                         </div>
+
+                        <div class="col-md-6">
+                            <div>
+                                <h4>Pending {{ config.groupMembersSectionLabel }}</h4>
+                                <div v-for="pendingMember in config.pendingGroupMembers" class="form-group">
+                                    <span>{{ pendingMember.fullName }}</span>
+                                    <RockButton btnType="link" tooltip="Add Person to Group" @click="onAddPerson(pendingMember.personId)"><i class="fa fa-plus"></i></RockButton>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="row">
@@ -286,8 +296,8 @@
         roster.value = roster.value.map(r => ({...r, hasAttended }) as GroupAttendanceDetailRosterAttendeeBag);
     }
 
-    function onAddPerson(person: ListItemBag): void {
-        console.log(person);
+    function onAddPerson(personId: number): void {
+        console.log(personId);
     }
 
     function onAddGroupMemberClicked(): void {
