@@ -471,6 +471,24 @@ namespace Rock.Model
         [DataMember]
         public int SundayDateYear { get; set; }
 
+        /// <summary>
+        /// Gets or sets the age.
+        /// </summary>
+        /// <value>
+        /// The age.
+        /// </value>
+        [DataMember]
+        public int? Age { get; set; }
+
+        /// <summary>
+        /// Gets or sets the age bracket.
+        /// </summary>
+        /// <value>
+        /// The age bracket.
+        /// </value>
+        [DataMember]
+        public int? AgeBracket { get; set; }
+
         #endregion Entity Properties
 
         #region Entity Properties Specific to Analytics

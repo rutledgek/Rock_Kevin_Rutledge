@@ -565,6 +565,23 @@ namespace Rock.Model
         [DefinedValue( SystemGuid.DefinedType.PERSON_ETHNICITY )]
         public int? EthnicityValueId { get; set; }
 
+        /// <summary>
+        /// Gets or sets the birth date key.
+        /// </summary>
+        /// <value>
+        /// The birth date key.
+        /// </value>
+        [DataMember]
+        public int? BirthDateKey { get; set; }
+
+        /// <summary>
+        /// Gets or sets the age range.
+        /// </summary>
+        /// <value>
+        /// The age range.
+        /// </value>
+        public string AgeRange { get; set; }
+
         #endregion
 
         #region Constructors
