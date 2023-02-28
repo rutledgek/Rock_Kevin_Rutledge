@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data.Entity;
+using System.IO;
 using System.Linq;
 using Rock.Attribute;
 using Rock.Communication;
@@ -255,11 +256,13 @@ namespace Rock.Blocks.Groups
 
         private static class MergeFieldKeys
         {
-            public const string Group = "Group";
+            public const string AttendanceDate = "AttendanceDate";
+
+            public const string AttendanceNoteLabel = "AttendanceNoteLabel";
 
             public const string AttendanceOccurrence = "AttendanceOccurrence";
 
-            public const string AttendanceNoteLabel = "AttendanceNoteLabel";
+            public const string Group = "Group";
         }
 
         #endregion
@@ -336,7 +339,7 @@ namespace Rock.Blocks.Groups
         /// <summary>
         /// Gets the attendance roster template unique identifier.
         /// </summary>
-        private Guid? AttendanceRosterTemplateGuid => GetAttributeValue( AttributeKey.AttendanceRosterTemplate ).AsGuidOrNull();
+        private Guid AttendanceRosterTemplateGuid => GetAttributeValue( AttributeKey.AttendanceRosterTemplate ).AsGuid();
 
         /// <summary>
         /// An optional lava template to appear next to each person in the list.
@@ -579,80 +582,98 @@ namespace Rock.Blocks.Groups
         /// Prints the group attendance occurrence roster.
         /// </summary>
         [BlockAction( "PrintRoster" )]
-        public BlockActionResult PrintRoster( /*GroupAttendanceDetailPrintRosterRequest*/ object bag )
+        public BlockActionResult PrintRoster()
         {
-            // TODO JMH Implement this.
-            throw new NotImplementedException();
-            //nbPrintRosterWarning.Visible = false;
-            //var rockContext = new RockContext();
+            using ( var rockContext = new RockContext() )
+            {
+                var clientService = GetOccurrenceDataClientService( rockContext );
 
-            //Dictionary<int, object> mergeObjectsDictionary = new Dictionary<int, object>();
-            //if ( _attendees != null )
-            //{
-            //    var personIdList = _attendees.Select( a => a.PersonId ).ToList();
-            //    var personList = new PersonService( rockContext ).GetByIds( personIdList );
-            //    foreach ( var person in personList.OrderBy( a => a.LastName ).ThenBy( a => a.NickName ) )
-            //    {
-            //        mergeObjectsDictionary.AddOrIgnore( person.Id, person );
-            //    }
-            //}
+                // Use the default search parameters so we only print the persisted AttendanceOccurrence.
+                var searchParameters = clientService.GetAttendanceOccurrenceSearchParameters();
+                var occurrenceData = clientService.GetOccurrenceData( searchParameters, asNoTracking: true );
 
-            //var mergeFields = Rock.Lava.LavaHelper.GetCommonMergeFields( this.RockPage, this.CurrentPerson );
-            //mergeFields.Add( "Group", this._group );
-            //mergeFields.Add( "AttendanceDate", this._occurrence.OccurrenceDate );
+                if ( !occurrenceData.IsValid )
+                {
+                    return ActionBadRequest( occurrenceData.ErrorMessage );
+                }
 
-            //var mergeTemplate = new MergeTemplateService( rockContext ).Get( this.GetAttributeValue( AttributeKey.AttendanceRosterTemplate ).AsGuid() );
+                // Get the roster using a blanmk
+                var box = new GroupAttendanceDetailInitializationBox();
+                SetRoster( rockContext, occurrenceData, box );
 
-            //if ( mergeTemplate == null )
-            //{
-            //    this.LogException( new Exception( "Error printing Attendance Roster: No merge template selected. Please configure an 'Attendance Roster Template' in the block settings." ) );
-            //    nbPrintRosterWarning.Visible = true;
-            //    nbPrintRosterWarning.Text = "Unable to print Attendance Roster: No merge template selected. Please configure an 'Attendance Roster Template' in the block settings.";
-            //    return;
-            //}
+                var mergeObjects = new Dictionary<int, object>();
+                if ( box.Roster?.Any() == true )
+                {
+                    var personGuids = box.Roster.Select( a => a.PersonGuid ).ToList();
+                    var personList = new PersonService( rockContext )
+                        .GetByGuids( personGuids )
+                        .OrderBy( a => a.LastName )
+                        .ThenBy( a => a.NickName )
+                        .ToList();
+                    foreach ( var person in personList )
+                    {
+                        mergeObjects.AddOrIgnore( person.Id, person );
+                    }
+                }
 
-            //MergeTemplateType mergeTemplateType = mergeTemplate.GetMergeTemplateType();
-            //if ( mergeTemplateType == null )
-            //{
-            //    this.LogException( new Exception( "Error printing Attendance Roster: Unable to determine Merge Template Type from the 'Attendance Roster Template' in the block settings." ) );
-            //    nbPrintRosterWarning.Visible = true;
-            //    nbPrintRosterWarning.Text = "Error printing Attendance Roster: Unable to determine Merge Template Type from the 'Attendance Roster Template' in the block settings.";
-            //    return;
-            //}
+                var mergeFields = this.RequestContext.GetCommonMergeFields();
+                mergeFields.Add( MergeFieldKeys.Group, occurrenceData.Group );
+                mergeFields.Add( MergeFieldKeys.AttendanceDate, occurrenceData.AttendanceOccurrence.OccurrenceDate );
 
-            //BinaryFile outputBinaryFileDoc = null;
+                var mergeTemplate = new MergeTemplateService( rockContext ).Get( this.AttendanceRosterTemplateGuid );
 
-            //var mergeObjectList = mergeObjectsDictionary.Select( a => a.Value ).ToList();
+                if ( mergeTemplate == null )
+                {
+                    // TODO JMH Log this exception using Obsidian patterns.
+                    //this.LogException( new Exception( "Error printing Attendance Roster: No merge template selected. Please configure an 'Attendance Roster Template' in the block settings." ) );
+                    return ActionBadRequest( "Unable to print Attendance Roster: No merge template selected. Please configure an 'Attendance Roster Template' in the block settings." );
+                }
 
-            //outputBinaryFileDoc = mergeTemplateType.CreateDocument( mergeTemplate, mergeObjectList, mergeFields );
+                var mergeTemplateType = mergeTemplate.GetMergeTemplateType();
 
-            //// Set the name of the output doc
-            //outputBinaryFileDoc = new BinaryFileService( rockContext ).Get( outputBinaryFileDoc.Id );
-            //outputBinaryFileDoc.FileName = _group.Name + " Attendance Roster" + Path.GetExtension( outputBinaryFileDoc.FileName ?? string.Empty ) ?? ".docx";
-            //rockContext.SaveChanges();
+                if ( mergeTemplateType == null )
+                {
+                    // TODO JMH Log this exception using Obsidian patterns.
+                    //this.LogException( new Exception( "Error printing Attendance Roster: Unable to determine Merge Template Type from the 'Attendance Roster Template' in the block settings." ) );
+                    return ActionBadRequest( $"Error printing Attendance Roster: Unable to determine Merge Template Type from the 'Attendance Roster Template' in the block settings." );
+                }
 
-            //if ( mergeTemplateType.Exceptions != null && mergeTemplateType.Exceptions.Any() )
-            //{
-            //    if ( mergeTemplateType.Exceptions.Count == 1 )
-            //    {
-            //        this.LogException( mergeTemplateType.Exceptions[0] );
-            //    }
-            //    else if ( mergeTemplateType.Exceptions.Count > 50 )
-            //    {
-            //        this.LogException( new AggregateException( string.Format( "Exceptions merging template {0}. See InnerExceptions for top 50.", mergeTemplate.Name ), mergeTemplateType.Exceptions.Take( 50 ).ToList() ) );
-            //    }
-            //    else
-            //    {
-            //        this.LogException( new AggregateException( string.Format( "Exceptions merging template {0}. See InnerExceptions", mergeTemplate.Name ), mergeTemplateType.Exceptions.ToList() ) );
-            //    }
-            //}
+                var mergeObjectList = mergeObjects.Select( a => a.Value ).ToList();
 
-            //var uri = new UriBuilder( outputBinaryFileDoc.Url );
-            //var qry = System.Web.HttpUtility.ParseQueryString( uri.Query );
-            //qry["attachment"] = true.ToTrueFalse();
-            //uri.Query = qry.ToString();
-            //Response.Redirect( uri.ToString(), false );
-            //Context.ApplicationInstance.CompleteRequest();
+                var outputBinaryFileDoc = mergeTemplateType.CreateDocument( mergeTemplate, mergeObjectList, mergeFields );
+
+                // Set the name of the output doc.
+                outputBinaryFileDoc = new BinaryFileService( rockContext ).Get( outputBinaryFileDoc.Id );
+                outputBinaryFileDoc.FileName = occurrenceData.Group.Name + " Attendance Roster" + Path.GetExtension( outputBinaryFileDoc.FileName ?? string.Empty ) ?? ".docx";
+                rockContext.SaveChanges();
+
+                if ( mergeTemplateType.Exceptions != null && mergeTemplateType.Exceptions.Any() )
+                {
+                    // TODO JMH Log these exceptions using Obsidian patterns.
+                    if ( mergeTemplateType.Exceptions.Count == 1 )
+                    {
+                        //this.LogException( mergeTemplateType.Exceptions[0] );
+                    }
+                    else if ( mergeTemplateType.Exceptions.Count > 50 )
+                    {
+                        //this.LogException( new AggregateException( string.Format( "Exceptions merging template {0}. See InnerExceptions for top 50.", mergeTemplate.Name ), mergeTemplateType.Exceptions.Take( 50 ).ToList() ) );
+                    }
+                    else
+                    {
+                        //this.LogException( new AggregateException( string.Format( "Exceptions merging template {0}. See InnerExceptions", mergeTemplate.Name ), mergeTemplateType.Exceptions.ToList() ) );
+                    }
+                }
+
+                var uri = new UriBuilder( outputBinaryFileDoc.Url );
+                var queryString = uri.Query.ParseQueryString();
+                queryString["attachment"] = true.ToTrueFalse();
+                uri.Query = queryString.ToString();
+
+                return ActionOk( new GroupAttendanceDetailPrintRosterResponseBag
+                {
+                    RedirectUrl = uri.ToString()
+                } );
+            }
         }
 
         /// <summary>
@@ -933,82 +954,87 @@ namespace Rock.Blocks.Groups
                     }
                 }
 
-                // Load the attendance for the selected attendance occurrence.
-                var attendedPersonIds = new List<int>();
-
-                if ( occurrenceData.AttendanceOccurrence.Id > 0 )
-                {
-                    box.Notes = occurrenceData.AttendanceOccurrence.Notes;
-                    box.IsDidNotMeetChecked = occurrenceData.AttendanceOccurrence.DidNotOccur ?? false;
-
-                    // Get the list of people who attended.
-                    // These may or may not be group members.
-                    attendedPersonIds = occurrenceData.AttendanceOccurrence.Attendees
-                        .Where( a =>
-                            a.DidAttend.HasValue &&
-                            a.DidAttend.Value &&
-                            a.PersonAliasId.HasValue )
-                        .Select( a => a.PersonAlias.PersonId )
-                        .Distinct()
-                        .ToList();
-                }
-
-                // Get the group members.
-                var groupMemberService = new GroupMemberService( rockContext );
-
-                // Add any existing active members not on that list.
-                var unattendedPersonIds = groupMemberService
-                    .Queryable()
-                    .AsNoTracking()
-                    .Where( m =>
-                        m.GroupId == occurrenceData.Group.Id &&
-                        m.GroupMemberStatus == GroupMemberStatus.Active &&
-                        !attendedPersonIds.Contains( m.PersonId ) )
-                    .Select( m => m.PersonId )
-                    .Distinct()
-                    .ToList();
-
-                var lavaTemplate = this.LavaTemplate;
-                var mergeFields = this.RequestContext.GetCommonMergeFields( null );
-
-                // Set the roster.
-                box.Roster = new PersonService( rockContext )
-                    .Queryable()
-                    .AsNoTracking()
-                    .Include( p => p.Aliases )
-                    .Where( p => attendedPersonIds.Contains( p.Id ) || unattendedPersonIds.Contains( p.Id ) )
-                    .ToList()
-                    .Select( p => new GroupAttendanceDetailRosterAttendeeBag
-                    {
-                        PersonGuid = p.Guid,
-                        PersonAliasId = p.PrimaryAliasId,
-                        NickName = p.NickName,
-                        LastName = p.LastName,
-                        HasAttended = attendedPersonIds.Contains( p.Id ),
-                        CampusGuid = p.PrimaryCampusId.HasValue ? p.PrimaryCampus.Guid : ( Guid? ) null
-                    } )
-                    .ToList();
-
-                // TODO JMH Remove pending members functionality.
-                // TODO JMH Per 2023-02-23 1:1 w/ Nick, we should return Active and Pending GroupMembers (as well as current attendees) in the regular Members list (only Inactive should be omitted).
-                // Add the pending members.
-                box.PendingGroupMembers = groupMemberService
-                    .Queryable()
-                    .AsNoTracking()
-                    .Where( m =>
-                        m.GroupId == occurrenceData.Group.Id &&
-                        m.GroupMemberStatus == GroupMemberStatus.Pending )
-                    .OrderBy( m => m.Person.LastName )
-                    .ThenBy( m => m.Person.NickName )
-                    .Select( m => new GroupAttendancePendingGroupMemberBag
-                    {
-                        PersonId = m.PersonId,
-                        FullName = m.Person.NickName + " " + m.Person.LastName
-                    } )
-                    .ToList();
+                SetRoster( rockContext, occurrenceData, box );
 
                 return box;
             }
+        }
+
+        private void SetRoster( RockContext rockContext, OccurrenceData occurrenceData, GroupAttendanceDetailInitializationBox box )
+        {
+            // Load the attendance for the selected attendance occurrence.
+            var attendedPersonIds = new List<int>();
+
+            if ( occurrenceData.AttendanceOccurrence.Id > 0 )
+            {
+                box.Notes = occurrenceData.AttendanceOccurrence.Notes;
+                box.IsDidNotMeetChecked = occurrenceData.AttendanceOccurrence.DidNotOccur ?? false;
+
+                // Get the list of people who attended.
+                // These may or may not be group members.
+                attendedPersonIds = occurrenceData.AttendanceOccurrence.Attendees
+                    .Where( a =>
+                        a.DidAttend.HasValue &&
+                        a.DidAttend.Value &&
+                        a.PersonAliasId.HasValue )
+                    .Select( a => a.PersonAlias.PersonId )
+                    .Distinct()
+                    .ToList();
+            }
+
+            // Get the group members.
+            var groupMemberService = new GroupMemberService( rockContext );
+
+            // Add any existing active members not on that list.
+            var unattendedPersonIds = groupMemberService
+                .Queryable()
+                .AsNoTracking()
+                .Where( m =>
+                    m.GroupId == occurrenceData.Group.Id &&
+                    m.GroupMemberStatus == GroupMemberStatus.Active &&
+                    !attendedPersonIds.Contains( m.PersonId ) )
+                .Select( m => m.PersonId )
+                .Distinct()
+                .ToList();
+
+            var lavaTemplate = this.LavaTemplate;
+            var mergeFields = this.RequestContext.GetCommonMergeFields( null );
+
+            // Set the roster.
+            box.Roster = new PersonService( rockContext )
+                .Queryable()
+                .AsNoTracking()
+                .Include( p => p.Aliases )
+                .Where( p => attendedPersonIds.Contains( p.Id ) || unattendedPersonIds.Contains( p.Id ) )
+                .ToList()
+                .Select( p => new GroupAttendanceDetailRosterAttendeeBag
+                {
+                    PersonGuid = p.Guid,
+                    PersonAliasId = p.PrimaryAliasId,
+                    NickName = p.NickName,
+                    LastName = p.LastName,
+                    HasAttended = attendedPersonIds.Contains( p.Id ),
+                    CampusGuid = p.PrimaryCampusId.HasValue ? p.PrimaryCampus.Guid : ( Guid? ) null
+                } )
+                .ToList();
+
+            // TODO JMH Remove pending members functionality.
+            // TODO JMH Per 2023-02-23 1:1 w/ Nick, we should return Active and Pending GroupMembers (as well as current attendees) in the regular Members list (only Inactive should be omitted).
+            // Add the pending members.
+            box.PendingGroupMembers = groupMemberService
+                .Queryable()
+                .AsNoTracking()
+                .Where( m =>
+                    m.GroupId == occurrenceData.Group.Id &&
+                    m.GroupMemberStatus == GroupMemberStatus.Pending )
+                .OrderBy( m => m.Person.LastName )
+                .ThenBy( m => m.Person.NickName )
+                .Select( m => new GroupAttendancePendingGroupMemberBag
+                {
+                    PersonId = m.PersonId,
+                    FullName = m.Person.NickName + " " + m.Person.LastName
+                } )
+                .ToList();
         }
 
         private void SetRosterOptions( OccurrenceData occurrenceData, GroupAttendanceDetailInitializationBox box )
@@ -1531,9 +1557,9 @@ namespace Rock.Blocks.Groups
                 return true;
             }
 
-            private bool TrySetAttendanceOccurrence( OccurrenceData occurrenceData, AttendanceOccurrenceSearchParameters occurrenceDataSearchParameters, bool isReadOnly = false )
+            internal bool TrySetAttendanceOccurrence( OccurrenceData occurrenceData, AttendanceOccurrenceSearchParameters occurrenceDataSearchParameters, bool asNoTracking = false )
             {
-                occurrenceData.AttendanceOccurrence = GetExistingAttendanceOccurrence( occurrenceDataSearchParameters, isReadOnly );
+                occurrenceData.AttendanceOccurrence = GetExistingAttendanceOccurrence( occurrenceDataSearchParameters, asNoTracking );
 
                 if ( occurrenceData.AttendanceOccurrence == null )
                 {
@@ -1579,7 +1605,7 @@ namespace Rock.Blocks.Groups
                 return query.FirstOrDefault();
             }
 
-            private AttendanceOccurrence GetExistingAttendanceOccurrence( AttendanceOccurrenceSearchParameters occurrenceDataSearchParameters, bool isReadOnly )
+            private AttendanceOccurrence GetExistingAttendanceOccurrence( AttendanceOccurrenceSearchParameters occurrenceDataSearchParameters, bool asNoTracking )
             {
                 // Try to set the AttendanceOccurrence from Attendance Occurrence ID.
                 if ( occurrenceDataSearchParameters.AttendanceOccurrenceId.HasValue && occurrenceDataSearchParameters.AttendanceOccurrenceId.Value > 0 )
@@ -1591,7 +1617,7 @@ namespace Rock.Blocks.Groups
                         .Include( a => a.Attendees )
                         .Where( a => a.Id == occurrenceDataSearchParameters.AttendanceOccurrenceId.Value );
 
-                    if ( isReadOnly )
+                    if ( asNoTracking )
                     {
                         query = query.AsNoTracking();
                     }

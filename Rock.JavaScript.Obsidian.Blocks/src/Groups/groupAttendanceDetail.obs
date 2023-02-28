@@ -154,7 +154,7 @@
                     </div>
 
 
-                    <Alert v-if="false" id="printRosterAlert" alertType="warning" />
+                    <Alert v-if="!isPrintingRoster && printRosterWarning" alertType="warning">{{ printRosterWarning }}</Alert>
 
                     <div class="actions">
                         <RockButton tooltip="Print Attendance Roster" CssClass="btn btn-default btn-sm btn-square pull-right" @click="onPrintAttendanceRosterClicked()"><i class="fa fa-print"></i></RockButton>
@@ -194,10 +194,12 @@
     import { onConfigurationValuesChanged, useConfigurationValues, useInvokeBlockAction, useReloadBlock } from "@Obsidian/Utility/block";
     import { RockDateTime } from "@Obsidian/Utility/rockDateTime";
     import { GroupAttendanceDetailInitializationBox } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailInitializationBox";
+    import { GroupAttendanceDetailPrintRosterResponseBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailPrintRosterResponseBag";
     import { GroupAttendanceDetailRosterAttendeeBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailRosterAttendeeBag";
     import { GroupAttendanceDetailSaveAttendanceOccurrenceRequestBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailSaveAttendanceOccurrenceRequestBag";
     import { GroupAttendanceDetailSaveAttendanceOccurrenceResponseBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailSaveAttendanceOccurrenceResponseBag";
     import { ListItemBag } from "@Obsidian/ViewModels/Utility/listItemBag";
+import { isPrivateName } from "@babel/types";
 
     // TODO JMH This config should contain the group GUID for use in the specific group controls.
     const config = useConfigurationValues<GroupAttendanceDetailInitializationBox>();
@@ -287,8 +289,8 @@
         scheduleGuid.value = (schedulePickerSelection as ListItemBag)?.value;
     }
 
-    async function onPrintAttendanceRosterClicked(): Promise<void> {
-        await printAttendanceRoster();
+    function onPrintAttendanceRosterClicked(): Promise<void> {
+        return printAttendanceRoster();
     }
 
     function onSelectAllMembers(): void {
@@ -369,8 +371,25 @@
         return comparison;
     }
 
+    const isPrintingRoster = ref<boolean>(false);
+    const printRosterWarning = ref<string>("");
+
     async function printAttendanceRoster(): Promise<void> {
-        await invokeBlockAction<void>("JMH TBD");
+        try {
+            isPrintingRoster.value = true;
+
+            var result = await invokeBlockAction<GroupAttendanceDetailPrintRosterResponseBag>("PrintRoster");
+
+            if (result?.errorMessage) {
+                printRosterWarning.value = result.errorMessage;
+            }
+            else if (result?.data?.redirectUrl) {
+                window.location.href = result.data.redirectUrl;
+            }
+        }
+        finally {
+            isPrintingRoster.value = false;
+        }
     }
 
     async function updateSchedulePicker(locationPickerSelection: ListItemBag | null): Promise<void> {
