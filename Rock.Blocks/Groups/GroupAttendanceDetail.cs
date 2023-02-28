@@ -1316,6 +1316,14 @@ namespace Rock.Blocks.Groups
                     return false;
                 }
 
+                if ( occurrenceData.IsReadOnly )
+                {
+                    // If an occurrence already exists but not by the supplied OccurrenceID,
+                    // then return an error to the client.
+                    occurrenceData.ErrorMessage = "An occurrence already exists for this group for the selected date, location, and schedule that you've selected. Please return to the list and select that occurrence to update it's attendance.";
+                    return false;
+                }
+
                 if ( occurrenceData.IsNewOccurrence )
                 {
                     _attendanceOccurrenceService.Add( occurrenceData.AttendanceOccurrence );
@@ -1504,7 +1512,10 @@ namespace Rock.Blocks.Groups
 
             internal bool TrySetAttendanceOccurrence( OccurrenceData occurrenceData, AttendanceOccurrenceSearchParameters occurrenceDataSearchParameters, bool asNoTracking = false )
             {
-                occurrenceData.AttendanceOccurrence = GetExistingAttendanceOccurrence( occurrenceDataSearchParameters, asNoTracking );
+                (var isReadOnly, var attendanceOccurrence) = GetExistingAttendanceOccurrence( occurrenceDataSearchParameters, asNoTracking );
+
+                occurrenceData.IsReadOnly = isReadOnly;
+                occurrenceData.AttendanceOccurrence = attendanceOccurrence;
 
                 if ( occurrenceData.AttendanceOccurrence == null )
                 {
@@ -1549,7 +1560,7 @@ namespace Rock.Blocks.Groups
                 return query.FirstOrDefault();
             }
 
-            private AttendanceOccurrence GetExistingAttendanceOccurrence( AttendanceOccurrenceSearchParameters occurrenceDataSearchParameters, bool asNoTracking )
+            private (bool IsReadOnly, AttendanceOccurrence AttendanceOccurrence) GetExistingAttendanceOccurrence( AttendanceOccurrenceSearchParameters occurrenceDataSearchParameters, bool asNoTracking )
             {
                 // Try to set the AttendanceOccurrence from Attendance Occurrence ID.
                 if ( occurrenceDataSearchParameters.AttendanceOccurrenceId.HasValue && occurrenceDataSearchParameters.AttendanceOccurrenceId.Value > 0 )
@@ -1570,17 +1581,18 @@ namespace Rock.Blocks.Groups
 
                     if ( attendanceOccurrence != null )
                     {
-                        return attendanceOccurrence;
+                        return (false, attendanceOccurrence);
                     }
                 }
 
                 // If no specific Attendance Occurrence ID was specified, try to find a matching occurrence from Date, GroupId, Location, ScheduleId.
                 if ( occurrenceDataSearchParameters.AttendanceOccurrenceDate.HasValue )
                 {
-                    return _attendanceOccurrenceService.Get( occurrenceDataSearchParameters.AttendanceOccurrenceDate.Value.Date, occurrenceDataSearchParameters.GroupId, occurrenceDataSearchParameters.LocationId, occurrenceDataSearchParameters.ScheduleId, "Location,Schedule" );
+                    var attendanceOccurrence = _attendanceOccurrenceService.Get( occurrenceDataSearchParameters.AttendanceOccurrenceDate.Value.Date, occurrenceDataSearchParameters.GroupId, occurrenceDataSearchParameters.LocationId, occurrenceDataSearchParameters.ScheduleId, "Location,Schedule" );
+                    return ( attendanceOccurrence != null ? true : false, attendanceOccurrence );
                 }
 
-                return null;
+                return ( false, null );
             }
 
             private AttendanceOccurrence GetNewAttendanceOccurrence( AttendanceOccurrenceSearchParameters attendanceOccurrenceSearchParameters )
@@ -1626,6 +1638,7 @@ namespace Rock.Blocks.Groups
             public bool IsNotAuthorizedError { get; internal set; }
 
             public bool IsNoAttendanceOccurrencesError { get; internal set; }
+            public bool IsReadOnly { get; internal set; }
         }
 
         private class AttendanceOccurrenceSearchParameters
