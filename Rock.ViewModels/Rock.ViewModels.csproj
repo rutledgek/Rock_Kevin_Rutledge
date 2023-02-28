@@ -47,6 +47,9 @@
     <Compile Include="Blocks\Engagement\SignUp\SignUpDetail\SignUpDetailInitializationBox.cs" />
     <Compile Include="Blocks\Engagement\SignUp\SignUpRegister\SignUpRegisterRequestBag.cs" />
     <Compile Include="Blocks\Engagement\SignUp\SignUpRegister\SignUpRegisterResponseBag.cs" />
+    <Compile Include="Blocks\Groups\GroupAttendanceDetail\GroupAttendanceDetailActivateGroupMemberRequestBag.cs" />
+    <Compile Include="Blocks\Groups\GroupAttendanceDetail\GroupAttendanceDetailAddPersonResponseBag.cs" />
+    <Compile Include="Blocks\Groups\GroupAttendanceDetail\GroupAttendanceDetailAddPersonRequestBag.cs" />
     <Compile Include="Blocks\Groups\GroupAttendanceDetail\GroupAttendanceDetailPrintRosterResponseBag.cs" />
     <Compile Include="Blocks\Groups\GroupAttendanceDetail\GroupAttendanceDetailSaveAttendanceOccurrenceResponseBag.cs" />
     <Compile Include="Blocks\Groups\GroupAttendanceDetail\GroupAttendancePendingGroupMemberBag.cs" />

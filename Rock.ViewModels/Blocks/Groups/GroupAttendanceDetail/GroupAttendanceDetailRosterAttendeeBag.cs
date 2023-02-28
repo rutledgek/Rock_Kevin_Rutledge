@@ -62,5 +62,7 @@ namespace Rock.ViewModels.Blocks.Groups.GroupAttendanceDetail
         /// The campus ids.
         /// </value>
         public Guid? CampusGuid { get; set; }
+
+        public string ItemTemplate { get; set; }
     }
 }

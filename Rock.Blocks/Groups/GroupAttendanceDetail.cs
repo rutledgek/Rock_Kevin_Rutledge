@@ -24,6 +24,7 @@ using Rock.Attribute;
 using Rock.Communication;
 using Rock.Data;
 using Rock.Enums.Blocks.Groups.GroupAttendanceDetail;
+using Rock.Logging;
 using Rock.Model;
 using Rock.Security;
 using Rock.ViewModels.Blocks.Groups.GroupAttendanceDetail;
@@ -262,7 +263,11 @@ namespace Rock.Blocks.Groups
 
             public const string AttendanceOccurrence = "AttendanceOccurrence";
 
+            public const string Attended = "Attended";
+
             public const string Group = "Group";
+
+            public const string Person = "Person";
         }
 
         #endregion
@@ -565,19 +570,6 @@ namespace Rock.Blocks.Groups
             }
         }
 
-        private string GetRedirectUrl( int groupId )
-        {
-            var qryParams = new Dictionary<string, string> { { PageParameterKey.GroupId, groupId.ToString() } };
-
-            var groupTypeIds = this.GroupTypeIdsPageParameter;
-            if ( groupTypeIds.IsNotNullOrWhiteSpace() )
-            {
-                qryParams.Add( PageParameterKey.GroupTypeIds, groupTypeIds );
-            }
-
-            return this.GetParentPageUrl( qryParams );
-        }
-
         /// <summary>
         /// Prints the group attendance occurrence roster.
         /// </summary>
@@ -597,12 +589,13 @@ namespace Rock.Blocks.Groups
                     return ActionBadRequest( occurrenceData.ErrorMessage );
                 }
 
-                // Get the roster using a blanmk
+                // Get the roster.
                 var box = new GroupAttendanceDetailInitializationBox();
                 SetRoster( rockContext, occurrenceData, box );
 
                 var mergeObjects = new Dictionary<int, object>();
-                if ( box.Roster?.Any() == true )
+
+                if ( box.Roster.Any() == true )
                 {
                     var personGuids = box.Roster.Select( a => a.PersonGuid ).ToList();
                     var personList = new PersonService( rockContext )
@@ -624,8 +617,7 @@ namespace Rock.Blocks.Groups
 
                 if ( mergeTemplate == null )
                 {
-                    // TODO JMH Log this exception using Obsidian patterns.
-                    //this.LogException( new Exception( "Error printing Attendance Roster: No merge template selected. Please configure an 'Attendance Roster Template' in the block settings." ) );
+                    RockLogger.Log.Error( RockLogDomains.Group, new Exception( "Error printing Attendance Roster: No merge template selected. Please configure an 'Attendance Roster Template' in the block settings." ) );
                     return ActionBadRequest( "Unable to print Attendance Roster: No merge template selected. Please configure an 'Attendance Roster Template' in the block settings." );
                 }
 
@@ -633,8 +625,7 @@ namespace Rock.Blocks.Groups
 
                 if ( mergeTemplateType == null )
                 {
-                    // TODO JMH Log this exception using Obsidian patterns.
-                    //this.LogException( new Exception( "Error printing Attendance Roster: Unable to determine Merge Template Type from the 'Attendance Roster Template' in the block settings." ) );
+                    RockLogger.Log.Error( RockLogDomains.Group, new Exception( "Error printing Attendance Roster: Unable to determine Merge Template Type from the 'Attendance Roster Template' in the block settings." ) );
                     return ActionBadRequest( $"Error printing Attendance Roster: Unable to determine Merge Template Type from the 'Attendance Roster Template' in the block settings." );
                 }
 
@@ -649,18 +640,17 @@ namespace Rock.Blocks.Groups
 
                 if ( mergeTemplateType.Exceptions != null && mergeTemplateType.Exceptions.Any() )
                 {
-                    // TODO JMH Log these exceptions using Obsidian patterns.
                     if ( mergeTemplateType.Exceptions.Count == 1 )
                     {
-                        //this.LogException( mergeTemplateType.Exceptions[0] );
+                        RockLogger.Log.Error(RockLogDomains.Group, mergeTemplateType.Exceptions[0] );
                     }
                     else if ( mergeTemplateType.Exceptions.Count > 50 )
                     {
-                        //this.LogException( new AggregateException( string.Format( "Exceptions merging template {0}. See InnerExceptions for top 50.", mergeTemplate.Name ), mergeTemplateType.Exceptions.Take( 50 ).ToList() ) );
+                        RockLogger.Log.Error( RockLogDomains.Group, new AggregateException( $"Exceptions merging template {mergeTemplate.Name}. See InnerExceptions for top 50.", mergeTemplateType.Exceptions.Take( 50 ).ToList() ) );
                     }
                     else
                     {
-                        //this.LogException( new AggregateException( string.Format( "Exceptions merging template {0}. See InnerExceptions", mergeTemplate.Name ), mergeTemplateType.Exceptions.ToList() ) );
+                        RockLogger.Log.Error( RockLogDomains.Group, new AggregateException( $"Exceptions merging template {mergeTemplate.Name}. See InnerExceptions", mergeTemplateType.Exceptions.ToList() ) );
                     }
                 }
 
@@ -682,103 +672,104 @@ namespace Rock.Blocks.Groups
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         [BlockAction( "AddPerson" )]
-        public BlockActionResult AddPerson( /* GroupAttendanceDetailAddPersonBag */ object bag )
+        public BlockActionResult AddPerson( GroupAttendanceDetailAddPersonRequestBag bag )
         {
-            // TODO JMH Implement this.
-            throw new NotImplementedException();
-            //string template = GetAttributeValue( AttributeKey.LavaTemplate );
+            if ( !bag.PersonGuid.HasValue )
+            {
+                return ActionOk();
+            }
 
-            //if ( ppAddPerson.PersonId.HasValue )
-            //{
-            //    if ( !_attendees.Any( a => a.PersonId == ppAddPerson.PersonId.Value ) )
-            //    {
-            //        var rockContext = new RockContext();
-            //        var person = new PersonService( rockContext ).Get( ppAddPerson.PersonId.Value );
-            //        if ( person != null )
-            //        {
-            //            string addPersonAs = GetAttributeValue( AttributeKey.AddPersonAs );
-            //            if ( !addPersonAs.IsNullOrWhiteSpace() && addPersonAs == "Group Member" )
-            //            {
-            //                AddPersonAsGroupMember( person, rockContext );
-            //            }
+            using ( var rockContext = new RockContext() )
+            {
+                var clientService = GetOccurrenceDataClientService( rockContext );
+                var searchParameters = clientService.GetAttendanceOccurrenceSearchParameters();
+                var occurrenceData = new OccurrenceData();
 
-            //            var attendee = new GroupAttendanceAttendee();
-            //            attendee.PersonId = person.Id;
-            //            attendee.NickName = person.NickName;
-            //            attendee.LastName = person.LastName;
-            //            attendee.Attended = true;
-            //            attendee.CampusIds = person.GetCampusIds();
+                if ( !clientService.TrySetGroup( occurrenceData, searchParameters, asNoTracking: true ) )
+                {
+                    return ActionBadRequest( occurrenceData.ErrorMessage );
+                }
 
-            //            var mergeFields = Rock.Lava.LavaHelper.GetCommonMergeFields( null );
-            //            mergeFields.Add( "Person", person );
-            //            mergeFields.Add( "Attended", true );
-            //            attendee.MergedTemplate = template.ResolveMergeFields( mergeFields );
-            //            _attendees.Add( attendee );
-            //            BindAttendees();
-            //        }
-            //    }
-            //}
+                var person = new PersonService( rockContext ).Get( bag.PersonGuid.Value );
+
+                if ( person == null )
+                {
+                    return ActionBadRequest( "Person not found." );
+                }
+
+                var addPersonAs = this.AddPersonAs;
+
+                if ( !addPersonAs.IsNullOrWhiteSpace() && addPersonAs == "Group Member" )
+                {
+                    AddPersonAsGroupMember( occurrenceData.Group, person, rockContext );
+                    rockContext.SaveChanges();
+                }
+
+                // TODO JMH We'll need to add an Attendee record for real-time.
+                var attendee = GetRosterAttendeeBag( person, true );
+
+                return ActionOk( new GroupAttendanceDetailAddPersonResponseBag
+                {
+                    Attendee = attendee
+                } );
+            }
         }
 
-        /// <summary>
-        /// Handles the ItemCommand event of the lvPendingMembers control.
-        /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="ListViewCommandEventArgs"/> instance containing the event data.</param>
-        // TODO JMH Per 1:1 with Nick on 2023-02-23, we might not need to change group member statuses in this block.
-        //protected void lvPendingMembers_ItemCommand( object sender, ListViewCommandEventArgs e )
-        //{
-        //    if ( _group != null && e.CommandName == "Add" )
-        //    {
-        //        int personId = e.CommandArgument.ToString().AsInteger();
-
-        //        var rockContext = new RockContext();
-
-        //        foreach ( var groupMember in new GroupMemberService( rockContext )
-        //            .GetByGroupIdAndPersonId( _group.Id, personId ) )
-        //        {
-        //            if ( groupMember.GroupMemberStatus == GroupMemberStatus.Pending )
-        //            {
-        //                groupMember.GroupMemberStatus = GroupMemberStatus.Active;
-        //            }
-        //        }
-
-        //        rockContext.SaveChanges();
-
-        //        ShowDetails();
-        //    }
-        //}
 
         /// <summary>
-        /// Handles the Click event of the lbAddMember control.
+        /// Sets a Group Member Status to Active.
         /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        // TODO JMH This should redirect from the Obsidian client code. The GroupMemberAddPageUrl should have been passed down via the block initialization box.
-        //protected void lbAddMember_Click( object sender, EventArgs e )
-        //{
-        //    var personAddPage = GetAttributeValue( AttributeKey.GroupMemberAddPage );
+        [BlockAction( "ActivateGroupMember" )]
+        public BlockActionResult ActivateGroupMember( GroupAttendanceDetailActivateGroupMemberRequestBag bag )
+        {
+            using ( var rockContext = new RockContext() )
+            {
+                var clientService = GetOccurrenceDataClientService( rockContext );
+                var occurrenceData = clientService.GetOccurrenceData( clientService.GetAttendanceOccurrenceSearchParameters(), asNoTracking: true );
 
-        //    if ( !personAddPage.IsNullOrWhiteSpace() )
-        //    {
-        //        // Redirect to the add page provided
-        //        if ( _group != null && _occurrence != null )
-        //        {
-        //            if ( SaveAttendance() )
-        //            {
-        //                var queryParams = new Dictionary<string, string>();
-        //                queryParams.Add( "GroupId", _group.Id.ToString() );
-        //                queryParams.Add( "GroupName", _group.Name );
-        //                queryParams.Add( "ReturnUrl", Request.QueryString["returnUrl"] ?? Server.UrlEncode( Request.RawUrl ) );
-        //                NavigateToLinkedPage( AttributeKey.GroupMemberAddPage, queryParams );
-        //            }
-        //        }
-        //    }
-        //}
+                if ( !occurrenceData.IsValid )
+                {
+                    return ActionBadRequest( occurrenceData.ErrorMessage );
+                }
+
+                var personId = new PersonService( rockContext ).GetId( bag.PersonGuid );
+
+                if ( !personId.HasValue )
+                {
+                    return ActionBadRequest( "Person not found." );
+                }
+
+                foreach ( var groupMember in new GroupMemberService( rockContext )
+                    .GetByGroupIdAndPersonId( occurrenceData.Group.Id, personId.Value )
+                    .Where( g => g.GroupMemberStatus == GroupMemberStatus.Pending ) )
+                {
+                    groupMember.GroupMemberStatus = GroupMemberStatus.Active;
+                }
+
+                rockContext.SaveChanges();
+
+                // TODO JMH We'll need to notify clients which members are no longer pending.
+
+                return ActionOk();
+            }
+        }
 
         #endregion
 
         #region Private Methods
+
+        private string GetRedirectUrl( int groupId )
+        {
+            var qryParams = new Dictionary<string, string> { { PageParameterKey.GroupId, groupId.ToString() } };
+
+            var groupTypeIds = this.GroupTypeIdsPageParameter;
+            if ( groupTypeIds.IsNotNullOrWhiteSpace() )
+            {
+                qryParams.Add( PageParameterKey.GroupTypeIds, groupTypeIds );
+            }
+
+            return this.GetParentPageUrl( qryParams );
+        }
 
         /// <summary>
         /// Gets a user preference for the current user.
@@ -1007,15 +998,7 @@ namespace Rock.Blocks.Groups
                 .Include( p => p.Aliases )
                 .Where( p => attendedPersonIds.Contains( p.Id ) || unattendedPersonIds.Contains( p.Id ) )
                 .ToList()
-                .Select( p => new GroupAttendanceDetailRosterAttendeeBag
-                {
-                    PersonGuid = p.Guid,
-                    PersonAliasId = p.PrimaryAliasId,
-                    NickName = p.NickName,
-                    LastName = p.LastName,
-                    HasAttended = attendedPersonIds.Contains( p.Id ),
-                    CampusGuid = p.PrimaryCampusId.HasValue ? p.PrimaryCampus.Guid : ( Guid? ) null
-                } )
+                .Select( p => GetRosterAttendeeBag( p, attendedPersonIds.Contains( p.Id ) ) )
                 .ToList();
 
             // TODO JMH Remove pending members functionality.
@@ -1031,10 +1014,28 @@ namespace Rock.Blocks.Groups
                 .ThenBy( m => m.Person.NickName )
                 .Select( m => new GroupAttendancePendingGroupMemberBag
                 {
-                    PersonId = m.PersonId,
+                    PersonGuid = m.Person.Guid,
                     FullName = m.Person.NickName + " " + m.Person.LastName
                 } )
                 .ToList();
+        }
+
+        private GroupAttendanceDetailRosterAttendeeBag GetRosterAttendeeBag( Person person, bool hasAttended )
+        {
+            var mergeFields = this.RequestContext.GetCommonMergeFields();
+            mergeFields.Add( MergeFieldKeys.Person, person );
+            mergeFields.Add( MergeFieldKeys.Attended, hasAttended );
+
+            return new GroupAttendanceDetailRosterAttendeeBag
+            {
+                PersonGuid = person.Guid,
+                PersonAliasId = person.PrimaryAliasId,
+                NickName = person.NickName,
+                LastName = person.LastName,
+                HasAttended = hasAttended,
+                CampusGuid = person.PrimaryCampusId.HasValue ? person.PrimaryCampus.Guid : ( Guid? ) null,
+                ItemTemplate = this.LavaTemplate.ResolveMergeFields( mergeFields )
+            };
         }
 
         private void SetRosterOptions( OccurrenceData occurrenceData, GroupAttendanceDetailInitializationBox box )
@@ -1091,17 +1092,20 @@ namespace Rock.Blocks.Groups
         }
 
         /// <summary>
-        /// Adds the person as group member.
+        /// Adds the person as group member but does not save changes.
         /// </summary>
         /// <param name="person">The person.</param>
         /// <param name="rockContext">The rock context.</param>
         private void AddPersonAsGroupMember( Group group, Person person, RockContext rockContext )
         {
-            GroupMemberService groupMemberService = new GroupMemberService( rockContext );
-            GroupTypeRole role = new GroupTypeRoleService( rockContext ).Get( group.GroupType.DefaultGroupRoleId ?? 0 );
+            var groupMemberService = new GroupMemberService( rockContext );
+            var role = new GroupTypeRoleService( rockContext ).Get( group.GroupType.DefaultGroupRoleId ?? 0 );
 
-            var groupMember = new GroupMember { Id = 0 };
-            groupMember.GroupId = group.Id;
+            var groupMember = new GroupMember
+            {
+                Id = 0,
+                GroupId = group.Id
+            };
 
             // Check to see if the person is already a member of the group/role.
             var existingGroupMember = groupMemberService.GetByGroupIdAndPersonIdAndGroupRoleId( group.Id, person.Id, group.GroupType.DefaultGroupRoleId ?? 0 );
@@ -1119,8 +1123,6 @@ namespace Rock.Blocks.Groups
             {
                 groupMemberService.Add( groupMember );
             }
-
-            rockContext.SaveChanges();
         }
 
         // TODO JMH Need a modal when adding pending group member with text, "Add {memberName} to your group?" and with OK, Cancel, and X (close) buttons.
@@ -1524,7 +1526,7 @@ namespace Rock.Blocks.Groups
                 return campusId;
             }
 
-            private bool TrySetGroup( OccurrenceData occurrenceData, AttendanceOccurrenceSearchParameters attendanceOccurrenceSearchParameters, bool asNoTracking )
+            internal bool TrySetGroup( OccurrenceData occurrenceData, AttendanceOccurrenceSearchParameters attendanceOccurrenceSearchParameters, bool asNoTracking )
             {
                 // Get Group.
                 if ( attendanceOccurrenceSearchParameters.GroupId.HasValue )

@@ -21,12 +21,8 @@
 // </copyright>
 //
 
-import { Guid } from "@Obsidian/Types";
+import { GroupAttendanceDetailRosterAttendeeBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailRosterAttendeeBag";
 
-export type GroupAttendancePendingGroupMemberBag = {
-    /** Gets or sets the full name. */
-    fullName?: string | null;
-
-    /** Gets or sets the person unique identifier. */
-    personGuid?: Guid | null;
+export type GroupAttendanceDetailAddPersonResponseBag = {
+    attendee?: GroupAttendanceDetailRosterAttendeeBag | null;
 };

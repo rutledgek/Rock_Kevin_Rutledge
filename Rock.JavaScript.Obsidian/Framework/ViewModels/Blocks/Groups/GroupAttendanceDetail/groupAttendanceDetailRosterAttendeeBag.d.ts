@@ -33,6 +33,8 @@ export type GroupAttendanceDetailRosterAttendeeBag = {
     /** Indicates whether the Person has attended. */
     hasAttended: boolean;
 
+    itemTemplate?: string | null;
+
     /** Gets or sets the Person's last name. */
     lastName?: string | null;
 

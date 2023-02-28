@@ -15,20 +15,10 @@
 // </copyright>
 //
 
-using System;
-
 namespace Rock.ViewModels.Blocks.Groups.GroupAttendanceDetail
 {
-    public class GroupAttendancePendingGroupMemberBag
+    public class GroupAttendanceDetailAddPersonResponseBag
     {
-        /// <summary>
-        /// Gets or sets the person unique identifier.
-        /// </summary>
-        public Guid PersonGuid { get; set; }
-
-        /// <summary>
-        /// Gets or sets the full name.
-        /// </summary>
-        public string FullName { get; set; }
+        public GroupAttendanceDetailRosterAttendeeBag Attendee { get; set; }
     }
 }
