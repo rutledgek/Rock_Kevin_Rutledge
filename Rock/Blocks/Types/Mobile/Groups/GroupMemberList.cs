@@ -581,9 +581,9 @@ namespace Rock.Blocks.Types.Mobile.Groups
         /// <summary>
         /// Gets the group details.
         /// </summary>
+        /// <remarks>We only use this in shell version 4 and below. You should use the <see cref="GetGroupDetailsWithFilterOptions(FilterBag)"/></remarks>
         /// <returns></returns>
         [BlockAction]
-        [RockObsolete( "1.15" )]
         public object GetGroupDetails()
         {
             using ( var rockContext = new RockContext() )
