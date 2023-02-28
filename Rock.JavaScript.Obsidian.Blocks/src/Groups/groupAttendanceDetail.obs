@@ -1,5 +1,21 @@
 <template>
-    <div>
+    <Alert v-if="config.isNotAuthorizedError" alertType="danger">
+        <strong>Sorry</strong>
+        <p>You're not authorized to update the attendance for the selected group.</p>
+    </Alert>
+    <Alert v-if="config.isNoAttendanceOccurrencesError" alertType="danger">
+        <strong>No Occurrences</strong>
+        <p>There are currently not any active occurrences for selected group for which to take attendance.</p>
+    </Alert>
+    <Alert v-if="config.isGroupNotFoundError" alertType="danger">
+        <strong>No Group</strong>
+        Group was not found.
+    </Alert>
+    <Alert v-if="config.errorMessage" alertType="danger">
+        <strong>Sorry</strong>
+        <p>{{ config.errorMessage }}</p>
+    </Alert>
+    <div v-if="!config.isConfigError">
         <Panel titleIconCssClass="fa fa-check-square-o" :title="title">
             <template #headerActions>
                 <CampusPicker
@@ -11,9 +27,7 @@
             </template>
 
             <template #default>
-                <Alert v-if="errorMessage" id="nbNotice" alertType="danger">{{ errorMessage }}</Alert>
-                <asp:ValidationSummary ID="ValidationSummary1" runat="server" HeaderText="Please correct the following:" CssClass="alert alert-validation" />
-                <Alert v-if="false" id="cvAttendance" alertType="danger" />
+                <Alert v-if="errorMessage" alertType="danger">{{ errorMessage }}</Alert>
 
                 <div id="pnlDetails">
 

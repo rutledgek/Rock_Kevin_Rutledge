@@ -58,5 +58,7 @@ namespace Rock.ViewModels.Blocks.Groups.GroupAttendanceDetail
         public string AddGroupMemberPageUrl { get; set; }
         public List<GroupAttendanceDetailRosterAttendeeBag> Roster { get; set; }
         public List<GroupAttendancePendingGroupMemberBag> PendingGroupMembers { get; set; }
+        public bool IsNoAttendanceOccurrencesError { get; set; }
+        public bool IsConfigError { get; set; }
     }
 }

@@ -821,28 +821,6 @@ namespace Rock.Blocks.Groups
             return $"{PersonService.GetBlockUserPreferenceKeyPrefix( this.BlockId )}{key}";
         }
 
-        // TODO JMH These error messages should appear in the Obsidian client code.
-        private bool IsGroupValid( Group group, out string errorMessage )
-        {
-            if ( group == null )
-            {
-                errorMessage = "No group was available from the querystring.";
-                return false;
-            }
-
-            var currentPerson = this.GetCurrentPerson();
-
-            if ( !group.IsAuthorized( Authorization.MANAGE_MEMBERS, currentPerson )
-                || !group.IsAuthorized( Authorization.EDIT, currentPerson ) )
-            {
-                errorMessage = "You're not authorized to update the attendance for the selected group.";
-                return false;
-            }
-
-            errorMessage = null;
-            return true;
-        }
-
         private OccurrenceDataClientService GetOccurrenceDataClientService( RockContext rockContext )
         {
             return new OccurrenceDataClientService(
@@ -878,6 +856,20 @@ namespace Rock.Blocks.Groups
             box.AddGroupMemberPageUrl = this.GetLinkedPageUrl( AttributeKey.GroupMemberAddPage, queryParams );
         }
 
+        private void SetErrorData( OccurrenceData occurrenceData, GroupAttendanceDetailInitializationBox box )
+        {
+            box.ErrorMessage = occurrenceData.ErrorMessage;
+            box.IsGroupNotFoundError = occurrenceData.IsGroupNotFoundError;
+            box.IsNotAuthorizedError = occurrenceData.IsNotAuthorizedError;
+            box.IsNoAttendanceOccurrencesError = occurrenceData.IsNoAttendanceOccurrencesError;
+
+            box.IsConfigError = box.ErrorMessage.IsNotNullOrWhiteSpace()
+                || box.IsGroupNotFoundError
+                || box.IsNotAuthorizedError
+                || box.IsNoAttendanceOccurrencesError;
+            // TODO JMH Add error when user trying to save new occurrence where one already exists (for date, location, schedule).
+        }
+
         /// <summary>
         /// Gets the initialization box.
         /// </summary>
@@ -888,31 +880,27 @@ namespace Rock.Blocks.Groups
                 var occurrenceDataClientService = GetOccurrenceDataClientService( rockContext );
                 var searchParameters = occurrenceDataClientService.GetAttendanceOccurrenceSearchParameters( campusIdOverride: this.CampusIdBlockUserPreference );
                 var occurrenceData = occurrenceDataClientService.GetOccurrenceData( searchParameters, asNoTracking: false );
+                var box = new GroupAttendanceDetailInitializationBox();
 
                 if ( !occurrenceData.IsValid )
                 {
-                    return new GroupAttendanceDetailInitializationBox
-                    {
-                        ErrorMessage = occurrenceData.ErrorMessage
-                    };
+                    SetErrorData( occurrenceData, box );
+                    return box;
                 }
 
-                var box = new GroupAttendanceDetailInitializationBox
-                {
-                    AreMembersSortedByFirstName = this.IsMemberSortingHidden ? false : this.AreGroupMembersSortedByFirstNameUserPreference,
-                    CampusName = occurrenceData.Campus?.Name,
-                    CampusGuid = occurrenceData.Campus?.Guid,
-                    GroupGuid = occurrenceData.Group.Guid,
-                    GroupName = occurrenceData.Group.Name,
-                    IsCampusFilteringAllowed = this.IsCampusFilteringAllowed,
-                    IsFutureOccurrenceDateSelectionRestricted = this.IsFutureOccurrenceDateSelectionRestricted,
-                    IsMemberSortingHidden = this.IsMemberSortingHidden,
-                    IsNewAttendanceDateAdditionRestricted = this.IsNewAttendanceDateAdditionRestricted,
-                    IsNewAttendeeAdditionAllowed = this.IsNewAttendeeAdditionAllowed,
-                    IsNotesSectionHidden = this.IsNotesSectionHidden,
-                    NotesSectionLabel = this.NotesSectionLabel,
-                    AddPersonAs = this.AddPersonAs,
-                };
+                box.AreMembersSortedByFirstName = this.IsMemberSortingHidden ? false : this.AreGroupMembersSortedByFirstNameUserPreference;
+                box.CampusName = occurrenceData.Campus?.Name;
+                box.CampusGuid = occurrenceData.Campus?.Guid;
+                box.GroupGuid = occurrenceData.Group.Guid;
+                box.GroupName = occurrenceData.Group.Name;
+                box.IsCampusFilteringAllowed = this.IsCampusFilteringAllowed;
+                box.IsFutureOccurrenceDateSelectionRestricted = this.IsFutureOccurrenceDateSelectionRestricted;
+                box.IsMemberSortingHidden = this.IsMemberSortingHidden;
+                box.IsNewAttendanceDateAdditionRestricted = this.IsNewAttendanceDateAdditionRestricted;
+                box.IsNewAttendeeAdditionAllowed = this.IsNewAttendeeAdditionAllowed;
+                box.IsNotesSectionHidden = this.IsNotesSectionHidden;
+                box.NotesSectionLabel = this.NotesSectionLabel;
+                box.AddPersonAs = this.AddPersonAs;
 
                 SetAddGroupMemberPageUrl( occurrenceData, box );
                 SetOccurrenceDateOptions( occurrenceData, box );
@@ -1542,7 +1530,7 @@ namespace Rock.Blocks.Groups
 
                 if ( occurrenceData.Group == null )
                 {
-                    occurrenceData.ErrorMessage = "Group was not found.";
+                    occurrenceData.IsGroupNotFoundError = true;
                     return false;
                 }
 
@@ -1550,9 +1538,9 @@ namespace Rock.Blocks.Groups
                 var currentPerson = _block.GetCurrentPerson();
 
                 if ( !occurrenceData.Group.IsAuthorized( Authorization.MANAGE_MEMBERS, currentPerson )
-                    || !occurrenceData.Group.IsAuthorized( Authorization.EDIT, currentPerson ) )
+                    && !occurrenceData.Group.IsAuthorized( Authorization.EDIT, currentPerson ) )
                 {
-                    occurrenceData.ErrorMessage = "You're not authorized to update the attendance for the selected group.";
+                    occurrenceData.IsNotAuthorizedError = true;
                     return false;
                 }
 
@@ -1567,8 +1555,7 @@ namespace Rock.Blocks.Groups
                 {
                     if ( _block.IsNewAttendanceDateAdditionRestricted )
                     {
-                        // JMH Should be a bool that will show a message in the client.
-                        occurrenceData.ErrorMessage = "There are currently not any active occurrences for selected group to take attendance for.";
+                        occurrenceData.IsNoAttendanceOccurrencesError = true;
                         return false;
                     }
 
@@ -1667,7 +1654,7 @@ namespace Rock.Blocks.Groups
 
         private class OccurrenceData
         {
-            public bool IsValid => ErrorMessage.IsNullOrWhiteSpace() && Group != null && AttendanceOccurrence != null;
+            public bool IsValid => ErrorMessage.IsNullOrWhiteSpace() && !IsGroupNotFoundError && !IsNoAttendanceOccurrencesError && !IsNotAuthorizedError && Group != null && AttendanceOccurrence != null;
 
             public bool IsNewOccurrence => AttendanceOccurrence?.Id == 0;
 
@@ -1678,6 +1665,12 @@ namespace Rock.Blocks.Groups
             public AttendanceOccurrence AttendanceOccurrence { get; internal set; }
 
             public CampusCache Campus { get; internal set; }
+
+            public bool IsGroupNotFoundError { get; internal set; }
+
+            public bool IsNotAuthorizedError { get; internal set; }
+
+            public bool IsNoAttendanceOccurrencesError { get; internal set; }
         }
 
         private class AttendanceOccurrenceSearchParameters

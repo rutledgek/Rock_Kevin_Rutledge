@@ -66,6 +66,8 @@ export type GroupAttendanceDetailInitializationBox = {
 
     isCampusFilteringAllowed: boolean;
 
+    isConfigError: boolean;
+
     isDidNotMeetChecked: boolean;
 
     isFutureOccurrenceDateSelectionRestricted: boolean;
@@ -77,6 +79,8 @@ export type GroupAttendanceDetailInitializationBox = {
     isNewAttendanceDateAdditionRestricted: boolean;
 
     isNewAttendeeAdditionAllowed: boolean;
+
+    isNoAttendanceOccurrencesError: boolean;
 
     isNotAuthorizedError: boolean;
 
