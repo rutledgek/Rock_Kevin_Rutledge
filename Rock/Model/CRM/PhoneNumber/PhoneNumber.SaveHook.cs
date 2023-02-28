@@ -65,7 +65,7 @@ namespace Rock.Model
                  * This method is called within the block where the number is being changed.
                  * 
                  * Having the remove duplicate numbers in this location caused several issues:
-                 * Duplicate numbers could still be added to a user initially when the user had no numbers
+                 * Duplicate numbers could still be added to a person initially when the person had no numbers
                  * Numbers were unable to be swapped (mobile and work phone number switched)
                  * 
                  */
