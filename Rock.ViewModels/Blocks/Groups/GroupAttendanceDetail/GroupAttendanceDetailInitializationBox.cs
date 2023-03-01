@@ -50,14 +50,12 @@ namespace Rock.ViewModels.Blocks.Groups.GroupAttendanceDetail
         public List<ListItemBag> AttendanceOccurrenceTypes { get; set; }
         public string SelectedAttendanceOccurrenceTypeValue { get; set; }
         public string GroupMembersSectionLabel { get; set; }
-        public string PendingGroupMembersSectionLabel { get; set; }
         public string Notes { get; set; }
         public bool IsDidNotMeetChecked { get; set; }
         public bool IsNewAttendeeAdditionAllowed { get; set; }
         public string AddPersonAs { get; set; }
         public string AddGroupMemberPageUrl { get; set; }
         public List<GroupAttendanceDetailRosterAttendeeBag> Roster { get; set; }
-        public List<GroupAttendancePendingGroupMemberBag> PendingGroupMembers { get; set; }
         public bool IsNoAttendanceOccurrencesError { get; set; }
         public bool IsConfigError { get; set; }
     }

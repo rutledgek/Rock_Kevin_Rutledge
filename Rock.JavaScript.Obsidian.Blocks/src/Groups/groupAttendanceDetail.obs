@@ -145,16 +145,6 @@
                                 </div>
                             </TransitionVerticalCollapse>
                         </div>
-
-                        <div class="col-md-6">
-                            <div>
-                                <h4>Pending {{ config.groupMembersSectionLabel }}</h4>
-                                <div v-for="pendingMember in config.pendingGroupMembers" class="form-group d-flex align-items-center">
-                                    <span>{{ pendingMember.fullName }}</span>
-                                    <RockButton btnType="link" class="ml-1 p-0" tooltip="Add Person to Group" @click="onConfirmActivateGroupMemberClicked(pendingMember)"><i class="fa fa-plus"></i></RockButton>
-                                </div>
-                            </div>
-                        </div>
                     </div>
 
                     <div class="row">
@@ -198,13 +188,6 @@
             </template>
         </Panel>
     </div>
-
-    <Modal
-        v-model="isModalOpen"
-        saveText="OK"
-        @save="onActivateGroupMemberClicked(pendingMemberForActivation?.personGuid)">
-        Add {{ pendingMemberForActivation?.fullName }} to your group?
-    </Modal>
 </template>
 
 <script setup lang="ts">
@@ -220,7 +203,6 @@
     import CheckBoxList from "@Obsidian/Controls/checkBoxList";
     import DatePicker from "@Obsidian/Controls/datePicker.obs";
     import InlineCheckBox from "@Obsidian/Controls/inlineCheckBox";
-    import Modal from "@Obsidian/Controls/modal";
     import Panel from "@Obsidian/Controls/panel";
     import PersonPicker from "@Obsidian/Controls/personPicker";
     import RadioButtonList from "@Obsidian/Controls/radioButtonList";
@@ -234,19 +216,16 @@
     import { Guid } from "@Obsidian/Types";
     import { onConfigurationValuesChanged, useConfigurationValues, useInvokeBlockAction, useReloadBlock } from "@Obsidian/Utility/block";
     import { RockDateTime } from "@Obsidian/Utility/rockDateTime";
-    import { GroupAttendanceDetailActivateGroupMemberRequestBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailActivateGroupMemberRequestBag";
     import { GroupAttendanceDetailInitializationBox } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailInitializationBox";
     import { GroupAttendanceDetailPrintRosterResponseBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailPrintRosterResponseBag";
     import { GroupAttendanceDetailRosterAttendeeBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailRosterAttendeeBag";
     import { GroupAttendanceDetailSaveAttendanceOccurrenceRequestBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailSaveAttendanceOccurrenceRequestBag";
     import { GroupAttendanceDetailSaveAttendanceOccurrenceResponseBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailSaveAttendanceOccurrenceResponseBag";
-    import { GroupAttendancePendingGroupMemberBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendancePendingGroupMemberBag";
     import { ListItemBag } from "@Obsidian/ViewModels/Utility/listItemBag";
 
     // TODO JMH This config should contain the group GUID for use in the specific group controls.
     const config = useConfigurationValues<GroupAttendanceDetailInitializationBox>();
     const invokeBlockAction = useInvokeBlockAction();
-    const reloadBlock = useReloadBlock();
 
     type NullableListItemBags = ListItemBag | ListItemBag[] | null;
 
@@ -316,8 +295,6 @@
             })) ?? []);
     const notes = ref<string>(config.notes ?? "");
     const campusGuid = ref<ListItemBag | null>(config.campusGuid ? ({ text: config.campusName, value: config.campusGuid }) : null);
-    const isModalOpen = ref<boolean>(false);
-    const pendingMemberForActivation = ref<GroupAttendancePendingGroupMemberBag | null>(null);
 
     //#region Event Handlers
 
@@ -329,17 +306,6 @@
         if (config.addGroupMemberPageUrl) {
             location.href = config.addGroupMemberPageUrl;
         }
-    }
-
-    function onActivateGroupMemberClicked(personGuid: Guid | null | undefined): Promise<void> {
-        // eslint-disable-next-line no-debugger
-        debugger;
-        return activateGroupMember(personGuid);
-    }
-
-    function onConfirmActivateGroupMemberClicked(pendingMember: GroupAttendancePendingGroupMemberBag): void {
-        pendingMemberForActivation.value = pendingMember;
-        isModalOpen.value = true;
     }
 
     async function onGroupLocationPickerChanged(locationPickerSelection: NullableListItemBags): Promise<void> {
@@ -391,21 +357,6 @@
 
     type RosterFilterPredicate = (rosterMember: GroupAttendanceDetailRosterAttendeeBag) => boolean;
     type RosterComparer = (m1: GroupAttendanceDetailRosterAttendeeBag, m2: GroupAttendanceDetailRosterAttendeeBag) => number;
-
-
-    async function activateGroupMember(personGuid: string | null | undefined): Promise<void> {
-        const bag: GroupAttendanceDetailActivateGroupMemberRequestBag = {
-            personGuid
-        };
-        var result = await invokeBlockAction("ActivateGroupMember", {
-            bag
-        });
-
-        if (result?.isSuccess) {
-            // TODO JMH This isn't the best way to accomplish this. We should be updating the specific group member.
-            reloadBlock();
-        }
-    }
 
     function compare(comparer: RosterComparer, thenBy?: RosterComparer): RosterComparer {
         return (m1: GroupAttendanceDetailRosterAttendeeBag, m2: GroupAttendanceDetailRosterAttendeeBag): number => {

@@ -733,45 +733,6 @@ namespace Rock.Blocks.Groups
             }
         }
 
-
-        /// <summary>
-        /// Sets a Group Member Status to Active.
-        /// </summary>
-        [BlockAction( "ActivateGroupMember" )]
-        public BlockActionResult ActivateGroupMember( GroupAttendanceDetailActivateGroupMemberRequestBag bag )
-        {
-            using ( var rockContext = new RockContext() )
-            {
-                var clientService = GetOccurrenceDataClientService( rockContext );
-                var occurrenceData = clientService.GetOccurrenceData( clientService.GetAttendanceOccurrenceSearchParameters(), asNoTracking: true );
-
-                if ( !occurrenceData.IsValid )
-                {
-                    return ActionBadRequest( occurrenceData.ErrorMessage );
-                }
-
-                var personId = new PersonService( rockContext ).GetId( bag.PersonGuid );
-
-                if ( !personId.HasValue )
-                {
-                    return ActionBadRequest( "Person not found." );
-                }
-
-                foreach ( var groupMember in new GroupMemberService( rockContext )
-                    .GetByGroupIdAndPersonId( occurrenceData.Group.Id, personId.Value )
-                    .Where( g => g.GroupMemberStatus == GroupMemberStatus.Pending ) )
-                {
-                    groupMember.GroupMemberStatus = GroupMemberStatus.Active;
-                }
-
-                rockContext.SaveChanges();
-
-                // TODO JMH We'll need to notify clients which members are no longer pending.
-
-                return ActionOk();
-            }
-        }
-
         #endregion
 
         #region Private Methods
@@ -982,14 +943,14 @@ namespace Rock.Blocks.Groups
             // Get the group members.
             var groupMemberService = new GroupMemberService( rockContext );
 
-            // Add any existing active & pending members not on that list.
+            // Add any group members not on that list.
             var unattendedPersonIds = groupMemberService
                 .Queryable()
                 .AsNoTracking()
                 .Where( m =>
-                    m.GroupId == occurrenceData.Group.Id &&
-                    ( m.GroupMemberStatus == GroupMemberStatus.Active || m.GroupMemberStatus == GroupMemberStatus.Pending )  &&
-                    !attendedPersonIds.Contains( m.PersonId ) )
+                    m.GroupId == occurrenceData.Group.Id
+                    && m.GroupMemberStatus != GroupMemberStatus.Inactive
+                    && !attendedPersonIds.Contains( m.PersonId ) )
                 .Select( m => m.PersonId )
                 .Distinct()
                 .ToList();
@@ -1005,22 +966,6 @@ namespace Rock.Blocks.Groups
                 .Where( p => attendedPersonIds.Contains( p.Id ) || unattendedPersonIds.Contains( p.Id ) )
                 .ToList()
                 .Select( p => GetRosterAttendeeBag( p, attendedPersonIds.Contains( p.Id ), occurrenceData.Group.Members.FirstOrDefault( g => g.PersonId == p.Id ) ) )
-                .ToList();
-
-            // Add the pending members.
-            box.PendingGroupMembers = groupMemberService
-                .Queryable()
-                .AsNoTracking()
-                .Where( m =>
-                    m.GroupId == occurrenceData.Group.Id &&
-                    m.GroupMemberStatus == GroupMemberStatus.Pending )
-                .OrderBy( m => m.Person.LastName )
-                .ThenBy( m => m.Person.NickName )
-                .Select( m => new GroupAttendancePendingGroupMemberBag
-                {
-                    PersonGuid = m.Person.Guid,
-                    FullName = m.Person.NickName + " " + m.Person.LastName
-                } )
                 .ToList();
         }
 
@@ -1047,7 +992,6 @@ namespace Rock.Blocks.Groups
         {
             var groupMembersTerm = occurrenceData.Group.GroupType.GroupMemberTerm.Pluralize();
             box.GroupMembersSectionLabel = groupMembersTerm;
-            box.PendingGroupMembersSectionLabel = $"Pending {groupMembersTerm}";
         }
 
         private void SetOccurrenceDateOptions( OccurrenceData occurrenceData, GroupAttendanceDetailInitializationBox box )
