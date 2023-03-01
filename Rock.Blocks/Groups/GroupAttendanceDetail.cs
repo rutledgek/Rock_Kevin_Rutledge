@@ -102,14 +102,15 @@ namespace Rock.Blocks.Groups
         Order = 6 )]
 
     [CodeEditorField(
-        "Lava Template",
+        "List Item Details Template",
         Category = AttributeCategory.None,
+        DefaultValue = DefaultListItemDetailsTemplate,
         Description = "An optional lava template to appear next to each person in the list.",
         EditorMode = CodeEditorMode.Lava,
         EditorTheme = CodeEditorTheme.Rock,
         EditorHeight = 400,
         IsRequired = false,
-        Key = AttributeKey.LavaTemplate,
+        Key = AttributeKey.ListItemDetailsTemplate,
         Order = 7 )]
 
     [BooleanField(
@@ -193,6 +194,19 @@ namespace Rock.Blocks.Groups
 
     public class GroupAttendanceDetail : RockObsidianBlockType
     {
+        #region Attribute Values
+
+        private const string DefaultListItemDetailsTemplate = @"<div style=""width: 320px; display: flex; align-items: center; gap: 8px; padding: 12px;"">
+    <img width=""80px"" height=""80px"" src=""{{ Person.PhotoUrl }}"" style=""border-radius: 80px; width: 80px; height: 80px"" />
+    <div>
+        <strong>{{ Person.LastName }}, {{ Person.NickName }}</strong>
+        <div>{{ GroupMember.GroupRole.Name }}</div>    
+        {% if GroupMember.GroupMemberStatus == 'Pending' %}<span class=""label label-info"" style=""position: absolute; right: 10px; top: 10px;"">{{ GroupMember.GroupMemberStatus }}</span>{% endif %}
+    </div>
+</div>";
+
+        #endregion
+
         #region Categories
 
         private static class AttributeCategory
@@ -222,7 +236,7 @@ namespace Rock.Blocks.Groups
             public const string AllowCampusFilter = "AllowCampusFilter";
             public const string Workflow = "Workflow";
             public const string AttendanceRosterTemplate = "AttendanceRosterTemplate";
-            public const string LavaTemplate = "LavaTemplate";
+            public const string ListItemDetailsTemplate = "ListItemDetailsTemplate";
             public const string RestrictFutureOccurrenceDate = "RestrictFutureOccurrenceDate";
             public const string ShowNotes = "ShowNotes";
             public const string AttendanceNoteLabel = "AttendanceNoteLabel";
@@ -266,6 +280,8 @@ namespace Rock.Blocks.Groups
             public const string Attended = "Attended";
 
             public const string Group = "Group";
+
+            public const string GroupMember = "GroupMember";
 
             public const string Person = "Person";
         }
@@ -349,7 +365,7 @@ namespace Rock.Blocks.Groups
         /// <summary>
         /// An optional lava template to appear next to each person in the list.
         /// </summary>
-        private string LavaTemplate => GetAttributeValue( AttributeKey.LavaTemplate );
+        private string ListItemDetailsTemplate => GetAttributeValue( AttributeKey.ListItemDetailsTemplate );
 
         /// <summary>
         /// Should user be restricted from selecting a future Occurrence date?
@@ -699,14 +715,16 @@ namespace Rock.Blocks.Groups
 
                 var addPersonAs = this.AddPersonAs;
 
+                GroupMember groupMember = null;
+
                 if ( !addPersonAs.IsNullOrWhiteSpace() && addPersonAs == "Group Member" )
                 {
-                    AddPersonAsGroupMember( occurrenceData.Group, person, rockContext );
+                    groupMember = AddPersonAsGroupMember( occurrenceData.Group, person, rockContext );
                     rockContext.SaveChanges();
                 }
 
                 // TODO JMH We'll need to add an Attendee record for real-time.
-                var attendee = GetRosterAttendeeBag( person, true );
+                var attendee = GetRosterAttendeeBag( person, true, groupMember );
 
                 return ActionOk( new GroupAttendanceDetailAddPersonResponseBag
                 {
@@ -964,19 +982,19 @@ namespace Rock.Blocks.Groups
             // Get the group members.
             var groupMemberService = new GroupMemberService( rockContext );
 
-            // Add any existing active members not on that list.
+            // Add any existing active & pending members not on that list.
             var unattendedPersonIds = groupMemberService
                 .Queryable()
                 .AsNoTracking()
                 .Where( m =>
                     m.GroupId == occurrenceData.Group.Id &&
-                    m.GroupMemberStatus == GroupMemberStatus.Active &&
+                    ( m.GroupMemberStatus == GroupMemberStatus.Active || m.GroupMemberStatus == GroupMemberStatus.Pending )  &&
                     !attendedPersonIds.Contains( m.PersonId ) )
                 .Select( m => m.PersonId )
                 .Distinct()
                 .ToList();
 
-            var lavaTemplate = this.LavaTemplate;
+            var lavaTemplate = this.ListItemDetailsTemplate;
             var mergeFields = this.RequestContext.GetCommonMergeFields( null );
 
             // Set the roster.
@@ -986,7 +1004,7 @@ namespace Rock.Blocks.Groups
                 .Include( p => p.Aliases )
                 .Where( p => attendedPersonIds.Contains( p.Id ) || unattendedPersonIds.Contains( p.Id ) )
                 .ToList()
-                .Select( p => GetRosterAttendeeBag( p, attendedPersonIds.Contains( p.Id ) ) )
+                .Select( p => GetRosterAttendeeBag( p, attendedPersonIds.Contains( p.Id ), occurrenceData.Group.Members.FirstOrDefault( g => g.PersonId == p.Id ) ) )
                 .ToList();
 
             // Add the pending members.
@@ -1006,11 +1024,12 @@ namespace Rock.Blocks.Groups
                 .ToList();
         }
 
-        private GroupAttendanceDetailRosterAttendeeBag GetRosterAttendeeBag( Person person, bool hasAttended )
+        private GroupAttendanceDetailRosterAttendeeBag GetRosterAttendeeBag( Person person, bool hasAttended, GroupMember groupMember )
         {
             var mergeFields = this.RequestContext.GetCommonMergeFields();
             mergeFields.Add( MergeFieldKeys.Person, person );
             mergeFields.Add( MergeFieldKeys.Attended, hasAttended );
+            mergeFields.Add( MergeFieldKeys.GroupMember, groupMember );
 
             return new GroupAttendanceDetailRosterAttendeeBag
             {
@@ -1020,7 +1039,7 @@ namespace Rock.Blocks.Groups
                 LastName = person.LastName,
                 HasAttended = hasAttended,
                 CampusGuid = person.PrimaryCampusId.HasValue ? person.PrimaryCampus.Guid : ( Guid? ) null,
-                ItemTemplate = this.LavaTemplate.ResolveMergeFields( mergeFields )
+                ItemTemplate = this.ListItemDetailsTemplate.ResolveMergeFields( mergeFields )
             };
         }
 
@@ -1082,7 +1101,7 @@ namespace Rock.Blocks.Groups
         /// </summary>
         /// <param name="person">The person.</param>
         /// <param name="rockContext">The rock context.</param>
-        private void AddPersonAsGroupMember( Group group, Person person, RockContext rockContext )
+        private GroupMember AddPersonAsGroupMember( Group group, Person person, RockContext rockContext )
         {
             var groupMemberService = new GroupMemberService( rockContext );
             var role = new GroupTypeRoleService( rockContext ).Get( group.GroupType.DefaultGroupRoleId ?? 0 );
@@ -1098,7 +1117,7 @@ namespace Rock.Blocks.Groups
 
             if ( existingGroupMember != null )
             {
-                return;
+                return existingGroupMember;
             }
 
             groupMember.PersonId = person.Id;
@@ -1109,6 +1128,8 @@ namespace Rock.Blocks.Groups
             {
                 groupMemberService.Add( groupMember );
             }
+
+            return groupMember;
         }
 
         /// <summary>

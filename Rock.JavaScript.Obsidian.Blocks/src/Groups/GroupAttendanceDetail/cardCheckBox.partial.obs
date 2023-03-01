@@ -1,0 +1,63 @@
+<template>
+    <RockFormField
+        :modelValue="modelValue"
+        formGroupClasses="rock-check-box"
+        name="checkbox">
+        <template #default="{uniqueId, field}">
+            <div class="control-wrapper">
+                <div class="checkbox card-checkbox" :class="{ 'checked': internalValue }">
+                    <input type="checkbox" v-bind="field" v-model="internalValue" :id="uniqueId" style="display: none" />
+                    <label v-if="html" :for="uniqueId" v-html="html"></label>
+                    <label v-else :for="uniqueId">
+                        <slot></slot>
+                    </label>
+                </div>
+            </div>
+        </template>
+    </RockFormField>
+</template>
+
+<style scoped>
+.card-checkbox {
+    padding: 0;
+    margin: 0;
+    border: 1px solid #D6D6D6;
+    border-radius: 5px;
+}
+
+.card-checkbox.checked {
+    border: 2px solid #EE7725;
+    background: #FFF3EB;
+}
+
+.card-checkbox:not(.checked) {
+    margin: 1px; /* Add 1px all around card since the border for unchecked cards is 1px instead of 2px for checked cards. */
+}
+
+.card-checkbox > label {
+    padding: 0;
+}
+</style>
+
+<script setup lang="ts">
+    import { PropType } from "vue";
+    import RockFormField from "@Obsidian/Controls/rockFormField";
+    import { useVModelPassthrough } from "@Obsidian/Utility/component";
+
+    const props = defineProps({
+        modelValue: {
+            type: Boolean as PropType<boolean>,
+            required: true
+        },
+        html: {
+            type: String as PropType<string | null | undefined>
+        }
+    });
+
+    const emit = defineEmits<{
+        (e: "update:modelValue", newValue: boolean): void
+    }>();
+
+    const internalValue = useVModelPassthrough(props, "modelValue", emit);
+
+</script>
