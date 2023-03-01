@@ -1,4 +1,21 @@
-﻿using System;
+﻿// <copyright>
+// Copyright by the Spark Development Network
+//
+// Licensed under the Rock Community License (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.rockrms.com/license
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// </copyright>
+//
+
+using System;
 using System.ComponentModel;
 using System.ComponentModel.Composition;
 using System.Data.Entity;
@@ -61,7 +78,7 @@ namespace Rock.Reporting.DataFilter.Group
             /// <summary>
             /// Whether to hide past opportunities.
             /// </summary>
-            public bool HidePastOpportunties { get; set; }
+            public bool HidePastOpportunities { get; set; }
 
             /// <summary>
             /// Parses the specified selection from a JSON string.
@@ -168,7 +185,7 @@ namespace Rock.Reporting.DataFilter.Group
             // Define control: hide past opportunities check box.
             var cbHidePastOpportunities = new RockCheckBox();
             cbHidePastOpportunities.ID = filterControl.GetChildControlInstanceName( "_cbHidePastOpportunities" );
-            cbHidePastOpportunities.Label = "Hide Past Opportunties";
+            cbHidePastOpportunities.Label = "Hide Past Opportunities";
             cbHidePastOpportunities.AddCssClass( "js-cb-hide-past-opportunities" );
             filterControl.Controls.Add( cbHidePastOpportunities );
 
@@ -265,7 +282,7 @@ function() {
         {
             var selectionConfig = SelectionConfig.Parse( selection );
 
-            var timeframe = selectionConfig.HidePastOpportunties
+            var timeframe = selectionConfig.HidePastOpportunities
                 ? "Current"
                 : "Current or past";
 
@@ -310,7 +327,7 @@ function() {
             {
                 GroupTypeGuid = groupTypePicker.SelectedValue,
                 MemberType = ddlMemberType.SelectedValue,
-                HidePastOpportunties = cbHidePastOpportunities.Checked
+                HidePastOpportunities = cbHidePastOpportunities.Checked
             };
 
             return selectionConfig.ToJson();
@@ -332,7 +349,7 @@ function() {
 
             groupTypePicker.SetValue( selectionConfig.GroupTypeGuid );
             ddlMemberType.SetValue( selectionConfig.MemberType );
-            cbHidePastOpportunities.Checked = selectionConfig.HidePastOpportunties;
+            cbHidePastOpportunities.Checked = selectionConfig.HidePastOpportunities;
         }
 
         /// <summary>
@@ -350,13 +367,16 @@ function() {
             var selectionConfig = SelectionConfig.Parse( selection );
             var requireLeader = selectionConfig.MemberType == MemberTypeValue.Leader;
             var requireNonLeader = selectionConfig.MemberType == MemberTypeValue.NotLeader;
-            var hidePastOpportunities = selectionConfig.HidePastOpportunties;
+            var hidePastOpportunities = selectionConfig.HidePastOpportunities;
 
             var groupTypeGuid = selectionConfig.GroupTypeGuid.AsGuidOrNull();
             if ( !groupTypeGuid.HasValue )
             {
                 return null;
             }
+
+            // We'll use today's date @ 12:00 AM to compare against Schedule.EffectiveEndDate below, in order to filter out past opportunities if needed.
+            var startOfToday = RockDateTime.Now.StartOfDay();
 
             var membersByOpportunityQuery = new GroupLocationService( ( RockContext ) serviceInstance.Context )
                 .Queryable()
@@ -369,7 +389,7 @@ function() {
                     Schedule = s
                 } )
                 /*
-                 * We now have [GroupLocationSchedule] instances:
+                 * We now have GroupLocationSchedule instances:
                  * One for each combination of Group, Location & Schedule, where [Group].[GroupTypeId] == selectionConfig.GroupTypeId.
                  */
                 .Where( gls =>
@@ -378,13 +398,13 @@ function() {
                         gls.Schedule.IsActive
                         && (
                             !gls.Schedule.EffectiveEndDate.HasValue
-                            || gls.Schedule.EffectiveEndDate.Value >= RockDateTime.Now
+                            || gls.Schedule.EffectiveEndDate.Value >= startOfToday
                         )
                     )
                 )
                 /*
-                 * We've now filtered out any past opportunities if indicated by selectionConfig.HidePastOpportunties.
-                 * If not, we have all opportunites (GroupLocationSchedules): past, present and future.
+                 * If indicated by selectionConfig.HidePastOpportunities, we've now filtered out any past opportunities.
+                 * If not, we have all opportunities (GroupLocationSchedules): past, present and future.
                  */
                 .Select( gls => new
                 {
