@@ -200,8 +200,8 @@ namespace Rock.Blocks.Groups
     <img width=""80px"" height=""80px"" src=""{{ Person.PhotoUrl }}"" style=""border-radius: 80px; width: 80px; height: 80px"" />
     <div>
         <strong>{{ Person.LastName }}, {{ Person.NickName }}</strong>
-        <div>{{ GroupMember.GroupRole.Name }}</div>    
-        {% if GroupMember.GroupMemberStatus == 'Pending' %}<span class=""label label-info"" style=""position: absolute; right: 10px; top: 10px;"">{{ GroupMember.GroupMemberStatus }}</span>{% endif %}
+        {% if GroupMember.GroupRole %}<div>{{ GroupMember.GroupRole.Name }}</div>{% endif %}
+        {% if GroupMember.GroupMemberStatus and GroupMember.GroupMemberStatus != 'Active' %}<span class=""label label-info"" style=""position: absolute; right: 10px; top: 10px;"">{{ GroupMember.GroupMemberStatus }}</span>{% endif %}
     </div>
 </div>";
 
