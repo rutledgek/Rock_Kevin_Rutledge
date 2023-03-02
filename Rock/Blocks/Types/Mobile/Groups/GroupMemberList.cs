@@ -30,6 +30,7 @@ using Rock.Data;
 using Rock.Mobile;
 using Rock.Mobile.JsonFields;
 using Rock.Model;
+using Rock.ViewModels.Utility;
 using Rock.Web.Cache;
 using Rock.Web.UI.Controls;
 
@@ -76,54 +77,61 @@ namespace Rock.Blocks.Types.Mobile.Groups
         Key = AttributeKeys.AdditionalFields,
         Order = 3 )]
 
+    [BooleanField( "Show Include Inactive Members Filter",
+        Description = "If enabled then the 'Include Inactive' filter option will be shown.",
+        IsRequired = false,
+        Key = AttributeKeys.ShowInactiveMembersFilter,
+        DefaultBooleanValue = false,
+        Order = 4 )]
+
     [BooleanField( "Show Group Role Type Filter",
         Description = "If enabled then the 'Group Type Role' filter option will be shown.",
         IsRequired = false,
         Key = AttributeKeys.ShowGroupRoleTypeFilter,
         DefaultBooleanValue = false,
-        Order = 4 )]
+        Order = 5 )]
 
     [BooleanField( "Show Group Role Filter",
         Description = "If enabled then the 'Group Role' filter option will be shown.",
         IsRequired = false,
         DefaultBooleanValue = true,
         Key = AttributeKeys.ShowGroupRoleFilter,
-        Order = 5 )]
+        Order = 6 )]
 
     [BooleanField( "Show Gender Filter",
         Description = "If enabled then the 'Gender' filter option will be shown.",
         IsRequired = false,
         DefaultBooleanValue = false,
         Key = AttributeKeys.ShowGenderFilter,
-        Order = 6 )]
+        Order = 7 )]
 
     [BooleanField( "Show Child Groups Filter",
         Description = "If enabled then the 'Child Groups' filter option will be shown.",
         IsRequired = false,
         DefaultBooleanValue = false,
         Key = AttributeKeys.ShowChildGroupsFilter,
-        Order = 7 )]
+        Order = 8 )]
 
     [BooleanField( "Show Attendance Filter",
         Description = "If enabled then the 'Attendance' filter option will be shown.",
         IsRequired = false,
         DefaultBooleanValue = false,
         Key = AttributeKeys.ShowAttendanceFilter,
-        Order = 8 )]
+        Order = 9 )]
 
     [IntegerField( "Attendance Filter Short Week Range",
         Description = "Displays a filter option that gives a variety of different options for attendance based on x number of weeks.",
         IsRequired = false,
         DefaultIntegerValue = 3,
         Key = AttributeKeys.AttendanceFilterShortWeekRange,
-        Order = 9 )]
+        Order = 10 )]
 
     [IntegerField( "Attendance Filter Long Week Range",
         Description = "Displays a filter option that gives a variety of different options for attendance based on x number of weeks.",
         IsRequired = false,
         DefaultIntegerValue = 12,
         Key = AttributeKeys.AttendanceFilterLongWeekRange,
-        Order = 10 )]
+        Order = 11 )]
 
     #endregion
 
@@ -157,6 +165,11 @@ namespace Rock.Blocks.Types.Mobile.Groups
             /// The additional fields key.
             /// </summary>
             public const string AdditionalFields = "AdditionalFields";
+
+            /// <summary>
+            /// The show inactive filter key.
+            /// </summary>
+            public const string ShowInactiveMembersFilter = "ShowInactiveMembersFilter";
 
             /// <summary>
             /// The show group role type filter key.
@@ -209,6 +222,12 @@ namespace Rock.Blocks.Types.Mobile.Groups
         /// The group member detail page.
         /// </value>
         protected Guid? GroupMemberDetailPage => GetAttributeValue( AttributeKeys.GroupMemberDetailPage ).AsGuidOrNull();
+
+        /// <summary>
+        /// Gets a value indicating whether to show the 'Include Inactive' filter option.
+        /// </summary>
+        /// <value><c>true</c> if [show inactive]; otherwise, <c>false</c>.</value>
+        protected bool ShowInactiveMembersFilter => GetAttributeValue( AttributeKeys.ShowInactiveMembersFilter ).AsBoolean();
 
         /// <summary>
         /// Gets a value indicating whether to show the group role type filter option.
@@ -305,11 +324,12 @@ namespace Rock.Blocks.Types.Mobile.Groups
                 GroupMemberDetailPage = GroupMemberDetailPage,
                 ShowGroupRoleTypeFilter = ShowGroupRoleTypeFilter,
                 ShowGenderFilter = ShowGenderFilter,
+                ShowInactiveMembersFilter = ShowInactiveMembersFilter,
                 ShowAttendanceFilter = ShowAttendanceFilter,
                 ShowGroupRoleFilter = ShowGroupRoleFilter,
                 ShowChildGroupFilter = ShowChildGroupFilter,
                 AttendanceFilterLongWeekRange = AttendanceFilterLongWeekRange,
-                AttendanceFilterShortWeekRange = AttendanceFilterShortWeekRange
+                AttendanceFilterShortWeekRange = AttendanceFilterShortWeekRange,
             };
         }
 
@@ -368,6 +388,11 @@ namespace Rock.Blocks.Types.Mobile.Groups
             var members = new GroupMemberService( rockContext )
                 .Queryable()
                 .Where( gm => gm.Group.Guid == group.Guid );
+
+            if( !filterBag.IncludeInactive )
+            {
+                members = members.Where( m => m.GroupMemberStatus == GroupMemberStatus.Active );
+            }
 
             // If they selected group roles to filter, and the amount of
             // selected group roles does not equal of group roles the amount the group already has.
@@ -505,7 +530,7 @@ namespace Rock.Blocks.Types.Mobile.Groups
                     groupMembers = new GroupMemberService( rockContext )
                         .Queryable()
                         .Include( gm => gm.Person )
-                        .Where( gm => gm.Group.Guid == groupGuid && gm.GroupMemberStatus == GroupMemberStatus.Active )
+                        .Where( gm => gm.Group.Guid == groupGuid )
                         .ToList();
 
                     totalGroupMemberCount = groupMembers.Count();
@@ -514,10 +539,22 @@ namespace Rock.Blocks.Types.Mobile.Groups
                 else
                 {
                     groupMembers = FilterGroupMembers( group, filterBag, rockContext );
-                    totalGroupMemberCount = new GroupMemberService( rockContext )
+
+                    if( filterBag.IncludeInactive )
+                    {
+                        totalGroupMemberCount = new GroupMemberService( rockContext )
+                        .Queryable()
+                        .Where( gm => gm.Group.Guid == groupGuid )
+                        .Count();
+                    }
+                    else
+                    {
+                        totalGroupMemberCount = new GroupMemberService( rockContext )
                         .Queryable()
                         .Where( gm => gm.Group.Guid == groupGuid && gm.GroupMemberStatus == GroupMemberStatus.Active )
                         .Count();
+                    }
+                    
                 }
 
                 var lavaTemplate = CreateLavaTemplate();

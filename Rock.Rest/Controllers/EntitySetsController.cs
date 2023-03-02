@@ -38,18 +38,18 @@ namespace Rock.Rest.Controllers
         /// <returns>IHttpActionResult.</returns>
         [System.Web.Http.Route( "api/EntitySets/CreateFromItems/{entityTypeGuid:guid}" )]
         [HttpPost]
-        [Authenticate]
+        [Authenticate, Secured]
         [Rock.SystemGuid.RestActionGuid( "50B248D7-C52A-4698-B4AF-C9DE305394EC" )]
         public IHttpActionResult PostEntitySetFromGuid( [FromBody] List<Guid> entityItemGuids, Guid entityTypeGuid )
         {
             var entityType = EntityTypeCache.Get( entityTypeGuid );
 
-            if( entityType == null )
+            if ( entityType == null )
             {
-                return BadRequest("Invalid EntityType.");
+                return BadRequest( "Invalid EntityType." );
             }
 
-            using( var rockContext = new RockContext() )
+            using ( var rockContext = new RockContext() )
             {
                 // Dynamically get the IService for the entity type and
                 // then get a queryable to load them.
@@ -60,7 +60,7 @@ namespace Rock.Rest.Controllers
                 // Must not really be an IEntity type...
                 if ( asQueryableMethod == null )
                 {
-                    return BadRequest("Unsupported EntityType.");
+                    return BadRequest( "Unsupported EntityType." );
                 }
 
                 var entityQry = ( IQueryable<IEntity> ) asQueryableMethod?.Invoke( entityService, Array.Empty<object>() );
@@ -102,7 +102,7 @@ namespace Rock.Rest.Controllers
         /// <returns>System.Web.Http.IHttpActionResult.</returns>
         [System.Web.Http.Route( "api/EntitySets/CreateFromItems/{entityTypeId:int}" )]
         [HttpPost]
-        [Authenticate]
+        [Authenticate, Secured]
         [Rock.SystemGuid.RestActionGuid( "32374DFE-6478-41A5-AE7D-43DD58DC6176" )]
         public IHttpActionResult PostEntitySetFromInt( [FromBody] List<int> entityItemIds, int entityTypeId )
         {
