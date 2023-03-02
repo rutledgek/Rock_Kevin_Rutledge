@@ -1,0 +1,25 @@
+<template>
+    <div class="d-flex flex-wrap mt-3" style="gap: 16px">
+        <template v-for="attendee in items" :key="attendee.personGuid">
+            <CardCheckBox v-if="attendee.itemTemplate" v-model="attendee.hasAttended" :html="attendee.itemTemplate" />
+            <CardCheckBox v-else v-model="attendee.hasAttended">
+                <div style="width: 350px">
+                    {{ attendee.fullName }}
+                </div>
+            </CardCheckBox>
+        </template>
+    </div>
+</template>
+
+<script setup lang="ts">
+    import { PropType } from "vue";
+    import CardCheckBox from "./cardCheckBox.partial.obs";
+    import { GroupAttendanceDetailRosterAttendeeBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailRosterAttendeeBag";
+
+    const props = defineProps({
+        items: {
+            type: Object as PropType<GroupAttendanceDetailRosterAttendeeBag[]>,
+            required: true
+        }
+    });
+</script>

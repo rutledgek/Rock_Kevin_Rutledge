@@ -1,0 +1,42 @@
+<template>
+    <template v-for="(attendees, lastNameInitial, index) in groupedAttendees" :key="lastNameInitial">
+        <hr v-if="index !== 0" />
+        <h2>{{ lastNameInitial }}</h2>
+        <AttendanceRoster :items="attendees" />
+    </template>
+</template>
+
+<style scoped>
+    hr {
+        border-top-width: 5px;
+    }
+</style>
+
+<script setup lang="ts">
+    import { computed, PropType } from "vue";
+    import AttendanceRoster from "./attendanceRoster.partial.obs";
+    import { GroupAttendanceDetailRosterAttendeeBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailRosterAttendeeBag";
+
+    const props = defineProps({
+        items: {
+            type: Object as PropType<GroupAttendanceDetailRosterAttendeeBag[]>,
+            required: true
+        }
+    });
+
+    const groupedAttendees = computed<Record<string, GroupAttendanceDetailRosterAttendeeBag[]>>(() => {
+        const dictionary: Record<string, GroupAttendanceDetailRosterAttendeeBag[]> = {};
+
+        props.items.forEach((attendee) => {
+            const lastNameInitial = attendee.lastName?.charAt(0) || "?";
+            if (!dictionary[lastNameInitial]) {
+                dictionary[lastNameInitial] = [attendee];
+            }
+            else {
+                dictionary[lastNameInitial].push(attendee);
+            }
+        });
+
+        return dictionary;
+    });
+</script>
