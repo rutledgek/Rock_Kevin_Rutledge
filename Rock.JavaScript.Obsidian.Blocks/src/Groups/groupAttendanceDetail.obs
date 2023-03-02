@@ -31,145 +31,153 @@
             <template #default>
                 <Alert v-if="errorMessage" alertType="danger">{{ errorMessage }}</Alert>
 
-                <div class="container">
-                    <div class="row">
-                        <div class="col-sm-4">
-                            <DatePicker
-                                v-if="config.attendanceOccurrenceDateSelectionMode === GroupAttendanceDetailDateSelectionMode.DatePicker"
-                                v-model="attendanceForDate"
-                                :displayCurrentOption="false"
-                                :isCurrentDateOffset="false"
-                                :disableForceParse="false"
-                                :disableShowOnFocus="false"
-                                :disableHighlightToday="false"
-                                :disallowFutureDateSelection="config.isFutureOccurrenceDateSelectionRestricted"
-                                :disallowPastDateSelection="false"
-                                label="Attendance For"
-                            />
-                            <div v-else-if="config.attendanceOccurrenceDateSelectionMode === GroupAttendanceDetailDateSelectionMode.Specific">
-                                <RockLabel>Attendance For</RockLabel>
-                                <div>{{ attendanceForDate }}</div>
-                            </div>
-                            <!--
-                                if (attendanceDateSelectionMode === AttendanceForMode.PickFromSchedule
-                                    ||
+                <div class="row">
+                    <div class="col-sm-4">
+                        <DatePicker
+                            v-if="config.attendanceOccurrenceDateSelectionMode === GroupAttendanceDetailDateSelectionMode.DatePicker"
+                            v-model="attendanceForDate"
+                            :displayCurrentOption="false"
+                            :isCurrentDateOffset="false"
+                            :disableForceParse="false"
+                            :disableShowOnFocus="false"
+                            :disableHighlightToday="false"
+                            :disallowFutureDateSelection="config.isFutureOccurrenceDateSelectionRestricted"
+                            :disallowPastDateSelection="false"
+                            label="Attendance For"
+                        />
+                        <div v-else-if="config.attendanceOccurrenceDateSelectionMode === GroupAttendanceDetailDateSelectionMode.Specific">
+                            <RockLabel>Attendance For</RockLabel>
+                            <div>{{ attendanceForDate }}</div>
+                        </div>
+                        <!--
+                            if (attendanceDateSelectionMode === AttendanceForMode.PickFromSchedule
+                                ||
+                                (
+                                    groupLocationConfigHasSchedule
+                                    &&
                                     (
-                                        groupLocationConfigHasSchedule
-                                        &&
-                                        (
-                                            attendanceDateSelectionMode === AttendanceForMode.CurrentDate
-                                            ||
-                                            location.queryString["date"]
-                                        )
-                                    )) {
-                                    //  then present the schedule options that match the block setting constraints.
-                                }
-                            -->
-                            <AttendanceOccurrencePicker
-                                v-else-if="config.attendanceOccurrenceDateSelectionMode === GroupAttendanceDetailDateSelectionMode.ScheduledDatePicker"
-                                Label="Attendance For"
-                                rules="required" />
-                        </div>
+                                        attendanceDateSelectionMode === AttendanceForMode.CurrentDate
+                                        ||
+                                        location.queryString["date"]
+                                    )
+                                )) {
+                                //  then present the schedule options that match the block setting constraints.
+                            }
+                        -->
+                        <AttendanceOccurrencePicker
+                            v-else-if="config.attendanceOccurrenceDateSelectionMode === GroupAttendanceDetailDateSelectionMode.ScheduledDatePicker"
+                            Label="Attendance For"
+                            rules="required" />
+                    </div>
 
-                        <div class="col-sm-4">
-                            <GroupLocationPicker
-                                v-if="config.locationSelectionMode === GroupAttendanceDetailLocationSelectionMode.GroupLocationPicker"
-                                :groupGuid="config.groupGuid"
-                                label="Location"
-                                :showBlankItem="true"
-                                @update:modelValue="onGroupLocationPickerChanged" />
-                            <div v-else-if="config.locationSelectionMode === GroupAttendanceDetailLocationSelectionMode.Specific">
-                                <RockLabel>Location</RockLabel>
-                                <div>{{ config.locationLabel }}</div>
-                            </div>
-                        </div>
-
-                        <div class="col-sm-4">
-                            <GroupLocationSchedulePicker
-                                v-if="config.scheduleSelectionMode === GroupAttendanceDetailScheduleSelectionMode.GroupLocationSchedulePicker"
-                                @update:modelValue="onGroupLocationSchedulePickerChanged"
-                                :groupGuid="config.groupGuid"
-                                label="Schedule"
-                                :locationGuid="locationGuid"
-                                :showBlankItem="true"
-                                />
-                            <div v-else-if="config.scheduleSelectionMode === GroupAttendanceDetailScheduleSelectionMode.Specific">
-                                <RockLabel>Schedule</RockLabel>
-                                <div>{{ config.scheduleLabel }}</div>
-                            </div>
+                    <div class="col-sm-4">
+                        <GroupLocationPicker
+                            v-if="config.locationSelectionMode === GroupAttendanceDetailLocationSelectionMode.GroupLocationPicker"
+                            :groupGuid="config.groupGuid"
+                            label="Location"
+                            :showBlankItem="true"
+                            @update:modelValue="onGroupLocationPickerChanged" />
+                        <div v-else-if="config.locationSelectionMode === GroupAttendanceDetailLocationSelectionMode.Specific">
+                            <RockLabel>Location</RockLabel>
+                            <div>{{ config.locationLabel }}</div>
                         </div>
                     </div>
 
-                    <div class="row">
-                        <div class="col-sm-3">
-                            <InlineCheckBox
-                                v-model="didNotMeet"
-                                label="We Did Not Meet" />
-                        </div>
-
-                        <div class="col-sm-3">
-                            <RadioButtonList
-                                v-if="config.attendanceOccurrenceTypes && config.isAttendanceOccurrenceTypesSectionShown"
-                                v-model="attendanceOccurrenceType"
-                                :label="config.attendanceOccurrenceTypesSectionLabel"
-                                :horizontal="true"
-                                :items="config.attendanceOccurrenceTypes" />
-                        </div>
-
-                        <div class="col-sm-3">
-                            <PersonPicker @update:modelValue="onAddPerson($event)"></PersonPicker>
-                        </div>
-
-                        <div class="col-sm-3">
-                            <RockButton v-if="config.addGroupMemberPageUrl" btnType="default" @click="onAddGroupMemberClicked"><i class="fa fa-plus"></i> Add Group Member</RockButton>
+                    <div class="col-sm-4">
+                        <GroupLocationSchedulePicker
+                            v-if="config.scheduleSelectionMode === GroupAttendanceDetailScheduleSelectionMode.GroupLocationSchedulePicker"
+                            @update:modelValue="onGroupLocationSchedulePickerChanged"
+                            :groupGuid="config.groupGuid"
+                            label="Schedule"
+                            :locationGuid="locationGuid"
+                            :showBlankItem="true"
+                            />
+                        <div v-else-if="config.scheduleSelectionMode === GroupAttendanceDetailScheduleSelectionMode.Specific">
+                            <RockLabel>Schedule</RockLabel>
+                            <div>{{ config.scheduleLabel }}</div>
                         </div>
                     </div>
-
-                    <div class="row">
-                        <div class="col-md-12">
-                            <TransitionVerticalCollapse speed="fast">
-                                <div v-show="!didNotMeet">
-                                    <RosterFilterPicker
-                                        v-model="rosterFilter"
-                                        :lastNameInitials="rosterLastNameInitials"
-                                        :hasAttendedCount="attendedPeople.length">
-                                    </RosterFilterPicker>
-
-                                    <div class="d-flex flex-wrap mt-3" style="gap: 16px">
-                                        <template v-for="attendee in filteredAndSortedRoster" :key="attendee.personGuid">
-                                            <CardCheckBox v-if="attendee.itemTemplate" v-model="attendee.hasAttended" :html="attendee.itemTemplate" />
-                                            <CardCheckBox v-else v-model="attendee.hasAttended">
-                                                <div style="width: 350px">
-                                                    {{ attendee.fullName }}
-                                                </div>
-                                            </CardCheckBox>
-                                        </template>
-                                    </div>
-                                </div>
-                            </TransitionVerticalCollapse>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-12">
-                            <TextBox
-                                v-model="notes"
-                                label="Notes"
-                                :rows="3"
-                                textMode="multiline" />
-                        </div>
-                    </div>
-
-
-                    <Alert v-if="!isPrintingRoster && printRosterWarning" alertType="warning">{{ printRosterWarning }}</Alert>
-
-                    <div class="actions">
-                        <RockButton tooltip="Print Attendance Roster" CssClass="btn btn-default btn-sm btn-square pull-right" @click="onPrintAttendanceRosterClicked()"><i class="fa fa-print"></i></RockButton>
-                    </div>
-
-                    <RockButton @click="onSave">Save</RockButton>
-
                 </div>
+
+                <div class="row">
+                    <div class="col-sm-3">
+                        <InlineCheckBox
+                            v-model="didNotMeet"
+                            label="We Did Not Meet" />
+                    </div>
+
+                    <div class="col-sm-3">
+                        <RadioButtonList
+                            v-if="config.attendanceOccurrenceTypes && config.isAttendanceOccurrenceTypesSectionShown"
+                            v-model="attendanceOccurrenceType"
+                            :label="config.attendanceOccurrenceTypesSectionLabel"
+                            :horizontal="true"
+                            :items="config.attendanceOccurrenceTypes" />
+                    </div>
+
+                    <div class="col-sm-3">
+                        <PersonPicker @update:modelValue="onAddPerson($event)"></PersonPicker>
+                    </div>
+
+                    <div class="col-sm-3">
+                        <RockButton v-if="config.addGroupMemberPageUrl" btnType="default" @click="onAddGroupMemberClicked"><i class="fa fa-plus"></i> Add Group Member</RockButton>
+                    </div>
+                </div>
+
+                <TransitionVerticalCollapse speed="fast">
+                    <div v-show="!didNotMeet">
+                        <div class="row">
+                            <div class="col-sm-4">
+                                <TextBox v-model="searchText" placeholder="Search" />
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <RosterFilterPicker
+                                    v-model="rosterFilter"
+                                    class="mt-3"
+                                    :lastNameInitials="rosterLastNameInitials"
+                                    :hasAttendedCount="attendedPeople.length">
+                                </RosterFilterPicker>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="d-flex flex-wrap mt-3" style="gap: 16px">
+                                    <template v-for="attendee in filteredAndSortedRoster" :key="attendee.personGuid">
+                                        <CardCheckBox v-if="attendee.itemTemplate" v-model="attendee.hasAttended" :html="attendee.itemTemplate" />
+                                        <CardCheckBox v-else v-model="attendee.hasAttended">
+                                            <div style="width: 350px">
+                                                {{ attendee.fullName }}
+                                            </div>
+                                        </CardCheckBox>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </TransitionVerticalCollapse>
+
+                <div class="row">
+                    <div class="col-sm-12">
+                        <TextBox
+                            v-model="notes"
+                            label="Notes"
+                            :rows="3"
+                            textMode="multiline" />
+                    </div>
+                </div>
+
+
+                <Alert v-if="!isPrintingRoster && printRosterWarning" alertType="warning">{{ printRosterWarning }}</Alert>
+
+                <div class="actions">
+                    <RockButton tooltip="Print Attendance Roster" CssClass="btn btn-default btn-sm btn-square pull-right" @click="onPrintAttendanceRosterClicked()"><i class="fa fa-print"></i></RockButton>
+                </div>
+
+                <RockButton @click="onSave">Save</RockButton>
             </template>
         </Panel>
     </div>
@@ -235,6 +243,39 @@
         return compare(byLastName, byFirstName);
     });
 
+    const internalSearchText = ref<string>("");
+    const searchText = computed<string>({
+        get(): string {
+            return internalSearchText.value;
+        },
+        set(newValue: string) {
+            internalSearchText.value = newValue;
+        }
+    });
+    const isRegex: RegExp = /\/(.+)\/(.*)/;
+    const searchFilterOrNoFilter = computed<IRosterFilter>(() => {
+        const text = searchText.value;
+
+        if (text) {
+            const match = text.match(isRegex);
+            if (match && match.length) {
+                try {
+                    const regex = new RegExp(match[1], match[2]);
+                    if (regex) {
+                        return createFilter((attendee: GroupAttendanceDetailRosterAttendeeBag) => !!attendee.fullName && regex.test(attendee.fullName));
+                    }
+                }
+                catch {
+                    // `text` is not a valid regex string so try a simple text match.
+                }
+            }
+
+            // `text` is not a valid regex string so try a simple text match.
+            return createFilter((attendee: GroupAttendanceDetailRosterAttendeeBag) => !!attendee.fullName && attendee.fullName.toLocaleLowerCase().indexOf(text) >= 0);
+        }
+
+        return NoFilter;
+    });
     const campusGuid = ref<ListItemBag | null>(config.campusGuid ? ({ text: config.campusName, value: config.campusGuid }) : null);
     const campusFilterOrNoFilter = computed<IRosterFilter>(() => {
         if (campusGuid.value) {
@@ -256,13 +297,14 @@
         return NoFilter;
     });
     const rosterFilter = ref<IRosterFilter>(NoFilter);
-    const allRosterFilters = computed<IRosterFilter>(() => combineFilters(campusFilterOrNoFilter.value, rosterFilter.value));
+    const allRosterFilters = computed<IRosterFilter>(() => combineFilters(combineFilters(campusFilterOrNoFilter.value, searchFilterOrNoFilter.value), rosterFilter.value));
     const filteredAndSortedRoster = computed<GroupAttendanceDetailRosterAttendeeBag[]>(() => {
         return sortedRoster.value.filter(attendee => allRosterFilters.value.filter(attendee));
     });
     const sortedRoster = computed<GroupAttendanceDetailRosterAttendeeBag[]>(() => {
         return roster.value.slice().sort((attendee1, attendee2) => rosterComparer.value(attendee1, attendee2));
     });
+    const filteredCount = computed<number>(() => filteredAndSortedRoster.value.length);
 
     const notes = ref<string>(config.notes ?? "");
     const rosterLastNameInitials = computed<string[]>(() => roster.value

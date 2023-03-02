@@ -1,16 +1,18 @@
 <template>
-    <RockFormField v-bind="standardFieldProps" name="rosterFilter" :modelValue="internalValue">
-        <div class="btn-toolbar">
-            <div class="btn-group">
-                <RockButton :isSquare="true" btnSize="lg" :btnType="getFilterButtonType(NoFilter)" @click="setOrToggleFilter(NoFilter)"><i class="fa fa-th" /></RockButton>
-                <RockButton :isSquare="true" btnSize="lg" :btnType="getFilterButtonType(HasAttendedFilter)" @click="setOrToggleFilter(HasAttendedFilter)">{{ hasAttendedCount }}</RockButton>
-            </div>
+    <div class="roster-filter">
+        <RockFormField v-bind="standardFieldProps" name="rosterFilter" :modelValue="internalValue">
+            <div class="btn-toolbar">
+                <div class="btn-group">
+                    <RockButton :isSquare="true" btnSize="lg" :btnType="getFilterButtonType(NoFilter)" @click="setOrToggleFilter(NoFilter)"><i class="fa fa-th" /></RockButton>
+                    <RockButton :isSquare="true" btnSize="lg" :btnType="getFilterButtonType(HasAttendedFilter)" @click="setOrToggleFilter(HasAttendedFilter)">{{ hasAttendedCount }}</RockButton>
+                </div>
 
-            <div class="btn-group">
-                <RockButton v-for="lastNameInitial in lastNameInitials" :isSquare="true" btnSize="lg" :btnType="getFilterButtonType(getLastNameStartsWithFilter(lastNameInitial))" @click="setOrToggleFilter(getLastNameStartsWithFilter(lastNameInitial))">{{ lastNameInitial }}</RockButton>
+                <div class="btn-group">
+                    <RockButton v-for="lastNameInitial in lastNameInitials" :isSquare="true" btnSize="lg" :btnType="getFilterButtonType(getLastNameStartsWithFilter(lastNameInitial))" @click="setOrToggleFilter(getLastNameStartsWithFilter(lastNameInitial))">{{ lastNameInitial }}</RockButton>
+                </div>
             </div>
-        </div>
-    </RockFormField>
+        </RockFormField>
+    </div>
 </template>
 
 <script setup lang="ts">
