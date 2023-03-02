@@ -477,6 +477,10 @@ namespace RockWeb
             */
             scrubbedFileName = scrubbedFileName.Replace(" ", "_");
 
+            // Replace Illegal Filename Characters with an '_'
+            char[] illegalChars = { '#' };
+            scrubbedFileName = string.Join( "_", scrubbedFileName.Split( illegalChars ) );
+
             return scrubbedFileName;
         }
 
