@@ -459,7 +459,6 @@ namespace RockWeb
 
 	            Specific Use Case: Theme Editor was having issues when using uploaded files from the Image Upload control
              */
-            scrubbedFileName = scrubbedFileName.Replace( "(", "" ).Replace( ")", "" );
 
             // Scrub characters identified by .NET as invalid for file names.
             scrubbedFileName = Regex.Replace( scrubbedFileName, "[" + Regex.Escape( string.Concat( Path.GetInvalidFileNameChars() ) ) + "]", string.Empty, RegexOptions.CultureInvariant );
@@ -477,9 +476,9 @@ namespace RockWeb
             */
             scrubbedFileName = scrubbedFileName.Replace(" ", "_");
 
-            // Replace Illegal Filename Characters with an '_'
-            char[] illegalChars = { '#' };
-            scrubbedFileName = string.Join( "_", scrubbedFileName.Split( illegalChars ) );
+            // Remove Illegal Filename Characters
+            char[] illegalChars = { '#', '(', ')' };
+            scrubbedFileName = string.Concat( scrubbedFileName.Split( illegalChars ) );
 
             return scrubbedFileName;
         }
