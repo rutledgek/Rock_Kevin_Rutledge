@@ -1,0 +1,103 @@
+<template>
+    <RockFormField v-bind="standardFieldProps" name="rosterFilter" :modelValue="internalValue">
+        <div class="btn-toolbar">
+            <div class="btn-group">
+                <RockButton :isSquare="true" btnSize="lg" :btnType="getFilterButtonType(NoFilter)" @click="setOrToggleFilter(NoFilter)"><i class="fa fa-th" /></RockButton>
+                <RockButton :isSquare="true" btnSize="lg" :btnType="getFilterButtonType(HasAttendedFilter)" @click="setOrToggleFilter(HasAttendedFilter)">{{ hasAttendedCount }}</RockButton>
+            </div>
+
+            <div class="btn-group">
+                <RockButton v-for="lastNameInitial in lastNameInitials" :isSquare="true" btnSize="lg" :btnType="getFilterButtonType(getLastNameStartsWithFilter(lastNameInitial))" @click="setOrToggleFilter(getLastNameStartsWithFilter(lastNameInitial))">{{ lastNameInitial }}</RockButton>
+            </div>
+        </div>
+    </RockFormField>
+</template>
+
+<script setup lang="ts">
+    import { computed, PropType } from "vue";
+    import { IRosterFilter, NoFilter, getLastNameStartsWithFilter, HasAttendedFilter } from "./filterType";
+    import RockButton from "@Obsidian/Controls/rockButton";
+    import RockFormField from "@Obsidian/Controls/rockFormField";
+    import { BtnType } from "@Obsidian/Enums/Controls/btnType";
+    import { LiteralUnion } from "@Obsidian/Types/Utility/support";
+    import { standardRockFormFieldProps, useStandardRockFormFieldProps } from "@Obsidian/Utility/component";
+
+    const props = defineProps({
+
+        modelValue: {
+            type: Object as PropType<IRosterFilter>,
+            required: true
+        },
+
+        defaultFilter: {
+            type: Object as PropType<IRosterFilter>,
+            default: NoFilter
+        },
+
+        hasAttendedCount: {
+            type: Number as PropType<number>,
+            required: true
+        },
+
+        lastNameInitials: {
+            type: Array as PropType<string[]>,
+            required: true
+        },
+
+        unselectedBtnType: {
+            type: String as PropType<LiteralUnion<BtnType>>,
+            default: BtnType.Default
+        },
+
+        selectedBtnType: {
+            type: String as PropType<LiteralUnion<BtnType>>,
+            default: BtnType.Primary
+        },
+
+        isTogglable: {
+            type: Boolean as PropType<boolean>,
+            default: false
+        },
+
+        ...standardRockFormFieldProps
+    });
+
+    const emit = defineEmits<{
+        (e: "update:modelValue", value: IRosterFilter): void
+    }>();
+
+    const internalValue = computed<IRosterFilter>({
+        get(): IRosterFilter {
+            return props.modelValue;
+        },
+        set(newValue: IRosterFilter) {
+            emit("update:modelValue", newValue);
+        }
+    });
+
+    function getFilterButtonType(rosterFilter: IRosterFilter): LiteralUnion<BtnType> {
+        // Compare the filter functions since the `internalValue.value` is a proxy object and cannot be used for comparison.
+        return rosterFilter.filter === internalValue.value.filter ? props.selectedBtnType : props.unselectedBtnType;
+    }
+
+    function isFilterSet(rosterFilter: IRosterFilter): boolean {
+        // Compare the filter functions since the `internalValue.value` is a proxy object and cannot be used for comparison.
+        return internalValue.value.filter === rosterFilter.filter;
+    }
+
+    function setOrToggleFilter(rosterFilter: IRosterFilter): void {
+        const isFilterAlreadySet = isFilterSet(rosterFilter);
+
+        // If toggling is enabled and the same filter was selected,
+        // then switch to the default filter.
+        if (isFilterAlreadySet && props.isTogglable && !isFilterSet(props.defaultFilter)) {
+            internalValue.value = props.defaultFilter;
+        }
+        else if (!isFilterAlreadySet) {
+            internalValue.value = rosterFilter;
+        }
+    }
+
+    const standardFieldProps = useStandardRockFormFieldProps(props);
+
+</script>

@@ -16,23 +16,24 @@
         <p>{{ config.errorMessage }}</p>
     </Alert>
     <div v-if="!config.isConfigError">
-        <Panel titleIconCssClass="fa fa-check-square-o" :title="title">
+        <Panel :title="title">
             <template #headerActions>
-                <CampusPicker
-                    v-model="campusGuid"
-                    blankValue="All Campuses"
-                    :includeInactive="true"
-                    :multiple="false"
-                    :showBlankItem="true" />
+                <div class="mr-2">
+                    <CampusPicker
+                        v-model="campusGuid"
+                        blankValue="All Campuses"
+                        :includeInactive="true"
+                        :multiple="false"
+                        :showBlankItem="true" />
+                </div>
             </template>
 
             <template #default>
                 <Alert v-if="errorMessage" alertType="danger">{{ errorMessage }}</Alert>
 
-                <div id="pnlDetails">
-
+                <div class="container">
                     <div class="row">
-                        <div class="col-sm-3">
+                        <div class="col-sm-4">
                             <DatePicker
                                 v-if="config.attendanceOccurrenceDateSelectionMode === GroupAttendanceDetailDateSelectionMode.DatePicker"
                                 v-model="attendanceForDate"
@@ -69,7 +70,8 @@
                                 Label="Attendance For"
                                 rules="required" />
                         </div>
-                        <div class="col-sm-3">
+
+                        <div class="col-sm-4">
                             <GroupLocationPicker
                                 v-if="config.locationSelectionMode === GroupAttendanceDetailLocationSelectionMode.GroupLocationPicker"
                                 :groupGuid="config.groupGuid"
@@ -81,7 +83,8 @@
                                 <div>{{ config.locationLabel }}</div>
                             </div>
                         </div>
-                        <div class="col-sm-3">
+
+                        <div class="col-sm-4">
                             <GroupLocationSchedulePicker
                                 v-if="config.scheduleSelectionMode === GroupAttendanceDetailScheduleSelectionMode.GroupLocationSchedulePicker"
                                 @update:modelValue="onGroupLocationSchedulePickerChanged"
@@ -95,16 +98,16 @@
                                 <div>{{ config.scheduleLabel }}</div>
                             </div>
                         </div>
-                        <div class="col-sm-3">
-                            <template v-if="attendedPeople.length > 0">
-                                <RockLabel>Attendance Count</RockLabel>
-                                <div>{{ attendedPeople.length }}</div>
-                            </template>
-                        </div>
                     </div>
 
                     <div class="row">
-                        <div class="col-sm-12">
+                        <div class="col-sm-3">
+                            <InlineCheckBox
+                                v-model="didNotMeet"
+                                label="We Did Not Meet" />
+                        </div>
+
+                        <div class="col-sm-3">
                             <RadioButtonList
                                 v-if="config.attendanceOccurrenceTypes && config.isAttendanceOccurrenceTypesSectionShown"
                                 v-model="attendanceOccurrenceType"
@@ -112,58 +115,40 @@
                                 :horizontal="true"
                                 :items="config.attendanceOccurrenceTypes" />
                         </div>
-                        <div class="col-sm-12">
-                            <InlineCheckBox
-                                v-model="didNotMeet"
-                                label="We Did Not Meet" />
+
+                        <div class="col-sm-3">
+                            <PersonPicker @update:modelValue="onAddPerson($event)"></PersonPicker>
                         </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <TransitionVerticalCollapse speed="fast">
-                                <div v-show="!didNotMeet" class="js-roster">
-                                    <div class="panel-labels clearfix">
-                                        <h4 class="js-members-label cursor-pointer" @click="onSelectAllMembers()">
-                                            {{ config.groupMembersSectionLabel }}
-                                        </h4>
-                                        <ButtonGroup
-                                            v-if="config.isMemberSortingHidden"
-                                            v-model="sortBy"
-                                            label="Sort by"
-                                            :items="[{ text: 'First Name', value: SortType.FirstNameFirst }, { text: 'Last Name', value: SortType.LastNameFirst }]" />
-                                    </div>
-                                    <CheckBoxList
-                                        v-if="config.roster"
-                                        v-model="internalAttendeeStringIds"
-                                        :items="rosterCheckBoxItems" />
-                                    <div class="pull-left margin-b-md margin-r-md">
-                                        <PersonPicker @update:modelValue="onAddPerson($event)"></PersonPicker>
-                                    </div>
-                                    <div class="pull-left margin-b-lg">
-                                        <RockButton v-if="config.addGroupMemberPageUrl" btnType="default" @click="onAddGroupMemberClicked"><i class="fa fa-plus"></i> Add Group Member</RockButton>
-                                    </div>
-                                </div>
-                            </TransitionVerticalCollapse>
+
+                        <div class="col-sm-3">
+                            <RockButton v-if="config.addGroupMemberPageUrl" btnType="default" @click="onAddGroupMemberClicked"><i class="fa fa-plus"></i> Add Group Member</RockButton>
                         </div>
                     </div>
 
                     <div class="row">
                         <div class="col-md-12">
                             <TransitionVerticalCollapse speed="fast">
-                                <div v-show="!didNotMeet" class="d-flex flex-wrap" style="gap: 16px">
-                                    <template v-for="attendee in filteredAndSortedRoster">
-                                        <CardCheckBox v-if="attendee.itemTemplate" v-model="attendee.hasAttended" :html="attendee.itemTemplate" />
-                                        <CardCheckBox v-else v-model="attendee.hasAttended">
-                                            <div style="width: 350px">
-                                                {{ attendee.fullName }}
-                                            </div>
-                                        </CardCheckBox>
-                                    </template>
+                                <div v-show="!didNotMeet">
+                                    <RosterFilterPicker
+                                        v-model="rosterFilter"
+                                        :lastNameInitials="rosterLastNameInitials"
+                                        :hasAttendedCount="attendedPeople.length">
+                                    </RosterFilterPicker>
+
+                                    <div class="d-flex flex-wrap mt-3" style="gap: 16px">
+                                        <template v-for="attendee in filteredAndSortedRoster" :key="attendee.personGuid">
+                                            <CardCheckBox v-if="attendee.itemTemplate" v-model="attendee.hasAttended" :html="attendee.itemTemplate" />
+                                            <CardCheckBox v-else v-model="attendee.hasAttended">
+                                                <div style="width: 350px">
+                                                    {{ attendee.fullName }}
+                                                </div>
+                                            </CardCheckBox>
+                                        </template>
+                                    </div>
                                 </div>
                             </TransitionVerticalCollapse>
                         </div>
                     </div>
-
 
                     <div class="row">
                         <div class="col-md-12">
@@ -197,10 +182,9 @@
     import GroupLocationPicker from "./GroupAttendanceDetail/groupLocationPicker.partial.obs";
     import GroupLocationSchedulePicker from "./GroupAttendanceDetail/groupLocationSchedulePicker.partial.obs";
     import { SortType } from "./GroupAttendanceDetail/sortType";
+    import RosterFilterPicker from "./GroupAttendanceDetail/rosterFilter.partial.obs";
     import Alert from "@Obsidian/Controls/alert.obs";
-    import ButtonGroup from "@Obsidian/Controls/buttonGroup.obs";
     import CampusPicker from "@Obsidian/Controls/campusPicker.obs";
-    import CheckBoxList from "@Obsidian/Controls/checkBoxList";
     import DatePicker from "@Obsidian/Controls/datePicker.obs";
     import InlineCheckBox from "@Obsidian/Controls/inlineCheckBox";
     import Panel from "@Obsidian/Controls/panel";
@@ -222,6 +206,7 @@
     import { GroupAttendanceDetailSaveAttendanceOccurrenceRequestBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailSaveAttendanceOccurrenceRequestBag";
     import { GroupAttendanceDetailSaveAttendanceOccurrenceResponseBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailSaveAttendanceOccurrenceResponseBag";
     import { ListItemBag } from "@Obsidian/ViewModels/Utility/listItemBag";
+    import { createFilter, getCombinationFilter as combineFilters, IRosterFilter, NoFilter } from "./GroupAttendanceDetail/filterType";
 
     // TODO JMH This config should contain the group GUID for use in the specific group controls.
     const config = useConfigurationValues<GroupAttendanceDetailInitializationBox>();
@@ -243,58 +228,49 @@
     const didNotMeet = ref<boolean>(config.isDidNotMeetChecked);
     const attendedPeople = computed<GroupAttendanceDetailRosterAttendeeBag[]>(() => roster.value.filter(m => m.personGuid && m.hasAttended) ?? []);
     const sortBy = ref<SortType>(config.areMembersSortedByFirstName ? SortType.FirstNameFirst : SortType.LastNameFirst);
-    const internalAttendeeStringIds = computed<string[]>({
-        get(): string[] {
-            return attendedPeople.value.map(r => r.personGuid!) ?? [];
-        },
-        set(newValue: string[]) {
-            const oldValue = attendedPeople.value.map(r => r.personGuid!) ?? [];
-
-            const membersToMarkAsUnattended = oldValue.filter(m => !newValue.includes(m));
-            const membersToMarkAsAttended = newValue.filter(m => !oldValue.includes(m));
-
-            if (membersToMarkAsAttended.length || membersToMarkAsUnattended.length) {
-                roster.value.forEach(r => {
-                    if (membersToMarkAsUnattended.includes(r.personGuid!)) {
-                        r.hasAttended = false;
-                    }
-                    else if (membersToMarkAsAttended.includes(r.personGuid!)) {
-                        r.hasAttended = true;
-                    }
-                });
-
-                console.log("Update attended and unattended", membersToMarkAsAttended, membersToMarkAsUnattended);
-            }
-        }
-    });
     const rosterComparer = computed<RosterComparer>(() => {
         if (sortBy.value === SortType.FirstNameFirst) {
             return compare(byFirstName, byLastName);
         }
         return compare(byLastName, byFirstName);
     });
-    const rosterFilterPredicate = computed<RosterFilterPredicate>(() => {
-        if (campusGuid.value) {
-            return (member) => {
-                if (member.campusGuid && campusGuid.value?.value) {
-                    return member.campusGuid == campusGuid.value?.value;
-                }
-                return false;
-            };
-        }
-        return _ => true;
-    });
-    const filteredAndSortedRoster = computed<GroupAttendanceDetailRosterAttendeeBag[]>(() => roster.value
-        .filter(rosterFilterPredicate.value)
-        .sort(rosterComparer.value));
-    const rosterCheckBoxItems = computed<ListItemBag[]>(() =>
-        filteredAndSortedRoster.value
-            .map(r => ({
-                text: r.fullName,
-                value: r.personGuid
-            })) ?? []);
-    const notes = ref<string>(config.notes ?? "");
+
     const campusGuid = ref<ListItemBag | null>(config.campusGuid ? ({ text: config.campusName, value: config.campusGuid }) : null);
+    const campusFilterOrNoFilter = computed<IRosterFilter>(() => {
+        if (campusGuid.value) {
+            return createFilter((attendee) => {
+                // Return `true` if for some reason the campus guid is cleared by the time this runs.
+                const guid = campusGuid.value?.value;
+                if (!guid) {
+                    return true;
+                }
+
+                if (!attendee.campusGuid) {
+                    return false;
+                }
+
+                return attendee.campusGuid === guid;
+            });
+        }
+
+        return NoFilter;
+    });
+    const rosterFilter = ref<IRosterFilter>(NoFilter);
+    const allRosterFilters = computed<IRosterFilter>(() => combineFilters(campusFilterOrNoFilter.value, rosterFilter.value));
+    const filteredAndSortedRoster = computed<GroupAttendanceDetailRosterAttendeeBag[]>(() => {
+        return sortedRoster.value.filter(attendee => allRosterFilters.value.filter(attendee));
+    });
+    const sortedRoster = computed<GroupAttendanceDetailRosterAttendeeBag[]>(() => {
+        return roster.value.slice().sort((attendee1, attendee2) => rosterComparer.value(attendee1, attendee2));
+    });
+
+    const notes = ref<string>(config.notes ?? "");
+    const rosterLastNameInitials = computed<string[]>(() => roster.value
+        .filter(a => !!a.lastName)
+        .map(a => a.lastName!.charAt(0).toLocaleUpperCase())
+        // Remove duplicates.
+        .filter((item, index, arr) => arr.indexOf(item) === index)
+        .sort());
 
     //#region Event Handlers
 
@@ -318,11 +294,6 @@
 
     function onPrintAttendanceRosterClicked(): Promise<void> {
         return printAttendanceRoster();
-    }
-
-    function onSelectAllMembers(): void {
-        let hasAttended = roster.value.some(r => !r.hasAttended);
-        roster.value = roster.value.map(r => ({...r, hasAttended }) as GroupAttendanceDetailRosterAttendeeBag);
     }
 
     async function onSave(): Promise<void> {
@@ -355,7 +326,6 @@
 
     //#region Functions
 
-    type RosterFilterPredicate = (rosterMember: GroupAttendanceDetailRosterAttendeeBag) => boolean;
     type RosterComparer = (m1: GroupAttendanceDetailRosterAttendeeBag, m2: GroupAttendanceDetailRosterAttendeeBag) => number;
 
     function compare(comparer: RosterComparer, thenBy?: RosterComparer): RosterComparer {
