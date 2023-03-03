@@ -81,6 +81,7 @@ namespace Rock.Blocks.Types.Mobile.Groups
         Description = "If enabled then the 'Include Inactive' filter option will be shown.",
         IsRequired = false,
         Key = AttributeKeys.ShowInactiveMembersFilter,
+        Category = "filter",
         DefaultBooleanValue = false,
         Order = 4 )]
 
@@ -88,6 +89,7 @@ namespace Rock.Blocks.Types.Mobile.Groups
         Description = "If enabled then the 'Group Type Role' filter option will be shown.",
         IsRequired = false,
         Key = AttributeKeys.ShowGroupRoleTypeFilter,
+        Category = "filter",
         DefaultBooleanValue = false,
         Order = 5 )]
 
@@ -95,6 +97,7 @@ namespace Rock.Blocks.Types.Mobile.Groups
         Description = "If enabled then the 'Group Role' filter option will be shown.",
         IsRequired = false,
         DefaultBooleanValue = true,
+        Category = "filter",
         Key = AttributeKeys.ShowGroupRoleFilter,
         Order = 6 )]
 
@@ -102,6 +105,7 @@ namespace Rock.Blocks.Types.Mobile.Groups
         Description = "If enabled then the 'Gender' filter option will be shown.",
         IsRequired = false,
         DefaultBooleanValue = false,
+        Category = "filter",
         Key = AttributeKeys.ShowGenderFilter,
         Order = 7 )]
 
@@ -109,6 +113,7 @@ namespace Rock.Blocks.Types.Mobile.Groups
         Description = "If enabled then the 'Child Groups' filter option will be shown.",
         IsRequired = false,
         DefaultBooleanValue = false,
+        Category = "filter",
         Key = AttributeKeys.ShowChildGroupsFilter,
         Order = 8 )]
 
@@ -117,6 +122,7 @@ namespace Rock.Blocks.Types.Mobile.Groups
         IsRequired = false,
         DefaultBooleanValue = false,
         Key = AttributeKeys.ShowAttendanceFilter,
+        Category = "filter",
         Order = 9 )]
 
     [IntegerField( "Attendance Filter Short Week Range",
@@ -124,6 +130,7 @@ namespace Rock.Blocks.Types.Mobile.Groups
         IsRequired = false,
         DefaultIntegerValue = 3,
         Key = AttributeKeys.AttendanceFilterShortWeekRange,
+        Category = "filter",
         Order = 10 )]
 
     [IntegerField( "Attendance Filter Long Week Range",
@@ -131,6 +138,7 @@ namespace Rock.Blocks.Types.Mobile.Groups
         IsRequired = false,
         DefaultIntegerValue = 12,
         Key = AttributeKeys.AttendanceFilterLongWeekRange,
+        Category = "filter",
         Order = 11 )]
 
     #endregion
