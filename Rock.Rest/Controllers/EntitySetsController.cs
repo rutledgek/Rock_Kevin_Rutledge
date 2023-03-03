@@ -22,6 +22,7 @@ using Rock.Rest.Filters;
 using Rock.Web.Cache;
 using System.Linq;
 using System.Data.Entity;
+using Rock.Model;
 
 namespace Rock.Rest.Controllers
 {
@@ -42,55 +43,15 @@ namespace Rock.Rest.Controllers
         [Rock.SystemGuid.RestActionGuid( "50B248D7-C52A-4698-B4AF-C9DE305394EC" )]
         public IHttpActionResult PostEntitySetFromGuid( [FromBody] List<Guid> entityItemGuids, Guid entityTypeGuid )
         {
-            var entityType = EntityTypeCache.Get( entityTypeGuid );
-
-            if ( entityType == null )
-            {
-                return BadRequest( "Invalid EntityType." );
-            }
-
             using ( var rockContext = new RockContext() )
             {
-                // Dynamically get the IService for the entity type and
-                // then get a queryable to load them.
-                var entityService = Rock.Reflection.GetServiceForEntityType( entityType.GetEntityType(), rockContext );
-                var asQueryableMethod = entityService?.GetType()
-                    .GetMethod( "Queryable", Array.Empty<Type>() );
-
-                // Must not really be an IEntity type...
-                if ( asQueryableMethod == null )
-                {
-                    return BadRequest( "Unsupported EntityType." );
-                }
-
-                var entityQry = ( IQueryable<IEntity> ) asQueryableMethod?.Invoke( entityService, Array.Empty<object>() );
-
-                var entityIds = new List<int>();
-                while ( entityItemGuids.Any() )
-                {
-                    // Work with at most 1,000 records at a time since it
-                    // translates to an IN query which doesn't perform well
-                    // on large sets.
-                    var guidsToProcess = entityItemGuids.Take( 1_000 ).ToList();
-                    entityItemGuids = entityItemGuids.Skip( 1_000 ).ToList();
-
-                    // Load all entities from the Guids.
-                    var ids = entityQry
-                        .AsNoTracking()
-                        .Where( e => guidsToProcess.Contains( e.Guid ) )
-                        .Select( e => e.Id )
-                        .ToList();
-
-                    entityIds.AddRange( ids );
-                }
-
-                var entitySetId = CreateEntitySet( entityIds, entityType.Id );
-                if ( !entitySetId.HasValue )
+                var entitySetGuid = EntitySetService.CreateEntitySetFromItems( entityItemGuids, entityTypeGuid, rockContext );
+                if ( !entitySetGuid.HasValue )
                 {
                     return InternalServerError();
                 }
 
-                return Ok( entitySetId.Value.Guid );
+                return Ok( entitySetGuid.Value );
             }
         }
 
@@ -106,61 +67,16 @@ namespace Rock.Rest.Controllers
         [Rock.SystemGuid.RestActionGuid( "32374DFE-6478-41A5-AE7D-43DD58DC6176" )]
         public IHttpActionResult PostEntitySetFromInt( [FromBody] List<int> entityItemIds, int entityTypeId )
         {
-            var entitySetId = CreateEntitySet( entityItemIds, entityTypeId );
-            if ( !entitySetId.HasValue )
+            using ( var rockContext = new RockContext() )
             {
-                return InternalServerError();
-            }
-
-            return Ok( entitySetId.Value.Id );
-        }
-
-        /// <summary>
-        /// Creates the entity set.
-        /// </summary>
-        /// <param name="entityItemIds">The entity item ids.</param>
-        /// <param name="entityTypeId">The entity type identifier.</param>
-        /// <param name="rockContext">The rock context.</param>
-        /// <returns>System.Int32.</returns>
-        private static (int Id, Guid Guid)? CreateEntitySet( List<int> entityItemIds, int entityTypeId, RockContext rockContext = null )
-        {
-            rockContext = rockContext ?? new RockContext();
-
-            var entitySet = new Rock.Model.EntitySet();
-            entitySet.EntityTypeId = entityTypeId;
-            entitySet.ExpireDateTime = RockDateTime.Now.AddMinutes( 5 );
-            List<Rock.Model.EntitySetItem> entitySetItems = new List<Rock.Model.EntitySetItem>();
-
-            foreach ( var entityItemId in entityItemIds )
-            {
-                try
+                var entitySetId = EntitySetService.CreateEntitySetFromItems( entityItemIds, entityTypeId, rockContext );
+                if ( !entitySetId.HasValue )
                 {
-                    var item = new Rock.Model.EntitySetItem();
-                    item.EntityId = ( int ) entityItemId;
-                    entitySetItems.Add( item );
+                    return InternalServerError();
                 }
-                catch
-                {
-                    // ignore
-                }
+
+                return Ok( entitySetId.Value );
             }
-
-            if ( entitySetItems.Any() )
-            {
-                var service = new Rock.Model.EntitySetService( rockContext );
-                service.Add( entitySet );
-                rockContext.SaveChanges();
-                entitySetItems.ForEach( a =>
-                {
-                    a.EntitySetId = entitySet.Id;
-                } );
-
-                rockContext.BulkInsert( entitySetItems );
-
-                return (entitySet.Id, entitySet.Guid);
-            }
-
-            return null;
         }
     }
 }
