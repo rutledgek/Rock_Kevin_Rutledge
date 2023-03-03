@@ -987,7 +987,9 @@ namespace Rock.Model
         }
 
         /// <summary>
-        /// Wheres the members with no attendance for number of weeks.
+        /// Takes an existing queryable of group members, and filters
+        /// the data to where the member has not had an attendance within
+        /// x number of weeks.
         /// </summary>
         /// <param name="members">The members.</param>
         /// <param name="amtOfWeeks">The amt of weeks.</param>
@@ -1009,7 +1011,9 @@ namespace Rock.Model
         }
 
         /// <summary>
-        /// Gets the members who first attended within a number of weeks.
+        /// Takes an existing queryable of group members, and filters
+        /// the data to where the member has had their first attendance within
+        /// x number of weeks.
         /// </summary>
         /// <param name="members">The members.</param>
         /// <param name="amtOfWeeks">The amt of weeks.</param>
@@ -1023,18 +1027,20 @@ namespace Rock.Model
             var attendanceOccurenceService = new AttendanceService( rockContext );
             var limitDate = RockDateTime.Now.AddDays( amtOfWeeks * -7 );
 
-            // Pull the attendance occurrences for this group.
+            // Pull all of the previous attendances for this member (basically, all of the attendances BEFORE the amount of weeks
+            // we're filtering out).
             var previousAttendancesPersonIds = attendanceOccurenceService
                 .Queryable()
                 .Where( x => x.Occurrence.OccurrenceDate < limitDate && x.DidAttend == true )
                 .Select( a => a.PersonAlias.PersonId );
 
-            // Pull the attendance occurrences for this group.
+            // Pull all of our attendances within our cut-off.
             var attendedPersonIds = attendanceOccurenceService
                 .Queryable()
                 .Where( x => x.Occurrence.OccurrenceDate >= limitDate && x.DidAttend == true )
                 .Select( a => a.PersonAlias.PersonId );
 
+            // Filter the data to where the group member has no previous attendance, but has an attendance within x number of weeks.
             return members.Where( m => !previousAttendancesPersonIds.Contains( m.PersonId ) && attendedPersonIds.Contains( m.PersonId ) );
         }
 

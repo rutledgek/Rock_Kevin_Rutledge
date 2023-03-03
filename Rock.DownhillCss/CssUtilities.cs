@@ -1972,10 +1972,16 @@ formfield .required-indicator {
 
 /* Recipient View */
 .recipient-container {
-    height: 70;
-    background-color: white;
     padding: 8, 0;
     -xf-spacing: 8;
+}
+
+.recipient-name-and-communication {
+    -xf-spacing: 0;
+}
+
+.recipients-layout {
+    -xf-spacing: 0;
 }
 
 .block-communication-entry .recipients-icon {
