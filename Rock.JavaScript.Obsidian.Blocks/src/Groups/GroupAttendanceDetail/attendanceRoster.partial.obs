@@ -1,6 +1,6 @@
 <template>
     <div class="d-flex flex-wrap mt-3" style="gap: 16px">
-        <template v-for="attendee in items" :key="attendee.personGuid">
+        <template v-for="attendee in attendees" :key="attendee.personGuid">
             <CardCheckBox v-if="attendee.itemTemplate" v-model="attendee.hasAttended" :html="attendee.itemTemplate" />
             <CardCheckBox v-else v-model="attendee.hasAttended">
                 <div style="width: 350px">
@@ -17,7 +17,7 @@
     import { GroupAttendanceDetailRosterAttendeeBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailRosterAttendeeBag";
 
     const props = defineProps({
-        items: {
+        attendees: {
             type: Object as PropType<GroupAttendanceDetailRosterAttendeeBag[]>,
             required: true
         }

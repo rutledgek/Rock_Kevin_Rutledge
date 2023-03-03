@@ -70,6 +70,21 @@ export function createLastNameStartsWithFilter(lastNameInitial: string): IRoster
     return lastNameStartsWithFilter;
 }
 
+const firstNameStartsWithFilters: Record<string, IRosterFilter> = {};
+
+export function createFirstNameStartsWithFilter(firstNameInitial: string): IRosterFilter {
+    let firstNameStartsWithFilter = firstNameStartsWithFilters[firstNameInitial];
+
+    if (firstNameStartsWithFilter) {
+        return firstNameStartsWithFilter;
+    }
+
+    firstNameStartsWithFilter = createFilter(attendee => attendee.nickName?.startsWith(firstNameInitial) === true);
+    firstNameStartsWithFilters[firstNameInitial] = firstNameStartsWithFilter;
+
+    return firstNameStartsWithFilter;
+}
+
 export function createLogicalAndFilter(rosterFilter1: IRosterFilter, rosterFilter2: IRosterFilter): IRosterFilter {
     // Return the first filter if both are the same instance.
     if (isSameFilter(rosterFilter1, rosterFilter2)) {

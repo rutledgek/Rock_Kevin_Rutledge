@@ -1,9 +1,9 @@
 <template>
-    <template v-for="(attendees, lastNameInitial, index) in groupedAttendees" :key="lastNameInitial">
+    <template v-for="(attendees, groupLabel, index) in groupedAttendees" :key="groupLabel">
         <template v-if="attendees?.length">
             <hr v-if="index !== 0" />
-            <h2>{{ lastNameInitial }}</h2>
-            <AttendanceRoster :items="attendees" />
+            <h2>{{ groupLabel }}</h2>
+            <AttendanceRoster :attendees="attendees" />
         </template>
     </template>
 </template>
@@ -17,28 +17,37 @@
 <script setup lang="ts">
     import { computed, PropType } from "vue";
     import AttendanceRoster from "./attendanceRoster.partial.obs";
+    import { AttendeeGroupLabelDelegate } from "./attendeeGroupLabelDelegate";
     import { GroupAttendanceDetailRosterAttendeeBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailRosterAttendeeBag";
 
     const props = defineProps({
-        items: {
+        attendees: {
             type: Object as PropType<GroupAttendanceDetailRosterAttendeeBag[]>,
+            required: true
+        },
+
+        attendeeGroupLabelDelegate: {
+            type: Object as PropType<AttendeeGroupLabelDelegate>,
             required: true
         }
     });
+
+    //#region Computed Values
 
     const groupedAttendees = computed<Record<string, GroupAttendanceDetailRosterAttendeeBag[]>>(() => {
         const dictionary: Record<string, GroupAttendanceDetailRosterAttendeeBag[]> = {};
 
         const keys: string[] = [];
 
-        props.items.forEach((attendee) => {
-            const lastNameInitial = attendee.lastName?.charAt(0) || "?";
-            if (!dictionary[lastNameInitial]) {
-                dictionary[lastNameInitial] = [attendee];
-                keys.push(lastNameInitial);
+        props.attendees.forEach((attendee) => {
+            const groupLabel = props.attendeeGroupLabelDelegate(attendee);
+
+            if (!dictionary[groupLabel]) {
+                dictionary[groupLabel] = [attendee];
+                keys.push(groupLabel);
             }
             else {
-                dictionary[lastNameInitial].push(attendee);
+                dictionary[groupLabel].push(attendee);
             }
         });
 
@@ -48,4 +57,6 @@
         keys.forEach(key => sortedDictionary[key] = dictionary[key]);
         return sortedDictionary;
     });
+
+    //#endregion
 </script>
