@@ -1,0 +1,61 @@
+<template>
+    <TextBox v-model="searchText" placeholder="Search" />
+</template>
+
+<script setup lang="ts">
+    import { PropType, ref, watch } from 'vue';
+    import { createFilter, IRosterFilter, NoFilter } from './filterType';
+    import TextBox from "@Obsidian/Controls/textBox";
+    import { GroupAttendanceDetailRosterAttendeeBag } from '@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailRosterAttendeeBag';
+
+    const props = defineProps({
+        modelValue: {
+            type: Object as PropType<IRosterFilter>,
+            required: true
+        }
+    });
+
+    const emit = defineEmits<{
+        (e: "update:modelValue", value: IRosterFilter): void
+    }>();
+
+    //#region Values
+
+    const isRegex: RegExp = /\/(.+)\/(.*)/;
+    const searchText = ref<string>("");
+
+    //#endregion
+
+    //#region Watchers
+
+    // Emit a new filter whenever the searchText changes. Could add a debounce to make this more efficient.
+    watch(searchText, () => {
+        let filter: IRosterFilter = NoFilter;
+        const text = searchText.value;
+
+        if (text) {
+            const match = text.match(isRegex);
+            if (match && match.length) {
+                try {
+                    const regex = new RegExp(match[1], match[2]);
+                    if (regex) {
+                        filter = createFilter((attendee: GroupAttendanceDetailRosterAttendeeBag) => {
+                            return !!attendee.fullName && regex.test(attendee.fullName);
+                        });
+                    }
+                }
+                catch {
+                    // `text` is not a valid regex string so try a simple text match.
+                }
+            }
+
+            filter = createFilter((attendee: GroupAttendanceDetailRosterAttendeeBag) => {
+                return !!attendee.fullName && attendee.fullName.toLocaleLowerCase().indexOf(text) >= 0;
+            });
+        }
+
+        return emit("update:modelValue", filter);
+    });
+
+    //#endregion
+</script>

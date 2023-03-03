@@ -16,15 +16,10 @@
         <p>{{ config.errorMessage }}</p>
     </Alert>
     <div v-if="!config.isConfigError">
-        <Panel :title="title">
+        <Panel :title="panelTitle">
             <template #headerActions>
                 <div class="mr-2">
-                    <CampusPicker
-                        v-model="campusGuid"
-                        blankValue="All Campuses"
-                        :includeInactive="true"
-                        :multiple="false"
-                        :showBlankItem="true" />
+                    <CampusFilter v-model="campusFilter" v-model:campusGuid="campusGuid" />
                 </div>
             </template>
 
@@ -128,7 +123,7 @@
                     <div v-show="!didNotMeet">
                         <div class="row">
                             <div class="col-sm-4">
-                                <TextBox v-model="searchText" placeholder="Search" />
+                                <SearchFilter v-model="searchFilter" />
                             </div>
                         </div>
 
@@ -137,7 +132,7 @@
                                 <RosterFilterPicker
                                     v-model="rosterFilter"
                                     class="mt-3"
-                                    :hasAttendedCount="attendedPeople.length"
+                                    :hasAttendedCount="didAttendAttendees.length"
                                     :initials="rosterAttendeesInitials"
                                     :isFilterByFirstNameInitial="sortBy === SortType.FirstNameFirst"
                                     :isMultiselect="true">
@@ -147,8 +142,8 @@
 
                         <div class="row">
                             <div class="col-sm-12">
-                                <AttendanceRosterGrouped v-if="filteredCount > 50" :attendees="filteredAndSortedRoster" :attendeeGroupLabelDelegate="attendeeGroupLabelDelegate" />
-                                <AttendanceRoster v-else :attendees="filteredAndSortedRoster" />
+                                <AttendanceRosterGrouped v-if="displayedRosterCount > 50" :attendees="sortedAndFilteredRoster" :attendeeGroupLabelDelegate="attendeeGroupLabelDelegate" />
+                                <AttendanceRoster v-else :attendees="sortedAndFilteredRoster" />
                             </div>
                         </div>
                     </div>
@@ -178,16 +173,17 @@
 </template>
 
 <script setup lang="ts">
-    import { computed, ref } from "vue";
+    import { computed, ref, watch } from "vue";
     import AttendanceOccurrencePicker from "./GroupAttendanceDetail/attendanceOccurrencePicker.partial.obs";
     import AttendanceRoster from "./GroupAttendanceDetail/attendanceRoster.partial.obs";
+    import CampusFilter from "./GroupAttendanceDetail/campusFilter.partial.obs";
     import AttendanceRosterGrouped from "./GroupAttendanceDetail/attendanceRosterGrouped.partial.obs";
     import GroupLocationPicker from "./GroupAttendanceDetail/groupLocationPicker.partial.obs";
     import GroupLocationSchedulePicker from "./GroupAttendanceDetail/groupLocationSchedulePicker.partial.obs";
-    import { SortType } from "./GroupAttendanceDetail/sortType";
+    import SearchFilter from "./GroupAttendanceDetail/searchFilter.partial.obs";
+    import { AttendeeComparer, byFirstName, byLastName, compare, SortType } from "./GroupAttendanceDetail/sortType";
     import RosterFilterPicker from "./GroupAttendanceDetail/rosterFilter.partial.obs";
     import Alert from "@Obsidian/Controls/alert.obs";
-    import CampusPicker from "@Obsidian/Controls/campusPicker.obs";
     import DatePicker from "@Obsidian/Controls/datePicker.obs";
     import InlineCheckBox from "@Obsidian/Controls/inlineCheckBox";
     import Panel from "@Obsidian/Controls/panel";
@@ -209,121 +205,92 @@
     import { GroupAttendanceDetailSaveAttendanceOccurrenceRequestBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailSaveAttendanceOccurrenceRequestBag";
     import { GroupAttendanceDetailSaveAttendanceOccurrenceResponseBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailSaveAttendanceOccurrenceResponseBag";
     import { ListItemBag } from "@Obsidian/ViewModels/Utility/listItemBag";
-    import { createFilter, createLogicalAndFilter as combineFilters, IRosterFilter, NoFilter } from "./GroupAttendanceDetail/filterType";
+    import { createEveryFilter as every, IRosterFilter, NoFilter } from "./GroupAttendanceDetail/filterType";
     import { AttendeeGroupLabelDelegate } from "./GroupAttendanceDetail/attendeeGroupLabelDelegate";
 
     // TODO JMH This config should contain the group GUID for use in the specific group controls.
     const config = useConfigurationValues<GroupAttendanceDetailInitializationBox>();
     const invokeBlockAction = useInvokeBlockAction();
 
+    //#region Types
+
     type NullableListItemBags = ListItemBag | ListItemBag[] | null;
 
-    const errorMessage = ref<string>("");
-    const title = computed<string>(() => config.groupName ? `${config.groupName} Attendance` : "Group Attendance");
-    const roster = ref<GroupAttendanceDetailRosterAttendeeBag[]>(config?.roster ?? []);
+    //#endregion
+
+    //#region Values
+
+    //#region Non-reactive Values
+
+    const panelTitle = config.groupName ? `${config.groupName} Attendance` : "Group Attendance";
     const dateFormat = config.attendanceOccurrenceDateSelectionMode === GroupAttendanceDetailDateSelectionMode.DatePicker ? "yyyy-MM-dd" : "MM/dd/yyyy";
+    const roster: GroupAttendanceDetailRosterAttendeeBag[] = config?.roster ?? [];
+    const sortBy = config.areAttendeesSortedByFirstName ? SortType.FirstNameFirst : SortType.LastNameFirst;
+    const attendeeComparer: AttendeeComparer =
+        sortBy === SortType.FirstNameFirst
+            ? compare(byFirstName, byLastName)
+            : compare(byLastName, byFirstName);
+    const rosterAttendeesInitials: string[] =
+        sortBy === SortType.FirstNameFirst
+            ? roster.filter(a => !!a.nickName)
+                .map(a => a.nickName!.charAt(0).toLocaleUpperCase())
+                // Remove duplicates.
+                .filter((item, index, arr) => arr.indexOf(item) === index)
+                .sort()
+            : roster.filter(a => !!a.lastName)
+                .map(a => a.lastName!.charAt(0).toLocaleUpperCase())
+                // Remove duplicates.
+                .filter((item, index, arr) => arr.indexOf(item) === index)
+                .sort();
+
+    //#endregion
+
+    //#region Reactive Values
+
+    const isPrintingRoster = ref<boolean>(false);
+    const printRosterWarning = ref<string>("");
+    const errorMessage = ref<string>("");
     const attendanceForDate = ref<string>(
-        config.attendanceOccurrenceDate
-            ? RockDateTime.parseISO(config.attendanceOccurrenceDate)!.toASPString(dateFormat)
-            : RockDateTime.now().toASPString(dateFormat));
+        (config.attendanceOccurrenceDate && RockDateTime.parseISO(config.attendanceOccurrenceDate)?.toASPString(dateFormat))
+            || RockDateTime.now().toASPString(dateFormat));
     const attendanceOccurrenceType = ref<Guid | undefined>(config.selectedAttendanceOccurrenceTypeValue ?? undefined);
     const locationGuid = ref<Guid | undefined | null>(null);
     const scheduleGuid = ref<Guid | undefined | null>(null);
     const didNotMeet = ref<boolean>(config.isDidNotMeetChecked);
-    const attendedPeople = computed<GroupAttendanceDetailRosterAttendeeBag[]>(() => roster.value.filter(m => m.personGuid && m.hasAttended) ?? []);
-    const sortBy = ref<SortType>(config.areAttendeesSortedByFirstName ? SortType.FirstNameFirst : SortType.LastNameFirst);
-    const rosterComparer = computed<RosterComparer>(() => {
-        if (sortBy.value === SortType.FirstNameFirst) {
-            return compare(byFirstName, byLastName);
-        }
-        return compare(byLastName, byFirstName);
-    });
-
-    const internalSearchText = ref<string>("");
-    const searchText = computed<string>({
-        get(): string {
-            return internalSearchText.value;
-        },
-        set(newValue: string) {
-            internalSearchText.value = newValue;
-        }
-    });
-    const isRegex: RegExp = /\/(.+)\/(.*)/;
-    const searchFilterOrNoFilter = computed<IRosterFilter>(() => {
-        const text = searchText.value;
-
-        if (text) {
-            const match = text.match(isRegex);
-            if (match && match.length) {
-                try {
-                    const regex = new RegExp(match[1], match[2]);
-                    if (regex) {
-                        return createFilter((attendee: GroupAttendanceDetailRosterAttendeeBag) => !!attendee.fullName && regex.test(attendee.fullName));
-                    }
-                }
-                catch {
-                    // `text` is not a valid regex string so try a simple text match.
-                }
-            }
-
-            // `text` is not a valid regex string so try a simple text match.
-            return createFilter((attendee: GroupAttendanceDetailRosterAttendeeBag) => !!attendee.fullName && attendee.fullName.toLocaleLowerCase().indexOf(text) >= 0);
-        }
-
-        return NoFilter;
-    });
-    const campusGuid = ref<ListItemBag | null>(config.campusGuid ? ({ text: config.campusName, value: config.campusGuid }) : null);
-    const campusFilterOrNoFilter = computed<IRosterFilter>(() => {
-        if (campusGuid.value) {
-            return createFilter((attendee) => {
-                // Return `true` if for some reason the campus guid is cleared by the time this runs.
-                const guid = campusGuid.value?.value;
-                if (!guid) {
-                    return true;
-                }
-
-                if (!attendee.campusGuid) {
-                    return false;
-                }
-
-                return attendee.campusGuid === guid;
-            });
-        }
-
-        return NoFilter;
-    });
-    const rosterFilter = ref<IRosterFilter>(NoFilter);
-    const allRosterFilters = computed<IRosterFilter>(() => combineFilters(combineFilters(campusFilterOrNoFilter.value, searchFilterOrNoFilter.value), rosterFilter.value));
-    const filteredAndSortedRoster = computed<GroupAttendanceDetailRosterAttendeeBag[]>(() => {
-        return sortedRoster.value.filter(attendee => allRosterFilters.value.filter(attendee));
-    });
-    const sortedRoster = computed<GroupAttendanceDetailRosterAttendeeBag[]>(() => {
-        return roster.value.slice().sort((attendee1, attendee2) => rosterComparer.value(attendee1, attendee2));
-    });
-    const filteredCount = computed<number>(() => filteredAndSortedRoster.value.length);
-
-    const attendeeGroupLabelDelegate = computed<AttendeeGroupLabelDelegate>(() => {
-        return (attendee: GroupAttendanceDetailRosterAttendeeBag) => {
-            if (sortBy.value === SortType.FirstNameFirst) {
-                return attendee.nickName?.charAt(0) || "?";
-            }
-            else {
-                return attendee.lastName?.charAt(0) || "?";
-            }
-        };
-    });
-
+    const campusGuid = ref<string | null | undefined>(config.campusGuid);
     const notes = ref<string>(config.notes ?? "");
-    const rosterAttendeesInitials = computed<string[]>(() => roster.value
-        .filter(a => sortBy.value === SortType.FirstNameFirst ? !!a.nickName : !!a.lastName)
-        .map(a => sortBy.value === SortType.FirstNameFirst ? a.nickName!.charAt(0).toLocaleUpperCase() : a.lastName!.charAt(0).toLocaleUpperCase())
-        // Remove duplicates.
-        .filter((item, index, arr) => arr.indexOf(item) === index)
-        .sort());
+    const searchFilter = ref<IRosterFilter>(NoFilter);
+    const campusFilter = ref<IRosterFilter>(NoFilter);
+    const rosterFilter = ref<IRosterFilter>(NoFilter);
+
+    //#endregion Reactive Values
+
+    //#region Computed Values
+
+    const didAttendAttendees = computed<GroupAttendanceDetailRosterAttendeeBag[]>(() => roster.filter(m => m.hasAttended) ?? []);
+    const sortedAndFilteredRoster = computed<GroupAttendanceDetailRosterAttendeeBag[]>(() => {
+        return roster.slice() // Copy the array before sorting because `sort()` mutates the array in place.
+            .sort(attendeeComparer)
+            .filter(attendee => every(campusFilter.value, searchFilter.value, rosterFilter.value).filter(attendee));
+    });
+    const displayedRosterCount = computed<number>(() => sortedAndFilteredRoster.value.length);
+    const attendeeGroupLabelDelegate = computed<AttendeeGroupLabelDelegate>(() => {
+        if (sortBy === SortType.FirstNameFirst) {
+            return (attendee: GroupAttendanceDetailRosterAttendeeBag) => attendee.nickName?.charAt(0) || "?";
+        }
+        else {
+            return (attendee: GroupAttendanceDetailRosterAttendeeBag) => attendee.lastName?.charAt(0) || "?";
+        }
+    });
+
+    //#endregion
+
+    //#endregion
 
     //#region Event Handlers
 
     function onAddPerson(personId: number): void {
+        // TODO JMH Implement this.
         console.log(personId);
     }
 
@@ -350,12 +317,12 @@
             didNotOccur: didNotMeet.value,
             attendanceOccurrenceDate: attendanceForDate.value,
             attendanceTypeGuid: attendanceOccurrenceType.value,
-            attendees: roster.value,
-            campusGuid: campusGuid.value?.value,
+            attendees: roster,
+            campusGuid: campusGuid.value,
             locationGuid: locationGuid.value,
             notes: notes.value,
             scheduleGuid: scheduleGuid.value,
-            areAttendeesSortedByFirstName: sortBy.value === SortType.FirstNameFirst
+            areAttendeesSortedByFirstName: sortBy === SortType.FirstNameFirst
         };
 
         // Clear the error before saving.
@@ -374,41 +341,6 @@
     //#endregion
 
     //#region Functions
-
-    type RosterComparer = (m1: GroupAttendanceDetailRosterAttendeeBag, m2: GroupAttendanceDetailRosterAttendeeBag) => number;
-
-    function compare(comparer: RosterComparer, thenBy?: RosterComparer): RosterComparer {
-        return (m1: GroupAttendanceDetailRosterAttendeeBag, m2: GroupAttendanceDetailRosterAttendeeBag): number => {
-            const comparison = comparer(m1, m2);
-
-            if (comparison === 0 && thenBy) {
-                return thenBy(m1, m2);
-            }
-
-            return comparison;
-        };
-    }
-
-    const byFirstName: RosterComparer = (member1: GroupAttendanceDetailRosterAttendeeBag, member2: GroupAttendanceDetailRosterAttendeeBag): number => {
-        return compareStrings(member1.nickName, member2.nickName);
-    };
-
-    const byLastName: RosterComparer = (member1: GroupAttendanceDetailRosterAttendeeBag, member2: GroupAttendanceDetailRosterAttendeeBag): number => {
-        return compareStrings(member1.lastName, member2.lastName);
-    };
-
-    function compareStrings(str1: string | null | undefined, str2: string | null | undefined, thenBy?: () => number): number {
-        const comparison = (str1 ?? "").localeCompare(str2 ?? "");
-
-        if (comparison === 0 && thenBy) {
-            return thenBy();
-        }
-
-        return comparison;
-    }
-
-    const isPrintingRoster = ref<boolean>(false);
-    const printRosterWarning = ref<string>("");
 
     async function printAttendanceRoster(): Promise<void> {
         try {
@@ -431,6 +363,19 @@
     async function updateSchedulePicker(locationPickerSelection: ListItemBag | null): Promise<void> {
         locationGuid.value = locationPickerSelection?.value;
     }
+
+    //#endregion
+
+    //#region Watchers
+
+    const rosterRef = computed(() => roster.map(r => ({ hasAttended: r.hasAttended, personGuid: r.personGuid})));
+    const stopWatching = watch(rosterRef, (newValue, oldValue, onCleanup) => {
+        const updatedAttendees = newValue.filter(newP => oldValue.some(oldP => oldP.personGuid === newP.personGuid && oldP.hasAttended !== newP.hasAttended));
+
+        console.log("People marked as DidAttend: ", JSON.stringify(updatedAttendees.filter(a => a.hasAttended)));
+        console.log("People marked as !DidAttend: ", JSON.stringify(updatedAttendees.filter(a => !a.hasAttended)));
+        onCleanup(() => console.log("TODO JMH Do we need to do any cleanup?"));
+    });
 
     //#endregion
 
