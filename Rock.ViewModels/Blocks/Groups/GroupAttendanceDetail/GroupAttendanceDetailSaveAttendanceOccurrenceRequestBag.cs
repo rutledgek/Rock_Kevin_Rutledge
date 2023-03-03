@@ -38,6 +38,6 @@ namespace Rock.ViewModels.Blocks.Groups.GroupAttendanceDetail
 
         public List<GroupAttendanceDetailRosterAttendeeBag> Attendees { get; set; }
 
-        public bool AreMembersSortedByFirstName { get; set; }
+        public bool AreAttendeesSortedByFirstName { get; set; }
     }
 }

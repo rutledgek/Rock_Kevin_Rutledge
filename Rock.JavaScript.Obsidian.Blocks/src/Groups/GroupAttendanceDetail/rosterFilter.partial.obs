@@ -3,12 +3,15 @@
         <RockFormField v-bind="standardFieldProps" name="rosterFilter" :modelValue="internalValue">
             <div class="btn-toolbar">
                 <div class="btn-group">
-                    <RockButton btnSize="lg" :btnType="getFilterButtonType(NoFilter)" @click="setOrToggleFilter(NoFilter)"><i class="fa fa-th" /></RockButton>
-                    <RockButton btnSize="lg" :btnType="getFilterButtonType(HasAttendedFilter)" @click="setOrToggleFilter(HasAttendedFilter)">{{ hasAttendedCount }}</RockButton>
+                    <RockButton btnSize="lg" :btnType="getBtnType(noFilterOrHasAttendedFilter.hasFilter(NoFilter))" @click="setNoFilterOrHasAttendedFilter(NoFilter)"><i class="fa fa-th" /></RockButton>
+                    <RockButton btnSize="lg" :btnType="getBtnType(noFilterOrHasAttendedFilter.hasFilter(HasAttendedFilter))" @click="setNoFilterOrHasAttendedFilter(HasAttendedFilter)">{{ hasAttendedCount }}</RockButton>
                 </div>
 
                 <div class="btn-group">
-                    <RockButton v-for="lastNameInitial in lastNameInitials" btnSize="lg" :btnType="getFilterButtonType(getLastNameStartsWithFilter(lastNameInitial))" @click="setOrToggleFilter(getLastNameStartsWithFilter(lastNameInitial))">{{ lastNameInitial }}</RockButton>
+                    <RockButton v-for="lastNameInitial in lastNameInitials"
+                        btnSize="lg"
+                        :btnType="getBtnType(lastNameStartsWithFilters.hasFilter(createLastNameStartsWithFilter(lastNameInitial)))"
+                        @click="addOrRemoveLastNameStartsWithFilter(createLastNameStartsWithFilter(lastNameInitial))">{{ lastNameInitial }}</RockButton>
                 </div>
             </div>
         </RockFormField>
@@ -16,8 +19,8 @@
 </template>
 
 <script setup lang="ts">
-    import { computed, PropType } from "vue";
-    import { IRosterFilter, NoFilter, getLastNameStartsWithFilter, HasAttendedFilter } from "./filterType";
+    import { computed, PropType, ref } from "vue";
+    import { IAggregateRosterFilter, IRosterFilter, NoFilter, createEveryFilter, createLastNameStartsWithFilter, createSomeFilter, HasAttendedFilter } from "./filterType";
     import RockButton from "@Obsidian/Controls/rockButton";
     import RockFormField from "@Obsidian/Controls/rockFormField";
     import { BtnType } from "@Obsidian/Enums/Controls/btnType";
@@ -56,7 +59,7 @@
             default: BtnType.Primary
         },
 
-        isTogglable: {
+        isMultiselect: {
             type: Boolean as PropType<boolean>,
             default: false
         },
@@ -68,7 +71,7 @@
         (e: "update:modelValue", value: IRosterFilter): void
     }>();
 
-    const internalValue = computed<IRosterFilter>({
+    const internalValue = computed({
         get(): IRosterFilter {
             return props.modelValue;
         },
@@ -77,29 +80,71 @@
         }
     });
 
-    function getFilterButtonType(rosterFilter: IRosterFilter): LiteralUnion<BtnType> {
-        // Compare the filter functions since the `internalValue.value` is a proxy object and cannot be used for comparison.
-        return rosterFilter.filter === internalValue.value.filter ? props.selectedBtnType : props.unselectedBtnType;
-    }
+    // Initialize the NoFilter or HasAttendedFilter based on the initial filter(s).
+    const noFilterOrHasAttendedFilter = ref<typeof HasAttendedFilter | typeof NoFilter>(props.modelValue.hasFilter(HasAttendedFilter) ? HasAttendedFilter : NoFilter);
 
-    function isFilterSet(rosterFilter: IRosterFilter): boolean {
-        // Compare the filter functions since the `internalValue.value` is a proxy object and cannot be used for comparison.
-        return internalValue.value.filter === rosterFilter.filter;
-    }
+    // No need to initialize the "last name starts with" filter(s) yet.
+    const lastNameStartsWithFilters = ref<IAggregateRosterFilter>(createSomeFilter());
 
-    function setOrToggleFilter(rosterFilter: IRosterFilter): void {
-        const isFilterAlreadySet = isFilterSet(rosterFilter);
-
-        // If toggling is enabled and the same filter was selected,
-        // then switch to the default filter.
-        if (isFilterAlreadySet && props.isTogglable && !isFilterSet(props.defaultFilter)) {
-            internalValue.value = props.defaultFilter;
+    function getBtnType(isSelected: boolean): LiteralUnion<BtnType> {
+        if (isSelected) {
+            return props.selectedBtnType;
         }
-        else if (!isFilterAlreadySet) {
-            internalValue.value = rosterFilter;
+        else {
+            return props.unselectedBtnType;
+        }
+    }
+
+    function setNoFilterOrHasAttendedFilter(rosterFilter: IRosterFilter): void {
+        noFilterOrHasAttendedFilter.value = rosterFilter;
+
+        notifyFiltersUpdated();
+    }
+
+    function addOrRemoveLastNameStartsWithFilter(rosterFilter: IRosterFilter): void {
+        // If the filter is currently selected then remove it.
+        const hasNoLastNameStartsWithFilters = !lastNameStartsWithFilters.value.filters.length;
+
+        if (hasNoLastNameStartsWithFilters) {
+            lastNameStartsWithFilters.value.filters = [rosterFilter];
+        }
+        else {
+            // At least one filter is selected.
+            const isFilterSelected = lastNameStartsWithFilters.value.hasFilter(rosterFilter);
+
+            if (!props.isMultiselect) {
+                if (isFilterSelected) {
+                    // Deselect the filter.
+                    lastNameStartsWithFilters.value.filters = [];
+                }
+                else {
+                    // Select the filter.
+                    lastNameStartsWithFilters.value.filters = [rosterFilter];
+                }
+            }
+            else {
+                if (isFilterSelected) {
+                    // Exclude the filter.
+                    lastNameStartsWithFilters.value.filters = lastNameStartsWithFilters.value.filters.filter(f => !f.isFilter(rosterFilter));
+                }
+                else {
+                    // Include the filter.
+                    lastNameStartsWithFilters.value.filters.push(rosterFilter);
+                }
+            }
+        }
+
+        notifyFiltersUpdated();
+    }
+
+    function notifyFiltersUpdated(): void {
+        if (!lastNameStartsWithFilters.value.filters.length) {
+            internalValue.value = noFilterOrHasAttendedFilter.value;
+        }
+        else {
+            internalValue.value = createEveryFilter(noFilterOrHasAttendedFilter.value, lastNameStartsWithFilters.value);
         }
     }
 
     const standardFieldProps = useStandardRockFormFieldProps(props);
-
 </script>

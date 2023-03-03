@@ -26,7 +26,6 @@ import { GroupAttendanceDetailLocationSelectionMode } from "@Obsidian/Enums/Bloc
 import { GroupAttendanceDetailScheduleSelectionMode } from "@Obsidian/Enums/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailScheduleSelectionMode";
 import { Guid } from "@Obsidian/Types";
 import { GroupAttendanceDetailRosterAttendeeBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailRosterAttendeeBag";
-import { GroupAttendancePendingGroupMemberBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendancePendingGroupMemberBag";
 import { ListItemBag } from "@Obsidian/ViewModels/Utility/listItemBag";
 
 export type GroupAttendanceDetailInitializationBox = {
@@ -34,7 +33,7 @@ export type GroupAttendanceDetailInitializationBox = {
 
     addPersonAs?: string | null;
 
-    areMembersSortedByFirstName: boolean;
+    areAttendeesSortedByFirstName: boolean;
 
     attendanceOccurrenceDate?: string | null;
 
@@ -60,8 +59,6 @@ export type GroupAttendanceDetailInitializationBox = {
 
     groupName?: string | null;
 
-    hasNoAttendanceOccurrencesError: boolean;
-
     isAttendanceOccurrenceTypesSectionShown: boolean;
 
     isCampusFilteringAllowed: boolean;
@@ -73,8 +70,6 @@ export type GroupAttendanceDetailInitializationBox = {
     isFutureOccurrenceDateSelectionRestricted: boolean;
 
     isGroupNotFoundError: boolean;
-
-    isMemberSortingHidden: boolean;
 
     isNewAttendanceDateAdditionRestricted: boolean;
 
@@ -98,10 +93,6 @@ export type GroupAttendanceDetailInitializationBox = {
     notes?: string | null;
 
     notesSectionLabel?: string | null;
-
-    pendingGroupMembers?: GroupAttendancePendingGroupMemberBag[] | null;
-
-    pendingGroupMembersSectionLabel?: string | null;
 
     roster?: GroupAttendanceDetailRosterAttendeeBag[] | null;
 

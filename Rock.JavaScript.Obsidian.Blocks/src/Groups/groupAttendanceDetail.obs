@@ -137,6 +137,7 @@
                                 <RosterFilterPicker
                                     v-model="rosterFilter"
                                     class="mt-3"
+                                    :isMultiselect="true"
                                     :lastNameInitials="rosterLastNameInitials"
                                     :hasAttendedCount="attendedPeople.length">
                                 </RosterFilterPicker>
@@ -207,7 +208,7 @@
     import { GroupAttendanceDetailSaveAttendanceOccurrenceRequestBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailSaveAttendanceOccurrenceRequestBag";
     import { GroupAttendanceDetailSaveAttendanceOccurrenceResponseBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailSaveAttendanceOccurrenceResponseBag";
     import { ListItemBag } from "@Obsidian/ViewModels/Utility/listItemBag";
-    import { createFilter, getCombinationFilter as combineFilters, IRosterFilter, NoFilter } from "./GroupAttendanceDetail/filterType";
+    import { createFilter, createLogicalAndFilter as combineFilters, IRosterFilter, NoFilter } from "./GroupAttendanceDetail/filterType";
 
     // TODO JMH This config should contain the group GUID for use in the specific group controls.
     const config = useConfigurationValues<GroupAttendanceDetailInitializationBox>();
@@ -228,7 +229,7 @@
     const scheduleGuid = ref<Guid | undefined | null>(null);
     const didNotMeet = ref<boolean>(config.isDidNotMeetChecked);
     const attendedPeople = computed<GroupAttendanceDetailRosterAttendeeBag[]>(() => roster.value.filter(m => m.personGuid && m.hasAttended) ?? []);
-    const sortBy = ref<SortType>(config.areMembersSortedByFirstName ? SortType.FirstNameFirst : SortType.LastNameFirst);
+    const sortBy = ref<SortType>(config.areAttendeesSortedByFirstName ? SortType.FirstNameFirst : SortType.LastNameFirst);
     const rosterComparer = computed<RosterComparer>(() => {
         if (sortBy.value === SortType.FirstNameFirst) {
             return compare(byFirstName, byLastName);
@@ -341,7 +342,7 @@
             locationGuid: locationGuid.value,
             notes: notes.value,
             scheduleGuid: scheduleGuid.value,
-            areMembersSortedByFirstName: sortBy.value === SortType.FirstNameFirst
+            areAttendeesSortedByFirstName: sortBy.value === SortType.FirstNameFirst
         };
 
         // Clear the error before saving.

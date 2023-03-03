@@ -157,10 +157,10 @@ namespace Rock.Blocks.Groups
         Order = 12 )]
 
     [BooleanField(
-        "Allow Sorting",
+        "Sort By First Name",
         Category = AttributeCategory.None,
         DefaultBooleanValue = true,
-        Description = "Should the block allow sorting the Members list by First Name or Last Name?",
+        Description = "Should the block allow sorting the Members list by First Name?",
         IsRequired = false,
         Key = AttributeKey.AllowSorting,
         Order = 13 )]
@@ -265,7 +265,7 @@ namespace Rock.Blocks.Groups
 
         private static class UserPreferenceKeys
         {
-            public const string AreGroupMembersSortedByFirstName = "Attendance_List_Sorting_Toggle";
+            public const string AreGroupAttendanceAttendeesSortedByFirstName = "Attendance_List_Sorting_Toggle";
             public const string Campus = "Campus";
         }
 
@@ -404,12 +404,9 @@ namespace Rock.Blocks.Groups
         private Guid AttendanceEmailTemplateGuid => GetAttributeValue( AttributeKey.AttendanceEmailTemplate ).AsGuid();
 
         /// <summary>
-        /// Should the block allow sorting the Members list by First Name or Last Name?
+        /// Should the block allow sorting the attendees list by First Name?
         /// </summary>
-        /// <value>
-        ///   <c>true</c> if is member sorting is hidden; otherwise, <c>false</c>.
-        /// </value>
-        private bool IsMemberSortingHidden => GetAttributeValue( AttributeKey.AllowSorting ).AsBoolean();
+        private bool AreAttendeesSortedByFirstName => GetAttributeValue( AttributeKey.AllowSorting ).AsBoolean();
 
         /// <summary>
         /// The Attendance types that an occurrence can have.
@@ -437,24 +434,6 @@ namespace Rock.Blocks.Groups
         /// Gets the group type identifiers page parameter or null if missing.
         /// </summary>
         private string GroupTypeIdsPageParameter => PageParameter( PageParameterKey.GroupTypeIds );
-
-        /// <summary>
-        /// Should Group Members be sorted by first name or last name?
-        /// </summary>
-        /// <value>
-        ///   <c>true</c> if members should be sorted by first name; otherwise, <c>false</c> to sort by last name.
-        /// </value>
-        private bool AreGroupMembersSortedByFirstNameUserPreference
-        {
-            get
-            {
-                return GetCurrentUserPreference( UserPreferenceKeys.AreGroupMembersSortedByFirstName ).AsBoolean();
-            }
-            set
-            {
-                SetCurrentUserPreference( UserPreferenceKeys.AreGroupMembersSortedByFirstName, value.ToString() );
-            }
-        }
 
         /// <summary>
         /// The Campus ID filter.
@@ -535,12 +514,6 @@ namespace Rock.Blocks.Groups
                 if ( occurrenceDataClientService.Save( occurrenceData, bag ) )
                 {
                     rockContext.SaveChanges();
-
-                    // Update the sort user preference.
-                    if ( !this.IsMemberSortingHidden && bag.AreMembersSortedByFirstName != this.AreGroupMembersSortedByFirstNameUserPreference )
-                    {
-                        this.AreGroupMembersSortedByFirstNameUserPreference = bag.AreMembersSortedByFirstName;
-                    }
 
                     if ( occurrenceData.AttendanceOccurrence.LocationId.HasValue )
                     {
@@ -867,14 +840,13 @@ namespace Rock.Blocks.Groups
                     return box;
                 }
 
-                box.AreMembersSortedByFirstName = this.IsMemberSortingHidden ? false : this.AreGroupMembersSortedByFirstNameUserPreference;
+                box.AreAttendeesSortedByFirstName = this.AreAttendeesSortedByFirstName;
                 box.CampusName = occurrenceData.Campus?.Name;
                 box.CampusGuid = occurrenceData.Campus?.Guid;
                 box.GroupGuid = occurrenceData.Group.Guid;
                 box.GroupName = occurrenceData.Group.Name;
                 box.IsCampusFilteringAllowed = this.IsCampusFilteringAllowed;
                 box.IsFutureOccurrenceDateSelectionRestricted = this.IsFutureOccurrenceDateSelectionRestricted;
-                box.IsMemberSortingHidden = this.IsMemberSortingHidden;
                 box.IsNewAttendanceDateAdditionRestricted = this.IsNewAttendanceDateAdditionRestricted;
                 box.IsNewAttendeeAdditionAllowed = this.IsNewAttendeeAdditionAllowed;
                 box.IsNotesSectionHidden = this.IsNotesSectionHidden;

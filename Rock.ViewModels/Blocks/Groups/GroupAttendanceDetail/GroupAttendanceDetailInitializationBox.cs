@@ -24,7 +24,7 @@ namespace Rock.ViewModels.Blocks.Groups.GroupAttendanceDetail
 {
     public class GroupAttendanceDetailInitializationBox : BlockBox
     {
-        public bool AreMembersSortedByFirstName { get; set; }
+        public bool AreAttendeesSortedByFirstName { get; set; }
         public string CampusName { get; set; }
         public Guid? CampusGuid { get; set; }
         public Guid GroupGuid { get; set; }
@@ -36,8 +36,6 @@ namespace Rock.ViewModels.Blocks.Groups.GroupAttendanceDetail
         public bool IsCampusFilteringAllowed { get; set; }
         public string NotesSectionLabel { get; set; }
         public bool IsNotesSectionHidden { get; set; }
-        public bool IsMemberSortingHidden { get; set; }
-        public bool HasNoAttendanceOccurrencesError { get; set; }
         public GroupAttendanceDetailDateSelectionMode AttendanceOccurrenceDateSelectionMode { get; set; }
         public string LocationLabel { get; set; }
         public GroupAttendanceDetailLocationSelectionMode LocationSelectionMode { get; set; }

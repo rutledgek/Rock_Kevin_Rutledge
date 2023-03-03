@@ -1,8 +1,10 @@
 <template>
     <template v-for="(attendees, lastNameInitial, index) in groupedAttendees" :key="lastNameInitial">
-        <hr v-if="index !== 0" />
-        <h2>{{ lastNameInitial }}</h2>
-        <AttendanceRoster :items="attendees" />
+        <template v-if="attendees?.length">
+            <hr v-if="index !== 0" />
+            <h2>{{ lastNameInitial }}</h2>
+            <AttendanceRoster :items="attendees" />
+        </template>
     </template>
 </template>
 
@@ -27,16 +29,23 @@
     const groupedAttendees = computed<Record<string, GroupAttendanceDetailRosterAttendeeBag[]>>(() => {
         const dictionary: Record<string, GroupAttendanceDetailRosterAttendeeBag[]> = {};
 
+        const keys: string[] = [];
+
         props.items.forEach((attendee) => {
             const lastNameInitial = attendee.lastName?.charAt(0) || "?";
             if (!dictionary[lastNameInitial]) {
                 dictionary[lastNameInitial] = [attendee];
+                keys.push(lastNameInitial);
             }
             else {
                 dictionary[lastNameInitial].push(attendee);
             }
         });
 
-        return dictionary;
+        keys.sort();
+
+        const sortedDictionary: Record<string, GroupAttendanceDetailRosterAttendeeBag[]> = {};
+        keys.forEach(key => sortedDictionary[key] = dictionary[key]);
+        return sortedDictionary;
     });
 </script>

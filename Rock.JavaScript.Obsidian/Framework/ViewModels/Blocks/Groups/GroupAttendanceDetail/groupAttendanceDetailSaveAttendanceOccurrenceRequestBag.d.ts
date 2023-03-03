@@ -25,7 +25,7 @@ import { Guid } from "@Obsidian/Types";
 import { GroupAttendanceDetailRosterAttendeeBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailRosterAttendeeBag";
 
 export type GroupAttendanceDetailSaveAttendanceOccurrenceRequestBag = {
-    areMembersSortedByFirstName: boolean;
+    areAttendeesSortedByFirstName: boolean;
 
     attendanceOccurrenceDate?: string | null;
 
