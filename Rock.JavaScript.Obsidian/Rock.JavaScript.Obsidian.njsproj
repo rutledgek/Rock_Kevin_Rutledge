@@ -647,6 +647,11 @@
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupAttendanceDetail\groupAttendanceDetailRosterAttendeeBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupAttendanceDetail\groupAttendanceDetailSaveAttendanceOccurrenceRequestBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupAttendanceDetail\groupAttendanceDetailSaveAttendanceOccurrenceResponseBag.d.ts" />
+    <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupAttendanceDetail\groupAttendanceDetailUpdateAttendanceOccurrenceTypeRequestBag.d.ts" />
+    <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupAttendanceDetail\groupAttendanceDetailUpdateAttendeeRequestBag.d.ts" />
+    <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupAttendanceDetail\groupAttendanceDetailUpdateDidAttendRequestBag.d.ts" />
+    <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupAttendanceDetail\groupAttendanceDetailUpdateDidNotMeetRequestBag.d.ts" />
+    <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupAttendanceDetail\groupAttendanceDetailUpdateDidNotOccurRequestBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupAttendanceDetail\groupAttendancePendingGroupMemberBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupSchedulePreference\assignmentScheduleAndLocationBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupSchedulePreference\preferencePageContentBag.d.ts" />

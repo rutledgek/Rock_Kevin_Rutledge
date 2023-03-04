@@ -97,7 +97,7 @@
                 <div class="row">
                     <div class="col-sm-3">
                         <InlineCheckBox
-                            v-model="didNotMeet"
+                            v-model="didNotOccur"
                             label="We Did Not Meet" />
                     </div>
 
@@ -120,7 +120,7 @@
                 </div>
 
                 <TransitionVerticalCollapse speed="fast">
-                    <div v-show="!didNotMeet">
+                    <div v-show="!didNotOccur">
                         <div class="row">
                             <div class="col-sm-4">
                                 <SearchFilter v-model="searchFilter" />
@@ -166,14 +166,14 @@
                     <RockButton tooltip="Print Attendance Roster" CssClass="btn btn-default btn-sm btn-square pull-right" @click="onPrintAttendanceRosterClicked()"><i class="fa fa-print"></i></RockButton>
                 </div>
 
-                <RockButton @click="onSave">Save</RockButton>
+                <RockButton @click="onSaveClicked()">Save</RockButton>
             </template>
         </Panel>
     </div>
 </template>
 
 <script setup lang="ts">
-    import { computed, ref, watch } from "vue";
+    import { computed, nextTick, ref, watch, WatchStopHandle } from "vue";
     import AttendanceOccurrencePicker from "./GroupAttendanceDetail/attendanceOccurrencePicker.partial.obs";
     import AttendanceRoster from "./GroupAttendanceDetail/attendanceRoster.partial.obs";
     import CampusFilter from "./GroupAttendanceDetail/campusFilter.partial.obs";
@@ -201,15 +201,19 @@
     import { RockDateTime } from "@Obsidian/Utility/rockDateTime";
     import { GroupAttendanceDetailInitializationBox } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailInitializationBox";
     import { GroupAttendanceDetailPrintRosterResponseBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailPrintRosterResponseBag";
+    import { GroupAttendanceDetailUpdateAttendeeRequestBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailUpdateAttendeeRequestBag";
+    import { GroupAttendanceDetailUpdateDidNotOccurRequestBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailUpdateDidNotOccurRequestBag";
+    import { GroupAttendanceDetailUpdateAttendanceOccurrenceTypeRequestBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailUpdateAttendanceOccurrenceTypeRequestBag";
     import { GroupAttendanceDetailRosterAttendeeBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailRosterAttendeeBag";
     import { GroupAttendanceDetailSaveAttendanceOccurrenceRequestBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailSaveAttendanceOccurrenceRequestBag";
     import { GroupAttendanceDetailSaveAttendanceOccurrenceResponseBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailSaveAttendanceOccurrenceResponseBag";
     import { ListItemBag } from "@Obsidian/ViewModels/Utility/listItemBag";
     import { createEveryFilter as every, IRosterFilter, NoFilter } from "./GroupAttendanceDetail/filterType";
     import { AttendeeGroupLabelDelegate } from "./GroupAttendanceDetail/attendeeGroupLabelDelegate";
+    import { HttpResult } from "@Obsidian/Types/Utility/http";
 
     // TODO JMH This config should contain the group GUID for use in the specific group controls.
-    const config = useConfigurationValues<GroupAttendanceDetailInitializationBox>();
+    const config = ref(useConfigurationValues<GroupAttendanceDetailInitializationBox>());
     const invokeBlockAction = useInvokeBlockAction();
 
     //#region Types
@@ -220,62 +224,61 @@
 
     //#region Values
 
-    //#region Non-reactive Values
-
-    const panelTitle = config.groupName ? `${config.groupName} Attendance` : "Group Attendance";
-    const dateFormat = config.attendanceOccurrenceDateSelectionMode === GroupAttendanceDetailDateSelectionMode.DatePicker ? "yyyy-MM-dd" : "MM/dd/yyyy";
-    const roster: GroupAttendanceDetailRosterAttendeeBag[] = config?.roster ?? [];
-    const sortBy = config.areAttendeesSortedByFirstName ? SortType.FirstNameFirst : SortType.LastNameFirst;
-    const attendeeComparer: AttendeeComparer =
-        sortBy === SortType.FirstNameFirst
-            ? compare(byFirstName, byLastName)
-            : compare(byLastName, byFirstName);
-    const rosterAttendeesInitials: string[] =
-        sortBy === SortType.FirstNameFirst
-            ? roster.filter(a => !!a.nickName)
-                .map(a => a.nickName!.charAt(0).toLocaleUpperCase())
-                // Remove duplicates.
-                .filter((item, index, arr) => arr.indexOf(item) === index)
-                .sort()
-            : roster.filter(a => !!a.lastName)
-                .map(a => a.lastName!.charAt(0).toLocaleUpperCase())
-                // Remove duplicates.
-                .filter((item, index, arr) => arr.indexOf(item) === index)
-                .sort();
-
-    //#endregion
-
     //#region Reactive Values
 
+    const dateFormat = computed(() => config.value.attendanceOccurrenceDateSelectionMode === GroupAttendanceDetailDateSelectionMode.DatePicker ? "yyyy-MM-dd" : "MM/dd/yyyy");
     const isPrintingRoster = ref<boolean>(false);
     const printRosterWarning = ref<string>("");
     const errorMessage = ref<string>("");
-    const attendanceForDate = ref<string>(
-        (config.attendanceOccurrenceDate && RockDateTime.parseISO(config.attendanceOccurrenceDate)?.toASPString(dateFormat))
-            || RockDateTime.now().toASPString(dateFormat));
-    const attendanceOccurrenceType = ref<Guid | undefined>(config.selectedAttendanceOccurrenceTypeValue ?? undefined);
-    const locationGuid = ref<Guid | undefined | null>(null);
-    const scheduleGuid = ref<Guid | undefined | null>(null);
-    const didNotMeet = ref<boolean>(config.isDidNotMeetChecked);
-    const campusGuid = ref<string | null | undefined>(config.campusGuid);
-    const notes = ref<string>(config.notes ?? "");
     const searchFilter = ref<IRosterFilter>(NoFilter);
     const campusFilter = ref<IRosterFilter>(NoFilter);
     const rosterFilter = ref<IRosterFilter>(NoFilter);
+    const attendanceOccurrenceGuid = ref<string | null | undefined>(config.value.attendanceOccurrenceGuid);
+    const attendanceForDate = ref<string>(
+        (config.value.attendanceOccurrenceDate && RockDateTime.parseISO(config.value.attendanceOccurrenceDate)?.toASPString(dateFormat.value))
+            || RockDateTime.now().toASPString(dateFormat.value));
+    const attendanceOccurrenceType = ref<Guid | undefined>(config.value.selectedAttendanceOccurrenceTypeValue ?? undefined);
+    const locationGuid = ref<Guid | undefined | null>(config.value.locationGuid);
+    const scheduleGuid = ref<Guid | undefined | null>(config.value.scheduleGuid);
+    const didNotOccur = ref<boolean>(config.value.isDidNotMeetChecked);
+    const campusGuid = ref<string | null | undefined>(config.value.campusGuid);
+    const notes = ref<string>(config.value.notes ?? "");
+
+    const autoSaveOffHandle = ref<WatchStopHandle | null>(null);
 
     //#endregion Reactive Values
 
     //#region Computed Values
 
-    const didAttendAttendees = computed<GroupAttendanceDetailRosterAttendeeBag[]>(() => roster.filter(m => m.hasAttended) ?? []);
+    const panelTitle = computed(() => config.value.groupName ? `${config.value.groupName} Attendance` : "Group Attendance");
+    const roster = computed<GroupAttendanceDetailRosterAttendeeBag[]>(() => config.value?.roster ?? []);
+    const sortBy = computed<SortType>(() => config.value.areAttendeesSortedByFirstName ? SortType.FirstNameFirst : SortType.LastNameFirst);
+    const attendeeComparer = computed<AttendeeComparer>(() =>
+        sortBy.value === SortType.FirstNameFirst
+            ? compare(byFirstName, byLastName)
+            : compare(byLastName, byFirstName));
+
+    const rosterAttendeesInitials = computed<string[]>(() =>
+        sortBy.value === SortType.FirstNameFirst
+            ? roster.value.filter(a => !!a.nickName)
+                .map(a => a.nickName!.charAt(0).toLocaleUpperCase())
+                // Remove duplicates.
+                .filter((item, index, arr) => arr.indexOf(item) === index)
+                .sort()
+            : roster.value.filter(a => !!a.lastName)
+                .map(a => a.lastName!.charAt(0).toLocaleUpperCase())
+                // Remove duplicates.
+                .filter((item, index, arr) => arr.indexOf(item) === index)
+                .sort());
+    const didAttendAttendees = computed<GroupAttendanceDetailRosterAttendeeBag[]>(() => roster.value.filter(m => m.hasAttended) ?? []);
     const sortedAndFilteredRoster = computed<GroupAttendanceDetailRosterAttendeeBag[]>(() => {
-        return roster.slice() // Copy the array before sorting because `sort()` mutates the array in place.
-            .sort(attendeeComparer)
+        return roster.value.slice() // Copy the array before sorting because `sort()` mutates the array in place.
+            .sort(attendeeComparer.value)
             .filter(attendee => every(campusFilter.value, searchFilter.value, rosterFilter.value).filter(attendee));
     });
     const displayedRosterCount = computed<number>(() => sortedAndFilteredRoster.value.length);
     const attendeeGroupLabelDelegate = computed<AttendeeGroupLabelDelegate>(() => {
-        if (sortBy === SortType.FirstNameFirst) {
+        if (sortBy.value === SortType.FirstNameFirst) {
             return (attendee: GroupAttendanceDetailRosterAttendeeBag) => attendee.nickName?.charAt(0) || "?";
         }
         else {
@@ -295,8 +298,8 @@
     }
 
     function onAddGroupMemberClicked(): void {
-        if (config.addGroupMemberPageUrl) {
-            location.href = config.addGroupMemberPageUrl;
+        if (config.value.addGroupMemberPageUrl) {
+            location.href = config.value.addGroupMemberPageUrl;
         }
     }
 
@@ -312,30 +315,8 @@
         return printAttendanceRoster();
     }
 
-    async function onSave(): Promise<void> {
-        const bag: GroupAttendanceDetailSaveAttendanceOccurrenceRequestBag = {
-            didNotOccur: didNotMeet.value,
-            attendanceOccurrenceDate: attendanceForDate.value,
-            attendanceTypeGuid: attendanceOccurrenceType.value,
-            attendees: roster,
-            campusGuid: campusGuid.value,
-            locationGuid: locationGuid.value,
-            notes: notes.value,
-            scheduleGuid: scheduleGuid.value,
-            areAttendeesSortedByFirstName: sortBy === SortType.FirstNameFirst
-        };
-
-        // Clear the error before saving.
-        errorMessage.value = "";
-
-        const response = await invokeBlockAction<GroupAttendanceDetailSaveAttendanceOccurrenceResponseBag>("SaveAttendanceOccurrence", { bag });
-
-        if (response?.data?.redirectUrl) {
-            window.location.href = response.data.redirectUrl;
-        }
-        else {
-            errorMessage.value = response.errorMessage || "An unexpected error occurred. Please try again.";
-        }
+    async function onSaveClicked(): Promise<HttpResult<GroupAttendanceDetailSaveAttendanceOccurrenceResponseBag>> {
+        return await save();
     }
 
     //#endregion
@@ -360,24 +341,220 @@
         }
     }
 
+    async function save(): Promise<HttpResult<GroupAttendanceDetailSaveAttendanceOccurrenceResponseBag>> {
+        const bag: GroupAttendanceDetailSaveAttendanceOccurrenceRequestBag = {
+            didNotOccur: didNotOccur.value,
+            attendanceOccurrenceDate: attendanceForDate.value,
+            attendanceTypeGuid: attendanceOccurrenceType.value,
+            attendees: roster.value,
+            campusGuid: campusGuid.value,
+            locationGuid: locationGuid.value,
+            notes: notes.value,
+            scheduleGuid: scheduleGuid.value,
+            areAttendeesSortedByFirstName: sortBy.value === SortType.FirstNameFirst,
+            attendanceOccurrenceGuid: attendanceOccurrenceGuid.value
+        };
+
+        // Clear the error before saving.
+        errorMessage.value = "";
+
+        const response = await invokeBlockAction<GroupAttendanceDetailSaveAttendanceOccurrenceResponseBag>("SaveAttendanceOccurrence", { bag });
+
+        if (response?.data?.redirectUrl) {
+            attendanceOccurrenceGuid.value = response.data.attendanceOccurrenceGuid;
+        }
+        else {
+            errorMessage.value = response.errorMessage || "An unexpected error occurred. Please try again.";
+        }
+
+        return response;
+    }
+
+    async function getOrCreate(): Promise<void> {
+        const bag: GroupAttendanceDetailSaveAttendanceOccurrenceRequestBag = {
+            didNotOccur: didNotOccur.value,
+            attendanceOccurrenceDate: attendanceForDate.value,
+            attendanceTypeGuid: attendanceOccurrenceType.value,
+            attendees: roster.value,
+            campusGuid: campusGuid.value,
+            locationGuid: locationGuid.value,
+            notes: notes.value,
+            scheduleGuid: scheduleGuid.value,
+            areAttendeesSortedByFirstName: sortBy.value === SortType.FirstNameFirst,
+            attendanceOccurrenceGuid: attendanceOccurrenceGuid.value
+        };
+
+        // Clear the error before saving.
+        errorMessage.value = "";
+
+        const response = await invokeBlockAction<GroupAttendanceDetailInitializationBox>("GetOrCreate", { bag });
+
+        if (response?.data) {
+            config.value = response.data;
+        }
+        else if (config) {
+            config.value.errorMessage = response?.errorMessage || "An unexpected error occurred.";
+        }
+    }
+
     async function updateSchedulePicker(locationPickerSelection: ListItemBag | null): Promise<void> {
         locationGuid.value = locationPickerSelection?.value;
+    }
+
+    const rosterOperations = computed(() => roster.value.map(attendee => ({
+        attendeeOccurrenceGuid: config.value.attendanceOccurrenceGuid,
+        personGuid: attendee.personGuid,
+        didAttend: attendee.hasAttended })));
+
+    const autoSaveAttendeeOffHandle = ref<WatchStopHandle | null>(null);
+    const autoSaveDidNotOccurOffHandle = ref<WatchStopHandle | null>(null);
+    const autoSaveAttendanceOccurrenceTypeOffHandle = ref<WatchStopHandle | null>(null);
+
+    function autoSaveAttendeesOn(): void {
+        if (!autoSaveAttendeeOffHandle.value) {
+            autoSaveAttendeeOffHandle.value = watch([rosterOperations], ([newRoster], [oldRoster], onCleanup) => {
+                const rosterOperations = newRoster.filter(newAttendee => oldRoster.some(oldAttendee => newAttendee.personGuid === oldAttendee.personGuid && newAttendee.didAttend !== oldAttendee.didAttend));
+
+                if (rosterOperations.length) {
+                    for (const attendee of rosterOperations) {
+                        const bag: GroupAttendanceDetailUpdateAttendeeRequestBag = {
+                            attendanceOccurrenceGuid: attendanceOccurrenceGuid.value,
+                            personGuid: attendee.personGuid,
+                            didAttend: attendee.didAttend
+                        };
+                        invokeBlockAction<void>("UpdateAttendee", { bag }).then(() => console.log(`updated attendee ${formattedJson(bag)}`));
+                    }
+                }
+                onCleanup(() => autoSaveOffHandle.value = null);
+            }, { deep: true });
+        }
+    }
+
+    function autoSaveAttendeeOff(): void {
+        if (!autoSaveAttendeeOffHandle.value) {
+            return;
+        }
+
+        autoSaveAttendeeOffHandle.value();
+        autoSaveAttendeeOffHandle.value = null;
+    }
+
+    function autoSaveAttendanceOccurrenceTypeOn(): void {
+        if (!autoSaveAttendanceOccurrenceTypeOffHandle.value) {
+            autoSaveAttendanceOccurrenceTypeOffHandle.value = watch([attendanceOccurrenceType], ([newAttendanceOccurrenceType], [oldAttendanceOccurenceType], onCleanup) => {
+                onCleanup(() => autoSaveAttendanceOccurrenceTypeOffHandle.value = null);
+
+                if (newAttendanceOccurrenceType !== oldAttendanceOccurenceType) {
+                    const bag: GroupAttendanceDetailUpdateAttendanceOccurrenceTypeRequestBag = {
+                        attendanceOccurrenceGuid: attendanceOccurrenceGuid.value,
+                        attendanceOccurrenceTypeGuid: newAttendanceOccurrenceType
+                    };
+                    invokeBlockAction("UpdateAttendanceOccurrenceType", { bag }).then(() => console.log(`updated attendance occurrence type ${formattedJson(bag)}`));
+                }
+            });
+        }
+    }
+
+    function autoSaveDidNotOccurOff(): void {
+        if (!autoSaveDidNotOccurOffHandle.value) {
+            return;
+        }
+
+        autoSaveDidNotOccurOffHandle.value();
+        autoSaveDidNotOccurOffHandle.value = null;
+    }
+
+    function autoSaveDidNotOccurOn(): void {
+        if (!autoSaveDidNotOccurOffHandle.value) {
+            autoSaveDidNotOccurOffHandle.value = watch([didNotOccur], ([newDidNotOccur], [oldDidNotOccur], onCleanup) => {
+                if (newDidNotOccur !== oldDidNotOccur) {
+                    const bag: GroupAttendanceDetailUpdateDidNotOccurRequestBag = {
+                        attendanceOccurrenceGuid: attendanceOccurrenceGuid.value,
+                        didNotOccur: newDidNotOccur
+                    };
+
+                    if (bag.didNotOccur) {
+                        // Stop auto-saving attendees if the occurrence did not happen.
+                        autoSaveAttendeeOff();
+                        for (const attendee of roster.value) {
+                            attendee.hasAttended = false;
+                        }
+                    }
+
+                    invokeBlockAction<void>("UpdateDidNotOccur", { bag })
+                        .then(() => {
+                            console.log(`updated didNotOccur ${formattedJson(bag)}`);
+                        });
+
+                    if (!bag.didNotOccur) {
+                        // Start auto-saving attendees if the occurrence did happen.
+                        autoSaveAttendeesOn();
+                    }
+                }
+                onCleanup(() => autoSaveDidNotOccurOffHandle.value = null);
+            });
+        }
+    }
+
+    function autoSaveAttendanceOccurrenceTypeOff(): void {
+        if (!autoSaveAttendanceOccurrenceTypeOffHandle.value) {
+            return;
+        }
+
+        autoSaveAttendanceOccurrenceTypeOffHandle.value();
+        autoSaveAttendanceOccurrenceTypeOffHandle.value = null;
+    }
+
+    function autoSaveOn(): void {
+        autoSaveAttendeesOn();
+        autoSaveDidNotOccurOn();
+        autoSaveAttendanceOccurrenceTypeOn();
+    }
+
+    function autoSaveOff(): void {
+        autoSaveAttendeeOff();
+        autoSaveAttendanceOccurrenceTypeOff();
+        autoSaveDidNotOccurOff();
+    }
+
+    function formattedJson(value: any): string {
+        return JSON.stringify(value, null, 4);
     }
 
     //#endregion
 
     //#region Watchers
 
-    const rosterRef = computed(() => roster.map(r => ({ hasAttended: r.hasAttended, personGuid: r.personGuid})));
-    const stopWatching = watch(rosterRef, (newValue, oldValue, onCleanup) => {
-        const updatedAttendees = newValue.filter(newP => oldValue.some(oldP => oldP.personGuid === newP.personGuid && oldP.hasAttended !== newP.hasAttended));
+    watch(config, () => {
+        attendanceOccurrenceGuid.value = config.value.attendanceOccurrenceGuid;
+        attendanceForDate.value =
+            (config.value.attendanceOccurrenceDate && RockDateTime.parseISO(config.value.attendanceOccurrenceDate)?.toASPString(dateFormat.value))
+                || RockDateTime.now().toASPString(dateFormat.value);
+        attendanceOccurrenceType.value = config.value.selectedAttendanceOccurrenceTypeValue ?? undefined;
+        locationGuid.value =  config.value.locationGuid;
+        scheduleGuid.value = config.value.scheduleGuid;
+        didNotOccur.value =  config.value.isDidNotMeetChecked;
+        campusGuid.value = config.value.campusGuid;
+        notes.value = config.value.notes ?? "";
+    });
 
-        console.log("People marked as DidAttend: ", JSON.stringify(updatedAttendees.filter(a => a.hasAttended)));
-        console.log("People marked as !DidAttend: ", JSON.stringify(updatedAttendees.filter(a => !a.hasAttended)));
-        onCleanup(() => console.log("TODO JMH Do we need to do any cleanup?"));
+    watch([attendanceForDate, locationGuid, scheduleGuid], () => {
+        console.log("in config reload watch");
+        if (attendanceForDate.value && locationGuid.value && scheduleGuid.value) {
+            // Turn auto-save off before we get/create the occurrence.
+            autoSaveOff();
+            getOrCreate().then(() => {
+                // Wait one tick so the UI can update with the latest config before turning auto-save back on.
+                nextTick(() => autoSaveOn());
+            });
+        }
     });
 
     //#endregion
+
+    if (config.value.attendanceOccurrenceGuid) {
+        autoSaveOn();
+    }
 
     onConfigurationValuesChanged(useReloadBlock());
 </script>

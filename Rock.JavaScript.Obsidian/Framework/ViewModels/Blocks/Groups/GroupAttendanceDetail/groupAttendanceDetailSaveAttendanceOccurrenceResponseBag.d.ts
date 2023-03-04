@@ -21,7 +21,11 @@
 // </copyright>
 //
 
+import { Guid } from "@Obsidian/Types";
+
 export type GroupAttendanceDetailSaveAttendanceOccurrenceResponseBag = {
+    attendanceOccurrenceGuid?: Guid | null;
+
     isGroupNotFoundError: boolean;
 
     isNotAuthorizedError: boolean;

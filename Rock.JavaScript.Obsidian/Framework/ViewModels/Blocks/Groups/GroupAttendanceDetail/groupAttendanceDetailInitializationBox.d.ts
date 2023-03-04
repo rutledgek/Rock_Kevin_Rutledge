@@ -39,6 +39,8 @@ export type GroupAttendanceDetailInitializationBox = {
 
     attendanceOccurrenceDateSelectionMode: GroupAttendanceDetailDateSelectionMode;
 
+    attendanceOccurrenceGuid?: Guid | null;
+
     attendanceOccurrenceTypes?: ListItemBag[] | null;
 
     attendanceOccurrenceTypesSectionLabel?: string | null;
@@ -81,7 +83,7 @@ export type GroupAttendanceDetailInitializationBox = {
 
     isNotesSectionHidden: boolean;
 
-    locationId?: number | null;
+    locationGuid?: Guid | null;
 
     locationLabel?: string | null;
 
@@ -95,6 +97,8 @@ export type GroupAttendanceDetailInitializationBox = {
     notesSectionLabel?: string | null;
 
     roster?: GroupAttendanceDetailRosterAttendeeBag[] | null;
+
+    scheduleGuid?: Guid | null;
 
     scheduleLabel?: string | null;
 

@@ -22,26 +22,9 @@
 //
 
 import { Guid } from "@Obsidian/Types";
-import { GroupAttendanceDetailRosterAttendeeBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailRosterAttendeeBag";
 
-export type GroupAttendanceDetailSaveAttendanceOccurrenceRequestBag = {
-    areAttendeesSortedByFirstName: boolean;
-
-    attendanceOccurrenceDate?: string | null;
-
+export type GroupAttendanceDetailUpdateDidNotOccurRequestBag = {
     attendanceOccurrenceGuid?: Guid | null;
 
-    attendanceTypeGuid?: Guid | null;
-
-    attendees?: GroupAttendanceDetailRosterAttendeeBag[] | null;
-
-    campusGuid?: Guid | null;
-
     didNotOccur: boolean;
-
-    locationGuid?: Guid | null;
-
-    notes?: string | null;
-
-    scheduleGuid?: Guid | null;
 };

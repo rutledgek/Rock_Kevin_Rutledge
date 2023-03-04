@@ -24,5 +24,6 @@ namespace Rock.ViewModels.Blocks.Groups.GroupAttendanceDetail
         public bool IsGroupNotFoundError { get; set; }
         public bool IsNotAuthorizedError { get; set; }
         public string RedirectUrl { get; set; }
+        public Guid? AttendanceOccurrenceGuid { get; set; }
     }
 }

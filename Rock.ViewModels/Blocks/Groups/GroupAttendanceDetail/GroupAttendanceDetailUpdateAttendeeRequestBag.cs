@@ -16,30 +16,15 @@
 //
 
 using System;
-using System.Collections.Generic;
 
 namespace Rock.ViewModels.Blocks.Groups.GroupAttendanceDetail
 {
-    public class GroupAttendanceDetailSaveAttendanceOccurrenceRequestBag
+    public class GroupAttendanceDetailUpdateAttendeeRequestBag
     {
-        public DateTime? AttendanceOccurrenceDate { get; set; }
+        public Guid AttendanceOccurrenceGuid { get; set; }
 
-        public Guid? AttendanceOccurrenceGuid { get; set; }
+        public Guid? PersonGuid { get; set; }
 
-        public Guid? LocationGuid { get; set; }
-
-        public Guid? ScheduleGuid { get; set; }
-
-        public string Notes { get; set; }
-
-        public bool DidNotOccur { get; set; }
-
-        public Guid? AttendanceTypeGuid { get; set; }
-
-        public Guid? CampusGuid { get; set; }
-
-        public List<GroupAttendanceDetailRosterAttendeeBag> Attendees { get; set; }
-
-        public bool AreAttendeesSortedByFirstName { get; set; }
+        public bool DidAttend { get; set; }
     }
 }
