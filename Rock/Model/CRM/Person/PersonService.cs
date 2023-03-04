@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Entity;
 using System.Data.Entity.Spatial;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Web.UI.WebControls;
@@ -3954,6 +3955,69 @@ namespace Rock.Model
             RemovePersonFromOtherGroupsOfType( familyId, personId, rockContext );
         }
 
+        /// <summary>
+        /// Updates the person profile photo.
+        /// </summary>
+        /// <param name="personGuid">The person unique identifier.</param>
+        /// <param name="photoBytes">The photo bytes.</param>
+        /// <param name="filename">The filename.</param>
+        /// <param name="rockContext">The rock context.</param>
+        /// <returns>The new person profile image (built with the Public Application Root), or an empty string if something went wrong.</returns>
+        internal static string UpdatePersonProfilePhoto( Guid personGuid, byte[] photoBytes, string filename, RockContext rockContext = null )
+        {
+            rockContext = rockContext ?? new RockContext();
+
+            var person = new PersonService( rockContext ).Get( personGuid );
+
+            if ( person == null )
+            {
+                return string.Empty;
+            }
+
+            if ( photoBytes.Length == 0 || string.IsNullOrWhiteSpace( filename ) )
+            {
+                return string.Empty;
+            }
+
+            char[] illegalCharacters = new char[] { '<', '>', ':', '"', '/', '\\', '|', '?', '*' };
+
+            if ( filename.IndexOfAny( illegalCharacters ) >= 0 )
+            {
+                return string.Empty;
+            }
+
+            BinaryFileType binaryFileType = new BinaryFileTypeService( rockContext ).Get( SystemGuid.BinaryFiletype.PERSON_IMAGE.AsGuid() );
+
+            // always create a new BinaryFile record of IsTemporary when a file is uploaded
+            var binaryFileService = new BinaryFileService( rockContext );
+            var binaryFile = new BinaryFile();
+            binaryFileService.Add( binaryFile );
+
+            binaryFile.IsTemporary = false;
+            binaryFile.BinaryFileTypeId = binaryFileType.Id;
+            binaryFile.MimeType = "octet/stream";
+            binaryFile.FileSize = photoBytes.Length;
+            binaryFile.FileName = filename;
+            binaryFile.ContentStream = new MemoryStream( photoBytes );
+
+            rockContext.SaveChanges();
+
+            int? oldPhotoId = person.PhotoId;
+            person.PhotoId = binaryFile.Id;
+
+            rockContext.SaveChanges();
+
+            if ( oldPhotoId.HasValue )
+            {
+                binaryFile = binaryFileService.Get( oldPhotoId.Value );
+                binaryFile.IsTemporary = true;
+
+                rockContext.SaveChanges();
+            }
+
+            return $"{GlobalAttributesCache.Value( "PublicApplicationRoot" )}{person.PhotoUrl}";
+        }
+
         #endregion
 
         #region User Preferences
@@ -4511,12 +4575,12 @@ FROM (
         public static void UpdateGivingId( int personId, RockContext rockContext )
         {
             var person = new PersonService( rockContext ).Get( personId );
-            var correctGivingId = person.GivingGroupId.HasValue ? $"G{ person.GivingGroupId.Value }" : $"P{ person.Id }";
+            var correctGivingId = person.GivingGroupId.HasValue ? $"G{person.GivingGroupId.Value}" : $"P{person.Id}";
 
             // Make sure the GivingId is correct.
             if ( person.GivingId != correctGivingId )
             {
-                rockContext.Database.ExecuteSqlCommand( $"UPDATE [Person] SET [GivingId] = '{ correctGivingId }' WHERE [Id] = { personId }" );
+                rockContext.Database.ExecuteSqlCommand( $"UPDATE [Person] SET [GivingId] = '{correctGivingId}' WHERE [Id] = {personId}" );
             }
         }
 
@@ -4983,7 +5047,7 @@ FROM (
         /// <param name="people">The people.</param>
         /// <param name="filterByGender">The filter by gender.</param>
         /// <returns>IQueryable&lt;Person&gt;.</returns>
-        [RockInternal("1.15")]
+        [RockInternal( "1.15" )]
         internal IQueryable<Person> GetParentsForChildren( List<Person> people, Gender? filterByGender = null )
         {
             var personFamilyIds = people.Where( p => p.AgeClassification == AgeClassification.Child )
