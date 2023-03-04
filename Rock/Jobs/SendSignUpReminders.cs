@@ -143,8 +143,8 @@ namespace Rock.Jobs
                  *  2) According to our 202 guide, "Group attributes are the most complicated to load since they can inherit attributes from their parent
                  *     GroupType(s) and the [below] snippet wouldn't work if a Group inherited an attribute value from a GroupType." This is our exact
                  *     scenario: we can have GroupTypes that inherit from the default "Sign-Up Group" GroupType, and the Attribute we care about filtering
-                 *     against - "ProjectType" - exists on this parent "Sign-Up Group" GroupType; we'll have to just get all Groups up front, and filter
-                 *     out the ones we don't care about below.
+                 *     against - "ProjectType" - exists on the parent "Sign-Up Group" GroupType; we'll need to get all Groups up front, and filter out
+                 *     the ones we don't care about below, in-memory.
                  */
                 //.WhereAttributeValue( rockContext, "ProjectType", Rock.SystemGuid.DefinedValue.PROJECT_TYPE_IN_PERSON )
                 .SelectMany( gl => gl.Schedules, ( gl, s ) => new
