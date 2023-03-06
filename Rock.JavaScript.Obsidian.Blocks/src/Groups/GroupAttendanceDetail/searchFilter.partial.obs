@@ -50,7 +50,7 @@
             }
 
             filter = createFilter((attendee: GroupAttendanceDetailRosterAttendeeBag) => {
-                return !!attendee.fullName && attendee.fullName.toLocaleLowerCase().indexOf(text) >= 0;
+                return !!attendee.fullName && attendee.fullName.toLocaleLowerCase().indexOf(text.toLocaleLowerCase()) >= 0;
             });
         }
 
