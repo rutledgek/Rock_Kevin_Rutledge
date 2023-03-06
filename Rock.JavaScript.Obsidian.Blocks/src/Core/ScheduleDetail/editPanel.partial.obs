@@ -6,6 +6,9 @@
                 <TextBox v-model="name"
                          label="Name"
                          rules="required" />
+
+                <TextBox v-model="abbreviatedName"
+                         label="Abbreviated Name" />
             </div>
 
             <div class="col-md-6">
@@ -18,6 +21,62 @@
                  label="Description"
                  textMode="multiline" />
 
+        <div class="row">
+            <div class="col-md-6">
+                <Numberbox v-model="enableCheckIn"
+                            append="mins before start"
+                            label="Enable Check-in">
+                            <template #append>
+                                <span class="input-group-addon">mins before start</span>
+                            </template>
+                </Numberbox>
+
+                <CategoryPicker v-model="category"
+                                label="Category"
+                                :multiple="false"
+                                rules="required"
+                                :entityTypeGuid="scheduleEntityTypeGuid" />
+            </div>
+
+            <div class="col-md-6">
+                <Numberbox v-model="closeCheckIn"
+                            label="Close Check-in">
+                            <template #append>
+                                <span class="input-group-addon">mins after start</span>
+                            </template>
+                </Numberbox>
+
+                <CheckBox v-model="autoInactivateWhenComplete"
+                          label="Inactivate Schedule When Complete"
+                          help="When enabled, the schedule will automatically be inactivated once the schedule has no more occurrences." />
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="row">
+                    <div class="col-md-8">
+                        <ScheduleBuilder v-model="calendarContent"
+                                label="Schedule"/>
+                    </div>
+
+                    <div class="col-md-2">
+                        <a class="help" href="#" tabindex="-1" data-toggle="tooltip"
+                                            data-placement="auto" data-container="body" data-html="true"
+                                            title="" data-original-title="">Preview</a>
+
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="col-md-6">
+                <CheckBox v-model="isPublic"
+                          label="Show Publicly"
+                          help="Determines if this schedule should be shown or hidden when viewed by individuals outside of the organization." />
+            </div>
+        </div>
+
         <AttributeValuesContainer v-model="attributeValues" :attributes="attributes" isEditMode :numberOfColumns="2" />
     </fieldset>
 </template>
@@ -27,10 +86,14 @@
     import AttributeValuesContainer from "@Obsidian/Controls/attributeValuesContainer";
     import CheckBox from "@Obsidian/Controls/checkBox";
     import TextBox from "@Obsidian/Controls/textBox";
+    import Numberbox from "@Obsidian/Controls/numberBox";
+    import CategoryPicker from "@Obsidian/Controls/categoryPicker";
+    import ScheduleBuilder from "@Obsidian/Controls/scheduleBuilder.obs";
     import { watchPropertyChanges } from "@Obsidian/Utility/block";
     import { propertyRef, updateRefValue } from "@Obsidian/Utility/component";
     import { ScheduleBag } from "@Obsidian/ViewModels/Blocks/Core/ScheduleDetail/scheduleBag";
     import { ScheduleDetailOptionsBag } from "@Obsidian/ViewModels/Blocks/Core/ScheduleDetail/scheduleDetailOptionsBag";
+    import { EntityType } from "@Obsidian/SystemGuids/entityType";
 
     const props = defineProps({
         modelValue: {
@@ -56,10 +119,19 @@
     const description = propertyRef(props.modelValue.description ?? "", "Description");
     const isActive = propertyRef(props.modelValue.isActive ?? false, "IsActive");
     const name = propertyRef(props.modelValue.name ?? "", "Name");
+    const abbreviatedName = propertyRef(props.modelValue.abbreviatedName ?? "", "Abbreviated Name");
+    const enableCheckIn = propertyRef(props.modelValue.checkInStartOffsetMinutes ?? 0, "Enable Check-in");
+    const closeCheckIn = propertyRef(props.modelValue.checkInEndOffsetMinutes ?? 0, "Close Check-in");
+    const category = propertyRef(props.modelValue.category, "CategoryId");
+    const autoInactivateWhenComplete = propertyRef(props.modelValue.autoInactivateWhenComplete, "Auto Inactive When Complete");
+    const isPublic = propertyRef(props.modelValue.isPublic ?? false, "Show Public");
+    const calendarContent = propertyRef(props.modelValue.iCalendarContent, "Calendar Content");
+
+    const scheduleEntityTypeGuid = EntityType.Schedule;
 
     // The properties that are being edited. This should only contain
     // objects returned by propertyRef().
-    const propRefs = [description, isActive, name];
+    const propRefs = [description, isActive, name, abbreviatedName, enableCheckIn, closeCheckIn, category, autoInactivateWhenComplete, isPublic, calendarContent];
 
     // #endregion
 
@@ -82,6 +154,13 @@
         updateRefValue(description, props.modelValue.description ?? "");
         updateRefValue(isActive, props.modelValue.isActive ?? false);
         updateRefValue(name, props.modelValue.name ?? "");
+        updateRefValue(abbreviatedName, props.modelValue.abbreviatedName ?? "");
+        updateRefValue(enableCheckIn, props.modelValue.checkInStartOffsetMinutes ?? 0);
+        updateRefValue(closeCheckIn, props.modelValue.checkInEndOffsetMinutes ?? 0);
+        updateRefValue(category, props.modelValue.category);
+        updateRefValue(autoInactivateWhenComplete, props.modelValue.autoInactivateWhenComplete);
+        updateRefValue(isPublic, props.modelValue.isPublic ?? false);
+        updateRefValue(calendarContent, props.modelValue.iCalendarContent);
     });
 
     // Determines which values we want to track changes on (defined in the
@@ -92,7 +171,14 @@
             attributeValues: attributeValues.value,
             description: description.value,
             isActive: isActive.value,
-            name: name.value
+            name: name.value,
+            abbreviatedName: abbreviatedName.value,
+            checkInStartOffsetMinutes: enableCheckIn.value,
+            checkInEndOffsetMinutes: closeCheckIn.value,
+            category: category.value,
+            autoInactivateWhenComplete: autoInactivateWhenComplete.value,
+            isPublic: isPublic.value,
+            iCalendarContent: calendarContent.value
         };
 
         emit("update:modelValue", newValue);

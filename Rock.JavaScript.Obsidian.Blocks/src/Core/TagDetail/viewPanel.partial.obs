@@ -73,7 +73,8 @@
 
         if (!props.modelValue.ownerPersonAlias) {
             valueBuilder.addTextValue("Scope", "Organizational");
-        } else {
+        }
+ else {
             valueBuilder.addTextValue("Scope", "Personal");
         }
 

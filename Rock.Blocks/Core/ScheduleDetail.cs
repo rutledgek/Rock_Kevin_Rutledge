@@ -72,11 +72,12 @@ namespace Rock.Blocks.Core
             using ( var rockContext = new RockContext() )
             {
                 var box = new DetailBlockBox<ScheduleBag, ScheduleDetailOptionsBag>();
+                var entity = GetInitialEntity( rockContext );
 
-                SetBoxInitialEntityState( box, rockContext );
+                SetBoxInitialEntityState( box, rockContext, entity );
 
                 box.NavigationUrls = GetBoxNavigationUrls();
-                box.Options = GetBoxOptions( box.IsEditable, rockContext );
+                box.Options = GetBoxOptions( box.IsEditable, rockContext, entity );
                 box.QualifiedAttributeProperties = GetAttributeQualifiedColumns<Schedule>();
 
                 return box;
@@ -90,10 +91,10 @@ namespace Rock.Blocks.Core
         /// <param name="isEditable"><c>true</c> if the entity is editable; otherwise <c>false</c>.</param>
         /// <param name="rockContext">The rock context.</param>
         /// <returns>The options that provide additional details to the block.</returns>
-        private ScheduleDetailOptionsBag GetBoxOptions( bool isEditable, RockContext rockContext )
+        private ScheduleDetailOptionsBag GetBoxOptions( bool isEditable, RockContext rockContext, Schedule entity )
         {
             var options = new ScheduleDetailOptionsBag();
-
+            options.NextOccurrence = entity.GetNextStartDateTime( RockDateTime.Now );
             return options;
         }
 
@@ -118,10 +119,8 @@ namespace Rock.Blocks.Core
         /// </summary>
         /// <param name="box">The box to be populated.</param>
         /// <param name="rockContext">The rock context.</param>
-        private void SetBoxInitialEntityState( DetailBlockBox<ScheduleBag, ScheduleDetailOptionsBag> box, RockContext rockContext )
+        private void SetBoxInitialEntityState( DetailBlockBox<ScheduleBag, ScheduleDetailOptionsBag> box, RockContext rockContext, Schedule entity )
         {
-            var entity = GetInitialEntity( rockContext );
-
             if ( entity == null )
             {
                 box.ErrorMessage = $"The {Schedule.FriendlyTypeName} was not found.";

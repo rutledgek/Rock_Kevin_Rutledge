@@ -22,6 +22,7 @@
     import { computed, PropType, ref } from "vue";
     import AttributeValuesContainer from "@Obsidian/Controls/attributeValuesContainer";
     import ValueDetailList from "@Obsidian/Controls/valueDetailList";
+    import { RockDateTime } from "@Obsidian/Utility/rockDateTime";
     import { ValueDetailListItemBuilder } from "@Obsidian/Core/Controls/valueDetailListItemBuilder";
     import { ValueDetailListItem } from "@Obsidian/Types/Controls/valueDetailListItem";
     import { ScheduleBag } from "@Obsidian/ViewModels/Blocks/Core/ScheduleDetail/scheduleBag";
@@ -57,7 +58,7 @@
         }
 
         if (props.modelValue.description) {
-            valueBuilder.addTextValue("Description", props.modelValue.description);
+            valueBuilder.addTextValue("Description", props.modelValue?.description ?? "");
         }
 
         return valueBuilder.build();
@@ -71,6 +72,20 @@
             return valueBuilder.build();
         }
 
+        if(props.modelValue?.friendlyScheduleText) {
+            valueBuilder.addTextValue("Schedule", props.modelValue?.friendlyScheduleText ?? "");
+        }
+
+        if(props.options?.nextOccurrence) {
+            valueBuilder.addTextValue("Next Occurrence", `${RockDateTime.parseISO(props.options.nextOccurrence)?.toASPString("g") ?? ""}`);
+        }
+
+        if(props.modelValue?.category) {
+            valueBuilder.addTextValue("Category", props.modelValue?.category?.text ?? "");
+        }
+
+        valueBuilder.addTextValue("Check-in Starts", `${props.modelValue?.checkInStartOffsetMinutes ?? 0} minutes before start of schedule`);
+        valueBuilder.addTextValue("Check-in Ends", `${props.modelValue?.checkInEndOffsetMinutes ?? 0} minutes after start of schedule`);
         return valueBuilder.build();
     });
 
