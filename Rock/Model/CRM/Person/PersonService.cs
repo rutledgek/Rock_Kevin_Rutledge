@@ -3963,36 +3963,45 @@ namespace Rock.Model
         /// <param name="filename">The filename.</param>
         /// <param name="rockContext">The rock context.</param>
         /// <returns>The new person profile image (built with the Public Application Root), or an empty string if something went wrong.</returns>
+        [RockInternal( "1.15" )]
         internal static string UpdatePersonProfilePhoto( Guid personGuid, byte[] photoBytes, string filename, RockContext rockContext = null )
         {
+            // If rockContext is null, create a new RockContext object.
             rockContext = rockContext ?? new RockContext();
 
+            // Get the Person object using the unique identifier.
             var person = new PersonService( rockContext ).Get( personGuid );
 
+            // If the Person object is null, return an empty string.
             if ( person == null )
             {
                 return string.Empty;
             }
 
+            // If photoBytes is empty or filename is null or whitespace, return an empty string.
             if ( photoBytes.Length == 0 || string.IsNullOrWhiteSpace( filename ) )
             {
                 return string.Empty;
             }
 
+            // Create an array of illegal characters for filenames.
             char[] illegalCharacters = new char[] { '<', '>', ':', '"', '/', '\\', '|', '?', '*' };
 
+            // If filename contains any of the illegal characters, return an empty string.
             if ( filename.IndexOfAny( illegalCharacters ) >= 0 )
             {
                 return string.Empty;
             }
 
+            // Get the BinaryFileType object for person images.
             BinaryFileType binaryFileType = new BinaryFileTypeService( rockContext ).Get( SystemGuid.BinaryFiletype.PERSON_IMAGE.AsGuid() );
 
-            // always create a new BinaryFile record of IsTemporary when a file is uploaded
+            // Create a new BinaryFile object and add it to the BinaryFileService.
             var binaryFileService = new BinaryFileService( rockContext );
             var binaryFile = new BinaryFile();
             binaryFileService.Add( binaryFile );
 
+            // Set properties for the new BinaryFile object.
             binaryFile.IsTemporary = false;
             binaryFile.BinaryFileTypeId = binaryFileType.Id;
             binaryFile.MimeType = "octet/stream";
@@ -4000,13 +4009,19 @@ namespace Rock.Model
             binaryFile.FileName = filename;
             binaryFile.ContentStream = new MemoryStream( photoBytes );
 
+            // Save changes to the RockContext.
             rockContext.SaveChanges();
 
+            // Store the old photo ID for the person.
             int? oldPhotoId = person.PhotoId;
+
+            // Set the person's photo ID to the ID of the new BinaryFile object.
             person.PhotoId = binaryFile.Id;
 
+            // Save changes to the RockContext.
             rockContext.SaveChanges();
 
+            // If the person had an old photo ID, mark the old BinaryFile as temporary and save changes.
             if ( oldPhotoId.HasValue )
             {
                 binaryFile = binaryFileService.Get( oldPhotoId.Value );
@@ -4015,6 +4030,7 @@ namespace Rock.Model
                 rockContext.SaveChanges();
             }
 
+            // Return the URL for the person's new photo, built with the PublicApplicationRoot global attribute.
             return $"{GlobalAttributesCache.Value( "PublicApplicationRoot" )}{person.PhotoUrl}";
         }
 
