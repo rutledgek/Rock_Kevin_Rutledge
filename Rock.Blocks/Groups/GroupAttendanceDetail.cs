@@ -758,8 +758,9 @@ namespace Rock.Blocks.Groups
 
         #region Real-time Actions
 
+        // TODO JMH This is being replaced by real-time topic.
         [BlockAction("UpdateAttendee")]
-        public BlockActionResult UpdateAttendee( GroupAttendanceDetailUpdateAttendeeRequestBag bag )
+        public BlockActionResult UpdateAttendee( GroupAttendanceDetailMarkAttendanceRequestBag bag )
         {
             using ( var rockContext = new RockContext() )
             {

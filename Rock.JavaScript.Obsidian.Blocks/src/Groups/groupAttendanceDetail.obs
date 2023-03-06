@@ -183,6 +183,9 @@
     import SearchFilter from "./GroupAttendanceDetail/searchFilter.partial.obs";
     import { AttendeeComparer, byFirstName, byLastName, compare, SortType } from "./GroupAttendanceDetail/sortType";
     import RosterFilterPicker from "./GroupAttendanceDetail/rosterFilter.partial.obs";
+    import { createEveryFilter as every, IRosterFilter, NoFilter } from "./GroupAttendanceDetail/filterType";
+    import { AttendeeGroupLabelDelegate } from "./GroupAttendanceDetail/attendeeGroupLabelDelegate";
+    import { GroupAttendanceTopic, startRealTime, stopRealTime } from "./GroupAttendanceDetail/realTime";
     import Alert from "@Obsidian/Controls/alert.obs";
     import DatePicker from "@Obsidian/Controls/datePicker.obs";
     import InlineCheckBox from "@Obsidian/Controls/inlineCheckBox";
@@ -197,6 +200,7 @@
     import { GroupAttendanceDetailLocationSelectionMode } from "@Obsidian/Enums/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailLocationSelectionMode";
     import { GroupAttendanceDetailScheduleSelectionMode } from "@Obsidian/Enums/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailScheduleSelectionMode";
     import { Guid } from "@Obsidian/Types";
+    import { HttpResult } from "@Obsidian/Types/Utility/http";
     import { onConfigurationValuesChanged, useConfigurationValues, useInvokeBlockAction, useReloadBlock } from "@Obsidian/Utility/block";
     import { RockDateTime } from "@Obsidian/Utility/rockDateTime";
     import { GroupAttendanceDetailInitializationBox } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailInitializationBox";
@@ -208,9 +212,7 @@
     import { GroupAttendanceDetailSaveAttendanceOccurrenceRequestBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailSaveAttendanceOccurrenceRequestBag";
     import { GroupAttendanceDetailSaveAttendanceOccurrenceResponseBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailSaveAttendanceOccurrenceResponseBag";
     import { ListItemBag } from "@Obsidian/ViewModels/Utility/listItemBag";
-    import { createEveryFilter as every, IRosterFilter, NoFilter } from "./GroupAttendanceDetail/filterType";
-    import { AttendeeGroupLabelDelegate } from "./GroupAttendanceDetail/attendeeGroupLabelDelegate";
-    import { HttpResult } from "@Obsidian/Types/Utility/http";
+import { ITopic } from "@Obsidian/Utility/realTime";
 
     // TODO JMH This config should contain the group GUID for use in the specific group controls.
     const config = ref(useConfigurationValues<GroupAttendanceDetailInitializationBox>());
@@ -243,8 +245,6 @@
     const didNotOccur = ref<boolean>(config.value.isDidNotMeetChecked);
     const campusGuid = ref<string | null | undefined>(config.value.campusGuid);
     const notes = ref<string>(config.value.notes ?? "");
-
-    const autoSaveOffHandle = ref<WatchStopHandle | null>(null);
 
     //#endregion Reactive Values
 
@@ -406,37 +406,43 @@
         personGuid: attendee.personGuid,
         didAttend: attendee.hasAttended })));
 
-    const autoSaveAttendeeOffHandle = ref<WatchStopHandle | null>(null);
+    const autoSaveAttendeesOffHandle = ref<WatchStopHandle | null>(null);
     const autoSaveDidNotOccurOffHandle = ref<WatchStopHandle | null>(null);
     const autoSaveAttendanceOccurrenceTypeOffHandle = ref<WatchStopHandle | null>(null);
 
     function autoSaveAttendeesOn(): void {
-        if (!autoSaveAttendeeOffHandle.value) {
-            autoSaveAttendeeOffHandle.value = watch([rosterOperations], ([newRoster], [oldRoster], onCleanup) => {
-                const rosterOperations = newRoster.filter(newAttendee => oldRoster.some(oldAttendee => newAttendee.personGuid === oldAttendee.personGuid && newAttendee.didAttend !== oldAttendee.didAttend));
-
-                if (rosterOperations.length) {
-                    for (const attendee of rosterOperations) {
-                        const bag: GroupAttendanceDetailUpdateAttendeeRequestBag = {
-                            attendanceOccurrenceGuid: attendanceOccurrenceGuid.value,
-                            personGuid: attendee.personGuid,
-                            didAttend: attendee.didAttend
-                        };
-                        invokeBlockAction<void>("UpdateAttendee", { bag }).then(() => console.log(`updated attendee ${formattedJson(bag)}`));
-                    }
-                }
-                onCleanup(() => autoSaveOffHandle.value = null);
-            }, { deep: true });
-        }
-    }
-
-    function autoSaveAttendeeOff(): void {
-        if (!autoSaveAttendeeOffHandle.value) {
+        if (autoSaveAttendeesOffHandle.value) {
+            // Skip if auto-save is already on.
             return;
         }
 
-        autoSaveAttendeeOffHandle.value();
-        autoSaveAttendeeOffHandle.value = null;
+        autoSaveAttendeesOffHandle.value = watch([rosterOperations], ([newRoster], [oldRoster], onCleanup) => {
+            onCleanup(() => autoSaveAttendeesOffHandle.value = null);
+
+            const rosterChanges = newRoster.filter(newAttendee => oldRoster.some(oldAttendee => newAttendee.personGuid === oldAttendee.personGuid && newAttendee.didAttend !== oldAttendee.didAttend));
+
+            if (rosterChanges.length) {
+                for (const attendee of rosterChanges) {
+                    const bag: GroupAttendanceDetailUpdateAttendeeRequestBag = {
+                        attendanceOccurrenceGuid: attendanceOccurrenceGuid.value,
+                        personGuid: attendee.personGuid,
+                        didAttend: attendee.didAttend
+                    };
+                    topic.value?.server.markAttendance(bag);
+                    //invokeBlockAction<void>("UpdateAttendee", { bag }).then(() => console.log(`updated attendee ${formattedJson(bag)}`));
+                }
+            }
+        }, { deep: true });
+    }
+
+    function autoSaveAttendeesOff(): void {
+        if (!autoSaveAttendeesOffHandle.value) {
+            return;
+        }
+
+        console.log("Stopping watch handle");
+        autoSaveAttendeesOffHandle.value();
+        autoSaveAttendeesOffHandle.value = null;
     }
 
     function autoSaveAttendanceOccurrenceTypeOn(): void {
@@ -467,6 +473,8 @@
     function autoSaveDidNotOccurOn(): void {
         if (!autoSaveDidNotOccurOffHandle.value) {
             autoSaveDidNotOccurOffHandle.value = watch([didNotOccur], ([newDidNotOccur], [oldDidNotOccur], onCleanup) => {
+                onCleanup(() => autoSaveDidNotOccurOffHandle.value = null);
+
                 if (newDidNotOccur !== oldDidNotOccur) {
                     const bag: GroupAttendanceDetailUpdateDidNotOccurRequestBag = {
                         attendanceOccurrenceGuid: attendanceOccurrenceGuid.value,
@@ -475,7 +483,8 @@
 
                     if (bag.didNotOccur) {
                         // Stop auto-saving attendees if the occurrence did not happen.
-                        autoSaveAttendeeOff();
+                        console.log("Stopping attendee auto-save until did not occur is saved");
+                        autoSaveAttendeesOff();
                         for (const attendee of roster.value) {
                             attendee.hasAttended = false;
                         }
@@ -491,7 +500,6 @@
                         autoSaveAttendeesOn();
                     }
                 }
-                onCleanup(() => autoSaveDidNotOccurOffHandle.value = null);
             });
         }
     }
@@ -505,20 +513,36 @@
         autoSaveAttendanceOccurrenceTypeOffHandle.value = null;
     }
 
-    function autoSaveOn(): void {
+    const topic = ref<GroupAttendanceTopic | null>();
+
+    async function autoSaveOn(): Promise<void> {
+        if (attendanceOccurrenceGuid.value) {
+            topic.value = await startRealTime(attendanceOccurrenceGuid.value, { onUpdateAttendance });
+        }
         autoSaveAttendeesOn();
         autoSaveDidNotOccurOn();
         autoSaveAttendanceOccurrenceTypeOn();
     }
 
     function autoSaveOff(): void {
-        autoSaveAttendeeOff();
+        if (topic.value) {
+            stopRealTime(topic.value);
+        }
+        autoSaveAttendeesOff();
         autoSaveAttendanceOccurrenceTypeOff();
         autoSaveDidNotOccurOff();
     }
 
     function formattedJson(value: any): string {
         return JSON.stringify(value, null, 4);
+    }
+
+    function onUpdateAttendance(personGuid: Guid, didAttend: boolean): void {
+        const attendee = roster.value.find(attendee => attendee.personGuid === personGuid);
+
+        if (attendee) {
+            attendee.hasAttended = didAttend;
+        }
     }
 
     //#endregion

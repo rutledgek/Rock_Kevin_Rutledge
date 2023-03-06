@@ -643,6 +643,7 @@
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupAttendanceDetail\groupAttendanceDetailAddPersonRequestBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupAttendanceDetail\groupAttendanceDetailAddPersonResponseBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupAttendanceDetail\groupAttendanceDetailInitializationBox.d.ts" />
+    <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupAttendanceDetail\groupAttendanceDetailMarkAttendanceRequestBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupAttendanceDetail\groupAttendanceDetailPrintRosterResponseBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupAttendanceDetail\groupAttendanceDetailRosterAttendeeBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupAttendanceDetail\groupAttendanceDetailSaveAttendanceOccurrenceRequestBag.d.ts" />

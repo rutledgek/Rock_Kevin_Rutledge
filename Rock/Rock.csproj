@@ -1077,8 +1077,10 @@
     <Compile Include="RealTime\RealTimeException.cs" />
     <Compile Include="RealTime\Topics\EntityUpdatedTopic.cs" />
     <Compile Include="RealTime\Topics\ConversationParticipantTopic.cs" />
+    <Compile Include="RealTime\Topics\GroupAttendanceTopic.cs" />
     <Compile Include="RealTime\Topics\IEntityUpdated.cs" />
     <Compile Include="RealTime\Topics\IConversationParticipant.cs" />
+    <Compile Include="RealTime\Topics\IGroupAttendance.cs" />
     <Compile Include="RealTime\Topics\IInteractiveExperienceParticipant.cs" />
     <Compile Include="RealTime\Topics\InteractiveExperienceParticipantTopic.cs" />
     <Compile Include="RealTime\Topics\ITestCommunicationTransport.cs" />

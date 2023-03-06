@@ -53,7 +53,7 @@
     <Compile Include="Blocks\Groups\GroupAttendanceDetail\GroupAttendanceDetailPrintRosterResponseBag.cs" />
     <Compile Include="Blocks\Groups\GroupAttendanceDetail\GroupAttendanceDetailUpdateAttendanceOccurrenceTypeRequestBag.cs" />
     <Compile Include="Blocks\Groups\GroupAttendanceDetail\GroupAttendanceDetailUpdateDidNotOccurRequestBag.cs" />
-    <Compile Include="Blocks\Groups\GroupAttendanceDetail\GroupAttendanceDetailUpdateAttendeeRequestBag.cs" />
+    <Compile Include="Blocks\Groups\GroupAttendanceDetail\GroupAttendanceDetailMarkAttendanceRequestBag.cs" />
     <Compile Include="Blocks\Groups\GroupAttendanceDetail\GroupAttendanceDetailSaveAttendanceOccurrenceResponseBag.cs" />
     <Compile Include="Blocks\Groups\GroupAttendanceDetail\GroupAttendanceDetailRosterAttendeeBag.cs" />
     <Compile Include="Blocks\Groups\GroupAttendanceDetail\GroupAttendanceDetailInitializationBox.cs" />
