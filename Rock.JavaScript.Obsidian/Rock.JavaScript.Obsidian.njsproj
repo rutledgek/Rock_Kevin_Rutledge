@@ -38,6 +38,7 @@
     <Content Include="Framework\Controls\buttonGroup.obs" />
     <Content Include="Framework\Controls\cacheabilityPicker.obs" />
     <Content Include="Framework\Controls\campusPicker.obs" />
+    <Content Include="Framework\Controls\categorizedValuePicker.obs" />
     <Content Include="Framework\Controls\contentDropDownPicker.obs" />
     <Content Include="Framework\Controls\datePickerBase.obs" />
     <Content Include="Framework\Controls\datePicker.obs" />
@@ -184,6 +185,7 @@
     <Folder Include="Framework\ViewModels\Controls\" />
     <Folder Include="Framework\ViewModels\Core\" />
     <Folder Include="Framework\ViewModels\Crm\" />
+    <Folder Include="Framework\ViewModels\Engagement\" />
     <Folder Include="Framework\ViewModels\Entities\" />
     <Folder Include="Framework\ViewModels\Event\" />
     <Folder Include="Framework\ViewModels\Event\InteractiveExperiences\" />
@@ -361,6 +363,7 @@
     <TypeScriptCompile Include="Framework\Enums\Engagement\streakOccurrenceFrequency.ts" />
     <TypeScriptCompile Include="Framework\Enums\Engagement\streakStructureType.ts" />
     <TypeScriptCompile Include="Framework\Enums\Event\attendanceGraphBy.ts" />
+    <TypeScriptCompile Include="Framework\Enums\Event\attendanceStatus.ts" />
     <TypeScriptCompile Include="Framework\Enums\Event\interactiveExperienceApprovalStatus.ts" />
     <TypeScriptCompile Include="Framework\Enums\Event\interactiveExperienceCampusBehavior.ts" />
     <TypeScriptCompile Include="Framework\Enums\Event\interactiveExperiencePushNotificationType.ts" />
@@ -566,6 +569,7 @@
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Cms\ContentCollectionDetail\contentCollectionBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Cms\ContentCollectionDetail\contentCollectionDetailOptionsBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Cms\ContentCollectionDetail\contentSourceBag.d.ts" />
+    <TypeScriptCompile Include="Framework\ViewModels\Blocks\Cms\ContentCollectionDetail\customFieldFilterBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Cms\ContentCollectionDetail\filterSettingsBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Cms\ContentCollectionView\contentCollectionInitializationBox.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Cms\ContentCollectionView\contentCollectionListItemBag.d.ts" />
@@ -662,6 +666,8 @@
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Mobile\Communication\SmsConversation\conversationDetailBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Cms\blockCustomActionBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Cms\contentCollectionAttributeFilterSettingsBag.d.ts" />
+    <TypeScriptCompile Include="Framework\ViewModels\Cms\contentCollectionCustomFieldBag.d.ts" />
+    <TypeScriptCompile Include="Framework\ViewModels\Cms\contentCollectionCustomFieldFilterSettingsBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Cms\contentCollectionFilterSettingsBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Cms\contentCollectionSourceAdditionalSettingsBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Cms\obsidianBlockConfigBag.d.ts" />
@@ -682,6 +688,7 @@
     <TypeScriptCompile Include="Framework\ViewModels\Controls\slidingDateRangeBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Core\notificationMessageActionBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Crm\renderedBadgeBag.d.ts" />
+    <TypeScriptCompile Include="Framework\ViewModels\Engagement\achievementCompletedMessageBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Entities\achievementAttemptBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Entities\achievementTypeBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Entities\achievementTypePrerequisiteBag.d.ts" />
@@ -920,6 +927,7 @@
     <TypeScriptCompile Include="Framework\ViewModels\Entities\workflowFormBuilderTemplateBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Entities\workflowTypeBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\entity.d.ts" />
+    <TypeScriptCompile Include="Framework\ViewModels\Event\attendanceUpdatedMessageBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Event\InteractiveExperiences\actionRenderConfigurationBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Event\InteractiveExperiences\experienceActionStyleBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Event\InteractiveExperiences\experienceAnswerBag.d.ts" />
@@ -949,6 +957,9 @@
     <TypeScriptCompile Include="Framework\ViewModels\Rest\Controls\binaryFilePickerGetBinaryFilesOptionsBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Rest\Controls\binaryFileTypePickerGetBinaryFileTypesOptionsBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Rest\Controls\campusPickerGetCampusesOptionsBag.d.ts" />
+    <TypeScriptCompile Include="Framework\ViewModels\Rest\Controls\categorizedValuePickerGetTreeOptionsBag.d.ts" />
+    <TypeScriptCompile Include="Framework\ViewModels\Rest\Controls\categorizedValuePickerGetTreeResultsBag.d.ts" />
+    <TypeScriptCompile Include="Framework\ViewModels\Rest\Controls\categorizedValuePickerNodeBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Rest\Controls\categoryPickerChildTreeItemsOptionsBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Rest\Controls\connectionRequestPickerGetChildrenOptionsBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Rest\Controls\dataViewPickerGetDataViewsOptionsBag.d.ts" />
