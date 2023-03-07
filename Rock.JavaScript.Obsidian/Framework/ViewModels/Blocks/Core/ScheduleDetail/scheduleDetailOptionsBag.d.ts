@@ -6,4 +6,6 @@ export type ScheduleDetailOptionsBag = {
     exclusions?: ScheduleCategoryExclusionBag[]| null;
 
     hasScheduleWarning?: boolean
+
+    canDelete?: boolean
 };

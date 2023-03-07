@@ -28,5 +28,7 @@ namespace Rock.ViewModels.Blocks.Core.ScheduleDetail
         public List<ScheduleCategoryExclusionBag> Exclusions { get; set; }
 
         public bool HasScheduleWarning { get; set; }
+
+        public bool CanDelete { get; set; }
     }
 }

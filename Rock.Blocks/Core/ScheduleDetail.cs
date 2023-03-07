@@ -101,6 +101,9 @@ namespace Rock.Blocks.Core
 
             options.HasScheduleWarning = entity.HasScheduleWarning();
 
+            string errorMessage = string.Empty;
+            options.CanDelete = new ScheduleService( rockContext ).CanDelete( entity, out errorMessage );
+
             if ( entity.CategoryId.HasValue )
             {
                 var today = RockDateTime.Today;
@@ -293,9 +296,6 @@ namespace Rock.Blocks.Core
 
             box.IfValidProperty( nameof( box.Entity.EffectiveStartDate ),
                 () => entity.EffectiveStartDate = box.Entity.EffectiveStartDate );
-
-            /*box.IfValidProperty( nameof( box.Entity.FriendlyScheduleText ),
-                () => entity.FriendlyScheduleText = box.Entity.FriendlyScheduleText );*/
 
             box.IfValidProperty( nameof( box.Entity.iCalendarContent ),
                 () => entity.iCalendarContent = box.Entity.iCalendarContent );

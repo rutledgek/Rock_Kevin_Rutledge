@@ -13,7 +13,7 @@
                  entityTypeName="Schedule"
                  :isAuditHidden="false"
                  :isBadgesVisible="true"
-                 :isDeleteVisible="isEditable"
+                 :isDeleteVisible="config.options?.canDelete"
                  :isEditVisible="isEditable"
                  :isFollowVisible="true"
                  :isSecurityHidden="false"

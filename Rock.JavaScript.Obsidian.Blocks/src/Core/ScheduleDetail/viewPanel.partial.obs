@@ -1,13 +1,13 @@
 <!-- Copyright by the Spark Development Network; Licensed under the Rock Community License -->
 <template>
-    <Alert v-if="$props.options.exclusions" alertType="warning">
+    <Alert v-if="$props.options.exclusions?.length ?? 0" alertType="warning">
         <strong>Exclusions</strong> <br />
         <span class="js-notification-text">
             <p>This schedule will not be active during the following dates due to being excluded by the schedule's category:</p>
             <p>
-                <span v-for="exclusion in $props.options.exclusions">
+                <template v-for="exclusion in $props.options.exclusions">
                     <strong>{{ exclusion.title }}</strong>: {{  RockDateTime.parseISO(exclusion.startDate ?? "")?.toASPString("d") }} - {{ RockDateTime.parseISO(exclusion.endDate ?? "")?.toASPString("d") }} <br>
-                </span>
+                </template>
             </p>
         </span>
     </Alert>
