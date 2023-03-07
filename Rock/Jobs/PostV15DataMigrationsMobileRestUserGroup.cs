@@ -2,7 +2,9 @@
 using System.Data.Entity;
 using System.Drawing.Text;
 using System.Linq;
+using System.ServiceModel.Channels;
 
+using Rock.Attribute;
 using Rock.Data;
 using Rock.Mobile;
 using Rock.Model;
@@ -15,16 +17,33 @@ namespace Rock.Jobs
     /// </summary>
     [DisplayName( "Rock Update Helper v15.0 - Update Mobile Application Rest User Security." )]
     [Description( "This job will create (if doesn't exist) a new 'Mobile Application Users' security group, and add all current mobile application rest users to that group." )]
+
+    [IntegerField( "Command Timeout",
+        Key = AttributeKey.CommandTimeout,
+        Description = "Maximum amount of time (in seconds) to wait for each SQL command to complete. On a large database with lots of transactions, this could take several minutes or more.",
+        IsRequired = false,
+        DefaultIntegerValue = 14400 )]
     public class PostV15DataMigrationsMobileApplicationUserRestGroup : RockJob
     {
+        private static class AttributeKey
+        {
+            public const string CommandTimeout = "CommandTimeout";
+        }
+
         /// <inheritdoc />
         public override void Execute()
         {
-            using( var rockContext = new RockContext() )
+            // get the configured timeout, or default to 240 minutes if it is blank
+            var commandTimeout = GetAttributeValue( AttributeKey.CommandTimeout ).AsIntegerOrNull() ?? 14400;
+            var jobMigration = new JobMigration( commandTimeout );
+            var migrationHelper = new MigrationHelper( jobMigration );
+
+            using ( var rockContext = new RockContext() )
             {
                 var personService = new PersonService( rockContext );
                 var groupService = new GroupService( rockContext );
-                
+
+                // Checking to see if the 'RSR: Mobile Application Users' group exists.
                 var mobileAppUsersGuid = SystemGuid.Group.GROUP_MOBILE_APPLICATION_USERS.AsGuid();
                 var group = groupService
                     .Queryable()
@@ -32,7 +51,7 @@ namespace Rock.Jobs
                     .Where( g => g.Guid == mobileAppUsersGuid )
                     .SingleOrDefault();
 
-                // Create the rest security group if it doesn't exist.
+                // If not, create it with the default values.
                 if ( group == null )
                 {
                     group = GetDefaultMobileUsersGroup();
@@ -45,6 +64,8 @@ namespace Rock.Jobs
 
                 // Ensure all of the mobile application are in this group.
                 EnsureAllMobileApplicationsAreInDefaultGroup( rockContext, group, groupTypeId );
+                AddGroupsToMobileRelatedEndpointSecurityGroups( migrationHelper );
+
                 rockContext.SaveChanges();
             }
 
@@ -96,6 +117,90 @@ namespace Rock.Jobs
                     group.Members.Add( groupMember );
                 }
             }
+        }
+
+
+        /// <summary>
+        /// Adds the groups to mobile related endpoint security.
+        /// </summary>
+        /// <param name="migrationHelper">The migration helper.</param>
+        private static void AddGroupsToMobileRelatedEndpointSecurityGroups( MigrationHelper migrationHelper )
+        {
+            // 
+            // The 'Entity Sets' related endpoints.
+            //
+            migrationHelper.AddSecurityAuthForRestAction( "POST", "EntitySets^IHttpActionResult PostEntitySetFromGuid(List`1[Guid], Guid)",
+                0,
+                Rock.Security.Authorization.VIEW,
+                true,
+                Rock.SystemGuid.Group.GROUP_MOBILE_APPLICATION_USERS,
+                Model.SpecialRole.None,
+                "36336448-3021-4A03-B62D-B85CC3FB5FA2" );
+
+            //
+            // The 'Followings' related endpoints.
+            //
+            migrationHelper.AddSecurityAuthForRestAction( "POST", "Followings^HttpResponseMessage Follow(Int32, Int32, String)",
+                0,
+                Rock.Security.Authorization.VIEW,
+                true,
+                Rock.SystemGuid.Group.GROUP_MOBILE_APPLICATION_USERS,
+                Model.SpecialRole.None,
+                "C5D068B8-A3CF-4C8F-BD2B-43BEF433BAC6" );
+
+            migrationHelper.AddSecurityAuthForRestAction( "DELETE", "Followings^Void Delete(Int32, Int32, String)",
+                0,
+                Rock.Security.Authorization.VIEW,
+                true,
+                Rock.SystemGuid.Group.GROUP_MOBILE_APPLICATION_USERS,
+                Model.SpecialRole.None,
+                "B2F664B7-F4E9-4CDA-A1B3-29B6A713070A" );
+
+            migrationHelper.AddSecurityAuthForRestAction( "POST", "Followings^HttpResponseMessage Follow(Guid, Guid, String)",
+                0,
+                Rock.Security.Authorization.VIEW,
+                true,
+                Rock.SystemGuid.Group.GROUP_MOBILE_APPLICATION_USERS,
+                Model.SpecialRole.None,
+                "865D2996-9A90-483C-9BD2-25122355229A" );
+
+            migrationHelper.AddSecurityAuthForRestAction( "DELETE", "Followings^Void Delete(Guid, Guid, Guid, String)",
+                0,
+                Rock.Security.Authorization.VIEW,
+                true,
+                Rock.SystemGuid.Group.GROUP_MOBILE_APPLICATION_USERS,
+                Model.SpecialRole.None,
+                "5F878F7E-5E4C-4DA1-ADB3-24F5B871B9EC" );
+
+            //
+            // The 'Prayer Requests' related endpoints.
+            // 
+            migrationHelper.AddSecurityAuthForRestAction( "PUT", "PrayerRequests^Void Prayed(Int32)",
+                0,
+                Rock.Security.Authorization.VIEW,
+                true,
+                Rock.SystemGuid.Group.GROUP_MOBILE_APPLICATION_USERS,
+                Model.SpecialRole.None,
+                "98f43094-1188-491b-a43e-1993731ff313" );
+
+            migrationHelper.AddSecurityAuthForRestAction( "PUT", "PrayerRequests^IHttpActionResult Prayed(Guid, Nullable`1[Guid], Boolean)",
+                0,
+                Rock.Security.Authorization.VIEW,
+                true,
+                Rock.SystemGuid.Group.GROUP_MOBILE_APPLICATION_USERS,
+                Model.SpecialRole.None,
+                "3DE44323-7873-4BA8-BFDB-4BCC0AC25970" );
+
+            // 
+            // The 'Impersonation Token' related endpoints.
+            //
+            migrationHelper.AddSecurityAuthForRestAction( "GET", "People^String GetCurrentPersonImpersonationToken(Nullable`1[DateTime], Nullable`1[Int32], Nullable`1[Int32])",
+                0,
+                Rock.Security.Authorization.VIEW,
+                true,
+                Rock.SystemGuid.Group.GROUP_MOBILE_APPLICATION_USERS,
+                Model.SpecialRole.None,
+                "96CF823C-D014-4AF3-A17D-64B0C60B6150" );
         }
 
         /// <summary>
