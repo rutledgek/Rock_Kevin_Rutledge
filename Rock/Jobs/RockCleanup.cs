@@ -2627,16 +2627,7 @@ BEGIN
 				END
 			ELSE A.[Age] 
 			END,
-	P.[AgeRange] = CASE
-		WHEN A.[AgeBracket] = 1 THEN '0-12'
-		WHEN A.[AgeBracket] = 2 THEN '13-17'
-		WHEN A.[AgeBracket] = 3 THEN '18-24'
-		WHEN A.[AgeBracket] = 4 THEN '25-34'
-		WHEN A.[AgeBracket] = 5 THEN '35-44'
-		WHEN A.[AgeBracket] = 6 THEN '45-54'
-		WHEN A.[AgeBracket] = 7 THEN '55-64'
-		WHEN A.[AgeBracket] = 8 THEN '65+'
-	END
+	P.[AgeBracket] = A.[AgeBracket]
 	FROM Person P
 	INNER JOIN AnalyticsSourceDate A
 	ON A.[DateKey] = P.[BirthDateKey]

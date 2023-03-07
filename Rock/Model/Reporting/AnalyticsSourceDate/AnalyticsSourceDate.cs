@@ -19,6 +19,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Runtime.Serialization;
 using Rock.Data;
+using Rock.Enums.Crm;
 using Rock.Utility;
 
 namespace Rock.Model
@@ -487,7 +488,7 @@ namespace Rock.Model
         /// The age bracket.
         /// </value>
         [DataMember]
-        public int? AgeBracket { get; set; }
+        public AgeBracket AgeBracket { get; set; }
 
         #endregion Entity Properties
 

@@ -25,6 +25,7 @@ using System.Data.Entity.ModelConfiguration;
 using System.Linq;
 using System.Runtime.Serialization;
 using Rock.Data;
+using Rock.Enums.Crm;
 using Rock.Lava;
 using Rock.UniversalSearch;
 using Rock.Utility.Enums;
@@ -580,7 +581,7 @@ namespace Rock.Model
         /// <value>
         /// The age range.
         /// </value>
-        public string AgeRange { get; set; }
+        public AgeBracket AgeBracket { get; set; }
 
         #endregion
 
