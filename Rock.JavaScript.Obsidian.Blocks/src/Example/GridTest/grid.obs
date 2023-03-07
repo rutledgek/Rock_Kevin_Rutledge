@@ -192,6 +192,16 @@ table.table-obsidian th.grid-error > .alert {
     import GridPagerRow from "./gridPagerRow.obs";
     import { AttributeColumnDefinition, GridAction, GridColumnDefinition, GridData, IGridColumnFilter, ValueFormatterFunction } from "./types";
 
+    type RowCacheItem = {
+        quickFilterValue?: string | null;
+
+        sortValue?: string | number | null;
+
+        uniqueValue?: string | number | null;
+
+        filterValue?: unknown | null;
+    };
+
     // const startStamp = Date.now();
     // const mergeF = { row: { name: { firstName: "Daniel", lastName: "Hazelbaker" }}};
     // for (let i = 0; i < 10000; i++) {
@@ -263,6 +273,40 @@ table.table-obsidian th.grid-error > .alert {
         return resolveMergeFields(text, mergeFields);
     }
 
+    function getOrUpdateQuickFilterValueCache(row: Record<string, unknown>, column: GridColumnDefinition, factory: ((row: Record<string, unknown>, column: GridColumnDefinition) => string | undefined)): string | undefined {
+        if (props.itemId === undefined) {
+            return factory(row, column);
+        }
+
+        const rowId = row[props.itemId];
+
+        if (typeof rowId !== "string" && typeof rowId !== "number") {
+            return factory(row, column);
+        }
+
+        let cache = rowItemCache[rowId];
+
+        if (!cache) {
+            cache = {
+                quickFilterValue: null,
+                sortValue: null,
+                uniqueValue: null,
+                filterValue: null
+            };
+            rowItemCache[rowId] = cache;
+        }
+
+        if (cache.quickFilterValue === null) {
+            if (window["daniel"]) {
+                console.log(rowItemCache);
+                console.log(`Cache Miss on ${rowId}`);
+            }
+            cache.quickFilterValue = factory(row, column);
+        }
+
+        return cache.quickFilterValue;
+    }
+
     function getColumnDefinitions(columnNodes: VNode[]): GridColumnDefinition[] {
         const columns: GridColumnDefinition[] = [];
 
@@ -290,7 +334,7 @@ table.table-obsidian th.grid-error > .alert {
                         field: attribute.name,
                         uniqueValue: (r, c) => c.field ? String(r[c.field]) : "",
                         sortValue: (r, c) => c.field ? String(r[c.field]) : undefined,
-                        quickFilterValue: (r, c) => c.field ? String(r[c.field]) : undefined,
+                        quickFilterValue: (r, c) => getOrUpdateQuickFilterValueCache(r, c, () => c.field ? String(r[c.field]) : undefined),
                         filterValue: (r, c) => c.field ? String(r[c.field]) : undefined,
                         format: getVNodeProp<VNode>(node, "format") ?? textColumnValueComponent,
                         props: {}
@@ -324,7 +368,7 @@ table.table-obsidian th.grid-error > .alert {
                         return undefined;
                     }
 
-                    const v = r[c.field];
+                    let v = r[c.field];
 
                     if (typeof v === "string") {
                         return v;
@@ -332,6 +376,8 @@ table.table-obsidian th.grid-error > .alert {
                     else if (typeof v === "number") {
                         return v.toString();
                     }
+
+
                     else {
                         return undefined;
                     }
@@ -391,7 +437,7 @@ table.table-obsidian th.grid-error > .alert {
                 uniqueValue,
                 sortValue,
                 filterValue,
-                quickFilterValue,
+                quickFilterValue: (r, c) => quickFilterValue !== undefined ? getOrUpdateQuickFilterValueCache(r, c, quickFilterValue) : undefined,
                 props: getVNodeProps(node)
             });
         }
@@ -413,10 +459,23 @@ table.table-obsidian th.grid-error > .alert {
         data: {
             type: [Object, Function] as PropType<GridData | (() => GridData | Promise<GridData>)>,
             default: []
+        },
+
+        itemId: {
+            type: String as PropType<string>,
+            required: false
         }
     });
 
+    function doTest() {
+        console.log("test");
+    }
+
+    defineExpose({doTest});
+
     const slots = useSlots();
+
+    let rowItemCache: Record<string | number, RowCacheItem> = {};
 
     const gridActions = ref<GridAction[]>([]);
     const currentPage = ref(1);
@@ -578,11 +637,13 @@ table.table-obsidian th.grid-error > .alert {
         if (typeof props.data === "object") {
             const data = props.data;
             rows.value = data.rows;
+            rowItemCache = {};
         }
         else if (typeof props.data === "function") {
             try {
                 const data = await props.data();
                 rows.value = data.rows;
+                rowItemCache = {};
             }
             catch (error) {
                 gridErrorMessage.value = error instanceof Error ? error.message : new String(error).toString();

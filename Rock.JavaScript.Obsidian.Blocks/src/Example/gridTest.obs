@@ -1,7 +1,7 @@
 <!-- Copyright by the Spark Development Network; Licensed under the Rock Community License -->
 <template>
-    <Grid :data="loadGridData">
-        <Column name="name" title="Name" sortValue="{{ row.name.lastName }} {{ row.name.firstName }}" :filter="textColumnFilter" filterValue="{{ row.name.firstName }} {{  row.name.lastName }}">
+    <Grid ref="myGrid" :data="loadGridData" itemId="guid">
+        <Column name="name" title="Name" sortValue="{{ row.name.lastName }} {{ row.name.firstName }}" :filter="textColumnFilter" quickFilterValue="{{ row.name.firstName }} {{  row.name.lastName }}">
             <template #body="{ row }">
                 {{ row.name.firstName }} {{ row.name.lastName }}
             </template>
@@ -71,6 +71,16 @@
     import { ListItemBag } from "@Obsidian/ViewModels/Utility/listItemBag";
     import PickExistingColumnFilterComponent from "./GridTest/pickExistingColumnFilterComponent.obs";
     import { deepEqual } from "@Obsidian/Utility/util";
+
+    // Putting this here as an example of how to call methods on components.
+    // Such as myGrid.value.reloadItem(item.id);
+    const myGrid = ref<InstanceType<typeof Grid> | null>();
+    setTimeout(() => {
+        if (!myGrid.value) {
+            return;
+        }
+        myGrid.value.doTest();
+    }, 1000);
 
     const standardColumnProps = {
         name: {
