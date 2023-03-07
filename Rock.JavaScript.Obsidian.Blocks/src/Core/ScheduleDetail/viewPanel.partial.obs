@@ -85,7 +85,12 @@
         }
 
         if(props.modelValue?.friendlyScheduleText) {
-            valueBuilder.addTextValue("Schedule", props.modelValue?.friendlyScheduleText ?? "");
+            if(props.options.hasScheduleWarning) {
+                valueBuilder.addHtmlValue("Schedule", `<label class='label label-warning'>${props.modelValue?.friendlyScheduleText ?? ""}</label> <i class='fa fa-exclamation-triangle text-warning'></i>`);
+            }
+             else {
+                valueBuilder.addTextValue("Schedule", props.modelValue?.friendlyScheduleText ?? "");
+            }
         }
 
         if(props.options?.nextOccurrence) {

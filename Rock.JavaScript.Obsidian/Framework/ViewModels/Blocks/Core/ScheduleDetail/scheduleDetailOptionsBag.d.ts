@@ -4,4 +4,6 @@ export type ScheduleDetailOptionsBag = {
     nextOccurrence?: string | null
 
     exclusions?: ScheduleCategoryExclusionBag[]| null;
+
+    hasScheduleWarning?: boolean
 };

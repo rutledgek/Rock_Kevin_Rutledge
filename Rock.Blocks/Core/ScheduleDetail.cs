@@ -99,6 +99,8 @@ namespace Rock.Blocks.Core
                 NextOccurrence = entity.GetNextStartDateTime( RockDateTime.Now )
             };
 
+            options.HasScheduleWarning = entity.HasScheduleWarning();
+
             if ( entity.CategoryId.HasValue )
             {
                 var today = RockDateTime.Today;

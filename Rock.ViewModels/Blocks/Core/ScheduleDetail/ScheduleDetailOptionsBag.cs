@@ -26,5 +26,7 @@ namespace Rock.ViewModels.Blocks.Core.ScheduleDetail
         public DateTime? NextOccurrence { get; set; }
 
         public List<ScheduleCategoryExclusionBag> Exclusions { get; set; }
+
+        public bool HasScheduleWarning { get; set; }
     }
 }
