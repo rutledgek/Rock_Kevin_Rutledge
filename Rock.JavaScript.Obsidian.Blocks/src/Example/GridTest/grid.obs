@@ -337,6 +337,13 @@ table.table-obsidian th.grid-error > .alert {
                     }
                 };
             }
+            else if (typeof quickFilterValue === "string") {
+                const template = quickFilterValue;
+
+                quickFilterValue = (row): string | undefined => {
+                    return resolveDynamicText(template, { row });
+                };
+            }
 
             let filterValue = getVNodeProp<((row: Record<string, unknown>, column: GridColumnDefinition) => unknown) | string>(node, "filterValue");
 
@@ -463,11 +470,8 @@ table.table-obsidian th.grid-error > .alert {
                     if (columnFilterValue === undefined) {
                         return true;
                     }
-                    console.log("FilterA", columnFilterValue);
 
                     const value: unknown = column.filterValue(row, column);
-
-                    console.log("FilterB", value, column.filterValue);
 
                     if (value === undefined) {
                         return false;

@@ -48,7 +48,8 @@
         <ColoredBadgeColumn name="mode"
                             title="Mode"
                             field="mode"
-                            :filter="pickExistingColumnFilter" />
+                            :filter="pickExistingColumnFilter"
+                            quickFilterValue="{{ row.mode.text }}" />
 
         <BooleanColumn name="isPublic"
                        title="Public"
@@ -154,6 +155,17 @@
                 type: Object as PropType<VNode>,
                 required: false,
                 default: dateColumnValueComponent
+            },
+
+            quickFilterValue: {
+                type: Object as PropType<((row: Record<string, unknown>, column: GridColumnDefinition) => string | undefined)>,
+                default: (r: Record<string, unknown>, c: GridColumnDefinition) => {
+                    if (!c.field) {
+                        return undefined;
+                    }
+
+                    return RockDateTime.parseISO(r[c.field] as string)?.toASPString("d");
+                }
             }
         }
     });
