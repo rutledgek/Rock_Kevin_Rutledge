@@ -290,6 +290,8 @@ table.table-obsidian th.grid-error > .alert {
                         field: attribute.name,
                         uniqueValue: (r, c) => c.field ? String(r[c.field]) : "",
                         sortValue: (r, c) => c.field ? String(r[c.field]) : undefined,
+                        quickFilterValue: (r, c) => c.field ? String(r[c.field]) : undefined,
+                        filterValue: (r, c) => c.field ? String(r[c.field]) : undefined,
                         format: getVNodeProp<VNode>(node, "format") ?? textColumnValueComponent,
                         props: {}
                     });
@@ -314,9 +316,40 @@ table.table-obsidian th.grid-error > .alert {
                 };
             }
 
-            let filterValue = getVNodeProp<ValueFormatterFunction | string>(node, "filterValue");
+            let quickFilterValue = getVNodeProp<((row: Record<string, unknown>, column: GridColumnDefinition) => string | undefined)>(node, "quickFilterValue");
 
-            if (typeof filterValue === "string") {
+            if (!quickFilterValue) {
+                quickFilterValue = (r, c): string | undefined => {
+                    if (!c.field) {
+                        return undefined;
+                    }
+
+                    const v = r[c.field];
+
+                    if (typeof v === "string") {
+                        return v;
+                    }
+                    else if (typeof v === "number") {
+                        return v.toString();
+                    }
+                    else {
+                        return undefined;
+                    }
+                };
+            }
+
+            let filterValue = getVNodeProp<((row: Record<string, unknown>, column: GridColumnDefinition) => unknown) | string>(node, "filterValue");
+
+            if (filterValue === undefined) {
+                filterValue = (r, c): unknown => {
+                    if (!c.field) {
+                        return undefined;
+                    }
+
+                    return r[c.field];
+                };
+            }
+            else if (typeof filterValue === "string") {
                 const template = filterValue;
 
                 filterValue = (row): string | undefined => {
@@ -324,15 +357,34 @@ table.table-obsidian th.grid-error > .alert {
                 };
             }
 
+            let uniqueValue = getVNodeProp<ValueFormatterFunction>(node, "uniqueValue");
+
+            if (!uniqueValue) {
+                uniqueValue = (r, c) => {
+                    if (!c.field || r[c.field] === undefined) {
+                        return undefined;
+                    }
+
+                    const v = r[c.field];
+
+                    if (typeof v === "string" || typeof v === "number") {
+                        return v;
+                    }
+
+                    return JSON.stringify(v);
+                };
+            }
+
             columns.push({
                 name,
                 title: getVNodeProp<string>(node, "title"),
-                field: getVNodeProp<string>(node, "field"),
+                field,
                 format: node.children?.["body"] ?? getVNodeProp<VNode>(node, "format") ?? textColumnValueComponent,
                 filter: getVNodeProp<IGridColumnFilter>(node, "filter"),
-                uniqueValue: (r, c) => c.field && r[c.field] !== undefined ? String(r[c.field]) : undefined,
-                sortValue: sortValue,
-                filterValue: filterValue,
+                uniqueValue,
+                sortValue,
+                filterValue,
+                quickFilterValue,
                 props: getVNodeProps(node)
             });
         }
@@ -390,29 +442,9 @@ table.table-obsidian th.grid-error > .alert {
             const columns = toRaw(visibleColumnDefinitions.value);
             const quickFilterRawValue = quickFilterValue.value.toLowerCase();
 
-            const result = rows.value.filter(v => {
+            const result = rows.value.filter(row => {
                 const quickFilterMatch = !quickFilterRawValue || columns.some((column): boolean => {
-                    const columnValue = v[column.name];
-                    let value: string | undefined;
-
-                    if (column.quickFilterValue) {
-                        value = column.quickFilterValue(value);
-
-                        if (value === undefined) {
-                            return false;
-                        }
-
-                        value = value.toLowerCase();
-                    }
-                    else if (typeof columnValue === "string") {
-                        value = columnValue;
-                    }
-                    else if (typeof columnValue === "number") {
-                        value = columnValue.toString();
-                    }
-                    else {
-                        value = undefined;
-                    }
+                    const value = column.quickFilterValue(row, column);
 
                     if (value === undefined) {
                         return false;
@@ -431,15 +463,11 @@ table.table-obsidian th.grid-error > .alert {
                     if (columnFilterValue === undefined) {
                         return true;
                     }
+                    console.log("FilterA", columnFilterValue);
 
-                    let value: unknown = undefined;
+                    const value: unknown = column.filterValue(row, column);
 
-                    if (column.filterValue) {
-                        value = column.filterValue(v, column);
-                    }
-                    else if (column.field) {
-                        value = v[column.field];
-                    }
+                    console.log("FilterB", value, column.filterValue);
 
                     if (value === undefined) {
                         return false;

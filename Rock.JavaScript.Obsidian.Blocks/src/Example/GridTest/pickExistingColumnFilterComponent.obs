@@ -1,6 +1,8 @@
 <template>
     <div class="grid-filter-popup-body">
-        <div v-for="value in distinctValues" class="d-flex align-items-center mb-2">
+        <TextBox label="Search"
+                 v-model="searchValue" />
+        <div v-for="value in displayedValues" class="d-flex align-items-center mb-2">
             <label class="checkbox-inline">
                 <input type="checkbox" :checked="value.selected" @change="onSelected(value, $event)" />
                 <span class="label-text">&nbsp;</span>
@@ -11,7 +13,9 @@
 </template>
 
 <script setup lang="ts">
-    import { ref, PropType, watch } from "vue";
+    import TextBox from "@Obsidian/Controls/textBox";
+    import { deepEqual } from "@Obsidian/Utility/util";
+    import { ref, PropType, watch, computed } from "vue";
     import { GridColumnDefinition } from "./types";
 
     const props = defineProps({
@@ -38,41 +42,64 @@
     type DistinctValue = {
         row: Record<string, unknown>;
 
+        sortValue?: string | number;
+
+        quickFilterValue: string;
+
+        filterValue: unknown;
+
         selected: boolean
     };
 
     const distinctValues = ref<DistinctValue[]>([]);
+    const searchValue = ref("");
+
+    const displayedValues = computed((): DistinctValue[] => {
+        let values = distinctValues.value;
+
+        if (searchValue.value) {
+            const lowerSearchValue = searchValue.value.toLowerCase();
+
+            values = values.filter(v => v.quickFilterValue.includes(lowerSearchValue));
+        }
+
+        console.log(values.slice(0, 50));
+
+        return values.slice(0, 50);
+    });
 
     function getDistinctValues(): DistinctValue[] {
-        const valueRows: DistinctValue[] = [];
+        const valueRows: Record<string | number, DistinctValue> = {};
         const field = props.column.field;
 
         if (!field) {
-            return valueRows;
+            return [];
         }
 
+        console.log(`${Date.now()}: Starting Process`);
         for (let i = 0; i < props.rows.length; i++) {
-            const value = props.rows[i][field];
-            const valueJson = JSON.stringify(value);
+            const value = props.column.uniqueValue(props.rows[i], props.column);
 
-            //if (!valueRows.some(v => JSON.stringify(v.row[field]) == valueJson)) {
-            if (!valueRows.some(v => v.row[field] === value)) {
-                valueRows.push({
+            if (value && valueRows[value] === undefined) {
+                const quickFilterValue = props.column.quickFilterValue(props.rows[i], props.column) ?? "";
+                let filterValue = props.column.filterValue(props.rows[i], props.column);
+
+                if (filterValue === undefined) {
+                    continue;
+                }
+
+                valueRows[value] = {
                     row: props.rows[i],
-                    selected: false
-                });
+                    selected: false,
+                    sortValue: props.column.sortValue?.(props.rows[i], props.column) ?? "",
+                    quickFilterValue: quickFilterValue.toLowerCase(),
+                    filterValue
+                };
             }
-
-            // if (valueRows.length > 50) {
-            //     break;
-            // }
         }
+        console.log(`${Date.now()}: Finished Process, ${Object.values(valueRows).length} unique values out of ${props.rows.length} rows.`);
 
-        if (valueRows.length > 50) {
-            return valueRows.slice(0, 50);
-        }
-
-        return valueRows;
+        return Object.values(valueRows);
     }
 
     function onSelected(value: DistinctValue, event: Event): void {
@@ -86,12 +113,12 @@
     }
 
     function updateModelValue(): void {
-        const values: string[] = [];
+        const values: unknown[] = [];
 
         if (props.column.field) {
             for (const value of distinctValues.value) {
                 if (value.selected) {
-                    values.push(JSON.stringify(value.row[props.column.field]));
+                    values.push(props.column.filterValue(value.row, props.column));
                 }
             }
         }
@@ -109,7 +136,7 @@
         }
 
         for (const value of distinctValues.value) {
-            value.selected = props.modelValue.includes(JSON.stringify(value.row[props.column.field]));
+            value.selected = props.modelValue.some(mv => deepEqual(mv, value.filterValue, true));
         }
     }
 

@@ -15,7 +15,7 @@
 // </copyright>
 //
 
-import { Component, DefineComponent, PropType, VNode } from "vue";
+import { Component, PropType, VNode } from "vue";
 
 /** A function that will be called in response to an action. */
 export type GridActionCallback = (event: Event) => void | Promise<void>;
@@ -70,7 +70,7 @@ export type GridColumnDefinition = {
     format: VNode | Component;
 
     /** Gets the value to use when filtering on the quick filter. */
-    quickFilterValue?: (value: unknown) => string | undefined;
+    quickFilterValue: (row: Record<string, unknown>, column: GridColumnDefinition) => string | undefined;
 
     /**
      * Gets the unique value representation of the cell value. For example,
@@ -82,7 +82,7 @@ export type GridColumnDefinition = {
     sortValue?: ValueFormatterFunction;
 
     /** Gets the value to use when filtering. */
-    filterValue?: ValueFormatterFunction;
+    filterValue: (row: Record<string, unknown>, column: GridColumnDefinition) => unknown | undefined;
 
     filter?: IGridColumnFilter;
 

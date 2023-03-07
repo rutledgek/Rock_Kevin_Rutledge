@@ -69,6 +69,7 @@
     import { AttributeColumnDefinition, FilterComponentProps, GridColumnDefinition, GridData, GridDefinition, IGridColumnFilter } from "./GridTest/types";
     import { ListItemBag } from "@Obsidian/ViewModels/Utility/listItemBag";
     import PickExistingColumnFilterComponent from "./GridTest/pickExistingColumnFilterComponent.obs";
+    import { deepEqual } from "@Obsidian/Utility/util";
 
     const standardColumnProps = {
         name: {
@@ -465,9 +466,7 @@
             return true;
         }
 
-        const haystackJson = JSON.stringify(haystack);
-
-        return needle.some(n => n === haystackJson);
+        return needle.some(n => deepEqual(n, haystack, true));
     }
 
     const pickExistingColumnFilter: IGridColumnFilter = {
