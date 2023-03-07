@@ -7,7 +7,7 @@ function bindThis(filter: IRosterFilter): void {
 }
 
 export interface IRosterFilter {
-    filter(attendee: GroupAttendanceDetailRosterAttendeeBag): boolean;
+    filter(attendance: GroupAttendanceDetailRosterAttendeeBag): boolean;
     /**
      * Returns `true` if this filter is the same instance as `rosterFilter`; otherwise, `false`.
      *
@@ -26,7 +26,7 @@ export interface IAggregateRosterFilter extends IRosterFilter {
     filters: IRosterFilter[];
 }
 
-export function createFilter(filter: (attendee: GroupAttendanceDetailRosterAttendeeBag) => boolean): IRosterFilter {
+export function createFilter(filter: (attendance: GroupAttendanceDetailRosterAttendeeBag) => boolean): IRosterFilter {
     const rosterFilter: IRosterFilter = {
         filter,
         hasFilter: function(filter: IRosterFilter): boolean {
@@ -42,7 +42,7 @@ export function createFilter(filter: (attendee: GroupAttendanceDetailRosterAtten
     return rosterFilter;
 }
 
-export function createAggregateFilter(filters: IRosterFilter[], filter: (filters: IRosterFilter[], attendee: GroupAttendanceDetailRosterAttendeeBag) => boolean): IAggregateRosterFilter {
+export function createAggregateFilter(filters: IRosterFilter[], filter: (filters: IRosterFilter[], attendance: GroupAttendanceDetailRosterAttendeeBag) => boolean): IAggregateRosterFilter {
     const aggregateRosterFilter: IAggregateRosterFilter = {
         hasFilter: function(filter: IRosterFilter): boolean {
             return hasSameFilter(this, filter);
@@ -51,8 +51,8 @@ export function createAggregateFilter(filters: IRosterFilter[], filter: (filters
             return isSameFilter(this, filter);
         },
         filters: filters,
-        filter: function(attendee: GroupAttendanceDetailRosterAttendeeBag): boolean {
-            return filter(this.filters, attendee);
+        filter: function(attendance: GroupAttendanceDetailRosterAttendeeBag): boolean {
+            return filter(this.filters, attendance);
         }
     };
 
@@ -63,7 +63,7 @@ export function createAggregateFilter(filters: IRosterFilter[], filter: (filters
 
 export const NoFilter = createFilter(_ => true);
 
-export const DidAttendFilter = createFilter(attendee => attendee.didAttend);
+export const DidAttendFilter = createFilter(attendance => attendance.didAttend);
 
 const lastNameStartsWithFilters: Record<string, IRosterFilter> = {};
 
@@ -74,7 +74,7 @@ export function createLastNameStartsWithFilter(lastNameInitial: string): IRoster
         return lastNameStartsWithFilter;
     }
 
-    lastNameStartsWithFilter = createFilter(attendee => attendee.lastName?.startsWith(lastNameInitial) === true);
+    lastNameStartsWithFilter = createFilter(attendance => attendance.lastName?.startsWith(lastNameInitial) === true);
     lastNameStartsWithFilters[lastNameInitial] = lastNameStartsWithFilter;
 
     return lastNameStartsWithFilter;
@@ -89,7 +89,7 @@ export function createFirstNameStartsWithFilter(firstNameInitial: string): IRost
         return firstNameStartsWithFilter;
     }
 
-    firstNameStartsWithFilter = createFilter(attendee => attendee.nickName?.startsWith(firstNameInitial) === true);
+    firstNameStartsWithFilter = createFilter(attendance => attendance.nickName?.startsWith(firstNameInitial) === true);
     firstNameStartsWithFilters[firstNameInitial] = firstNameStartsWithFilter;
 
     return firstNameStartsWithFilter;
@@ -123,7 +123,7 @@ export function createLogicalNotFilter(rosterFilter: IRosterFilter): IRosterFilt
  * The aggregate filters can be modified via the `filters` property of the returned object.
  */
 export function createSomeFilter(...rosterFilters: IRosterFilter[]): IAggregateRosterFilter {
-    return createAggregateFilter(rosterFilters, (filters, attendee) => filters.some(filter => filter.filter(attendee)));
+    return createAggregateFilter(rosterFilters, (filters, attendance) => filters.some(filter => filter.filter(attendance)));
 }
 
 /**
@@ -132,7 +132,7 @@ export function createSomeFilter(...rosterFilters: IRosterFilter[]): IAggregateR
  * The aggregate filters can be modified via the `filters` property of the returned object.
  */
 export function createEveryFilter(...rosterFilters: IRosterFilter[]): IAggregateRosterFilter {
-    return createAggregateFilter(rosterFilters, (filters, attendee) => filters.every(filter => filter.filter(attendee)));
+    return createAggregateFilter(rosterFilters, (filters, attendance) => filters.every(filter => filter.filter(attendance)));
 }
 
 /**

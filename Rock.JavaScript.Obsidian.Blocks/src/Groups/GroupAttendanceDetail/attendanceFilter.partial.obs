@@ -1,10 +1,10 @@
 <template>
-    <div class="roster-filter">
-        <RockFormField v-bind="standardFieldProps" name="rosterFilter" :modelValue="allFilters">
+    <div class="attendance-filter">
+        <RockFormField v-bind="standardFieldProps" name="attendanceFilter" :modelValue="allFilters">
             <div class="btn-toolbar">
                 <div class="btn-group">
-                    <RockButton btnSize="lg" :btnType="getBtnType(noFilterOrDidAttendFilter.hasFilter(NoFilter))" @click="setNoFilterOrDidAttendFilter(NoFilter)"><i class="fa fa-th" /></RockButton>
-                    <RockButton btnSize="lg" :btnType="getBtnType(noFilterOrDidAttendFilter.hasFilter(DidAttendFilter))" @click="setNoFilterOrDidAttendFilter(DidAttendFilter)">{{ didAttendedCount }}</RockButton>
+                    <RockButton btnSize="lg" :btnType="getBtnType(didAttendFilterOrDefault.hasFilter(defaultFilter))" @click="setDefaultFilterOrDidAttendFilter(defaultFilter)"><i class="fa fa-th" /></RockButton>
+                    <RockButton btnSize="lg" :btnType="getBtnType(didAttendFilterOrDefault.hasFilter(DidAttendFilter))" @click="setDefaultFilterOrDidAttendFilter(DidAttendFilter)">{{ didAttendCount }}</RockButton>
                 </div>
 
                 <div class="btn-group">
@@ -20,7 +20,7 @@
 
 <script setup lang="ts">
     import { computed, PropType, ref, watch } from "vue";
-    import { IAggregateRosterFilter, IRosterFilter, NoFilter, createEveryFilter, createLastNameStartsWithFilter, createSomeFilter, DidAttendFilter, createFirstNameStartsWithFilter } from "./filterType";
+    import { createEveryFilter, createFirstNameStartsWithFilter, createLastNameStartsWithFilter, createSomeFilter, DidAttendFilter, IAggregateRosterFilter, IRosterFilter, NoFilter } from "./filterType";
     import RockButton from "@Obsidian/Controls/rockButton";
     import RockFormField from "@Obsidian/Controls/rockFormField";
     import { BtnType } from "@Obsidian/Enums/Controls/btnType";
@@ -35,31 +35,45 @@
             required: true
         },
 
-        attendees: {
+        attendances: {
             type: Object as PropType<GroupAttendanceDetailRosterAttendeeBag[]>,
             required: true
         },
+
 
         defaultFilter: {
             type: Object as PropType<IRosterFilter>,
             default: NoFilter
         },
 
+        /**
+         * When `true`, displays filter buttons for each attendee first name initial.
+         * When `false`, displays filter buttons for each attendee last name initial.
+         */
         isFilterByFirstNameInitial: {
             type: Boolean as PropType<boolean>,
             required: true
         },
 
+        /**
+         * The BtnType when a filter button is unselected.
+         */
         unselectedBtnType: {
             type: String as PropType<LiteralUnion<BtnType>>,
             default: BtnType.Default
         },
 
+        /**
+         * The BtnType when a filter button is selected.
+         */
         selectedBtnType: {
             type: String as PropType<LiteralUnion<BtnType>>,
             default: BtnType.Primary
         },
 
+        /**
+         * Allows filtering by multiple initials.
+         */
         isMultiselect: {
             type: Boolean as PropType<boolean>,
             default: false
@@ -74,8 +88,8 @@
 
     //#region Values
 
-    // Initialize the NoFilter or HasAttendedFilter based on the initial filter(s).
-    const noFilterOrDidAttendFilter = ref<typeof DidAttendFilter | typeof NoFilter>(props.modelValue.hasFilter(DidAttendFilter) ? DidAttendFilter : NoFilter);
+    // Initialize the default filter or HasAttendedFilter based on the initial filter(s).
+    const didAttendFilterOrDefault = ref<typeof DidAttendFilter | typeof props.defaultFilter>(props.modelValue.hasFilter(DidAttendFilter) ? DidAttendFilter : props.defaultFilter);
 
     // No need to initialize the "last name starts with" filter(s) yet.
     const initialsFilters = ref<IAggregateRosterFilter>(createSomeFilter());
@@ -93,15 +107,15 @@
         }
     });
 
-    const didAttendedCount = computed<number>(() => props.attendees.filter(attendee => attendee.didAttend).length);
+    const didAttendCount = computed<number>(() => props.attendances.filter(attendance => attendance.didAttend).length);
 
     const initials = computed<string[]>(() =>
         props.isFilterByFirstNameInitial
-            ? props.attendees.filter(a => !!a.nickName)
+            ? props.attendances.filter(a => !!a.nickName)
                 .map(a => a.nickName!.charAt(0).toLocaleUpperCase())
                 .filter((item, index, arr) => arr.indexOf(item) === index) // Remove duplicates.
                 .sort()
-            : props.attendees.filter(a => !!a.lastName)
+            : props.attendances.filter(a => !!a.lastName)
                 .map(a => a.lastName!.charAt(0).toLocaleUpperCase())
                 .filter((item, index, arr) => arr.indexOf(item) === index) // Remove duplicates.
                 .sort());
@@ -123,8 +137,8 @@
         }
     }
 
-    function setNoFilterOrDidAttendFilter(rosterFilter: IRosterFilter): void {
-        noFilterOrDidAttendFilter.value = rosterFilter;
+    function setDefaultFilterOrDidAttendFilter(rosterFilter: IRosterFilter): void {
+        didAttendFilterOrDefault.value = rosterFilter;
 
         notifyFiltersUpdated();
     }
@@ -168,11 +182,11 @@
     function notifyFiltersUpdated(): void {
         if (!initialsFilters.value.filters.length) {
             // There are no initials filters, so set the overall filter to the (no filter or has attended filter).
-            allFilters.value = noFilterOrDidAttendFilter.value;
+            allFilters.value = didAttendFilterOrDefault.value;
         }
         else {
             // There are initials filters, so set the overall filter to the combinations of the initials filters and the (no filter or has attended filter).
-            allFilters.value = createEveryFilter(noFilterOrDidAttendFilter.value, initialsFilters.value);
+            allFilters.value = createEveryFilter(didAttendFilterOrDefault.value, initialsFilters.value);
         }
     }
 

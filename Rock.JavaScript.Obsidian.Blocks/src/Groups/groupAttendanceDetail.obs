@@ -134,7 +134,7 @@
                                         <RosterFilterPicker
                                             v-model="rosterFilter"
                                             class="mt-3"
-                                            :attendees="roster"
+                                            :attendances="roster"
                                             :isFilterByFirstNameInitial="sortBy === SortType.FirstNameFirst"
                                             :isMultiselect="true">
                                         </RosterFilterPicker>
@@ -144,10 +144,10 @@
                                 <div class="row">
                                     <div class="col-sm-12">
                                         <AttendanceRoster
-                                            :attendees="roster"
+                                            :attendances="roster"
                                             :filterBy="attendeeFilterByDelegate"
                                             :groupBy="attendeeGroupByDelegate"
-                                            :groupWhenFilteredAttendeeCountExceeds="50"
+                                            :groupWhenFilteredAttendanceCountExceeds="50"
                                             :sortBy="attendeeSortByDelegate"
                                             @attendanceChanged="onAttendanceChanged($event)" />
                                     </div>
@@ -189,9 +189,9 @@
     import GroupLocationSchedulePicker from "./GroupAttendanceDetail/groupLocationSchedulePicker.partial.obs";
     import SearchFilter from "./GroupAttendanceDetail/searchFilter.partial.obs";
     import { AttendeeComparer, byFirstName, byLastName, compare, SortType } from "./GroupAttendanceDetail/sortType";
-    import RosterFilterPicker from "./GroupAttendanceDetail/rosterFilter.partial.obs";
+    import RosterFilterPicker from "./GroupAttendanceDetail/attendanceFilter.partial.obs";
     import { createEveryFilter as every, IRosterFilter, NoFilter } from "./GroupAttendanceDetail/filterType";
-    import { AttendeeGroupByDelegate } from "./GroupAttendanceDetail/attendeeGroupByDelegate";
+    import { AttendanceGroupByDelegate } from "./GroupAttendanceDetail/attendanceGroupByDelegate";
     import Alert from "@Obsidian/Controls/alert.obs";
     import DatePicker from "@Obsidian/Controls/datePicker.obs";
     import InlineCheckBox from "@Obsidian/Controls/inlineCheckBox";
@@ -221,7 +221,7 @@
     import { AttendanceUpdatedMessageBag } from "@Obsidian/ViewModels/Event/attendanceUpdatedMessageBag";
     import { AttendanceStatus } from "@Obsidian/Enums/Event/attendanceStatus";
     import { getTopic, ITopic, ServerFunctions } from "@Obsidian/Utility/realTime";
-    import { AttendeeFilterByDelegate } from "./GroupAttendanceDetail/attendeeFilterByDelegate";
+    import { AttendanceFilterByDelegate } from "./GroupAttendanceDetail/attendanceFilterByDelegate";
 
     // TODO JMH This config should contain the group GUID for use in the specific group controls.
     const config = ref(useConfigurationValues<GroupAttendanceDetailInitializationBox>());
@@ -267,8 +267,8 @@
         sortBy.value === SortType.FirstNameFirst
             ? compare(byFirstName, byLastName)
             : compare(byLastName, byFirstName));
-    const attendeeFilterByDelegate = computed<AttendeeFilterByDelegate>(() => (attendee) => every(campusFilter.value, searchFilter.value, rosterFilter.value).filter(attendee));
-    const attendeeGroupByDelegate = computed<AttendeeGroupByDelegate | null>(() => {
+    const attendeeFilterByDelegate = computed<AttendanceFilterByDelegate>(() => (attendee) => every(campusFilter.value, searchFilter.value, rosterFilter.value).filter(attendee));
+    const attendeeGroupByDelegate = computed<AttendanceGroupByDelegate | null>(() => {
         if (sortBy.value === SortType.FirstNameFirst) {
             return (attendee: GroupAttendanceDetailRosterAttendeeBag) => `${attendee.didAttend ? "(attended)" : attendee.nickName?.charAt(0) || "?"}`;
         }

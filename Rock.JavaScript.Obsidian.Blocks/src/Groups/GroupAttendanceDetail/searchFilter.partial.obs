@@ -3,10 +3,10 @@
 </template>
 
 <script setup lang="ts">
-    import { PropType, ref, watch } from 'vue';
-    import { createFilter, IRosterFilter, NoFilter } from './filterType';
+    import { computed, PropType, ref, watch } from "vue";
+    import { createFilter, IRosterFilter, NoFilter } from "./filterType";
     import TextBox from "@Obsidian/Controls/textBox";
-    import { GroupAttendanceDetailRosterAttendeeBag } from '@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailRosterAttendeeBag';
+    import { GroupAttendanceDetailRosterAttendeeBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailRosterAttendeeBag";
 
     const props = defineProps({
         modelValue: {
@@ -22,40 +22,54 @@
     //#region Values
 
     const isRegex: RegExp = /\/(.+)\/(.*)/;
-    const searchText = ref<string>("");
+    let privateSearchText = ref<string>("");
+    const searchText = computed<string>({
+        get() {
+            return privateSearchText.value;
+        },
+        set(newValue: string) {
+            privateSearchText.value = newValue;
 
-    //#endregion
+            let filter: IRosterFilter = NoFilter;
 
-    //#region Watchers
-
-    // Emit a new filter whenever the searchText changes. Could add a debounce to make this more efficient.
-    watch(searchText, () => {
-        let filter: IRosterFilter = NoFilter;
-        const text = searchText.value;
-
-        if (text) {
-            const match = text.match(isRegex);
-            if (match && match.length) {
-                try {
-                    const regex = new RegExp(match[1], match[2]);
-                    if (regex) {
-                        filter = createFilter((attendee: GroupAttendanceDetailRosterAttendeeBag) => {
-                            return !!attendee.fullName && regex.test(attendee.fullName);
-                        });
+            if (newValue) {
+                const match = newValue.match(isRegex);
+                if (match && match.length) {
+                    try {
+                        const regex = new RegExp(match[1], match[2]);
+                        if (regex) {
+                            filter = createNameMatchesRegexFilter(regex);
+                        }
+                    }
+                    catch {
+                        // `newValue` is not a valid regex string so try a simple text match.
+                        filter = createNameContainsFilter(newValue);
                     }
                 }
-                catch {
-                    // `text` is not a valid regex string so try a simple text match.
+                else {
+                    filter = createNameContainsFilter(newValue);
                 }
             }
 
-            filter = createFilter((attendee: GroupAttendanceDetailRosterAttendeeBag) => {
-                return !!attendee.fullName && attendee.fullName.toLocaleLowerCase().indexOf(text.toLocaleLowerCase()) >= 0;
-            });
+            return emit("update:modelValue", filter);
         }
-
-        return emit("update:modelValue", filter);
     });
+
+    //#endregion
+
+    //#region Functions
+
+    function createNameContainsFilter(text: string): IRosterFilter {
+        return createFilter((attendee: GroupAttendanceDetailRosterAttendeeBag) => {
+            return !!attendee.fullName && attendee.fullName.toLocaleLowerCase().indexOf(text.toLocaleLowerCase()) >= 0;
+        });
+    }
+
+    function createNameMatchesRegexFilter(regex: RegExp): IRosterFilter {
+        return createFilter((attendance: GroupAttendanceDetailRosterAttendeeBag) => {
+            return !!attendance.fullName && regex.test(attendance.fullName);
+        });
+    }
 
     //#endregion
 </script>
