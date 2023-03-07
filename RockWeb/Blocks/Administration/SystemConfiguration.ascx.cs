@@ -291,6 +291,8 @@ namespace RockWeb.Blocks.Administration
             {
                 cbRunJobsInIISContext.Checked = bool.Parse( runJobsInIISContext );
             }
+            rtbAzureSignalREndpoint.Text = ConfigurationManager.AppSettings["AzureSignalREndpoint"];
+            rtbAzureSignalRAccessKey.Text = ConfigurationManager.AppSettings["AzureSignalRAccessKey"];
         }
 
         /// <summary>
