@@ -99,7 +99,8 @@
                         <div class="row">
                             <div class="col-sm-3">
                                 <InlineCheckBox
-                                    v-model="didNotOccur"
+                                    v-model="internalDidNotOccur"
+                                    :disabled="isSavingDidNotOccur"
                                     label="We Did Not Meet" />
                             </div>
 
@@ -122,7 +123,7 @@
                         </div>
 
                         <TransitionVerticalCollapse speed="fast">
-                            <div v-show="!didNotOccur">
+                            <div v-show="!internalDidNotOccur">
                                 <div class="row">
                                     <div class="col-sm-4">
                                         <SearchFilter v-model="searchFilter" />
@@ -134,7 +135,7 @@
                                         <RosterFilterPicker
                                             v-model="rosterFilter"
                                             class="mt-3"
-                                            :attendances="roster"
+                                            :attendances="attendances"
                                             :isFilterByFirstNameInitial="sortBy === SortType.FirstNameFirst"
                                             :isMultiselect="true">
                                         </RosterFilterPicker>
@@ -144,11 +145,11 @@
                                 <div class="row">
                                     <div class="col-sm-12">
                                         <AttendanceRoster
-                                            :attendances="roster"
-                                            :filterBy="attendeeFilterByDelegate"
-                                            :groupBy="attendeeGroupByDelegate"
+                                            :attendances="attendances"
+                                            :filterBy="attendanceFilterByDelegate"
+                                            :groupBy="attendanceGroupByDelegate"
                                             :groupWhenFilteredAttendanceCountExceeds="50"
-                                            :sortBy="attendeeSortByDelegate"
+                                            :sortBy="attendanceSortByDelegate"
                                             @attendanceChanged="onAttendanceChanged($event)" />
                                     </div>
                                 </div>
@@ -188,7 +189,7 @@
     import GroupLocationPicker from "./GroupAttendanceDetail/groupLocationPicker.partial.obs";
     import GroupLocationSchedulePicker from "./GroupAttendanceDetail/groupLocationSchedulePicker.partial.obs";
     import SearchFilter from "./GroupAttendanceDetail/searchFilter.partial.obs";
-    import { AttendeeComparer, byFirstName, byLastName, compare, SortType } from "./GroupAttendanceDetail/sortType";
+    import { AttendanceSortByDelegate, byFirstName, byLastName, createSortBy, SortType } from "./GroupAttendanceDetail/attendanceSortByDelegate";
     import RosterFilterPicker from "./GroupAttendanceDetail/attendanceFilter.partial.obs";
     import { createEveryFilter as every, IRosterFilter, NoFilter } from "./GroupAttendanceDetail/filterType";
     import { AttendanceGroupByDelegate } from "./GroupAttendanceDetail/attendanceGroupByDelegate";
@@ -252,28 +253,39 @@
     const locationGuid = ref<Guid | undefined | null>(config.value.locationGuid);
     const scheduleGuid = ref<Guid | undefined | null>(config.value.scheduleGuid);
     const didNotOccur = ref<boolean>(config.value.isDidNotMeetChecked);
+    const internalDidNotOccur = computed<boolean>({
+        get(): boolean {
+            return didNotOccur.value;
+        },
+        set(newValue: boolean) {
+            // Prevent updating if we are in the middle of saving.
+            if (!isSavingDidNotOccur.value) {
+                didNotOccur.value = newValue;
+            }
+        }
+    });
+    const isSavingDidNotOccur = ref<boolean>(false);
     const campusGuid = ref<string | null | undefined>(config.value.campusGuid);
     const notes = ref<string>(config.value.notes ?? "");
-    const isAutoSaveAttendeesEnabled = ref<boolean>(false);
+    const isAutoSaveAttendancesEnabled = ref<boolean>(false);
 
     //#endregion Reactive Values
 
     //#region Computed Values
-
     const panelTitle = computed(() => config.value.groupName ? `${config.value.groupName} Attendance` : "Group Attendance");
-    const roster = computed<GroupAttendanceDetailRosterAttendeeBag[]>(() => config.value?.roster ?? []);
+    const attendances = computed<GroupAttendanceDetailRosterAttendeeBag[]>(() => config.value?.roster ?? []);
     const sortBy = computed<SortType>(() => config.value.areAttendeesSortedByFirstName ? SortType.FirstNameFirst : SortType.LastNameFirst);
-    const attendeeSortByDelegate = computed<AttendeeComparer>(() =>
+    const attendanceSortByDelegate = computed<AttendanceSortByDelegate>(() =>
         sortBy.value === SortType.FirstNameFirst
-            ? compare(byFirstName, byLastName)
-            : compare(byLastName, byFirstName));
-    const attendeeFilterByDelegate = computed<AttendanceFilterByDelegate>(() => (attendee) => every(campusFilter.value, searchFilter.value, rosterFilter.value).filter(attendee));
-    const attendeeGroupByDelegate = computed<AttendanceGroupByDelegate | null>(() => {
+            ? createSortBy(byFirstName, byLastName)
+            : createSortBy(byLastName, byFirstName));
+    const attendanceFilterByDelegate = computed<AttendanceFilterByDelegate>(() => (attendance) => every(campusFilter.value, searchFilter.value, rosterFilter.value).filter(attendance));
+    const attendanceGroupByDelegate = computed<AttendanceGroupByDelegate | null>(() => {
         if (sortBy.value === SortType.FirstNameFirst) {
-            return (attendee: GroupAttendanceDetailRosterAttendeeBag) => `${attendee.didAttend ? "(attended)" : attendee.nickName?.charAt(0) || "?"}`;
+            return (attendance: GroupAttendanceDetailRosterAttendeeBag) => attendance.nickName?.charAt(0) || "?";
         }
         else {
-            return (attendee: GroupAttendanceDetailRosterAttendeeBag) => `${attendee.didAttend ? "(attended)" : attendee.lastName?.charAt(0) || "?"}`;
+            return (attendance: GroupAttendanceDetailRosterAttendeeBag) => attendance.lastName?.charAt(0) || "?";
         }
     });
 
@@ -295,7 +307,7 @@
     }
 
     async function onAttendanceChanged(attendance: GroupAttendanceDetailRosterAttendeeBag): Promise<void> {
-        if (!isAutoSaveAttendeesEnabled.value) {
+        if (!isAutoSaveAttendancesEnabled.value) {
             return;
         }
 
@@ -305,7 +317,7 @@
             didAttend: attendance.didAttend
         };
 
-        await invokeBlockAction<void>("MarkAttendance", { bag }).then(() => console.log(`updated attendee ${formattedJson(bag)}`));
+        await invokeBlockAction<void>("MarkAttendance", { bag }).then(() => console.log(`updated attendance ${formattedJson(bag)}`));
     }
 
     async function onGroupLocationPickerChanged(locationPickerSelection: NullableListItemBags): Promise<void> {
@@ -348,10 +360,10 @@
 
     async function save(): Promise<HttpResult<GroupAttendanceDetailSaveAttendanceOccurrenceResponseBag>> {
         const bag: GroupAttendanceDetailSaveAttendanceOccurrenceRequestBag = {
-            didNotOccur: didNotOccur.value,
+            didNotOccur: internalDidNotOccur.value,
             attendanceOccurrenceDate: attendanceForDate.value,
             attendanceTypeGuid: attendanceOccurrenceType.value,
-            attendees: roster.value,
+            attendees: attendances.value,
             campusGuid: campusGuid.value,
             locationGuid: locationGuid.value,
             notes: notes.value,
@@ -377,10 +389,10 @@
 
     async function getOrCreate(): Promise<void> {
         const bag: GroupAttendanceDetailSaveAttendanceOccurrenceRequestBag = {
-            didNotOccur: didNotOccur.value,
+            didNotOccur: internalDidNotOccur.value,
             attendanceOccurrenceDate: attendanceForDate.value,
             attendanceTypeGuid: attendanceOccurrenceType.value,
-            attendees: roster.value,
+            attendees: attendances.value,
             campusGuid: campusGuid.value,
             locationGuid: locationGuid.value,
             notes: notes.value,
@@ -406,27 +418,27 @@
         locationGuid.value = locationPickerSelection?.value;
     }
 
-    const autoSaveAttendeesOffHandle = ref<WatchStopHandle | null>(null);
+    const autoSaveAttendancesOffHandle = ref<WatchStopHandle | null>(null);
     const autoSaveDidNotOccurOffHandle = ref<WatchStopHandle | null>(null);
     const autoSaveAttendanceOccurrenceTypeOffHandle = ref<WatchStopHandle | null>(null);
 
-    function autoSaveAttendeesOn(): void {
-        if (isAutoSaveAttendeesEnabled.value) {
+    function autoSaveAttendancesOn(): void {
+        if (isAutoSaveAttendancesEnabled.value) {
             // Skip if auto-save is already on.
             return;
         }
 
-        isAutoSaveAttendeesEnabled.value = true;
+        isAutoSaveAttendancesEnabled.value = true;
     }
 
-    function autoSaveAttendeesOff(): void {
-        if (!autoSaveAttendeesOffHandle.value) {
+    function autoSaveAttendancesOff(): void {
+        if (!autoSaveAttendancesOffHandle.value) {
             return;
         }
 
         console.log("Stopping watch handle");
-        autoSaveAttendeesOffHandle.value();
-        autoSaveAttendeesOffHandle.value = null;
+        autoSaveAttendancesOffHandle.value();
+        autoSaveAttendancesOffHandle.value = null;
     }
 
     function autoSaveAttendanceOccurrenceTypeOn(): void {
@@ -454,35 +466,50 @@
         autoSaveDidNotOccurOffHandle.value = null;
     }
 
+    const actions = {
+        updateDidNotOccur: async (bag: GroupAttendanceDetailUpdateDidNotOccurRequestBag): Promise<void> => {
+            try {
+                isSavingDidNotOccur.value = true;
+
+                // TODO JMH Prevent the user from checking/unchecking the did occur checkbox until the value is saved.
+                await invokeBlockAction<void>("UpdateDidNotOccur", { bag });
+
+                console.log(`updated didNotOccur ${formattedJson(bag)}`);
+            }
+            finally {
+                isSavingDidNotOccur.value = false;
+            }
+        }
+    };
+
     function autoSaveDidNotOccurOn(): void {
         if (!autoSaveDidNotOccurOffHandle.value) {
-            autoSaveDidNotOccurOffHandle.value = watch([didNotOccur], ([newDidNotOccur], [oldDidNotOccur], onCleanup) => {
+            autoSaveDidNotOccurOffHandle.value = watch([internalDidNotOccur], ([newDidNotOccur], [oldDidNotOccur], onCleanup) => {
                 onCleanup(() => autoSaveDidNotOccurOffHandle.value = null);
 
                 if (newDidNotOccur !== oldDidNotOccur) {
+                    if (isSavingDidNotOccur.value) {
+                        // Cancel if we are already saving.
+                        console.log("already saving did not occur so cancelling");
+                        return;
+                    }
+
                     const bag: GroupAttendanceDetailUpdateDidNotOccurRequestBag = {
                         attendanceOccurrenceGuid: attendanceOccurrenceGuid.value,
                         didNotOccur: newDidNotOccur
                     };
 
                     if (bag.didNotOccur) {
-                        // Stop auto-saving attendees if the occurrence did not happen.
-                        console.log("Stopping attendee auto-save until did not occur is saved");
-                        autoSaveAttendeesOff();
-                        for (const attendee of roster.value) {
-                            attendee.didAttend = false;
+                        // If the occurrence did not happen, then stop auto-saving attendances before we auto-save "did occur".
+                        autoSaveAttendancesOff();
+                    }
+
+                    actions.updateDidNotOccur(bag).then(() => {
+                        if (!bag.didNotOccur) {
+                            // If it "did occur", then start auto-saving attendances after "did occur" is auto-saved.
+                            autoSaveAttendancesOn();
                         }
-                    }
-
-                    invokeBlockAction<void>("UpdateDidNotOccur", { bag })
-                        .then(() => {
-                            console.log(`updated didNotOccur ${formattedJson(bag)}`);
-                        });
-
-                    if (!bag.didNotOccur) {
-                        // Start auto-saving attendees if the occurrence did happen.
-                        autoSaveAttendeesOn();
-                    }
+                    });
                 }
             });
         }
@@ -503,7 +530,7 @@
         if (attendanceOccurrenceGuid.value && config.value.groupGuid) {
             topic.value = await startRealTime(config.value.groupGuid, attendanceOccurrenceGuid.value, { onAttendanceUpdated: onAttendanceUpdated });
         }
-        autoSaveAttendeesOn();
+        autoSaveAttendancesOn();
         autoSaveDidNotOccurOn();
         autoSaveAttendanceOccurrenceTypeOn();
     }
@@ -512,7 +539,7 @@
         if (topic.value) {
             stopRealTime(topic.value);
         }
-        autoSaveAttendeesOff();
+        autoSaveAttendancesOff();
         autoSaveAttendanceOccurrenceTypeOff();
         autoSaveDidNotOccurOff();
     }
@@ -522,21 +549,20 @@
     }
 
     function onAttendanceUpdated(bag: AttendanceUpdatedMessageBag): void {
-        console.log(formattedJson(bag));
+        console.log(`on attendance updated from server ${formattedJson(bag)}`);
         // Ignore if not for this occurrence.
         if (bag.occurrenceGuid !== attendanceOccurrenceGuid.value) {
             return;
         }
 
-        const attendee = roster.value.find(attendee => attendee.personGuid === bag.personGuid);
+        const attendance = attendances.value.find(attendance => attendance.personGuid === bag.personGuid);
 
-        if (attendee) {
-            attendee.didAttend = bag.status === AttendanceStatus.DidAttend;
+        if (attendance) {
+            attendance.didAttend = bag.status === AttendanceStatus.DidAttend;
         }
         else {
-            // TODO JMH Create new attendee object for the props provided or go get one from the server.
             const fullNameParts = bag.personFullName?.split(" ") ?? [];
-            config.value.roster = [...roster.value, {
+            config.value.roster = [...attendances.value, {
                 didAttend: bag.status === AttendanceStatus.DidAttend,
                 fullName: bag.personFullName,
                 personGuid: bag.personGuid,
@@ -563,7 +589,7 @@
         attendanceOccurrenceType.value = config.value.selectedAttendanceOccurrenceTypeValue ?? undefined;
         locationGuid.value =  config.value.locationGuid;
         scheduleGuid.value = config.value.scheduleGuid;
-        didNotOccur.value =  config.value.isDidNotMeetChecked;
+        internalDidNotOccur.value =  config.value.isDidNotMeetChecked;
         campusGuid.value = config.value.campusGuid;
         notes.value = config.value.notes ?? "";
     });

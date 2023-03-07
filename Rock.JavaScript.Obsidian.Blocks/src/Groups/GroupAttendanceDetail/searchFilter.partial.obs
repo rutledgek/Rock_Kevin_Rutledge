@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-    import { computed, PropType, ref, watch } from "vue";
+    import { computed, PropType, ref } from "vue";
     import { createFilter, IRosterFilter, NoFilter } from "./filterType";
     import TextBox from "@Obsidian/Controls/textBox";
     import { GroupAttendanceDetailRosterAttendeeBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailRosterAttendeeBag";
@@ -60,8 +60,8 @@
     //#region Functions
 
     function createNameContainsFilter(text: string): IRosterFilter {
-        return createFilter((attendee: GroupAttendanceDetailRosterAttendeeBag) => {
-            return !!attendee.fullName && attendee.fullName.toLocaleLowerCase().indexOf(text.toLocaleLowerCase()) >= 0;
+        return createFilter((attendance: GroupAttendanceDetailRosterAttendeeBag) => {
+            return !!attendance.fullName && attendance.fullName.toLocaleLowerCase().indexOf(text.toLocaleLowerCase()) >= 0;
         });
     }
 

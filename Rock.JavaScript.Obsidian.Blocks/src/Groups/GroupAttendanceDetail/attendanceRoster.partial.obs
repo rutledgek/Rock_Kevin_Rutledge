@@ -27,7 +27,7 @@
     import { computed, PropType } from "vue";
     import { AttendanceFilterByDelegate } from "./attendanceFilterByDelegate";
     import { AttendanceGroupByDelegate } from "./attendanceGroupByDelegate";
-    import { AttendanceSortByDelegate } from "./attende/attendanceSortByDelegate";
+    import { AttendanceSortByDelegate } from "./attendanceSortByDelegate";
     import CardCheckBox from "./cardCheckBox.partial.obs";
     import { GroupAttendanceDetailRosterAttendeeBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailRosterAttendeeBag";
 
