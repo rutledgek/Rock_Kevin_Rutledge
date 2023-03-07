@@ -3,8 +3,8 @@
         <RockFormField v-bind="standardFieldProps" name="rosterFilter" :modelValue="allFilters">
             <div class="btn-toolbar">
                 <div class="btn-group">
-                    <RockButton btnSize="lg" :btnType="getBtnType(noFilterOrHasAttendedFilter.hasFilter(NoFilter))" @click="setNoFilterOrHasAttendedFilter(NoFilter)"><i class="fa fa-th" /></RockButton>
-                    <RockButton btnSize="lg" :btnType="getBtnType(noFilterOrHasAttendedFilter.hasFilter(HasAttendedFilter))" @click="setNoFilterOrHasAttendedFilter(HasAttendedFilter)">{{ hasAttendedCount }}</RockButton>
+                    <RockButton btnSize="lg" :btnType="getBtnType(noFilterOrDidAttendFilter.hasFilter(NoFilter))" @click="setNoFilterOrDidAttendFilter(NoFilter)"><i class="fa fa-th" /></RockButton>
+                    <RockButton btnSize="lg" :btnType="getBtnType(noFilterOrDidAttendFilter.hasFilter(DidAttendFilter))" @click="setNoFilterOrDidAttendFilter(DidAttendFilter)">{{ didAttendedCount }}</RockButton>
                 </div>
 
                 <div class="btn-group">
@@ -20,12 +20,13 @@
 
 <script setup lang="ts">
     import { computed, PropType, ref, watch } from "vue";
-    import { IAggregateRosterFilter, IRosterFilter, NoFilter, createEveryFilter, createLastNameStartsWithFilter, createSomeFilter, HasAttendedFilter, createFirstNameStartsWithFilter } from "./filterType";
+    import { IAggregateRosterFilter, IRosterFilter, NoFilter, createEveryFilter, createLastNameStartsWithFilter, createSomeFilter, DidAttendFilter, createFirstNameStartsWithFilter } from "./filterType";
     import RockButton from "@Obsidian/Controls/rockButton";
     import RockFormField from "@Obsidian/Controls/rockFormField";
     import { BtnType } from "@Obsidian/Enums/Controls/btnType";
     import { LiteralUnion } from "@Obsidian/Types/Utility/support";
     import { standardRockFormFieldProps, useStandardRockFormFieldProps } from "@Obsidian/Utility/component";
+    import { GroupAttendanceDetailRosterAttendeeBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailRosterAttendeeBag";
 
     const props = defineProps({
 
@@ -34,19 +35,14 @@
             required: true
         },
 
+        attendees: {
+            type: Object as PropType<GroupAttendanceDetailRosterAttendeeBag[]>,
+            required: true
+        },
+
         defaultFilter: {
             type: Object as PropType<IRosterFilter>,
             default: NoFilter
-        },
-
-        hasAttendedCount: {
-            type: Number as PropType<number>,
-            required: true
-        },
-
-        initials: {
-            type: Array as PropType<string[]>,
-            required: true
         },
 
         isFilterByFirstNameInitial: {
@@ -79,7 +75,7 @@
     //#region Values
 
     // Initialize the NoFilter or HasAttendedFilter based on the initial filter(s).
-    const noFilterOrHasAttendedFilter = ref<typeof HasAttendedFilter | typeof NoFilter>(props.modelValue.hasFilter(HasAttendedFilter) ? HasAttendedFilter : NoFilter);
+    const noFilterOrDidAttendFilter = ref<typeof DidAttendFilter | typeof NoFilter>(props.modelValue.hasFilter(DidAttendFilter) ? DidAttendFilter : NoFilter);
 
     // No need to initialize the "last name starts with" filter(s) yet.
     const initialsFilters = ref<IAggregateRosterFilter>(createSomeFilter());
@@ -96,6 +92,19 @@
             emit("update:modelValue", newValue);
         }
     });
+
+    const didAttendedCount = computed<number>(() => props.attendees.filter(attendee => attendee.didAttend).length);
+
+    const initials = computed<string[]>(() =>
+        props.isFilterByFirstNameInitial
+            ? props.attendees.filter(a => !!a.nickName)
+                .map(a => a.nickName!.charAt(0).toLocaleUpperCase())
+                .filter((item, index, arr) => arr.indexOf(item) === index) // Remove duplicates.
+                .sort()
+            : props.attendees.filter(a => !!a.lastName)
+                .map(a => a.lastName!.charAt(0).toLocaleUpperCase())
+                .filter((item, index, arr) => arr.indexOf(item) === index) // Remove duplicates.
+                .sort());
 
     //#endregion
 
@@ -114,8 +123,8 @@
         }
     }
 
-    function setNoFilterOrHasAttendedFilter(rosterFilter: IRosterFilter): void {
-        noFilterOrHasAttendedFilter.value = rosterFilter;
+    function setNoFilterOrDidAttendFilter(rosterFilter: IRosterFilter): void {
+        noFilterOrDidAttendFilter.value = rosterFilter;
 
         notifyFiltersUpdated();
     }
@@ -159,11 +168,11 @@
     function notifyFiltersUpdated(): void {
         if (!initialsFilters.value.filters.length) {
             // There are no initials filters, so set the overall filter to the (no filter or has attended filter).
-            allFilters.value = noFilterOrHasAttendedFilter.value;
+            allFilters.value = noFilterOrDidAttendFilter.value;
         }
         else {
             // There are initials filters, so set the overall filter to the combinations of the initials filters and the (no filter or has attended filter).
-            allFilters.value = createEveryFilter(noFilterOrHasAttendedFilter.value, initialsFilters.value);
+            allFilters.value = createEveryFilter(noFilterOrDidAttendFilter.value, initialsFilters.value);
         }
     }
 

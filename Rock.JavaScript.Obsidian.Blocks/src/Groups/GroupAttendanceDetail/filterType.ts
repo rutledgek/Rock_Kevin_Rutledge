@@ -1,5 +1,11 @@
 import { GroupAttendanceDetailRosterAttendeeBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailRosterAttendeeBag";
 
+function bindThis(filter: IRosterFilter): void {
+    filter.filter.bind(filter);
+    filter.hasFilter.bind(filter);
+    filter.isFilter.bind(filter);
+}
+
 export interface IRosterFilter {
     filter(attendee: GroupAttendanceDetailRosterAttendeeBag): boolean;
     /**
@@ -31,6 +37,8 @@ export function createFilter(filter: (attendee: GroupAttendanceDetailRosterAtten
         }
     };
 
+    bindThis(rosterFilter);
+
     return rosterFilter;
 }
 
@@ -48,12 +56,14 @@ export function createAggregateFilter(filters: IRosterFilter[], filter: (filters
         }
     };
 
+    bindThis(aggregateRosterFilter);
+
     return aggregateRosterFilter;
 }
 
 export const NoFilter = createFilter(_ => true);
 
-export const HasAttendedFilter = createFilter(attendee => attendee.didAttend);
+export const DidAttendFilter = createFilter(attendee => attendee.didAttend);
 
 const lastNameStartsWithFilters: Record<string, IRosterFilter> = {};
 
