@@ -18,6 +18,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Data.Entity;
 using System.Linq;
 
 using Rock.Attribute;
@@ -93,8 +94,27 @@ namespace Rock.Blocks.Core
         /// <returns>The options that provide additional details to the block.</returns>
         private ScheduleDetailOptionsBag GetBoxOptions( bool isEditable, RockContext rockContext, Schedule entity )
         {
-            var options = new ScheduleDetailOptionsBag();
-            options.NextOccurrence = entity.GetNextStartDateTime( RockDateTime.Now );
+            var options = new ScheduleDetailOptionsBag
+            {
+                NextOccurrence = entity.GetNextStartDateTime( RockDateTime.Now )
+            };
+
+            if ( entity.CategoryId.HasValue )
+            {
+                var today = RockDateTime.Today;
+                var nextYear = today.AddYears( 1 );
+                options.Exclusions = new ScheduleCategoryExclusionService( rockContext )
+                        .Queryable()
+                        .AsNoTracking()
+                        .Where( e =>
+                            e.CategoryId == entity.CategoryId.Value &&
+                            e.EndDate >= today &&
+                            e.StartDate < nextYear )
+                        .OrderBy( e => e.StartDate )
+                        .ToList()
+                        .Select( e => e.ToViewModel() )
+                        .ToList();
+            }
             return options;
         }
 

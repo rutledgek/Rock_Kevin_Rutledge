@@ -1,5 +1,16 @@
 <!-- Copyright by the Spark Development Network; Licensed under the Rock Community License -->
 <template>
+    <Alert v-if="$props.options.exclusions" alertType="warning">
+        <strong>Exclusions</strong> <br />
+        <span class="js-notification-text">
+            <p>This schedule will not be active during the following dates due to being excluded by the schedule's category:</p>
+            <p>
+                <span v-for="exclusion in $props.options.exclusions">
+                    <strong>{{ exclusion.title }}</strong>: {{  RockDateTime.parseISO(exclusion.startDate ?? "")?.toASPString("d") }} - {{ RockDateTime.parseISO(exclusion.endDate ?? "")?.toASPString("d") }} <br>
+                </span>
+            </p>
+        </span>
+    </Alert>
     <fieldset>
 
         <ValueDetailList :modelValue="topValues" />
@@ -20,6 +31,7 @@
 
 <script setup lang="ts">
     import { computed, PropType, ref } from "vue";
+    import Alert from "@Obsidian/Controls/alert.obs";
     import AttributeValuesContainer from "@Obsidian/Controls/attributeValuesContainer";
     import ValueDetailList from "@Obsidian/Controls/valueDetailList";
     import { RockDateTime } from "@Obsidian/Utility/rockDateTime";
@@ -57,10 +69,6 @@
             return valueBuilder.build();
         }
 
-        if (props.modelValue.description) {
-            valueBuilder.addTextValue("Description", props.modelValue?.description ?? "");
-        }
-
         return valueBuilder.build();
     });
 
@@ -70,6 +78,10 @@
 
         if (!props.modelValue) {
             return valueBuilder.build();
+        }
+
+        if(props.modelValue?.description) {
+            valueBuilder.addTextValue("Description", props.modelValue?.description ?? "");
         }
 
         if(props.modelValue?.friendlyScheduleText) {
@@ -84,8 +96,13 @@
             valueBuilder.addTextValue("Category", props.modelValue?.category?.text ?? "");
         }
 
-        valueBuilder.addTextValue("Check-in Starts", `${props.modelValue?.checkInStartOffsetMinutes ?? 0} minutes before start of schedule`);
-        valueBuilder.addTextValue("Check-in Ends", `${props.modelValue?.checkInEndOffsetMinutes ?? 0} minutes after start of schedule`);
+        if(props.modelValue?.checkInStartOffsetMinutes) {
+            valueBuilder.addTextValue("Check-in Starts", `${props.modelValue?.checkInStartOffsetMinutes} minutes before start of schedule`);
+        }
+
+        if(props.modelValue?.checkInEndOffsetMinutes) {
+            valueBuilder.addTextValue("Check-in Ends", `${props.modelValue?.checkInEndOffsetMinutes} minutes after start of schedule`);
+        }
         return valueBuilder.build();
     });
 

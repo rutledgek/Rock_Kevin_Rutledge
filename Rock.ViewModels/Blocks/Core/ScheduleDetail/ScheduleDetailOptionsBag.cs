@@ -16,11 +16,15 @@
 //
 
 using System;
+using System.Collections.Generic;
+using Rock.ViewModels.Entities;
 
 namespace Rock.ViewModels.Blocks.Core.ScheduleDetail
 {
     public class ScheduleDetailOptionsBag
     {
         public DateTime? NextOccurrence { get; set; }
+
+        public List<ScheduleCategoryExclusionBag> Exclusions { get; set; }
     }
 }
