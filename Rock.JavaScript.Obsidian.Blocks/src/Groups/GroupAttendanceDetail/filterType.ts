@@ -53,7 +53,7 @@ export function createAggregateFilter(filters: IRosterFilter[], filter: (filters
 
 export const NoFilter = createFilter(_ => true);
 
-export const HasAttendedFilter = createFilter(attendee => attendee.hasAttended);
+export const HasAttendedFilter = createFilter(attendee => attendee.didAttend);
 
 const lastNameStartsWithFilters: Record<string, IRosterFilter> = {};
 

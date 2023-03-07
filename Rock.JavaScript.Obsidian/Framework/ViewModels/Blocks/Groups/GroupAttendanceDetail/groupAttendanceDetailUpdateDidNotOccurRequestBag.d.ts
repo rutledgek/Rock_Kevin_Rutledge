@@ -26,5 +26,7 @@ import { Guid } from "@Obsidian/Types";
 export type GroupAttendanceDetailUpdateDidNotOccurRequestBag = {
     attendanceOccurrenceGuid?: Guid | null;
 
+    campusGuid?: Guid | null;
+
     didNotOccur: boolean;
 };

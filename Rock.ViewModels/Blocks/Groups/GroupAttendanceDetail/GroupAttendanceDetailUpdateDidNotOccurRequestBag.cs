@@ -24,5 +24,7 @@ namespace Rock.ViewModels.Blocks.Groups.GroupAttendanceDetail
         public Guid AttendanceOccurrenceGuid { get; set; }
 
         public bool DidNotOccur { get; set; }
+
+        public Guid? CampusGuid { get; set; }
     }
 }

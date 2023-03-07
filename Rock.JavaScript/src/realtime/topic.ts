@@ -49,7 +49,7 @@ export class Topic<TServer extends ServerFunctions<TServer> = GenericServerFunct
     public constructor(identifier: string, engine: Engine) {
         this.identifier = identifier;
         this.engine = engine;
-
+        
         this.server = createServerProxy<TServer>(engine, identifier, false);
     }
 

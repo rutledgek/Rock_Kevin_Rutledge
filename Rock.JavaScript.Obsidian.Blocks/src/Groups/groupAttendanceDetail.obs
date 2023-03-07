@@ -94,79 +94,83 @@
                     </div>
                 </div>
 
-                <div class="row">
-                    <div class="col-sm-3">
-                        <InlineCheckBox
-                            v-model="didNotOccur"
-                            label="We Did Not Meet" />
-                    </div>
-
-                    <div class="col-sm-3">
-                        <RadioButtonList
-                            v-if="config.attendanceOccurrenceTypes && config.isAttendanceOccurrenceTypesSectionShown"
-                            v-model="attendanceOccurrenceType"
-                            :label="config.attendanceOccurrenceTypesSectionLabel"
-                            :horizontal="true"
-                            :items="config.attendanceOccurrenceTypes" />
-                    </div>
-
-                    <div class="col-sm-3">
-                        <PersonPicker @update:modelValue="onAddPerson($event)"></PersonPicker>
-                    </div>
-
-                    <div class="col-sm-3">
-                        <RockButton v-if="config.addGroupMemberPageUrl" btnType="default" @click="onAddGroupMemberClicked"><i class="fa fa-plus"></i> Add Group Member</RockButton>
-                    </div>
-                </div>
-
                 <TransitionVerticalCollapse speed="fast">
-                    <div v-show="!didNotOccur">
+                    <div v-show="attendanceOccurrenceGuid">
                         <div class="row">
-                            <div class="col-sm-4">
-                                <SearchFilter v-model="searchFilter" />
+                            <div class="col-sm-3">
+                                <InlineCheckBox
+                                    v-model="didNotOccur"
+                                    label="We Did Not Meet" />
+                            </div>
+
+                            <div class="col-sm-3">
+                                <RadioButtonList
+                                    v-if="config.attendanceOccurrenceTypes && config.isAttendanceOccurrenceTypesSectionShown"
+                                    v-model="attendanceOccurrenceType"
+                                    :label="config.attendanceOccurrenceTypesSectionLabel"
+                                    :horizontal="true"
+                                    :items="config.attendanceOccurrenceTypes" />
+                            </div>
+
+                            <div class="col-sm-3">
+                                <PersonPicker @update:modelValue="onAddPerson($event)"></PersonPicker>
+                            </div>
+
+                            <div class="col-sm-3">
+                                <RockButton v-if="config.addGroupMemberPageUrl" btnType="default" @click="onAddGroupMemberClicked"><i class="fa fa-plus"></i> Add Group Member</RockButton>
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-sm-12">
-                                <RosterFilterPicker
-                                    v-model="rosterFilter"
-                                    class="mt-3"
-                                    :hasAttendedCount="didAttendAttendees.length"
-                                    :initials="rosterAttendeesInitials"
-                                    :isFilterByFirstNameInitial="sortBy === SortType.FirstNameFirst"
-                                    :isMultiselect="true">
-                                </RosterFilterPicker>
+                        <TransitionVerticalCollapse speed="fast">
+                            <div v-show="!didNotOccur">
+                                <div class="row">
+                                    <div class="col-sm-4">
+                                        <SearchFilter v-model="searchFilter" />
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-sm-12">
+                                        <RosterFilterPicker
+                                            v-model="rosterFilter"
+                                            class="mt-3"
+                                            :hasAttendedCount="didAttendAttendees.length"
+                                            :initials="rosterAttendeesInitials"
+                                            :isFilterByFirstNameInitial="sortBy === SortType.FirstNameFirst"
+                                            :isMultiselect="true">
+                                        </RosterFilterPicker>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-sm-12">
+                                        <AttendanceRosterGrouped v-if="displayedRosterCount > 50" :attendees="sortedAndFilteredRoster" :attendeeGroupLabelDelegate="attendeeGroupLabelDelegate" />
+                                        <AttendanceRoster v-else :attendees="sortedAndFilteredRoster" />
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                        </TransitionVerticalCollapse>
 
                         <div class="row">
                             <div class="col-sm-12">
-                                <AttendanceRosterGrouped v-if="displayedRosterCount > 50" :attendees="sortedAndFilteredRoster" :attendeeGroupLabelDelegate="attendeeGroupLabelDelegate" />
-                                <AttendanceRoster v-else :attendees="sortedAndFilteredRoster" />
+                                <TextBox
+                                    v-model="notes"
+                                    label="Notes"
+                                    :rows="3"
+                                    textMode="multiline" />
                             </div>
                         </div>
+
+
+                        <Alert v-if="!isPrintingRoster && printRosterWarning" alertType="warning">{{ printRosterWarning }}</Alert>
+
+                        <div class="actions">
+                            <RockButton tooltip="Print Attendance Roster" CssClass="btn btn-default btn-sm btn-square pull-right" @click="onPrintAttendanceRosterClicked()"><i class="fa fa-print"></i></RockButton>
+                        </div>
+
+                        <RockButton @click="onSaveClicked()">Save</RockButton>
                     </div>
                 </TransitionVerticalCollapse>
-
-                <div class="row">
-                    <div class="col-sm-12">
-                        <TextBox
-                            v-model="notes"
-                            label="Notes"
-                            :rows="3"
-                            textMode="multiline" />
-                    </div>
-                </div>
-
-
-                <Alert v-if="!isPrintingRoster && printRosterWarning" alertType="warning">{{ printRosterWarning }}</Alert>
-
-                <div class="actions">
-                    <RockButton tooltip="Print Attendance Roster" CssClass="btn btn-default btn-sm btn-square pull-right" @click="onPrintAttendanceRosterClicked()"><i class="fa fa-print"></i></RockButton>
-                </div>
-
-                <RockButton @click="onSaveClicked()">Save</RockButton>
             </template>
         </Panel>
     </div>
@@ -185,7 +189,6 @@
     import RosterFilterPicker from "./GroupAttendanceDetail/rosterFilter.partial.obs";
     import { createEveryFilter as every, IRosterFilter, NoFilter } from "./GroupAttendanceDetail/filterType";
     import { AttendeeGroupLabelDelegate } from "./GroupAttendanceDetail/attendeeGroupLabelDelegate";
-    import { GroupAttendanceTopic, startRealTime, stopRealTime } from "./GroupAttendanceDetail/realTime";
     import Alert from "@Obsidian/Controls/alert.obs";
     import DatePicker from "@Obsidian/Controls/datePicker.obs";
     import InlineCheckBox from "@Obsidian/Controls/inlineCheckBox";
@@ -205,14 +208,16 @@
     import { RockDateTime } from "@Obsidian/Utility/rockDateTime";
     import { GroupAttendanceDetailInitializationBox } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailInitializationBox";
     import { GroupAttendanceDetailPrintRosterResponseBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailPrintRosterResponseBag";
-    import { GroupAttendanceDetailUpdateAttendeeRequestBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailUpdateAttendeeRequestBag";
+    import { GroupAttendanceDetailMarkAttendanceRequestBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailMarkAttendanceRequestBag";
     import { GroupAttendanceDetailUpdateDidNotOccurRequestBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailUpdateDidNotOccurRequestBag";
     import { GroupAttendanceDetailUpdateAttendanceOccurrenceTypeRequestBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailUpdateAttendanceOccurrenceTypeRequestBag";
     import { GroupAttendanceDetailRosterAttendeeBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailRosterAttendeeBag";
     import { GroupAttendanceDetailSaveAttendanceOccurrenceRequestBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailSaveAttendanceOccurrenceRequestBag";
     import { GroupAttendanceDetailSaveAttendanceOccurrenceResponseBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailSaveAttendanceOccurrenceResponseBag";
     import { ListItemBag } from "@Obsidian/ViewModels/Utility/listItemBag";
-import { ITopic } from "@Obsidian/Utility/realTime";
+    import { AttendanceUpdatedMessageBag } from "@Obsidian/ViewModels/Event/attendanceUpdatedMessageBag";
+    import { AttendanceStatus } from "@Obsidian/Enums/Event/attendanceStatus";
+    import { getTopic, ITopic, ServerFunctions } from "@Obsidian/Utility/realTime";
 
     // TODO JMH This config should contain the group GUID for use in the specific group controls.
     const config = ref(useConfigurationValues<GroupAttendanceDetailInitializationBox>());
@@ -270,7 +275,7 @@ import { ITopic } from "@Obsidian/Utility/realTime";
                 // Remove duplicates.
                 .filter((item, index, arr) => arr.indexOf(item) === index)
                 .sort());
-    const didAttendAttendees = computed<GroupAttendanceDetailRosterAttendeeBag[]>(() => roster.value.filter(m => m.hasAttended) ?? []);
+    const didAttendAttendees = computed<GroupAttendanceDetailRosterAttendeeBag[]>(() => roster.value.filter(m => m.didAttend) ?? []);
     const sortedAndFilteredRoster = computed<GroupAttendanceDetailRosterAttendeeBag[]>(() => {
         return roster.value.slice() // Copy the array before sorting because `sort()` mutates the array in place.
             .sort(attendeeComparer.value)
@@ -404,7 +409,7 @@ import { ITopic } from "@Obsidian/Utility/realTime";
     const rosterOperations = computed(() => roster.value.map(attendee => ({
         attendeeOccurrenceGuid: config.value.attendanceOccurrenceGuid,
         personGuid: attendee.personGuid,
-        didAttend: attendee.hasAttended })));
+        didAttend: attendee.didAttend })));
 
     const autoSaveAttendeesOffHandle = ref<WatchStopHandle | null>(null);
     const autoSaveDidNotOccurOffHandle = ref<WatchStopHandle | null>(null);
@@ -423,13 +428,13 @@ import { ITopic } from "@Obsidian/Utility/realTime";
 
             if (rosterChanges.length) {
                 for (const attendee of rosterChanges) {
-                    const bag: GroupAttendanceDetailUpdateAttendeeRequestBag = {
+                    const bag: GroupAttendanceDetailMarkAttendanceRequestBag = {
                         attendanceOccurrenceGuid: attendanceOccurrenceGuid.value,
                         personGuid: attendee.personGuid,
                         didAttend: attendee.didAttend
                     };
-                    topic.value?.server.markAttendance(bag);
-                    //invokeBlockAction<void>("UpdateAttendee", { bag }).then(() => console.log(`updated attendee ${formattedJson(bag)}`));
+                    //topic.value?.server.markAttendance(bag);
+                    invokeBlockAction<void>("MarkAttendance", { bag }).then(() => console.log(`updated attendee ${formattedJson(bag)}`));
                 }
             }
         }, { deep: true });
@@ -486,7 +491,7 @@ import { ITopic } from "@Obsidian/Utility/realTime";
                         console.log("Stopping attendee auto-save until did not occur is saved");
                         autoSaveAttendeesOff();
                         for (const attendee of roster.value) {
-                            attendee.hasAttended = false;
+                            attendee.didAttend = false;
                         }
                     }
 
@@ -516,8 +521,8 @@ import { ITopic } from "@Obsidian/Utility/realTime";
     const topic = ref<GroupAttendanceTopic | null>();
 
     async function autoSaveOn(): Promise<void> {
-        if (attendanceOccurrenceGuid.value) {
-            topic.value = await startRealTime(attendanceOccurrenceGuid.value, { onUpdateAttendance });
+        if (attendanceOccurrenceGuid.value && config.value.groupGuid) {
+            topic.value = await startRealTime(config.value.groupGuid, attendanceOccurrenceGuid.value, { onAttendanceUpdated: onAttendanceUpdated });
         }
         autoSaveAttendeesOn();
         autoSaveDidNotOccurOn();
@@ -537,11 +542,33 @@ import { ITopic } from "@Obsidian/Utility/realTime";
         return JSON.stringify(value, null, 4);
     }
 
-    function onUpdateAttendance(personGuid: Guid, didAttend: boolean): void {
-        const attendee = roster.value.find(attendee => attendee.personGuid === personGuid);
+    function onAttendanceUpdated(bag: AttendanceUpdatedMessageBag): void {
+        console.log(formattedJson(bag));
+        // Ignore if not for this occurrence.
+        if (bag.occurrenceGuid !== attendanceOccurrenceGuid.value) {
+            return;
+        }
+
+        const attendee = roster.value.find(attendee => attendee.personGuid === bag.personGuid);
 
         if (attendee) {
-            attendee.hasAttended = didAttend;
+            attendee.didAttend = bag.status === AttendanceStatus.DidAttend;
+        }
+        else {
+            // TODO JMH Create new attendee object for the props provided or go get one from the server.
+            const fullNameParts = bag.personFullName?.split(" ") ?? [];
+            config.value.roster = [...roster.value, {
+                didAttend: bag.status === AttendanceStatus.DidAttend,
+                fullName: bag.personFullName,
+                personGuid: bag.personGuid,
+                // TODO JMH Guess at the nick name and last name for now.
+                nickName: fullNameParts[0],
+                lastName: fullNameParts.slice(1).join(" "),
+                // TODO JMH Need to get these things.
+                // campusGuid: null,
+                // itemTemplate: null,
+                // personAliasId: null
+            }];
         }
     }
 
@@ -562,17 +589,83 @@ import { ITopic } from "@Obsidian/Utility/realTime";
         notes.value = config.value.notes ?? "";
     });
 
-    watch([attendanceForDate, locationGuid, scheduleGuid], () => {
+    watch([attendanceForDate, locationGuid, scheduleGuid], async () => {
         console.log("in config reload watch");
+        attendanceOccurrenceGuid.value = null;
+
         if (attendanceForDate.value && locationGuid.value && scheduleGuid.value) {
-            // Turn auto-save off before we get/create the occurrence.
-            autoSaveOff();
-            getOrCreate().then(() => {
-                // Wait one tick so the UI can update with the latest config before turning auto-save back on.
-                nextTick(() => autoSaveOn());
-            });
+            await getOrCreate();
         }
     });
+
+    watch([attendanceOccurrenceGuid], () => {
+        // Turn auto-save off whenever attendance occurrence is changed.
+        console.log("auto-save was turned off.");
+        autoSaveOff();
+
+        if (attendanceOccurrenceGuid.value) {
+            // Wait one tick so the UI can update with the latest config before turning auto-save back on.
+            autoSaveOn();
+            console.log("auto-save was turned back on.");
+        }
+    });
+
+    //#endregion
+
+    //#region Real-time
+
+    type TopicListeners = {
+        onAttendanceUpdated: (bag: AttendanceUpdatedMessageBag) => void
+    };
+
+    type GroupAttendanceTopic = ITopic<ServerFunctions<unknown>> & {
+        attendanceOccurrenceGuid: Guid,
+        groupGuid: Guid
+    };
+
+    async function getGroupAttendanceTopic(groupGuid: Guid, attendanceOccurrenceGuid: Guid): Promise<GroupAttendanceTopic> {
+        const topic = await getTopic("Rock.RealTime.Topics.EntityUpdatedTopic");
+
+        await invokeBlockAction("SubscribeToRealTime", { connectionId: topic.connectionId, groupGuid });
+
+        Object.defineProperty(topic, "attendanceOccurrenceGuid", {
+            value: attendanceOccurrenceGuid,
+            writable: false
+        });
+
+        Object.defineProperty(topic, "groupGuid", {
+            value: groupGuid,
+            writable: false
+        });
+
+        return topic as GroupAttendanceTopic;
+    }
+
+    async function startRealTime(groupGuid: Guid, attendanceOccurrenceGuid: Guid, listeners: TopicListeners): Promise<GroupAttendanceTopic> {
+        const topic = await getGroupAttendanceTopic(groupGuid, attendanceOccurrenceGuid);
+
+        topic.onDisconnected(async () => {
+            await autoSaveOn();
+        });
+
+        setUpTopicListeners(topic, listeners);
+
+        // Extra logic that needs to happen on every connection goes here.
+
+        // if (!isReconnecting) {
+        //     // One time logic goes here.
+        // }
+
+        return topic;
+    }
+
+    async function stopRealTime(topic: GroupAttendanceTopic): Promise<void> {
+        await invokeBlockAction("UnsubscribeFromRealTime", { connectionId: topic.connectionId, groupGuid: topic.groupGuid });
+    }
+
+    function setUpTopicListeners(topic: GroupAttendanceTopic, listeners: TopicListeners): void {
+        topic.on("attendanceUpdated", listeners.onAttendanceUpdated);
+    }
 
     //#endregion
 

@@ -1,25 +1,17 @@
 import { Guid } from "@Obsidian/Types";
-import { getTopic, ITopic } from "@Obsidian/Utility/realTime";
-import { GroupAttendanceDetailUpdateAttendeeRequestBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailUpdateAttendeeRequestBag";
-
-interface IGroupAttendanceTopic {
-    markAttendance(bag: GroupAttendanceDetailUpdateAttendeeRequestBag);
-    startMonitoringAttendanceOccurrence(attendanceOccurrenceGuid: Guid);
-    stopMonitoringAttendanceOccurrence(attendanceOccurrenceGuid: Guid);
-}
-
-const topicName = "Rock.RealTime.Topics.GroupAttendanceTopic";
+import { getTopic, ITopic, ServerFunctions } from "@Obsidian/Utility/realTime";
+import { AttendanceUpdatedMessageBag } from "@Obsidian/ViewModels/Event/attendanceUpdatedMessageBag";
 
 export type TopicListeners = {
-    onUpdateAttendance: (personGuid: Guid, didAttend: boolean) => void
+    onAttendanceUpdated: (bag: AttendanceUpdatedMessageBag) => void
 };
 
-export type GroupAttendanceTopic = ITopic<IGroupAttendanceTopic> & {
+export type GroupAttendanceTopic = ITopic<ServerFunctions<unknown>> & {
     attendanceOccurrenceGuid: Guid
 };
 
-async function getGroupAttendanceTopic(attendanceOccurrenceGuid: Guid): Promise<GroupAttendanceTopic> {
-    const topic = await getTopic<IGroupAttendanceTopic>(topicName);
+async function getGroupAttendanceTopic(groupGuid: Guid, attendanceOccurrenceGuid: Guid): Promise<GroupAttendanceTopic> {
+    const topic = await getTopic("Rock.RealTime.Topics.EntityUpdatedTopic");
 
     Object.defineProperty(topic, "attendanceOccurrenceGuid", {
         value: attendanceOccurrenceGuid,
@@ -29,16 +21,14 @@ async function getGroupAttendanceTopic(attendanceOccurrenceGuid: Guid): Promise<
     return topic as GroupAttendanceTopic;
 }
 
-export async function startRealTime(attendanceOccurrenceGuid: Guid, listeners: TopicListeners): Promise<GroupAttendanceTopic> {
-    const topic = await getGroupAttendanceTopic(attendanceOccurrenceGuid);
+export async function startRealTime(groupGuid: Guid, attendanceOccurrenceGuid: Guid, listeners: TopicListeners): Promise<GroupAttendanceTopic> {
+    const topic = await getGroupAttendanceTopic(groupGuid, attendanceOccurrenceGuid);
 
     topic.onDisconnected(async () => {
-        await startRealTime(attendanceOccurrenceGuid, listeners);
+        await startRealTime(groupGuid, attendanceOccurrenceGuid, listeners);
     });
 
     setUpTopicListeners(topic, listeners);
-
-    await topic.server.startMonitoringAttendanceOccurrence(attendanceOccurrenceGuid);
 
     // Extra logic that needs to happen on every connection goes here.
 
@@ -53,9 +43,9 @@ export async function startRealTime(attendanceOccurrenceGuid: Guid, listeners: T
 }
 
 export async function stopRealTime(topic: GroupAttendanceTopic): Promise<void> {
-    topic.server.stopMonitoringAttendanceOccurrence(topic.attendanceOccurrenceGuid);
+    //topic.server.stopMonitoringAttendanceOccurrence(topic.attendanceOccurrenceGuid);
 }
 
-function setUpTopicListeners(topic: ITopic<IGroupAttendanceTopic>, listeners: TopicListeners): void {
-    topic.on("updateAttendance", listeners.onUpdateAttendance);
+function setUpTopicListeners(topic: GroupAttendanceTopic, listeners: TopicListeners): void {
+    topic.on("attendanceUpdated", listeners.onAttendanceUpdated);
 }

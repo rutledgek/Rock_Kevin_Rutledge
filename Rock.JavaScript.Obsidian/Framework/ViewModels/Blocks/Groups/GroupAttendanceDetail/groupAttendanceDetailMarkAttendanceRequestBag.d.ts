@@ -26,6 +26,8 @@ import { Guid } from "@Obsidian/Types";
 export type GroupAttendanceDetailMarkAttendanceRequestBag = {
     attendanceOccurrenceGuid?: Guid | null;
 
+    campusGuid?: Guid | null;
+
     didAttend: boolean;
 
     personGuid?: Guid | null;

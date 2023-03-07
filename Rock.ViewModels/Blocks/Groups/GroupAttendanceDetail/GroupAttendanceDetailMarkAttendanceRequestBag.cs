@@ -26,5 +26,7 @@ namespace Rock.ViewModels.Blocks.Groups.GroupAttendanceDetail
         public Guid PersonGuid { get; set; }
 
         public bool DidAttend { get; set; }
+
+        public Guid? CampusGuid { get; set; }
     }
 }

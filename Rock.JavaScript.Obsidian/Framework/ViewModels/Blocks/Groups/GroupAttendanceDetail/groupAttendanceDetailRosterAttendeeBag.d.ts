@@ -27,11 +27,11 @@ export type GroupAttendanceDetailRosterAttendeeBag = {
     /** Gets or sets the campus ids that a person's families belong to. */
     campusGuid?: Guid | null;
 
+    /** Indicates whether the Person has attended. */
+    didAttend: boolean;
+
     /** Gets or sets the Person's full name. */
     fullName?: string | null;
-
-    /** Indicates whether the Person has attended. */
-    hasAttended: boolean;
 
     itemTemplate?: string | null;
 

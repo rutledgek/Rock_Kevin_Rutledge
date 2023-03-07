@@ -53,7 +53,7 @@ namespace Rock.ViewModels.Blocks.Groups.GroupAttendanceDetail
         /// <summary>
         /// Indicates whether the Person has attended.
         /// </summary>
-        public bool HasAttended { get; set; }
+        public bool DidAttend { get; set; }
 
         /// <summary>
         /// Gets or sets the campus ids that a person's families belong to.

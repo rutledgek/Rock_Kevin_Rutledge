@@ -25,6 +25,7 @@ export class NetCoreEngine extends Engine {
         const connection = new HubConnectionBuilder()
             .withUrl("/rock-rt")
             .withAutomaticReconnect()
+            .configureLogging("info")
             .build();
 
         connection.on("message", this.onMessageReceived.bind(this));
