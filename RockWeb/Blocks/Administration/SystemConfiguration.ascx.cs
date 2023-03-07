@@ -187,6 +187,8 @@ namespace RockWeb.Blocks.Administration
             Configuration rockWebConfig = System.Web.Configuration.WebConfigurationManager.OpenWebConfiguration( "~" );
             rockWebConfig.AppSettings.Settings["OrgTimeZone"].Value = ddTimeZone.SelectedValue;
             rockWebConfig.AppSettings.Settings["RunJobsInIISContext"].Value = cbRunJobsInIISContext.Checked.ToString();
+            rockWebConfig.AppSettings.Settings["AzureSignalREndpoint"].Value = rtbAzureSignalREndpoint.Text;
+            rockWebConfig.AppSettings.Settings["AzureSignalRAccessKey"].Value = rtbAzureSignalRAccessKey.Text;
 
             var section = ( System.Web.Configuration.SystemWebSectionGroup ) rockWebConfig.GetSectionGroup( "system.web" );
             section.HttpRuntime.MaxRequestLength = int.Parse( numbMaxSize.Text ) * 1024;
