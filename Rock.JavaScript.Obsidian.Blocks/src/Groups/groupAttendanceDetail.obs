@@ -30,7 +30,7 @@
                     <div class="col-sm-4">
                         <DatePicker
                             v-if="config.attendanceOccurrenceDateSelectionMode === GroupAttendanceDetailDateSelectionMode.DatePicker"
-                            v-model="attendanceForDate"
+                            v-model="attendanceForDateString"
                             :displayCurrentOption="false"
                             :isCurrentDateOffset="false"
                             :disableForceParse="false"
@@ -42,7 +42,7 @@
                         />
                         <div v-else-if="config.attendanceOccurrenceDateSelectionMode === GroupAttendanceDetailDateSelectionMode.Specific">
                             <RockLabel>Attendance For</RockLabel>
-                            <div>{{ attendanceForDate }}</div>
+                            <div>{{ attendanceForDateString }}</div>
                         </div>
                         <!--
                             if (attendanceDateSelectionMode === AttendanceForMode.PickFromSchedule
@@ -184,7 +184,7 @@
 </template>
 
 <script setup lang="ts">
-    import { computed, ref, watch } from "vue";
+    import { computed, Ref, ref, watch } from "vue";
     import AttendanceOccurrencePicker from "./GroupAttendanceDetail/attendanceOccurrencePicker.partial.obs";
     import CampusFilter from "./GroupAttendanceDetail/campusFilter.partial.obs";
     import AttendanceRoster from "./GroupAttendanceDetail/attendanceRoster.partial.obs";
@@ -257,9 +257,8 @@
     const campusFilter = ref<IRosterFilter>(NoFilter);
     const rosterFilter = ref<IRosterFilter>(NoFilter);
     const attendanceOccurrenceGuid = ref<string | null | undefined>(config.value.attendanceOccurrenceGuid);
-    const attendanceForDate = ref<string>(
-        (config.value.attendanceOccurrenceDate && RockDateTime.parseISO(config.value.attendanceOccurrenceDate)?.toASPString(dateFormat.value))
-            || RockDateTime.now().toASPString(dateFormat.value));
+    const attendanceForDate = ref<RockDateTime>(config.value.attendanceOccurrenceDate && RockDateTime.parseISO(config.value.attendanceOccurrenceDate) || RockDateTime.now());
+    const attendanceForDateString = computed<string>(() => attendanceForDate.value.toASPString(dateFormat.value));
     const attendanceOccurrenceType = ref<Guid | undefined>(config.value.selectedAttendanceOccurrenceTypeValue ?? undefined);
     const locationGuid = ref<Guid | undefined | null>(config.value.locationGuid);
     const scheduleGuid = ref<Guid | undefined | null>(config.value.scheduleGuid);
@@ -413,7 +412,7 @@
     async function getOrCreateAttendanceOccurrence(): Promise<void> {
         const bag: GroupAttendanceDetailSaveAttendanceOccurrenceRequestBag = {
             didNotOccur: didNotOccur.value,
-            attendanceOccurrenceDate: attendanceForDate.value,
+            attendanceOccurrenceDate: attendanceForDateString.value,
             attendanceTypeGuid: attendanceOccurrenceType.value,
             attendees: attendances.value,
             campusGuid: campusGuid.value,
@@ -475,7 +474,7 @@
     async function save(): Promise<HttpResult<GroupAttendanceDetailSaveAttendanceOccurrenceResponseBag>> {
         const bag: GroupAttendanceDetailSaveAttendanceOccurrenceRequestBag = {
             didNotOccur: didNotOccur.value,
-            attendanceOccurrenceDate: attendanceForDate.value,
+            attendanceOccurrenceDate: attendanceForDateString.value,
             attendanceTypeGuid: attendanceOccurrenceType.value,
             attendees: attendances.value,
             campusGuid: campusGuid.value,
@@ -632,12 +631,22 @@
         autoSaveAttendanceOccurrenceTypeSwitch.turnOn();
     }
 
+    /**
+     * Enables auto-save functionality by enabling all auto-save switches.
+     *
+     * To turn on auto-save, call `turnOnAutoSave()`.
+     */
     function enableAutoSave(): void {
         autoMarkAttendanceSwitch.enable();
         autoSaveDidNotOccurSwitch.enable();
         autoSaveAttendanceOccurrenceTypeSwitch.enable();
     }
 
+    /**
+     * Disables auto-save functionality by disabling all auto-save switches.
+     *
+     * To turn off auto-save, call `turnOffAutoSave()`.
+     */
     function disableAutoSave(): void {
         autoMarkAttendanceSwitch.disable();
         autoSaveDidNotOccurSwitch.disable();
@@ -654,13 +663,11 @@
      */
     watch(config, () => {
         console.log("4. refs updated from config");
+        attendanceForDate.value = config.value.attendanceOccurrenceDate && RockDateTime.parseISO(config.value.attendanceOccurrenceDate) || RockDateTime.now();
+        locationGuid.value =  config.value.locationGuid;
+        scheduleGuid.value = config.value.scheduleGuid;
         attendanceOccurrenceGuid.value = config.value.attendanceOccurrenceGuid;
-        // attendanceForDate.value =
-        //     (config.value.attendanceOccurrenceDate && RockDateTime.parseISO(config.value.attendanceOccurrenceDate)?.toASPString(dateFormat.value))
-        //         || RockDateTime.now().toASPString(dateFormat.value);
         attendanceOccurrenceType.value = config.value.selectedAttendanceOccurrenceTypeValue ?? undefined;
-        // locationGuid.value =  config.value.locationGuid;
-        // scheduleGuid.value = config.value.scheduleGuid;
         didNotOccur.value =  config.value.isDidNotMeetChecked;
         campusGuid.value = config.value.campusGuid;
         notes.value = config.value.notes ?? "";
@@ -669,8 +676,18 @@
     /**
      * Gets an existing or creates a new AttendanceOccurrence when the date, location, or schedule changes.
      */
-    watch([attendanceForDate, locationGuid, scheduleGuid], async () => {
+    watch([attendanceForDate, locationGuid, scheduleGuid], async ([newAttendanceForDate, newLocationGuid, newScheduleGuid], [oldAttendanceForDate, oldLocationGuid, oldScheduleGuid]) => {
         console.log("1. in config reload watch");
+        if (newAttendanceForDate.millisecond === oldAttendanceForDate.millisecond
+            && newLocationGuid === oldLocationGuid
+            && newScheduleGuid === oldScheduleGuid) {
+            // Do nothing if nothing changed.
+            return;
+        }
+
+        console.log("new: " + JSON.stringify([newAttendanceForDate, newLocationGuid, newScheduleGuid], null, 4));
+        console.log("old: " + JSON.stringify([oldAttendanceForDate, oldLocationGuid, oldScheduleGuid], null, 4));
+
         attendanceOccurrenceGuid.value = null;
 
         if (attendanceForDate.value && locationGuid.value && scheduleGuid.value) {
@@ -679,10 +696,9 @@
     });
 
     /**
-     *
+     * Restarts auto-save and real-time updates when the AttendanceOccurrence is changed.
      */
     watch([attendanceOccurrenceGuid], async () => {
-        // Turn auto-save off whenever attendance occurrence is changed.
         console.log("5. auto-save was turned off.");
 
         turnOffAutoSave();
