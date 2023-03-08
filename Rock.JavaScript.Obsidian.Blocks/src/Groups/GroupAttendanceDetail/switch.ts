@@ -2,22 +2,22 @@ export type SwitchPosition = "on" | "off";
 
 export type Switch = {
     /**
-     * Determines if the switch is disconnected.
+     * Determines if the switch is disabled.
      *
-     * Use `connect()` and `disconnect()` to control this property.
+     * Use `enable()` and `disable()` to control this property.
      */
-    readonly isDisconnected: boolean,
+    readonly isDisabled: boolean,
 
     /**
      * Determines if the switch is on or off.
      *
-     * Returns `true` if `!isDisconnected && position === "on"`.
+     * Returns `true` if `!isDisabled && position === "on"`.
      *
      * The switch `position` can always be changed to `"on"` or `"off"`, but…
      *
-     * …when `isDisconnected`, `isOn` will always be `false`
+     * …when `isDisabled`, `isOn` will always be `false`
      *
-     * …when `!isDisconnected`, `isOn` will only be `true` if the switch position is `"on"`
+     * …when `!isDisabled`, `isOn` will only be `true` if the switch position is `"on"`
      */
     readonly isOn: boolean,
 
@@ -29,30 +29,30 @@ export type Switch = {
     readonly position: SwitchPosition;
 
     /**
-     * Connects the switch to "power".
+     * Enables the switch.
      *
      * Calling this will turn on the switch if it is also in the `"on"` position.
      */
-    connect(): void,
+    enable(): void,
 
     /**
-     * Disconnects the switch from "power".
+     * Disables the switch.
      *
      * Calling this will turn off the switch regardless of its "on" or "off" position.
      */
-    disconnect(): void,
+    disable(): void,
 
     /**
      * Turns the switch to the on position.
      *
-     * Calling this will turn on the switch if it is also connected to "power".
+     * Calling this will turn on the switch if it is enabled.
      */
     turnOn(): void,
 
     /**
      * Turns the switch to the off position.
      *
-     * Calling this will turn off the switch regardless of its connection to power.
+     * Calling this will turn off the switch regardless of enabled/disabled state.
      */
     turnOff(): void,
 
@@ -67,22 +67,22 @@ export type Switch = {
  */
 export function createSwitch(): Switch {
     let position: SwitchPosition;
-    let isDisconnected: boolean;
+    let isDisabled: boolean;
     return {
         get isOn(): boolean {
-            return !this.isDisconnected && this.position === "on";
+            return !this.isDisabled && this.position === "on";
         },
-        get isDisconnected(): boolean {
-            return isDisconnected;
+        get isDisabled(): boolean {
+            return isDisabled;
         },
         get position(): SwitchPosition {
             return position;
         },
-        connect(): void {
-            isDisconnected = true;
+        enable(): void {
+            isDisabled = false;
         },
-        disconnect(): void {
-            isDisconnected = false;
+        disable(): void {
+            isDisabled = true;
         },
         turnOn(): void {
             if (position === "on") {

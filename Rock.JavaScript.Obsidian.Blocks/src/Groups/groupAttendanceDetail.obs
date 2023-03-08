@@ -225,7 +225,6 @@
     import { AttendanceStatus } from "@Obsidian/Enums/Event/attendanceStatus";
     import { getTopic, ITopic, ServerFunctions } from "@Obsidian/Utility/realTime";
     import { AttendanceFilterByDelegate } from "./GroupAttendanceDetail/attendanceFilterByDelegate";
-    import { GroupAttendanceDetailGetAttendanceRequestBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailGetAttendanceRequestBag";
     import { createSwitch } from "./GroupAttendanceDetail/switch";
 
     // TODO JMH This config should contain the group GUID for use in the specific group controls.
@@ -633,6 +632,18 @@
         autoSaveAttendanceOccurrenceTypeSwitch.turnOn();
     }
 
+    function enableAutoSave(): void {
+        autoMarkAttendanceSwitch.enable();
+        autoSaveDidNotOccurSwitch.enable();
+        autoSaveAttendanceOccurrenceTypeSwitch.enable();
+    }
+
+    function disableAutoSave(): void {
+        autoMarkAttendanceSwitch.disable();
+        autoSaveDidNotOccurSwitch.disable();
+        autoSaveAttendanceOccurrenceTypeSwitch.disable();
+    }
+
     //#endregion
 
     //#region Watchers
@@ -689,7 +700,8 @@
 
     //#endregion
 
-    // Auto-save can be disabled by disconnecting all auto-save switches.
+    // Auto-save can be disabled by disabling all auto-save switches.
+    // disableAutoSave();
 
     if (config.value.attendanceOccurrenceGuid) {
         console.log("0. in startup startRealTime");
