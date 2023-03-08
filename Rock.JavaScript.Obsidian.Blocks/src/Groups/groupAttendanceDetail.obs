@@ -226,6 +226,7 @@
     import { getTopic, ITopic, ServerFunctions } from "@Obsidian/Utility/realTime";
     import { AttendanceFilterByDelegate } from "./GroupAttendanceDetail/attendanceFilterByDelegate";
     import { GroupAttendanceDetailGetAttendanceRequestBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailGetAttendanceRequestBag";
+    import { createSwitch } from "./GroupAttendanceDetail/switch";
 
     // TODO JMH This config should contain the group GUID for use in the specific group controls.
     const config = ref(useConfigurationValues<GroupAttendanceDetailInitializationBox>());
@@ -233,123 +234,21 @@
 
     type NullableListItemBags = ListItemBag | ListItemBag[] | null;
 
-    const actions = {
-        getAttendance: async (bag: GroupAttendanceDetailGetAttendanceRequestBag): Promise<HttpResult<GroupAttendanceDetailAttendanceBag>> => {
-            return await invokeBlockAction<GroupAttendanceDetailAttendanceBag>("GetAttendance", { bag });
-        },
-        getGroupAttendanceTopic: async (groupGuid: Guid, attendanceOccurrenceGuid: Guid): Promise<GroupAttendanceTopic> => {
-            const topic = await getTopic("Rock.RealTime.Topics.EntityUpdatedTopic");
+    type GroupAttendanceTopic = ITopic<ServerFunctions<unknown>> & {
+        attendanceOccurrenceGuid: Guid,
+        groupGuid: Guid
+    };
 
-            await invokeBlockAction("SubscribeToRealTime", { connectionId: topic.connectionId, groupGuid });
+    const autoMarkAttendanceSwitch = createSwitch();
+    const autoMarkAttendance = autoMarkAttendanceSwitch.connectToFunc(markAttendance);
 
-            // Associate the AttendanceOccurrence and Group unique identifiers to the topic so we don't have to keep passing them around.
-            Object.defineProperty(topic, "attendanceOccurrenceGuid", {
-                value: attendanceOccurrenceGuid,
-                writable: false
-            });
+    const autoSaveDidNotOccurSwitch = createSwitch();
+    const autoUpdateDidNotOccur = autoSaveDidNotOccurSwitch.connectToFunc(updateDidNotOccur);
 
-            Object.defineProperty(topic, "groupGuid", {
-                value: groupGuid,
-                writable: false
-            });
-
-            return topic as GroupAttendanceTopic;
-        },
-        getOrCreate: async (): Promise<void> => {
-            const bag: GroupAttendanceDetailSaveAttendanceOccurrenceRequestBag = {
-                didNotOccur: didNotOccur.value,
-                attendanceOccurrenceDate: attendanceForDate.value,
-                attendanceTypeGuid: attendanceOccurrenceType.value,
-                attendees: attendances.value,
-                campusGuid: campusGuid.value,
-                locationGuid: locationGuid.value,
-                notes: notes.value,
-                scheduleGuid: scheduleGuid.value,
-                areAttendeesSortedByFirstName: sortBy.value === SortType.FirstNameFirst,
-                attendanceOccurrenceGuid: attendanceOccurrenceGuid.value
-            };
-
-            // Clear the error before calling get/create.
-            errorMessage.value = "";
-
-            const response = await invokeBlockAction<GroupAttendanceDetailInitializationBox>("GetOrCreate", { bag });
-
-            if (response?.data) {
-                config.value = response.data;
-            }
-            else if (config) {
-                config.value.errorMessage = response?.errorMessage || "An unexpected error occurred.";
-            }
-        },
-        markAttendance: async (bag: GroupAttendanceDetailMarkAttendanceRequestBag): Promise<void> => {
-            await invokeBlockAction("MarkAttendance", { bag });
-        },
-        printAttendanceRoster: async (): Promise<void> => {
-            try {
-                isPrintingRoster.value = true;
-
-                var result = await invokeBlockAction<GroupAttendanceDetailPrintRosterResponseBag>("PrintRoster");
-
-                if (result?.errorMessage) {
-                    printRosterWarning.value = result.errorMessage;
-                }
-                else if (result?.data?.redirectUrl) {
-                    window.location.href = result.data.redirectUrl;
-                }
-            }
-            finally {
-                isPrintingRoster.value = false;
-            }
-        },
-        save: async (): Promise<HttpResult<GroupAttendanceDetailSaveAttendanceOccurrenceResponseBag>> => {
-            const bag: GroupAttendanceDetailSaveAttendanceOccurrenceRequestBag = {
-                didNotOccur: didNotOccur.value,
-                attendanceOccurrenceDate: attendanceForDate.value,
-                attendanceTypeGuid: attendanceOccurrenceType.value,
-                attendees: attendances.value,
-                campusGuid: campusGuid.value,
-                locationGuid: locationGuid.value,
-                notes: notes.value,
-                scheduleGuid: scheduleGuid.value,
-                areAttendeesSortedByFirstName: sortBy.value === SortType.FirstNameFirst,
-                attendanceOccurrenceGuid: attendanceOccurrenceGuid.value
-            };
-
-            // Clear the error before saving.
-            errorMessage.value = "";
-
-            const response = await invokeBlockAction<GroupAttendanceDetailSaveAttendanceOccurrenceResponseBag>("SaveAttendanceOccurrence", { bag });
-
-            if (response?.data?.redirectUrl) {
-                attendanceOccurrenceGuid.value = response.data.attendanceOccurrenceGuid;
-            }
-            else {
-                errorMessage.value = response.errorMessage || "An unexpected error occurred. Please try again.";
-            }
-
-            return response;
-        },
-        updateAttendanceOccurrenceType: async (bag: GroupAttendanceDetailUpdateAttendanceOccurrenceTypeRequestBag): Promise<void> => {
-            await invokeBlockAction("UpdateAttendanceOccurrenceType", { bag });
-        },
-        updateDidNotOccur: async (bag: GroupAttendanceDetailUpdateDidNotOccurRequestBag): Promise<void> => {
-            try {
-                isSavingDidNotOccur.value = true;
-
-                await invokeBlockAction<void>("UpdateDidNotOccur", { bag });
-            }
-            finally {
-                isSavingDidNotOccur.value = false;
-            }
-        },
-        unsubscribeFromRealTime: async (bag: { connectionId: string | null, groupGuid: Guid }): Promise<void> => {
-            await invokeBlockAction("UnsubscribeFromRealTime", { connectionId: bag.connectionId, groupGuid: bag.groupGuid });
-        }
-    } as const;
+    const autoSaveAttendanceOccurrenceTypeSwitch = createSwitch();
+    const autoUpdateAttendanceOccurrenceType = autoSaveAttendanceOccurrenceTypeSwitch.connectToFunc(updateAttendanceOccurrenceType);
 
     //#region Values
-
-    //#region Reactive Values
 
     const dateFormat = computed(() => config.value.attendanceOccurrenceDateSelectionMode === GroupAttendanceDetailDateSelectionMode.DatePicker ? "yyyy-MM-dd" : "MM/dd/yyyy");
     const isPrintingRoster = ref<boolean>(false);
@@ -369,10 +268,12 @@
     const isSavingDidNotOccur = ref<boolean>(false);
     const campusGuid = ref<string | null | undefined>(config.value.campusGuid);
     const notes = ref<string>(config.value.notes ?? "");
+    const topic = ref<GroupAttendanceTopic | null>();
 
-    //#endregion Reactive Values
+    //#endregion
 
     //#region Computed Values
+
     const panelTitle = computed(() => config.value.groupName ? `${config.value.groupName} Attendance` : "Group Attendance");
     const attendances = computed<GroupAttendanceDetailAttendanceBag[]>(() => config.value?.roster ?? []);
     const sortBy = computed<SortType>(() => config.value.areAttendeesSortedByFirstName ? SortType.FirstNameFirst : SortType.LastNameFirst);
@@ -392,8 +293,6 @@
 
     //#endregion
 
-    //#endregion
-
     //#region Event Handlers
 
     function onAddPerson(personId: number): void {
@@ -408,12 +307,7 @@
     }
 
     async function onAttendanceChanged(attendance: GroupAttendanceDetailAttendanceBag): Promise<void> {
-        if (!autoSaveAttendancesSwitch.isOn) {
-            // Skip if auto-save is off.
-            return;
-        }
-
-        await actions.markAttendance({
+        await autoMarkAttendance({
             attendanceOccurrenceGuid: attendanceOccurrenceGuid.value,
             personGuid: attendance.personGuid,
             didAttend: attendance.didAttend
@@ -421,137 +315,38 @@
     }
 
     async function onAttendanceOccurrenceTypeChanged(newAttendanceOccurrenceType: Guid): Promise<void> {
-        if (!autoSaveAttendanceOccurrenceTypeSwitch.isOn) {
-            // Skip if auto-save is off.
-            return;
-        }
-
-        await actions.updateAttendanceOccurrenceType({
+        await autoUpdateAttendanceOccurrenceType({
             attendanceOccurrenceGuid: attendanceOccurrenceGuid.value,
             attendanceOccurrenceTypeGuid: newAttendanceOccurrenceType
         });
     }
 
     async function onDidNotOccurChanged(newDidNotOccur: boolean): Promise<void> {
-        if (!autoSaveDidNotOccurSwitch.isOn) {
-            // Skip if auto-save is off.
-            return;
-        }
-
-        if (isSavingDidNotOccur.value) {
-            // Skip if "did not occur" is already being saved.
-            return;
-        }
-
-        if (newDidNotOccur) {
-            // If the occurrence did not happen, then stop auto-saving attendances before we auto-save "did occur".
-            await autoSaveAttendancesSwitch.turnOff();
-
-            // Update client state to match the server before saving.
-            didNotOccur.value = newDidNotOccur;
-        }
-
-        await actions.updateDidNotOccur({
+        await autoUpdateDidNotOccur({
             attendanceOccurrenceGuid: attendanceOccurrenceGuid.value,
             didNotOccur: newDidNotOccur
         });
-
-        if (!newDidNotOccur) {
-            // Update client state to match the server after saving.
-            didNotOccur.value = newDidNotOccur;
-
-            // If the occurrence did happen, then start auto-saving attendances after "did occur" is auto-saved.
-            await autoSaveAttendancesSwitch.turnOn();
-        }
     }
 
-    async function onGroupLocationPickerChanged(locationPickerSelection: NullableListItemBags): Promise<void> {
-        await updateSchedulePicker(locationPickerSelection as ListItemBag);
+    function onGroupLocationPickerChanged(locationPickerSelection: NullableListItemBags): void {
+        locationGuid.value = (locationPickerSelection as ListItemBag)?.value;
     }
 
     function onGroupLocationSchedulePickerChanged(schedulePickerSelection: NullableListItemBags): void {
         scheduleGuid.value = (schedulePickerSelection as ListItemBag)?.value;
     }
 
-    function onPrintAttendanceRosterClicked(): Promise<void> {
-        return actions.printAttendanceRoster();
+    async function onPrintAttendanceRosterClicked(): Promise<void> {
+        await printAttendanceRoster();
     }
 
-    async function onSaveClicked(): Promise<HttpResult<GroupAttendanceDetailSaveAttendanceOccurrenceResponseBag>> {
-        return await actions.save();
+    async function onSaveClicked(): Promise<void> {
+        await save();
     }
 
-    //#endregion
-
-    //#region Functions
-
-    async function updateSchedulePicker(locationPickerSelection: ListItemBag | null): Promise<void> {
-        locationGuid.value = locationPickerSelection?.value;
-    }
-
-    type AutoSaveSwitch = {
-        isOn: boolean,
-        turnOn: () => Promise<void>,
-        turnOff: () => Promise<void>
-    };
-
-    function createAutoSaveSwitch(onAutoSaveOn?: () => Promise<void>, onAutoSaveOff?: () => Promise<void>): AutoSaveSwitch {
-        const isOn = ref<boolean>(false);
-        return {
-            get isOn() {
-                return isOn.value;
-            },
-            turnOn: async () => {
-                if (isOn.value) {
-                    return;
-                }
-
-                if (onAutoSaveOn) {
-                    await onAutoSaveOn();
-                }
-
-                isOn.value = true;
-            },
-            turnOff: async () => {
-                if (!isOn.value) {
-                    return;
-                }
-
-                if (onAutoSaveOff) {
-                    await onAutoSaveOff();
-                }
-
-                isOn.value = false;
-            }
-        };
-    }
-
-    const autoSaveMasterSwitch = createAutoSaveSwitch(
-        async () => {
-            await startRealTime();
-            autoSaveAttendancesSwitch.turnOn();
-            autoSaveDidNotOccurSwitch.turnOn();
-            autoSaveAttendanceOccurrenceTypeSwitch.turnOn();
-        },
-        async () => {
-            if (topic.value) {
-                await stopRealTime(topic.value);
-            }
-
-            autoSaveAttendancesSwitch.turnOff();
-            autoSaveDidNotOccurSwitch.turnOff();
-            autoSaveAttendanceOccurrenceTypeSwitch.turnOff();
-        });
-    const autoSaveAttendancesSwitch = createAutoSaveSwitch();
-    const autoSaveDidNotOccurSwitch = createAutoSaveSwitch();
-    const autoSaveAttendanceOccurrenceTypeSwitch = createAutoSaveSwitch();
-
-    const topic = ref<GroupAttendanceTopic | null>();
-
-    function formattedJson(value: any): string {
-        return JSON.stringify(value, null, 4);
-    }
-
+    /**
+     * Event handler for attendance update being received from the server in real-time.
+     */
     function onAttendanceUpdatedFromServer(bag: AttendanceUpdatedMessageBag): void {
         if (bag.occurrenceGuid !== attendanceOccurrenceGuid.value) {
             // Ignore if not for this occurrence.
@@ -564,7 +359,8 @@
             attendance.didAttend = bag.status === AttendanceStatus.DidAttend;
         }
         else {
-            actions.getAttendance({
+            // Attendance was added outside of this browser so add it here (it could have been added by an individual on another device).
+            invokeBlockAction<GroupAttendanceDetailAttendanceBag>("GetAttendance", {
                 attendanceGuid: bag.attendanceGuid
             })
             .then(result => result?.data)
@@ -573,7 +369,7 @@
                     return;
                 }
 
-                // Make sure the attendance record hasn't been added already since this request was made.
+                // Check if the Attendance record was already added once more before adding it.
                 const existingAttendance = attendances.value.find(a => a.personGuid === attendance.personGuid);
 
                 if (existingAttendance) {
@@ -588,85 +384,317 @@
 
     //#endregion
 
-    //#region Watchers
+    //#region Functions
 
-    watch(config, () => {
-        attendanceOccurrenceGuid.value = config.value.attendanceOccurrenceGuid;
-        attendanceForDate.value =
-            (config.value.attendanceOccurrenceDate && RockDateTime.parseISO(config.value.attendanceOccurrenceDate)?.toASPString(dateFormat.value))
-                || RockDateTime.now().toASPString(dateFormat.value);
-        attendanceOccurrenceType.value = config.value.selectedAttendanceOccurrenceTypeValue ?? undefined;
-        locationGuid.value =  config.value.locationGuid;
-        scheduleGuid.value = config.value.scheduleGuid;
-        didNotOccur.value =  config.value.isDidNotMeetChecked;
-        campusGuid.value = config.value.campusGuid;
-        notes.value = config.value.notes ?? "";
-    });
+    /**
+     * Subscribes to the real-time GroupAttendanceTopic and returns it.
+     */
+    async function getGroupAttendanceTopic(groupGuid: Guid, attendanceOccurrenceGuid: Guid): Promise<GroupAttendanceTopic> {
+        const topic = await getTopic("Rock.RealTime.Topics.EntityUpdatedTopic");
 
-    watch([attendanceForDate, locationGuid, scheduleGuid], async () => {
-        console.log("in config reload watch");
-        attendanceOccurrenceGuid.value = null;
+        await invokeBlockAction("SubscribeToRealTime", { connectionId: topic.connectionId, groupGuid });
 
-        if (attendanceForDate.value && locationGuid.value && scheduleGuid.value) {
-            await actions.getOrCreate();
-        }
-    });
-
-    watch([attendanceOccurrenceGuid], async () => {
-        // Turn auto-save off whenever attendance occurrence is changed.
-        console.log("auto-save was turned off.");
-
-        await autoSaveMasterSwitch.turnOff();
-
-        if (attendanceOccurrenceGuid.value) {
-            await autoSaveMasterSwitch.turnOn();
-            console.log("auto-save was turned back on.");
-        }
-    });
-
-    //#endregion
-
-    //#region Real-time
-
-    type GroupAttendanceTopic = ITopic<ServerFunctions<unknown>> & {
-        attendanceOccurrenceGuid: Guid,
-        groupGuid: Guid
-    };
-
-    async function startRealTime(): Promise<GroupAttendanceTopic> {
-        if (!attendanceOccurrenceGuid.value || !config.value.groupGuid) {
-            throw "Unable to start real-time";
-        }
-
-        const topic = await actions.getGroupAttendanceTopic(config.value.groupGuid, attendanceOccurrenceGuid.value);
-
-        topic.onDisconnected(async () => {
-            await startRealTime();
+        // Associate the AttendanceOccurrence and Group unique identifiers to the topic so we don't have to keep passing them around.
+        Object.defineProperty(topic, "attendanceOccurrenceGuid", {
+            value: attendanceOccurrenceGuid,
+            writable: false
         });
 
-        setUpTopicListeners(topic);
+        Object.defineProperty(topic, "groupGuid", {
+            value: groupGuid,
+            writable: false
+        });
+
+        return topic as GroupAttendanceTopic;
+    }
+
+    /**
+     * Gets or creates the AttendanceOccurrence based on the currently selected date, location, and schedule.
+     */
+    async function getOrCreateAttendanceOccurrence(): Promise<void> {
+        const bag: GroupAttendanceDetailSaveAttendanceOccurrenceRequestBag = {
+            didNotOccur: didNotOccur.value,
+            attendanceOccurrenceDate: attendanceForDate.value,
+            attendanceTypeGuid: attendanceOccurrenceType.value,
+            attendees: attendances.value,
+            campusGuid: campusGuid.value,
+            locationGuid: locationGuid.value,
+            notes: notes.value,
+            scheduleGuid: scheduleGuid.value,
+            areAttendeesSortedByFirstName: sortBy.value === SortType.FirstNameFirst,
+            attendanceOccurrenceGuid: attendanceOccurrenceGuid.value
+        };
+
+        console.log("2. in getOrCreateAttendanceOccurrence");
+
+        // Clear the error before calling get/create.
+        errorMessage.value = "";
+
+        const response = await invokeBlockAction<GroupAttendanceDetailInitializationBox>("GetOrCreate", { bag });
+
+        if (response?.data) {
+            config.value = response.data;
+            console.log("3. config.value updated");
+        }
+        else if (config) {
+            config.value.errorMessage = response?.errorMessage || "An unexpected error occurred.";
+            console.log("3. config.value error");
+        }
+    }
+
+    /**
+     * Updates the DidAttend value of a single Attendance.
+     */
+    async function markAttendance(bag: GroupAttendanceDetailMarkAttendanceRequestBag): Promise<void> {
+        await invokeBlockAction("MarkAttendance", { bag });
+    }
+
+    /**
+     * Prints the Attendance roster.
+     */
+    async function printAttendanceRoster(): Promise<void> {
+        try {
+            isPrintingRoster.value = true;
+
+            var result = await invokeBlockAction<GroupAttendanceDetailPrintRosterResponseBag>("PrintRoster");
+
+            if (result?.errorMessage) {
+                printRosterWarning.value = result.errorMessage;
+            }
+            else if (result?.data?.redirectUrl) {
+                window.location.href = result.data.redirectUrl;
+            }
+        }
+        finally {
+            isPrintingRoster.value = false;
+        }
+    }
+
+    /**
+     * Saves the entire AttendanceOccurrence and Attendance records.
+     */
+    async function save(): Promise<HttpResult<GroupAttendanceDetailSaveAttendanceOccurrenceResponseBag>> {
+        const bag: GroupAttendanceDetailSaveAttendanceOccurrenceRequestBag = {
+            didNotOccur: didNotOccur.value,
+            attendanceOccurrenceDate: attendanceForDate.value,
+            attendanceTypeGuid: attendanceOccurrenceType.value,
+            attendees: attendances.value,
+            campusGuid: campusGuid.value,
+            locationGuid: locationGuid.value,
+            notes: notes.value,
+            scheduleGuid: scheduleGuid.value,
+            areAttendeesSortedByFirstName: sortBy.value === SortType.FirstNameFirst,
+            attendanceOccurrenceGuid: attendanceOccurrenceGuid.value
+        };
+
+        // Clear the error before saving.
+        errorMessage.value = "";
+
+        const response = await invokeBlockAction<GroupAttendanceDetailSaveAttendanceOccurrenceResponseBag>("SaveAttendanceOccurrence", { bag });
+
+        if (response?.data?.redirectUrl) {
+            attendanceOccurrenceGuid.value = response.data.attendanceOccurrenceGuid;
+        }
+        else {
+            errorMessage.value = response.errorMessage || "An unexpected error occurred. Please try again.";
+        }
+
+        return response;
+    }
+
+    /**
+     * Updates the type of the current AttendanceOccurrence.
+     */
+    async function updateAttendanceOccurrenceType(bag: GroupAttendanceDetailUpdateAttendanceOccurrenceTypeRequestBag): Promise<void> {
+        await invokeBlockAction("UpdateAttendanceOccurrenceType", { bag });
+    }
+
+    /**
+     * Unsubscribes from real-time updates to the Group Attendance Occurrence.
+     */
+    async function unsubscribeFromRealTime(bag: { connectionId: string | null, groupGuid: Guid }): Promise<void> {
+        await invokeBlockAction("UnsubscribeFromRealTime", { connectionId: bag.connectionId, groupGuid: bag.groupGuid });
+    }
+
+    /**
+     * Updates the AttendanceOccurrence DidNotOccur value.
+     */
+    async function updateDidNotOccur(bag: GroupAttendanceDetailUpdateDidNotOccurRequestBag): Promise<void> {
+        if (isSavingDidNotOccur.value) {
+            // Skip if "did not occur" is already being saved.
+            return;
+        }
+
+        const wasSwitchOn = autoMarkAttendanceSwitch.isOn;
+
+        if (bag.didNotOccur) {
+            // If the occurrence did not happen, then stop auto-saving attendances before we auto-save "did occur".
+            if (wasSwitchOn) {
+                autoMarkAttendanceSwitch.turnOff();
+            }
+
+            // Update client state to match the server before saving.
+            didNotOccur.value = bag.didNotOccur;
+        }
+
+        try {
+            isSavingDidNotOccur.value = true;
+
+            await invokeBlockAction<void>("UpdateDidNotOccur", { bag });
+        }
+        finally {
+            isSavingDidNotOccur.value = false;
+        }
+
+        if (!bag.didNotOccur) {
+            // Update client state to match the server after saving.
+            didNotOccur.value = bag.didNotOccur;
+
+            // If the occurrence did happen, then start auto-saving attendances after "did occur" is auto-saved.
+            if (wasSwitchOn) {
+                autoMarkAttendanceSwitch.turnOn();
+            }
+        }
+    }
+
+    /**
+     * Subscribes to the topic using the current Group and AttendanceOccurrence unique identifiers.
+     */
+    async function startRealTime(): Promise<GroupAttendanceTopic> {
+        const groupGuid = config.value.groupGuid;
+        const occurrenceGuid = attendanceOccurrenceGuid.value;
+
+        console.log("startRealTime(): 1. starting");
+
+        if (topic.value && topic.value.groupGuid === groupGuid && topic.value.attendanceOccurrenceGuid === occurrenceGuid) {
+            // Skip if already subscribed.
+            console.log("startRealTime(): 2. skipping");
+            return topic.value;
+        }
+
+        // Unsubscribe from the current topic before starting real-time.
+        await stopRealTime();
+
+        if (!attendanceOccurrenceGuid.value || !config.value.groupGuid) {
+            console.log("startRealTime(): 4. unable to start");
+            throw "Unable to start real-time";
+        }
+        console.log("startRealTime(): 4. getting topic");
+
+        const groupAttendanceTopic = await getGroupAttendanceTopic(config.value.groupGuid, attendanceOccurrenceGuid.value);
+
+        console.log("startRealTime(): 5. got topic");
+        groupAttendanceTopic.onDisconnected(async () => {
+            startRealTime();
+        });
+
+        groupAttendanceTopic.on("attendanceUpdated", onAttendanceUpdatedFromServer);
 
         // Extra logic that needs to happen on every connection goes here.
 
         // if (!isReconnecting) {
         //     // One time logic goes here.
         // }
+        console.log("startRealTime(): 6. done");
 
-        return topic;
+        return groupAttendanceTopic;
     }
 
-    async function stopRealTime(topic: GroupAttendanceTopic): Promise<void> {
-        await actions.unsubscribeFromRealTime({ connectionId: topic.connectionId, groupGuid: topic.groupGuid });
+    /**
+     * Unsubscribes from the current topic if subscribed.
+     */
+    async function stopRealTime(): Promise<void> {
+        console.log("startRealTime(): 2. stopping existing");
+
+        if (!topic.value) {
+            console.log("startRealTime(): 3. stopped non-existing");
+            return;
+        }
+
+        await unsubscribeFromRealTime({ connectionId: topic.value.connectionId, groupGuid: topic.value.groupGuid });
+        console.log("startRealTime(): 3. stopped existing");
     }
 
-    function setUpTopicListeners(topic: GroupAttendanceTopic): void {
-        topic.on("attendanceUpdated", onAttendanceUpdatedFromServer);
+    /**
+     * Turns off auto-save functionality by turning off all auto-save switches.
+     */
+    function turnOffAutoSave(): void {
+        autoMarkAttendanceSwitch.turnOff();
+        autoSaveDidNotOccurSwitch.turnOff();
+        autoSaveAttendanceOccurrenceTypeSwitch.turnOff();
+    }
+
+    /**
+     * Turns on auto-save functionality by turning on all auto-save switches.
+     */
+    function turnOnAutoSave(): void {
+        autoMarkAttendanceSwitch.turnOn();
+        autoSaveDidNotOccurSwitch.turnOn();
+        autoSaveAttendanceOccurrenceTypeSwitch.turnOn();
     }
 
     //#endregion
 
+    //#region Watchers
+
+    /**
+     * Keeps the reactive values up-to-date when the config changes.
+     * Config changes occur when the AttendanceOccurrence changes.
+     */
+    watch(config, () => {
+        console.log("4. refs updated from config");
+        attendanceOccurrenceGuid.value = config.value.attendanceOccurrenceGuid;
+        // attendanceForDate.value =
+        //     (config.value.attendanceOccurrenceDate && RockDateTime.parseISO(config.value.attendanceOccurrenceDate)?.toASPString(dateFormat.value))
+        //         || RockDateTime.now().toASPString(dateFormat.value);
+        attendanceOccurrenceType.value = config.value.selectedAttendanceOccurrenceTypeValue ?? undefined;
+        // locationGuid.value =  config.value.locationGuid;
+        // scheduleGuid.value = config.value.scheduleGuid;
+        didNotOccur.value =  config.value.isDidNotMeetChecked;
+        campusGuid.value = config.value.campusGuid;
+        notes.value = config.value.notes ?? "";
+    });
+
+    /**
+     * Gets an existing or creates a new AttendanceOccurrence when the date, location, or schedule changes.
+     */
+    watch([attendanceForDate, locationGuid, scheduleGuid], async () => {
+        console.log("1. in config reload watch");
+        attendanceOccurrenceGuid.value = null;
+
+        if (attendanceForDate.value && locationGuid.value && scheduleGuid.value) {
+            await getOrCreateAttendanceOccurrence();
+        }
+    });
+
+    /**
+     *
+     */
+    watch([attendanceOccurrenceGuid], async () => {
+        // Turn auto-save off whenever attendance occurrence is changed.
+        console.log("5. auto-save was turned off.");
+
+        turnOffAutoSave();
+
+        if (attendanceOccurrenceGuid.value) {
+            turnOnAutoSave();
+            console.log("6. in watch startRealTime");
+            await startRealTime();
+            console.log("7. auto-save was turned back on.");
+        }
+        else {
+            await stopRealTime();
+        }
+    });
+
+    //#endregion
+
+    // Auto-save can be disabled by disconnecting all auto-save switches.
+
     if (config.value.attendanceOccurrenceGuid) {
-        autoSaveMasterSwitch.turnOn();
+        console.log("0. in startup startRealTime");
+        turnOnAutoSave();
+        startRealTime();
     }
 
     onConfigurationValuesChanged(useReloadBlock());
