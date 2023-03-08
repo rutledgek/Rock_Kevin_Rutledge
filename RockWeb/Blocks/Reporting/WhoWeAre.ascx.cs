@@ -131,6 +131,7 @@ namespace RockWeb.Blocks.Reporting
         private void InitializeBlock()
         {
             var rockContext = new RockContext();
+            rockContext.Database.Log = strQry => Debug.WriteLine( strQry );
             var personService = new PersonService( rockContext );
             var qry = personService.Queryable();
             var total = qry.Count();
@@ -138,16 +139,8 @@ namespace RockWeb.Blocks.Reporting
             IEnumerable<Person> alivePersonsQry;
             IEnumerable<Person> activeAlivePersonsQry;
 
-            if ( total <= 2000 )
-            {
-                alivePersonsQry = qry.Where( p => p.RecordTypeValue.Guid == personRecordDefinedValueGuid && !p.IsDeceased ).ToList();
-                activeAlivePersonsQry = alivePersonsQry.Where( p => p.RecordStatusValue.Guid == Rock.SystemGuid.DefinedValue.PERSON_RECORD_STATUS_ACTIVE.AsGuid() ).ToList();
-            }
-            else
-            {
-                alivePersonsQry = qry.Where( p => p.RecordTypeValue.Guid == personRecordDefinedValueGuid && !p.IsDeceased );
-                activeAlivePersonsQry = alivePersonsQry.Where( p => p.RecordStatusValue.Guid == Rock.SystemGuid.DefinedValue.PERSON_RECORD_STATUS_ACTIVE.AsGuid() );
-            }
+            alivePersonsQry = qry.Where( p => p.RecordTypeValue.Guid == personRecordDefinedValueGuid && !p.IsDeceased );
+            activeAlivePersonsQry = alivePersonsQry.Where( p => p.RecordStatusValue.Guid == Rock.SystemGuid.DefinedValue.PERSON_RECORD_STATUS_ACTIVE.AsGuid() );
 
             GetDemographics( activeAlivePersonsQry, total );
             GetInformationStatistics( activeAlivePersonsQry, rockContext, total );
