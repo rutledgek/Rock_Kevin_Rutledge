@@ -61,10 +61,9 @@
                     </div>
 
                     <div class="col-md-2">
-                        <a class="help" href="#" tabindex="-1" data-toggle="tooltip"
+                        <RockButton btnType="link" data-toggle="tooltip"
                                             data-placement="auto" data-container="body" data-html="true"
-                                            title="" :data-original-title="props.options?.helpText">Preview</a>
-
+                                            title="" :data-original-title="props.options?.helpText">Preview</RockButton>
                     </div>
                 </div>
             </div>
@@ -87,6 +86,7 @@
     import CheckBox from "@Obsidian/Controls/checkBox";
     import TextBox from "@Obsidian/Controls/textBox";
     import Numberbox from "@Obsidian/Controls/numberBox";
+    import RockButton from "@Obsidian/Controls/rockButton";
     import CategoryPicker from "@Obsidian/Controls/categoryPicker";
     import ScheduleBuilder from "@Obsidian/Controls/scheduleBuilder.obs";
     import { watchPropertyChanges } from "@Obsidian/Utility/block";
