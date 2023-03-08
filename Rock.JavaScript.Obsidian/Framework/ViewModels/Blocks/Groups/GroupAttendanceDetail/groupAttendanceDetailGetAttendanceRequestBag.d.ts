@@ -23,10 +23,6 @@
 
 import { Guid } from "@Obsidian/Types";
 
-export type GroupAttendancePendingGroupMemberBag = {
-    /** Gets or sets the full name. */
-    fullName?: string | null;
-
-    /** Gets or sets the person unique identifier. */
-    personGuid?: Guid | null;
+export type GroupAttendanceDetailGetAttendanceRequestBag = {
+    attendanceGuid?: Guid | null;
 };

@@ -53,7 +53,7 @@ namespace Rock.ViewModels.Blocks.Groups.GroupAttendanceDetail
         public bool IsNewAttendeeAdditionAllowed { get; set; }
         public string AddPersonAs { get; set; }
         public string AddGroupMemberPageUrl { get; set; }
-        public List<GroupAttendanceDetailRosterAttendeeBag> Roster { get; set; }
+        public List<GroupAttendanceDetailAttendanceBag> Roster { get; set; }
         public bool IsNoAttendanceOccurrencesError { get; set; }
         public bool IsConfigError { get; set; }
         public Guid? ScheduleGuid { get; set; }

@@ -642,6 +642,8 @@
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupAttendanceDetail\groupAttendanceDetailActivateGroupMemberRequestBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupAttendanceDetail\groupAttendanceDetailAddPersonRequestBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupAttendanceDetail\groupAttendanceDetailAddPersonResponseBag.d.ts" />
+    <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupAttendanceDetail\groupAttendanceDetailAttendanceBag.d.ts" />
+    <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupAttendanceDetail\groupAttendanceDetailGetAttendanceRequestBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupAttendanceDetail\groupAttendanceDetailInitializationBox.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupAttendanceDetail\groupAttendanceDetailMarkAttendanceRequestBag.d.ts" />
     <TypeScriptCompile Include="Framework\ViewModels\Blocks\Groups\GroupAttendanceDetail\groupAttendanceDetailPrintRosterResponseBag.d.ts" />

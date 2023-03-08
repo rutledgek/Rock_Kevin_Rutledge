@@ -49,15 +49,15 @@
     <Compile Include="Blocks\Engagement\SignUp\SignUpRegister\SignUpRegisterResponseBag.cs" />
     <Compile Include="Blocks\Groups\GroupAttendanceDetail\GroupAttendanceDetailAddPersonResponseBag.cs" />
     <Compile Include="Blocks\Groups\GroupAttendanceDetail\GroupAttendanceDetailAddPersonRequestBag.cs" />
+    <Compile Include="Blocks\Groups\GroupAttendanceDetail\GroupAttendanceDetailGetAttendanceRequestBag.cs" />
     <Compile Include="Blocks\Groups\GroupAttendanceDetail\GroupAttendanceDetailPrintRosterResponseBag.cs" />
     <Compile Include="Blocks\Groups\GroupAttendanceDetail\GroupAttendanceDetailUpdateAttendanceOccurrenceTypeRequestBag.cs" />
     <Compile Include="Blocks\Groups\GroupAttendanceDetail\GroupAttendanceDetailUpdateDidNotOccurRequestBag.cs" />
     <Compile Include="Blocks\Groups\GroupAttendanceDetail\GroupAttendanceDetailMarkAttendanceRequestBag.cs" />
     <Compile Include="Blocks\Groups\GroupAttendanceDetail\GroupAttendanceDetailSaveAttendanceOccurrenceResponseBag.cs" />
-    <Compile Include="Blocks\Groups\GroupAttendanceDetail\GroupAttendanceDetailRosterAttendeeBag.cs" />
+    <Compile Include="Blocks\Groups\GroupAttendanceDetail\GroupAttendanceDetailAttendanceBag.cs" />
     <Compile Include="Blocks\Groups\GroupAttendanceDetail\GroupAttendanceDetailInitializationBox.cs" />
     <Compile Include="Blocks\Groups\GroupAttendanceDetail\GroupAttendanceDetailSaveAttendanceOccurrenceRequestBag.cs" />
-    <Compile Include="Blocks\Groups\GroupAttendanceDetail\GroupAttendanceDetailUpdateDidAttendRequestBag.cs" />
     <Compile Include="Blocks\Security\AccountEntry\AccountEntryAccountInfoBag.cs" />
     <Compile Include="Blocks\Security\AccountEntry\AccountEntryCompletedStepBag.cs" />
     <Compile Include="Blocks\Security\AccountEntry\AccountEntryConfirmationSentStepBag.cs" />

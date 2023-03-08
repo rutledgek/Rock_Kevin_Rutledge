@@ -29,11 +29,11 @@
     import { AttendanceGroupByDelegate } from "./attendanceGroupByDelegate";
     import { AttendanceSortByDelegate } from "./attendanceSortByDelegate";
     import CardCheckBox from "./cardCheckBox.partial.obs";
-    import { GroupAttendanceDetailRosterAttendeeBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailRosterAttendeeBag";
+    import { GroupAttendanceDetailAttendanceBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailAttendanceBag";
 
     const props = defineProps({
         attendances: {
-            type: Object as PropType<GroupAttendanceDetailRosterAttendeeBag[]>,
+            type: Object as PropType<GroupAttendanceDetailAttendanceBag[]>,
             required: true
         },
 
@@ -70,7 +70,7 @@
          * Emitted when attendance is changed by checking/unchecking an entry on the roster.
          * Does not emit if attendance.didAttend is changed somewhere else.
          */
-        (e: "attendanceChanged", value: GroupAttendanceDetailRosterAttendeeBag): void
+        (e: "attendanceChanged", value: GroupAttendanceDetailAttendanceBag): void
     }>();
 
     //#region Computed Values
@@ -78,7 +78,7 @@
     /**
      * Returns the sorted attendances if a "sort by" delegate is specified; otherwise, a copy of the attendances are returned without sorting.
      */
-    const sortedAttendances = computed<GroupAttendanceDetailRosterAttendeeBag[]>(() => {
+    const sortedAttendances = computed<GroupAttendanceDetailAttendanceBag[]>(() => {
         const sortByDelegate = props.sortBy;
 
         const attendances = [...props.attendances];
@@ -94,7 +94,7 @@
      *  Returns the filtered, sorted attendances if a "filter by" delegate is specified; otherwise, the sorted attendances are returned without filtering.
      *  We want to filter after sorting since filtering happens more often than sorting. If we filtered first, then any time the filter changed, we'd have to also re-sort.
      *  */
-    const filteredAttendances = computed<GroupAttendanceDetailRosterAttendeeBag[]>(() => {
+    const filteredAttendances = computed<GroupAttendanceDetailAttendanceBag[]>(() => {
         const filterByDelegate = props.filterBy;
         const attendances = sortedAttendances.value;
 
@@ -108,7 +108,7 @@
     /**
      * Returns the sorted and filtered attendances into groups if a "group by" delegate is specified; otherwise, a single group of attendances with a blank key is returned.
      */
-    const attendanceGroups = computed<Record<string, GroupAttendanceDetailRosterAttendeeBag[]>>(() => {
+    const attendanceGroups = computed<Record<string, GroupAttendanceDetailAttendanceBag[]>>(() => {
         const groupBy = props.groupBy;
         const attendances = filteredAttendances.value;
         const onlyGroupWhenFilteredAttendanceCountExceeds = props.groupWhenFilteredAttendanceCountExceeds;
@@ -119,7 +119,7 @@
             return { "": attendances };
         }
 
-        const dictionary: Record<string, GroupAttendanceDetailRosterAttendeeBag[]> = {};
+        const dictionary: Record<string, GroupAttendanceDetailAttendanceBag[]> = {};
 
         const keys: string[] = [];
 
@@ -137,7 +137,7 @@
 
         keys.sort();
 
-        const sortedDictionary: Record<string, GroupAttendanceDetailRosterAttendeeBag[]> = {};
+        const sortedDictionary: Record<string, GroupAttendanceDetailAttendanceBag[]> = {};
         keys.forEach(key => sortedDictionary[key] = dictionary[key]);
         return sortedDictionary;
     });
@@ -148,7 +148,7 @@
 
     //#region Event Handlers
 
-    function internalAttendanceChanged(didAttend: boolean, attendance: GroupAttendanceDetailRosterAttendeeBag): void {
+    function internalAttendanceChanged(didAttend: boolean, attendance: GroupAttendanceDetailAttendanceBag): void {
         const changed = attendance.didAttend !== didAttend;
         attendance.didAttend = didAttend;
 

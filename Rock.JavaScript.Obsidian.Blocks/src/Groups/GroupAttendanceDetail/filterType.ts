@@ -1,4 +1,4 @@
-import { GroupAttendanceDetailRosterAttendeeBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailRosterAttendeeBag";
+import { GroupAttendanceDetailAttendanceBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailAttendanceBag";
 
 function bindThis(filter: IRosterFilter): void {
     filter.filter.bind(filter);
@@ -7,7 +7,7 @@ function bindThis(filter: IRosterFilter): void {
 }
 
 export interface IRosterFilter {
-    filter(attendance: GroupAttendanceDetailRosterAttendeeBag): boolean;
+    filter(attendance: GroupAttendanceDetailAttendanceBag): boolean;
     /**
      * Returns `true` if this filter is the same instance as `rosterFilter`; otherwise, `false`.
      *
@@ -26,7 +26,7 @@ export interface IAggregateRosterFilter extends IRosterFilter {
     filters: IRosterFilter[];
 }
 
-export function createFilter(filter: (attendance: GroupAttendanceDetailRosterAttendeeBag) => boolean): IRosterFilter {
+export function createFilter(filter: (attendance: GroupAttendanceDetailAttendanceBag) => boolean): IRosterFilter {
     const rosterFilter: IRosterFilter = {
         filter,
         hasFilter: function(filter: IRosterFilter): boolean {
@@ -42,7 +42,7 @@ export function createFilter(filter: (attendance: GroupAttendanceDetailRosterAtt
     return rosterFilter;
 }
 
-export function createAggregateFilter(filters: IRosterFilter[], filter: (filters: IRosterFilter[], attendance: GroupAttendanceDetailRosterAttendeeBag) => boolean): IAggregateRosterFilter {
+export function createAggregateFilter(filters: IRosterFilter[], filter: (filters: IRosterFilter[], attendance: GroupAttendanceDetailAttendanceBag) => boolean): IAggregateRosterFilter {
     const aggregateRosterFilter: IAggregateRosterFilter = {
         hasFilter: function(filter: IRosterFilter): boolean {
             return hasSameFilter(this, filter);
@@ -51,7 +51,7 @@ export function createAggregateFilter(filters: IRosterFilter[], filter: (filters
             return isSameFilter(this, filter);
         },
         filters: filters,
-        filter: function(attendance: GroupAttendanceDetailRosterAttendeeBag): boolean {
+        filter: function(attendance: GroupAttendanceDetailAttendanceBag): boolean {
             return filter(this.filters, attendance);
         }
     };

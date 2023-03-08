@@ -23,24 +23,27 @@
 
 import { Guid } from "@Obsidian/Types";
 
-export type GroupAttendanceAttendeeBag = {
-    /** Gets or sets a value indicating whether this Rock.ViewModels.Blocks.Groups.GroupAttendanceDetail.GroupAttendanceAttendeeBag is attended. */
-    attended: boolean;
-
+export type GroupAttendanceDetailAttendanceBag = {
     /** Gets or sets the campus ids that a person's families belong to. */
-    campusIds?: Guid[] | null;
+    campusGuid?: Guid | null;
 
-    /** Gets or sets the full name. */
+    /** Indicates whether the Person has attended. */
+    didAttend: boolean;
+
+    /** Gets or sets the Person's full name. */
     fullName?: string | null;
 
-    /** Gets or sets the last name. */
+    itemTemplate?: string | null;
+
+    /** Gets or sets the Person's last name. */
     lastName?: string | null;
 
-    mergedTemplate?: string | null;
-
-    /** Gets or sets the name of the nick. */
+    /** Gets or sets the Person's nick name. */
     nickName?: string | null;
 
-    /** Gets or sets the person identifier. */
-    personId: number;
+    /** Gets or sets the person alias identifier. */
+    personAliasId?: number | null;
+
+    /** Gets or sets the Person's unique identifier. */
+    personGuid?: Guid | null;
 };

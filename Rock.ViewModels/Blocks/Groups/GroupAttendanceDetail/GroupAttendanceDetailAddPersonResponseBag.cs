@@ -19,6 +19,6 @@ namespace Rock.ViewModels.Blocks.Groups.GroupAttendanceDetail
 {
     public class GroupAttendanceDetailAddPersonResponseBag
     {
-        public GroupAttendanceDetailRosterAttendeeBag Attendee { get; set; }
+        public GroupAttendanceDetailAttendanceBag Attendee { get; set; }
     }
 }

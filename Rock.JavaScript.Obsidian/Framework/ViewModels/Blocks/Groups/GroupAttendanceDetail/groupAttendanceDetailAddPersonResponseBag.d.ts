@@ -21,8 +21,8 @@
 // </copyright>
 //
 
-import { GroupAttendanceDetailRosterAttendeeBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailRosterAttendeeBag";
+import { GroupAttendanceDetailAttendanceBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailAttendanceBag";
 
 export type GroupAttendanceDetailAddPersonResponseBag = {
-    attendee?: GroupAttendanceDetailRosterAttendeeBag | null;
+    attendee?: GroupAttendanceDetailAttendanceBag | null;
 };

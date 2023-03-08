@@ -1,3 +1,3 @@
-import { GroupAttendanceDetailRosterAttendeeBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailRosterAttendeeBag";
+import { GroupAttendanceDetailAttendanceBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailAttendanceBag";
 
-export type AttendanceGroupByDelegate = (attendance: GroupAttendanceDetailRosterAttendeeBag) => string;
+export type AttendanceGroupByDelegate = (attendance: GroupAttendanceDetailAttendanceBag) => string;

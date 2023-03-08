@@ -20,7 +20,7 @@ using System.Collections.Generic;
 
 namespace Rock.ViewModels.Blocks.Groups.GroupAttendanceDetail
 {
-    public class GroupAttendanceDetailRosterAttendeeBag
+    public class GroupAttendanceDetailAttendanceBag
     {
         /// <summary>
         /// Gets or sets the Person's unique identifier.

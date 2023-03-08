@@ -15,13 +15,12 @@
 // </copyright>
 //
 
-using System.Collections.Generic;
+using System;
 
 namespace Rock.ViewModels.Blocks.Groups.GroupAttendanceDetail
 {
-    public class GroupAttendanceDetailUpdateDidAttendRequestBag
+    public class GroupAttendanceDetailGetAttendanceRequestBag
     {
-        public List<GroupAttendanceDetailRosterAttendeeBag> Attendees { get; set; }
-        public bool DidNotOccur { get; set; }
+        public Guid AttendanceGuid { get; set; }
     }
 }

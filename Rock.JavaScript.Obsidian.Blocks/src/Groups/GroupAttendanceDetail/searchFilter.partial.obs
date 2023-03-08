@@ -6,7 +6,7 @@
     import { computed, PropType, ref } from "vue";
     import { createFilter, IRosterFilter, NoFilter } from "./filterType";
     import TextBox from "@Obsidian/Controls/textBox";
-    import { GroupAttendanceDetailRosterAttendeeBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailRosterAttendeeBag";
+    import { GroupAttendanceDetailAttendanceBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailAttendanceBag";
 
     const props = defineProps({
         modelValue: {
@@ -60,13 +60,13 @@
     //#region Functions
 
     function createNameContainsFilter(text: string): IRosterFilter {
-        return createFilter((attendance: GroupAttendanceDetailRosterAttendeeBag) => {
+        return createFilter((attendance: GroupAttendanceDetailAttendanceBag) => {
             return !!attendance.fullName && attendance.fullName.toLocaleLowerCase().indexOf(text.toLocaleLowerCase()) >= 0;
         });
     }
 
     function createNameMatchesRegexFilter(regex: RegExp): IRosterFilter {
-        return createFilter((attendance: GroupAttendanceDetailRosterAttendeeBag) => {
+        return createFilter((attendance: GroupAttendanceDetailAttendanceBag) => {
             return !!attendance.fullName && regex.test(attendance.fullName);
         });
     }

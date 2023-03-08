@@ -512,6 +512,54 @@ namespace Rock.Blocks.Groups
 
         #region Block Actions
 
+        [BlockAction( "GetAttendance" )]
+        public BlockActionResult GetAttendance( GroupAttendanceDetailGetAttendanceRequestBag bag )
+        {
+            using ( var rockContext = new RockContext() )
+            {
+                var attendanceInfo = new AttendanceService( rockContext )
+                    .Queryable()
+                    .Where( a =>  a.Guid == bag.AttendanceGuid )
+                    .Select( a => new
+                    {
+                        GroupId = a.Occurrence.GroupId,
+                        Person = a.PersonAlias.Person,
+                        DidAttend = a.DidAttend
+                    } )
+                    .FirstOrDefault();
+
+                if ( attendanceInfo == null )
+                {
+                    return ActionBadRequest( "Attendance not found." );
+                }
+
+                if ( !attendanceInfo.GroupId.HasValue )
+                {
+                    return ActionBadRequest( "Group not found." );
+                }
+
+                var group = new GroupService( rockContext ).Get( attendanceInfo.GroupId.Value );
+
+                if (!group.IsAuthorized(Authorization.VIEW, GetCurrentPerson() ) )
+                {
+                    return ActionStatusCode( System.Net.HttpStatusCode.Forbidden );
+                }
+
+                // The attendee may not be a member of the group.
+                var groupMember = new GroupMemberService( rockContext )
+                    .Queryable()
+                    .Where( m =>
+                        m.GroupId == group.Id
+                        && m.GroupId == group.Id
+                        && m.PersonId == attendanceInfo.Person.Id )
+                    .FirstOrDefault();
+
+                var attendanceBag = GetRosterAttendeeBag( attendanceInfo.Person, attendanceInfo.DidAttend ?? false, groupMember );
+
+                return ActionOk( attendanceBag );
+            }
+        }
+
         /// <summary>
         /// Saves the Attendance Occurrence.
         /// </summary>
@@ -1240,7 +1288,7 @@ namespace Rock.Blocks.Groups
             return box;
         }
 
-        private List<GroupAttendanceDetailRosterAttendeeBag> GetRoster( RockContext rockContext, OccurrenceData occurrenceData )
+        private List<GroupAttendanceDetailAttendanceBag> GetRoster( RockContext rockContext, OccurrenceData occurrenceData )
         {
             // Load the attendance for the selected attendance occurrence.
             var attendedPersonIds = new List<int>();
@@ -1288,14 +1336,14 @@ namespace Rock.Blocks.Groups
                 .ToList();
         }
 
-        private GroupAttendanceDetailRosterAttendeeBag GetRosterAttendeeBag( Person person, bool hasAttended, GroupMember groupMember )
+        private GroupAttendanceDetailAttendanceBag GetRosterAttendeeBag( Person person, bool hasAttended, GroupMember groupMember )
         {
             var mergeFields = this.RequestContext.GetCommonMergeFields();
             mergeFields.Add( MergeFieldKeys.Person, person );
             mergeFields.Add( MergeFieldKeys.Attended, hasAttended );
             mergeFields.Add( MergeFieldKeys.GroupMember, groupMember );
 
-            return new GroupAttendanceDetailRosterAttendeeBag
+            return new GroupAttendanceDetailAttendanceBag
             {
                 PersonGuid = person.Guid,
                 PersonAliasId = person.PrimaryAliasId,

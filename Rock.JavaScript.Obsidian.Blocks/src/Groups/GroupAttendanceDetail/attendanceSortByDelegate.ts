@@ -1,4 +1,4 @@
-import { GroupAttendanceDetailRosterAttendeeBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailRosterAttendeeBag";
+import { GroupAttendanceDetailAttendanceBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailAttendanceBag";
 
 export const SortType = {
     FirstNameFirst: "FirstNameFirst",
@@ -12,10 +12,10 @@ export const SortTypeDescription: Record<string, string> = {
 
 export type SortType = typeof SortType[keyof typeof SortType];
 
-export type AttendanceSortByDelegate = (attendance1: GroupAttendanceDetailRosterAttendeeBag, attendance2: GroupAttendanceDetailRosterAttendeeBag) => number;
+export type AttendanceSortByDelegate = (attendance1: GroupAttendanceDetailAttendanceBag, attendance2: GroupAttendanceDetailAttendanceBag) => number;
 
 export function createSortBy(firstBy: AttendanceSortByDelegate, thenBy?: AttendanceSortByDelegate): AttendanceSortByDelegate {
-    return (attendance1: GroupAttendanceDetailRosterAttendeeBag, attendance2: GroupAttendanceDetailRosterAttendeeBag): number => {
+    return (attendance1: GroupAttendanceDetailAttendanceBag, attendance2: GroupAttendanceDetailAttendanceBag): number => {
         const comparison = firstBy(attendance1, attendance2);
 
         // If attendance1 and attendance2 match, then run the additional `thenBy` comparison.
@@ -27,11 +27,11 @@ export function createSortBy(firstBy: AttendanceSortByDelegate, thenBy?: Attenda
     };
 }
 
-export const byFirstName: AttendanceSortByDelegate = (attendance1: GroupAttendanceDetailRosterAttendeeBag, attendance2: GroupAttendanceDetailRosterAttendeeBag): number => {
+export const byFirstName: AttendanceSortByDelegate = (attendance1: GroupAttendanceDetailAttendanceBag, attendance2: GroupAttendanceDetailAttendanceBag): number => {
     return compareStrings(attendance1.nickName, attendance2.nickName);
 };
 
-export const byLastName: AttendanceSortByDelegate = (attendance1: GroupAttendanceDetailRosterAttendeeBag, attendance2: GroupAttendanceDetailRosterAttendeeBag): number => {
+export const byLastName: AttendanceSortByDelegate = (attendance1: GroupAttendanceDetailAttendanceBag, attendance2: GroupAttendanceDetailAttendanceBag): number => {
     return compareStrings(attendance1.lastName, attendance2.lastName);
 };
 

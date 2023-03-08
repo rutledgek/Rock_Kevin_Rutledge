@@ -25,7 +25,7 @@ import { GroupAttendanceDetailDateSelectionMode } from "@Obsidian/Enums/Blocks/G
 import { GroupAttendanceDetailLocationSelectionMode } from "@Obsidian/Enums/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailLocationSelectionMode";
 import { GroupAttendanceDetailScheduleSelectionMode } from "@Obsidian/Enums/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailScheduleSelectionMode";
 import { Guid } from "@Obsidian/Types";
-import { GroupAttendanceDetailRosterAttendeeBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailRosterAttendeeBag";
+import { GroupAttendanceDetailAttendanceBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailAttendanceBag";
 import { ListItemBag } from "@Obsidian/ViewModels/Utility/listItemBag";
 
 export type GroupAttendanceDetailInitializationBox = {
@@ -96,7 +96,7 @@ export type GroupAttendanceDetailInitializationBox = {
 
     notesSectionLabel?: string | null;
 
-    roster?: GroupAttendanceDetailRosterAttendeeBag[] | null;
+    roster?: GroupAttendanceDetailAttendanceBag[] | null;
 
     scheduleGuid?: Guid | null;
 

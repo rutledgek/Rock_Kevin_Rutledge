@@ -38,7 +38,7 @@ namespace Rock.ViewModels.Blocks.Groups.GroupAttendanceDetail
 
         public Guid? CampusGuid { get; set; }
 
-        public List<GroupAttendanceDetailRosterAttendeeBag> Attendees { get; set; }
+        public List<GroupAttendanceDetailAttendanceBag> Attendees { get; set; }
 
         public bool AreAttendeesSortedByFirstName { get; set; }
     }

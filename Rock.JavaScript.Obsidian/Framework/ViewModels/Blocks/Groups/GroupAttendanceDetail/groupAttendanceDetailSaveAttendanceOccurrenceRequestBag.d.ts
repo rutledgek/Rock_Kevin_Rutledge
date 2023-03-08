@@ -22,7 +22,7 @@
 //
 
 import { Guid } from "@Obsidian/Types";
-import { GroupAttendanceDetailRosterAttendeeBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailRosterAttendeeBag";
+import { GroupAttendanceDetailAttendanceBag } from "@Obsidian/ViewModels/Blocks/Groups/GroupAttendanceDetail/groupAttendanceDetailAttendanceBag";
 
 export type GroupAttendanceDetailSaveAttendanceOccurrenceRequestBag = {
     areAttendeesSortedByFirstName: boolean;
@@ -33,7 +33,7 @@ export type GroupAttendanceDetailSaveAttendanceOccurrenceRequestBag = {
 
     attendanceTypeGuid?: Guid | null;
 
-    attendees?: GroupAttendanceDetailRosterAttendeeBag[] | null;
+    attendees?: GroupAttendanceDetailAttendanceBag[] | null;
 
     campusGuid?: Guid | null;
 
