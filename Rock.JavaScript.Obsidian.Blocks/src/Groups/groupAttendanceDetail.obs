@@ -281,6 +281,11 @@
             : createSortBy(byLastName, byFirstName));
     const attendanceFilterByDelegate = computed<AttendanceFilterByDelegate>(() => (attendance) => every(campusFilter.value, searchFilter.value, rosterFilter.value).filter(attendance));
     const attendanceGroupByDelegate = computed<AttendanceGroupByDelegate | null>(() => {
+        if (config.value.isLongListDisabled) {
+            // No grouping when long-list is disabled.
+            return null;
+        }
+
         if (sortBy.value === SortType.FirstNameFirst) {
             return (attendance: GroupAttendanceDetailAttendanceBag) => attendance.nickName?.charAt(0) || "?";
         }

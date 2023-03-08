@@ -73,6 +73,8 @@ export type GroupAttendanceDetailInitializationBox = {
 
     isGroupNotFoundError: boolean;
 
+    isLongListDisabled: boolean;
+
     isNewAttendanceDateAdditionRestricted: boolean;
 
     isNewAttendeeAdditionAllowed: boolean;

@@ -189,6 +189,15 @@ namespace Rock.Blocks.Groups
         Key = AttributeKey.AttendanceOccurrenceTypesLabel,
         Order = 15 )]
 
+    [BooleanField(
+        "Disable Long-List",
+        Category = AttributeCategory.None,
+        DefaultBooleanValue = false,
+        Description = "Will disable the long-list feature which groups individuals by the first character of their last name. When enabled, this only shows when there are more than 50 individuals on the list.",
+        IsRequired = false,
+        Key = AttributeKey.DisableLongList,
+        Order = 16 )]
+
     #endregion
 
     [Rock.SystemGuid.EntityTypeGuid( "64ECB2E0-218F-4EB4-8691-7DC94A767037" )]
@@ -249,6 +258,7 @@ namespace Rock.Blocks.Groups
             public const string AllowSorting = "AllowSorting";
             public const string AttendanceOccurrenceTypes = "AttendanceTypes";
             public const string AttendanceOccurrenceTypesLabel = "AttendanceTypeLabel";
+            public const string DisableLongList = "DisableLongList";
         }
 
         /// <summary>
@@ -478,6 +488,12 @@ namespace Rock.Blocks.Groups
         /// Gets the Schedule ID page parameter.
         /// </summary>
         private int? ScheduleIdPageParameter => PageParameter( PageParameterKey.ScheduleId ).AsIntegerOrNull();
+
+        /// <summary>
+        /// Will disable the long-list feature which groups individuals by the first character of their last name.
+        /// <para>When enabled, this only shows when there are more than 50 individuals on the list.</para>
+        /// </summary>
+        public bool IsLongListDisabled => GetAttributeValue( AttributeKey.DisableLongList ).AsBoolean();
 
         #endregion
 
@@ -1245,6 +1261,7 @@ namespace Rock.Blocks.Groups
             box.NotesSectionLabel = this.NotesSectionLabel;
             box.AddPersonAs = this.AddPersonAs;
             box.AttendanceOccurrenceGuid = occurrenceData.IsNewOccurrence ? (Guid?)null : occurrenceData.AttendanceOccurrence.Guid;
+            box.IsLongListDisabled = this.IsLongListDisabled;
 
             SetAddGroupMemberPageUrl( occurrenceData, box );
             SetOccurrenceDateOptions( occurrenceData, box );
