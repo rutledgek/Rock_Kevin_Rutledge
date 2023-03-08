@@ -59,5 +59,6 @@ namespace Rock.ViewModels.Blocks.Groups.GroupAttendanceDetail
         public Guid? ScheduleGuid { get; set; }
         public Guid? AttendanceOccurrenceGuid { get; set; }
         public bool IsLongListDisabled { get; set; }
+        public bool IsDidNotMeetDisabled { get; set; }
     }
 }

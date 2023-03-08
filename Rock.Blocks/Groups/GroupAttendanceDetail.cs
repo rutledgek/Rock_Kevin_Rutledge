@@ -198,6 +198,15 @@ namespace Rock.Blocks.Groups
         Key = AttributeKey.DisableLongList,
         Order = 16 )]
 
+    [BooleanField(
+        "Disable Did Not Meet",
+        Category = AttributeCategory.None,
+        DefaultBooleanValue = false,
+        Description = "Allows for hiding the flag that the group did not meet.",
+        IsRequired = false,
+        Key = AttributeKey.DisableDidNotMeet,
+        Order = 16 )]
+
     #endregion
 
     [Rock.SystemGuid.EntityTypeGuid( "64ECB2E0-218F-4EB4-8691-7DC94A767037" )]
@@ -259,6 +268,7 @@ namespace Rock.Blocks.Groups
             public const string AttendanceOccurrenceTypes = "AttendanceTypes";
             public const string AttendanceOccurrenceTypesLabel = "AttendanceTypeLabel";
             public const string DisableLongList = "DisableLongList";
+            public const string DisableDidNotMeet = "DisableDidNotMeet";
         }
 
         /// <summary>
@@ -494,6 +504,11 @@ namespace Rock.Blocks.Groups
         /// <para>When enabled, this only shows when there are more than 50 individuals on the list.</para>
         /// </summary>
         public bool IsLongListDisabled => GetAttributeValue( AttributeKey.DisableLongList ).AsBoolean();
+
+        /// <summary>
+        /// Allows for hiding the flag that the group did not meet.
+        /// </summary>
+        public bool IsDidNotMeetDisabled => GetAttributeValue( AttributeKey.DisableDidNotMeet ).AsBoolean();
 
         #endregion
 
@@ -1262,6 +1277,7 @@ namespace Rock.Blocks.Groups
             box.AddPersonAs = this.AddPersonAs;
             box.AttendanceOccurrenceGuid = occurrenceData.IsNewOccurrence ? (Guid?)null : occurrenceData.AttendanceOccurrence.Guid;
             box.IsLongListDisabled = this.IsLongListDisabled;
+            box.IsDidNotMeetDisabled = this.IsDidNotMeetDisabled;
 
             SetAddGroupMemberPageUrl( occurrenceData, box );
             SetOccurrenceDateOptions( occurrenceData, box );

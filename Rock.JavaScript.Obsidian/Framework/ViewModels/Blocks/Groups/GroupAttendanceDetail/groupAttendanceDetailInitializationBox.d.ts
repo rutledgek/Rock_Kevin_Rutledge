@@ -69,6 +69,8 @@ export type GroupAttendanceDetailInitializationBox = {
 
     isDidNotMeetChecked: boolean;
 
+    isDidNotMeetDisabled: boolean;
+
     isFutureOccurrenceDateSelectionRestricted: boolean;
 
     isGroupNotFoundError: boolean;
