@@ -30,5 +30,9 @@ namespace Rock.ViewModels.Blocks.Core.ScheduleDetail
         public bool HasScheduleWarning { get; set; }
 
         public bool CanDelete { get; set; }
+
+        public bool HasAttendance { get; set; }
+
+        public string HelpText { get; set; }
     }
 }

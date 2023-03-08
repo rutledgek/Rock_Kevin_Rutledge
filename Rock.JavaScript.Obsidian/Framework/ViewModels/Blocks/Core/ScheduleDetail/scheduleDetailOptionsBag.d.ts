@@ -8,4 +8,8 @@ export type ScheduleDetailOptionsBag = {
     hasScheduleWarning?: boolean
 
     canDelete?: boolean
+
+    hasAttendance?: boolean
+
+    helpText?: boolean
 };

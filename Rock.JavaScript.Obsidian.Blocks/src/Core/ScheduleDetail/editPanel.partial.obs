@@ -63,7 +63,7 @@
                     <div class="col-md-2">
                         <a class="help" href="#" tabindex="-1" data-toggle="tooltip"
                                             data-placement="auto" data-container="body" data-html="true"
-                                            title="" data-original-title="">Preview</a>
+                                            title="" :data-original-title="props.options?.helpText">Preview</a>
 
                     </div>
                 </div>
