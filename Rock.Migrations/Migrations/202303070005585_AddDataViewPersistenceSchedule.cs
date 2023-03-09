@@ -43,7 +43,6 @@ namespace Rock.Migrations
             DropForeignKey( "dbo.DataView", "PersistedScheduleId", "dbo.Schedule" );
             DropIndex( "dbo.DataView", new[] { "PersistedScheduleId" } );
             DropColumn( "dbo.DataView", "PersistedScheduleId" );
-            RockMigrationHelper.DeleteCategory( SystemGuid.Category.SCHEDULE_PERSISTED_DATAVIEWS );
         }
     }
 }
