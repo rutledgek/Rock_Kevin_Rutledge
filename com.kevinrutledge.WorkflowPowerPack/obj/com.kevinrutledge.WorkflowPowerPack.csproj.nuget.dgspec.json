@@ -1,0 +1,311 @@
+{
+  "format": 1,
+  "restore": {
+    "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\com.kevinrutledge.WorkflowPowerPack\\com.kevinrutledge.WorkflowPowerPack.csproj": {}
+  },
+  "projects": {
+    "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\com.kevinrutledge.WorkflowPowerPack\\com.kevinrutledge.WorkflowPowerPack.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\com.kevinrutledge.WorkflowPowerPack\\com.kevinrutledge.WorkflowPowerPack.csproj",
+        "projectName": "com.kevinrutledge.WorkflowPowerPack",
+        "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\com.kevinrutledge.WorkflowPowerPack\\com.kevinrutledge.WorkflowPowerPack.csproj",
+        "packagesPath": "C:\\Users\\Kevin Rutledge\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\com.kevinrutledge.WorkflowPowerPack\\obj\\",
+        "projectStyle": "PackageReference",
+        "skipContentFileWrite": true,
+        "configFilePaths": [
+          "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\NuGet.Config",
+          "C:\\Users\\Kevin Rutledge\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net472"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {},
+          "https://www.myget.org/F/rockdev/api/v3/index.json": {}
+        },
+        "frameworks": {
+          "net472": {
+            "projectReferences": {
+              "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\DotLiquid\\DotLiquid.csproj": {
+                "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\DotLiquid\\DotLiquid.csproj"
+              },
+              "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Common\\Rock.Common.csproj": {
+                "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Common\\Rock.Common.csproj"
+              },
+              "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Enums\\Rock.Enums.csproj": {
+                "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Enums\\Rock.Enums.csproj"
+              },
+              "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava.Fluid\\Rock.Lava.Fluid.csproj": {
+                "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava.Fluid\\Rock.Lava.Fluid.csproj"
+              },
+              "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava.Shared\\Rock.Lava.Shared.csproj": {
+                "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava.Shared\\Rock.Lava.Shared.csproj"
+              },
+              "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava\\Rock.Lava.csproj": {
+                "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava\\Rock.Lava.csproj"
+              },
+              "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock\\Rock.csproj": {
+                "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock\\Rock.csproj"
+              }
+            }
+          }
+        }
+      },
+      "frameworks": {
+        "net472": {
+          "dependencies": {
+            "EntityFramework": {
+              "target": "Package",
+              "version": "[6.4.4, )"
+            }
+          }
+        }
+      },
+      "runtimes": {
+        "win": {
+          "#import": []
+        },
+        "win-x64": {
+          "#import": []
+        },
+        "win-x86": {
+          "#import": []
+        }
+      }
+    },
+    "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\DotLiquid\\DotLiquid.csproj": {
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\DotLiquid\\DotLiquid.csproj",
+        "projectName": "DotLiquid",
+        "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\DotLiquid\\DotLiquid.csproj",
+        "frameworks": {
+          "net472": {
+            "projectReferences": {}
+          }
+        }
+      },
+      "frameworks": {
+        "net472": {}
+      }
+    },
+    "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Common\\Rock.Common.csproj": {
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Common\\Rock.Common.csproj",
+        "projectName": "Rock.Common",
+        "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Common\\Rock.Common.csproj",
+        "frameworks": {
+          "net472": {
+            "projectReferences": {}
+          }
+        }
+      },
+      "frameworks": {
+        "net472": {}
+      }
+    },
+    "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.DownhillCss\\Rock.DownhillCss.csproj": {
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.DownhillCss\\Rock.DownhillCss.csproj",
+        "projectName": "Rock.DownhillCss",
+        "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.DownhillCss\\Rock.DownhillCss.csproj",
+        "frameworks": {
+          "net472": {
+            "projectReferences": {}
+          }
+        }
+      },
+      "frameworks": {
+        "net472": {}
+      }
+    },
+    "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Enums\\Rock.Enums.csproj": {
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Enums\\Rock.Enums.csproj",
+        "projectName": "Rock.Enums",
+        "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Enums\\Rock.Enums.csproj",
+        "frameworks": {
+          "net472": {
+            "projectReferences": {}
+          }
+        }
+      },
+      "frameworks": {
+        "net472": {}
+      }
+    },
+    "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava.DotLiquid\\Rock.Lava.DotLiquid.csproj": {
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava.DotLiquid\\Rock.Lava.DotLiquid.csproj",
+        "projectName": "Rock.Lava.DotLiquid",
+        "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava.DotLiquid\\Rock.Lava.DotLiquid.csproj",
+        "frameworks": {
+          "net472": {
+            "projectReferences": {
+              "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\DotLiquid\\DotLiquid.csproj": {
+                "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\DotLiquid\\DotLiquid.csproj"
+              },
+              "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Common\\Rock.Common.csproj": {
+                "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Common\\Rock.Common.csproj"
+              },
+              "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava.Shared\\Rock.Lava.Shared.csproj": {
+                "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava.Shared\\Rock.Lava.Shared.csproj"
+              },
+              "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava\\Rock.Lava.csproj": {
+                "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava\\Rock.Lava.csproj"
+              }
+            }
+          }
+        }
+      },
+      "frameworks": {
+        "net472": {}
+      }
+    },
+    "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava.Fluid\\Rock.Lava.Fluid.csproj": {
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava.Fluid\\Rock.Lava.Fluid.csproj",
+        "projectName": "Rock.Lava.Fluid",
+        "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava.Fluid\\Rock.Lava.Fluid.csproj",
+        "frameworks": {
+          "net472": {
+            "projectReferences": {
+              "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Common\\Rock.Common.csproj": {
+                "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Common\\Rock.Common.csproj"
+              },
+              "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava.Shared\\Rock.Lava.Shared.csproj": {
+                "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava.Shared\\Rock.Lava.Shared.csproj"
+              },
+              "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava\\Rock.Lava.csproj": {
+                "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava\\Rock.Lava.csproj"
+              }
+            }
+          }
+        }
+      },
+      "frameworks": {
+        "net472": {}
+      }
+    },
+    "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava.Shared\\Rock.Lava.Shared.csproj": {
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava.Shared\\Rock.Lava.Shared.csproj",
+        "projectName": "Rock.Lava.Shared",
+        "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava.Shared\\Rock.Lava.Shared.csproj",
+        "frameworks": {
+          "net472": {
+            "projectReferences": {}
+          }
+        }
+      },
+      "frameworks": {
+        "net472": {}
+      }
+    },
+    "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava\\Rock.Lava.csproj": {
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava\\Rock.Lava.csproj",
+        "projectName": "Rock.Lava",
+        "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava\\Rock.Lava.csproj",
+        "frameworks": {
+          "net472": {
+            "projectReferences": {
+              "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Common\\Rock.Common.csproj": {
+                "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Common\\Rock.Common.csproj"
+              },
+              "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava.Shared\\Rock.Lava.Shared.csproj": {
+                "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava.Shared\\Rock.Lava.Shared.csproj"
+              }
+            }
+          }
+        }
+      },
+      "frameworks": {
+        "net472": {}
+      }
+    },
+    "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Version\\Rock.Version.csproj": {
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Version\\Rock.Version.csproj",
+        "projectName": "Rock.Version",
+        "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Version\\Rock.Version.csproj",
+        "frameworks": {
+          "net472": {
+            "projectReferences": {}
+          }
+        }
+      },
+      "frameworks": {
+        "net472": {}
+      }
+    },
+    "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.ViewModels\\Rock.ViewModels.csproj": {
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.ViewModels\\Rock.ViewModels.csproj",
+        "projectName": "Rock.ViewModels",
+        "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.ViewModels\\Rock.ViewModels.csproj",
+        "frameworks": {
+          "net472": {
+            "projectReferences": {
+              "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Enums\\Rock.Enums.csproj": {
+                "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Enums\\Rock.Enums.csproj"
+              }
+            }
+          }
+        }
+      },
+      "frameworks": {
+        "net472": {}
+      }
+    },
+    "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock\\Rock.csproj": {
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock\\Rock.csproj",
+        "projectName": "Rock",
+        "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock\\Rock.csproj",
+        "frameworks": {
+          "net472": {
+            "projectReferences": {
+              "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\DotLiquid\\DotLiquid.csproj": {
+                "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\DotLiquid\\DotLiquid.csproj"
+              },
+              "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Common\\Rock.Common.csproj": {
+                "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Common\\Rock.Common.csproj"
+              },
+              "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.DownhillCss\\Rock.DownhillCss.csproj": {
+                "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.DownhillCss\\Rock.DownhillCss.csproj"
+              },
+              "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Enums\\Rock.Enums.csproj": {
+                "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Enums\\Rock.Enums.csproj"
+              },
+              "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava.DotLiquid\\Rock.Lava.DotLiquid.csproj": {
+                "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava.DotLiquid\\Rock.Lava.DotLiquid.csproj"
+              },
+              "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava.Fluid\\Rock.Lava.Fluid.csproj": {
+                "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava.Fluid\\Rock.Lava.Fluid.csproj"
+              },
+              "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava.Shared\\Rock.Lava.Shared.csproj": {
+                "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava.Shared\\Rock.Lava.Shared.csproj"
+              },
+              "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava\\Rock.Lava.csproj": {
+                "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Lava\\Rock.Lava.csproj"
+              },
+              "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Version\\Rock.Version.csproj": {
+                "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.Version\\Rock.Version.csproj"
+              },
+              "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.ViewModels\\Rock.ViewModels.csproj": {
+                "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\Rock.ViewModels\\Rock.ViewModels.csproj"
+              }
+            }
+          }
+        }
+      },
+      "frameworks": {
+        "net472": {}
+      }
+    }
+  }
+}

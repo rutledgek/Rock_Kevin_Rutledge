@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "RwSxbfRX6Rds1V88gs2WwnorGCuDm5sx8KkLOOT6m883VrwMQLXTF5YfaK3Ec1K5/IJ9O1+Upv+RfvZjtkMZjg==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\com.kevinrutledge.WorkflowPowerPack\\com.kevinrutledge.WorkflowPowerPack.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Kevin Rutledge\\.nuget\\packages\\entityframework\\6.4.4\\entityframework.6.4.4.nupkg.sha512"
+  ],
+  "logs": []
+}
