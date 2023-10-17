@@ -1,0 +1,65 @@
+{
+  "format": 1,
+  "restore": {
+    "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\org.berwynumc.PodcastProject\\org.berwynumc.PodcastProject.csproj": {}
+  },
+  "projects": {
+    "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\org.berwynumc.PodcastProject\\org.berwynumc.PodcastProject.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\org.berwynumc.PodcastProject\\org.berwynumc.PodcastProject.csproj",
+        "projectName": "org.berwynumc.PodcastProject",
+        "projectPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\org.berwynumc.PodcastProject\\org.berwynumc.PodcastProject.csproj",
+        "packagesPath": "C:\\Users\\Kevin Rutledge\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\org.berwynumc.PodcastProject\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Kevin Rutledge\\Documents\\GitHub\\Rock_Kevin_Rutledge\\NuGet.Config",
+          "C:\\Users\\Kevin Rutledge\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net6.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {},
+          "https://www.myget.org/F/rockdev/api/v3/index.json": {}
+        },
+        "frameworks": {
+          "net6.0": {
+            "targetAlias": "net6.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net6.0": {
+          "targetAlias": "net6.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.201\\RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

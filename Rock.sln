@@ -120,6 +120,8 @@ Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "Rock.JavaScript.Obsidian.Bl
 EndProject
 Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "Rock.JavaScript", "Rock.JavaScript\Rock.JavaScript.njsproj", "{A5935F9E-DA78-46D6-806F-39C782C6A3C5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "org.berwynumc.PodcastProject", "org.berwynumc.PodcastProject\org.berwynumc.PodcastProject.csproj", "{A7C549FC-BC5A-423B-B951-FEEEB67B12BC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -282,6 +284,10 @@ Global
 		{A5935F9E-DA78-46D6-806F-39C782C6A3C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A5935F9E-DA78-46D6-806F-39C782C6A3C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A5935F9E-DA78-46D6-806F-39C782C6A3C5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A7C549FC-BC5A-423B-B951-FEEEB67B12BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A7C549FC-BC5A-423B-B951-FEEEB67B12BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A7C549FC-BC5A-423B-B951-FEEEB67B12BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A7C549FC-BC5A-423B-B951-FEEEB67B12BC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
