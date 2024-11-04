@@ -74,22 +74,22 @@ namespace online.kevinrutledge.InvoiceSystem.Model
             public string LateInvoiceCommunicationTemplate { get; set; }
 
             /// <summary>
-            /// Specifies the number of days after the due date that an invoice is considered late.
+            /// Specifies the number of days after the due date that an invoice is considered late. This value is used for all invoices of this type unless changed on the invoice.
             /// </summary>
             [DataMember]
-            public int DaysUntilLate { get; set; }
+            public int GlobalDaysUntilLate { get; set; }
 
-            /// <summary>
-            /// Default late fee amount for invoices of this type.
-            /// </summary>
-            [DataMember]
-            public decimal? LateFeeAmount { get; set; }
+        /// <summary>
+        /// Default late fee amount for invoices of this type. This value is used for all invoices of this type unless changed on the invoice.
+        /// </summary>
+        [DataMember]
+            public decimal GlobalLateFeeAmount { get; set; }
 
-            /// <summary>
-            /// Default late fee percentage for invoices of this type.
-            /// </summary>
-            [DataMember]
-            public decimal LateFeePercentage { get; set; }
+        /// <summary>
+        /// Default late fee percentage for invoices of this type. This value is used for all invoices of this type unless changed on the invoice.
+        /// </summary>
+        [DataMember]
+            public decimal GlobalLateFeePercentage { get; set; }
     }
 
     public partial class InvoiceTypeConfiguration : EntityTypeConfiguration<InvoiceType>
