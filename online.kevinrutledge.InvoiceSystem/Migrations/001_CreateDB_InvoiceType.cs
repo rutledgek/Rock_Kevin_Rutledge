@@ -55,15 +55,16 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
             RockMigrationHelper.UpdateEntityType("online.kevinrutledge.InvoiceSystem.Model.InvoiceType", online.kevinrutledge.InvoiceSystem.SystemGuids.EntityTypeGuids.Invoice_Type, true, true);
 
 
-            RockMigrationHelper.AddPage(online.kevinrutledge.InvoiceSystem.SystemGuids.SystemGuids.InstalledPluginsPage, online.kevinrutledge.InvoiceSystem.SystemGuids.SystemGuids.FullWidthLayout, "Invoice System Page", "These pages show are used in the invoice system plugin", online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceSystemParentPage, "fa fa-file-list-o");
-            RockMigrationHelper.AddPage(online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceSystemParentPage, online.kevinrutledge.InvoiceSystem.SystemGuids.SystemGuids.FullWidthLayout, "Invoice Type List Page", "List of all Invoice Types.", online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceTypeListPage, "fa fa-file-list-o");
+            RockMigrationHelper.AddPage(online.kevinrutledge.InvoiceSystem.SystemGuids.SystemGuids.InstalledPluginsPage, online.kevinrutledge.InvoiceSystem.SystemGuids.SystemGuids.FullWidthLayout, "Invoice System Page","" , online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceSystemParentPage, "fa fa-file-list");
+            /*
+            RockMigrationHelper.AddPage(online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceSystemParentPage, online.kevinrutledge.InvoiceSystem.SystemGuids.SystemGuids.FullWidthLayout, "Invoice Type List Page", "", online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceTypeListPage, "fa fa-file-list-o");
+            RockMigrationHelper.UpdateBlockType("Invoice Type List", "", "~/Plugins/online_kevinrutledge/InvoiceSystem/InvoiceTypeList.ascx", "online_kevinrutledge > Invoice System", online.kevinrutledge.InvoiceSystem.SystemGuids.BlockTypeGuids.InvoiceTypeList);
+            RockMigrationHelper.AddBlock(online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceTypeListPage, "",online.kevinrutledge.InvoiceSystem.SystemGuids.BlockTypeGuids.InvoiceTypeList, "Invoice Type List", "Main", "", "", 0, online.kevinrutledge.InvoiceSystem.SystemGuids.BlockGuids.InvoiceTypeListBlock);
+
+
             RockMigrationHelper.AddPage(online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceTypeListPage, online.kevinrutledge.InvoiceSystem.SystemGuids.SystemGuids.FullWidthLayout, "Invoice Type Detail Page", "Detail of an Invoice Type.", online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceTypeDetailpage, "fa fa-file-list-o");
-
-            RockMigrationHelper.AddBlockType("Invoice Type List", "Shows a list of invoice types", "~/Plugins/online_kevinrutledge/InvoiceSystem/InvoiceTypeList.ascx", "online_kevinrutledge > Invoice System", online.kevinrutledge.InvoiceSystem.SystemGuids.BlockTypeGuids.InvoiceTypeList);
-
-            RockMigrationHelper.AddBlock(online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceTypeListPage, online.kevinrutledge.InvoiceSystem.SystemGuids.SystemGuids.FullWidthLayout, online.kevinrutledge.InvoiceSystem.SystemGuids.BlockTypeGuids.InvoiceTypeList, "Invoice Type List", "Main", "", "", 0, "");
-
-        
+            */
+             
 
     }
 
