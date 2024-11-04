@@ -37,10 +37,36 @@ namespace online.kevinrutledge.InvoiceSystem.Model
             [DataMember]
             public bool IsActive { get; set; } = true;
 
+
             /// <summary>
-            /// Gets or sets the term used to describe invoices of this type.
+            /// Gets or sets the Id of the <see cref="Rock.Model.Campus"/> that this Group is associated with.
             /// </summary>
+            /// <value>
+            /// A <see cref="System.Int32"/> representing the Id of the <see cref="Rock.Model.Campus"/> that the Group is associated with. If the group is not 
+            /// associated with a campus, this value is null.
+            /// </value>
+            [HideFromReporting]
             [DataMember]
+            [FieldType(Rock.SystemGuid.FieldType.CAMPUS)]
+            public int? CampusId { get; set; }
+
+
+
+            /// <summary>
+            /// Gets or sets the <see cref="Rock.Model.Campus"/> that this Group is associated with.
+            /// </summary>
+            /// <value>
+            /// The <see cref="Rock.Model.Campus"/> that this Group is associated with.
+            /// </value>
+            [DataMember]
+            public virtual Rock.Model.Campus Campus { get; set; }
+
+
+
+        /// <summary>
+        /// Gets or sets the term used to describe invoices of this type.
+        /// </summary>
+        [DataMember]
             [MaxLength(100)]
             public string InvoiceTerm { get; set; }
 
@@ -101,7 +127,9 @@ namespace online.kevinrutledge.InvoiceSystem.Model
         {
             // Specify relationships and cascade delete settings if any
             // Since this example has no direct foreign keys on InvoiceType, 
-            // no specific foreign key configuration is set here. 
+            // no specific foreign key configuration is set here.
+
+            this.HasOptional(p => p.Campus).WithMany().HasForeignKey(p => p.CampusId).WillCascadeOnDelete(false);
 
             // Set entity set name for consistency and easy querying
             this.HasEntitySetName("InvoiceType");
