@@ -80,7 +80,7 @@ namespace online.kevinrutledge.InvoiceSystem.Model
             /// Specifies the number of days after the due date that an invoice is considered late. This value is used for all invoices of this type unless changed on the invoice.
             /// </summary>
             [DataMember]
-            public int GlobalDaysUntilLate { get; set; }
+            public int? GlobalDaysUntilLate { get; set; }
 
         /// <summary>
         /// Default late fee amount for invoices of this type. This value is used for all invoices of this type unless changed on the invoice.
