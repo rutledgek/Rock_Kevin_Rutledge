@@ -41,18 +41,21 @@ namespace online.kevinrutledge.InvoiceSystem.Model
             /// Gets or sets the term used to describe invoices of this type.
             /// </summary>
             [DataMember]
+            [MaxLength(100)]
             public string InvoiceTerm { get; set; }
 
             /// <summary>
             /// Gets or sets the term used to describe items on the invoice.
             /// </summary>
             [DataMember]
+            [MaxLength(100)]
             public string InvoiceItemTerm { get; set; }
 
             /// <summary>
             /// Gets or sets the prefix for financial batches related to this invoice type.
             /// </summary>
             [DataMember]
+            [MaxLength(100)]
             public string FinancialBatchPrefix { get; set; }
 
             /// <summary>

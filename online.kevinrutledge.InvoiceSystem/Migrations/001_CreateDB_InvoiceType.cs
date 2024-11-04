@@ -20,7 +20,7 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
 	[IsActive] bit NOT NULL Default 1,
 	[InvoiceTerm] [nvarchar](100) Null, 
 	[InvoiceItemTerm] [nvarchar](100) Null,
-	[FinancialBatchPrefix nvarchar(100) Null,
+	[FinancialBatchPrefix] nvarchar(100) Null,
 	[IconCssClass] nvarchar(100) null,
 	[DefaultCommunicationTemplate] nvarchar(max) null,
 	[LateInvoiceCommunicationTemplate] nvarchar(max) null,
