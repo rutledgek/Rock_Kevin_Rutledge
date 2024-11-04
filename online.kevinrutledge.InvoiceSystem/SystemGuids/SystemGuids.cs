@@ -38,6 +38,14 @@ namespace online.kevinrutledge.InvoiceSystem.SystemGuids
     {
         public const string InstalledPluginsPage = "5B6DBC42-8B03-4D15-8D92-AAFA28FD8616";
         public const string FullWidthLayout = "D65F783D-87A9-4CC9-8110-E83466A0EADB";
+        public const string PageMenuBlockType = "CACB9D1A-A820-4587-986A-D66A69EE9948";
+        public const string PageMenuTemplateContent = "1322186A-862A-4CF1-B349-28ECB67229BA";
     }
+
+    public static class AttributeContent
+    {
+        public const string SubMenuContent = "{% include '~~/Assets/Lava/PageListAsBlocks.lava' %}";
+    }
+
     #endregion
 }
