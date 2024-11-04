@@ -73,11 +73,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Model\InvoiceType.cs" />
+    <Compile Include="Model\InvoiceType_Service.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Migrations\" />
-    <Folder Include="Model\" />
     <Folder Include="Rest\" />
     <Folder Include="SystemGuids\" />
   </ItemGroup>
