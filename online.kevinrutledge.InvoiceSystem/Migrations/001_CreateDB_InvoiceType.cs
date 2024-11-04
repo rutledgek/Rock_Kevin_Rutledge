@@ -54,7 +54,18 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
 
             RockMigrationHelper.UpdateEntityType("online.kevinrutledge.InvoiceSystem.Model.InvoiceType", online.kevinrutledge.InvoiceSystem.SystemGuids.EntityTypeGuids.Invoice_Type, true, true);
 
-        }
+
+            RockMigrationHelper.AddPage(online.kevinrutledge.InvoiceSystem.SystemGuids.SystemGuids.InstalledPluginsPage, online.kevinrutledge.InvoiceSystem.SystemGuids.SystemGuids.FullWidthLayout, "Invoice System Page", "These pages show are used in the invoice system plugin", online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceSystemParentPage, "fa fa-file-list-o");
+            RockMigrationHelper.AddPage(online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceSystemParentPage, online.kevinrutledge.InvoiceSystem.SystemGuids.SystemGuids.FullWidthLayout, "Invoice Type List Page", "List of all Invoice Types.", online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceTypeListPage, "fa fa-file-list-o");
+            RockMigrationHelper.AddPage(online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceTypeListPage, online.kevinrutledge.InvoiceSystem.SystemGuids.SystemGuids.FullWidthLayout, "Invoice Type Detail Page", "Detail of an Invoice Type.", online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceTypeDetailpage, "fa fa-file-list-o");
+
+            RockMigrationHelper.AddBlockType("Invoice Type List", "Shows a list of invoice types", "~/Plugins/online_kevinrutledge/InvoiceSystem/InvoiceTypeList.ascx", "online_kevinrutledge > Invoice System", online.kevinrutledge.InvoiceSystem.SystemGuids.BlockTypeGuids.InvoiceTypeList);
+
+            RockMigrationHelper.AddBlock(online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceTypeListPage, online.kevinrutledge.InvoiceSystem.SystemGuids.SystemGuids.FullWidthLayout, online.kevinrutledge.InvoiceSystem.SystemGuids.BlockTypeGuids.InvoiceTypeList, "Invoice Type List", "Main", "", "", 0, "");
+
+        
+
+    }
 
         public override void Down()
         {
@@ -74,6 +85,11 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
                 DROP TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType];"
             );
             RockMigrationHelper.DeleteEntityType(online.kevinrutledge.InvoiceSystem.SystemGuids.EntityTypeGuids.Invoice_Type);
+
+            RockMigrationHelper.DeleteBlockType(online.kevinrutledge.InvoiceSystem.SystemGuids.BlockTypeGuids.InvoiceTypeList);
+            RockMigrationHelper.DeletePage(online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceTypeDetailpage);
+            RockMigrationHelper.DeletePage(online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceTypeListPage);
+            RockMigrationHelper.DeletePage(online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceSystemParentPage);
         }
     }
 }
