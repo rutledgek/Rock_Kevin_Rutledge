@@ -61,7 +61,7 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
         {
             pnlDetails.Visible = true;
 
-            int? invoiceTypeId = PageParameter("invoiceTypeId").AsIntegerOrNull();
+            int? invoiceTypeId = PageParameter("InvoiceTypeId").AsIntegerOrNull();
 
             InvoiceType invoiceType = null;
 

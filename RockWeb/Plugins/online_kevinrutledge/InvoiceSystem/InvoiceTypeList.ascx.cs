@@ -128,7 +128,7 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
         private void NavigateToDetailPage(int invoiceTypeId)
         {
             var queryParams = new Dictionary<string, string>();
-            queryParams.Add("invoiceTypeId", invoiceTypeId.ToString());
+            queryParams.Add("InvoiceTypeId", invoiceTypeId.ToString());
 
             NavigateToLinkedPage("DetailPage", queryParams);
         }
