@@ -48,17 +48,17 @@ namespace online.kevinrutledge.InvoiceSystem.Model
         public bool IsActive { get; set; } = true;
 
 
-        /// <summary>
-        /// Gets or sets the Id of the <see cref="Rock.Model.Campus"/> that this Group is associated with.
-        /// </summary>
-        /// <value>
+            /// <summary>
+            /// Gets or sets the Id of the <see cref="Rock.Model.Campus"/> that this Group is associated with.
+            /// </summary>
+            /// <value>
         /// A <see cref="System.Int32"/> representing the Id of the <see cref="Rock.Model.Campus"/> that the Invoice Type is associated with. If the invoice type is not 
-        /// associated with a campus, this value is null.
-        /// </value>
-        [HideFromReporting]
-        [DataMember]
-        [FieldType(Rock.SystemGuid.FieldType.CAMPUS)]
-        public int? CampusId { get; set; }
+            /// associated with a campus, this value is null.
+            /// </value>
+            [HideFromReporting]
+            [DataMember]
+            [FieldType(Rock.SystemGuid.FieldType.CAMPUS)]
+            public int? CampusId { get; set; }
 
 
 
@@ -128,7 +128,7 @@ namespace online.kevinrutledge.InvoiceSystem.Model
         /// Default late fee percentage for invoices of this type. This value is used for all invoices of this type unless changed on the invoice.
         /// </summary>
         [DataMember]
-        public decimal GlobalLateFeePercentage { get; set; }
+            public decimal GlobalLateFeePercentage { get; set; }
 
 
         [DataMember]
@@ -139,7 +139,7 @@ namespace online.kevinrutledge.InvoiceSystem.Model
         public virtual Category Category { get; set; }
         #endregion
     
-}
+    }
 
     public partial class InvoiceTypeConfiguration : EntityTypeConfiguration<InvoiceType>
     {
