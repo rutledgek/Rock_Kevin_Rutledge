@@ -124,7 +124,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rock.Tests.Performance", "R
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rock.AI.OpenAI", "Rock.AI.OpenAI\Rock.AI.OpenAI.csproj", "{BAB8BF5E-6457-4668-ADF1-B917100BA7CD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "online.kevinrutledge.Invoice System", "online.kevinrutledge.InvoiceSystem\online.kevinrutledge.Invoice System.csproj", "{6F95959E-067F-4366-990B-76D5CE7FA760}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "online.kevinrutledge.InvoiceSystem", "online.kevinrutledge.InvoiceSystem\online.kevinrutledge.InvoiceSystem.csproj", "{6F95959E-067F-4366-990B-76D5CE7FA760}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -21,6 +21,7 @@ namespace online.kevinrutledge.InvoiceSystem.SystemGuids
     public static class BlockTypeGuids
     {
         public const string InvoiceTypeList = "71EA18D3-0086-421B-8059-DF00630DBA7B";
+        public const string InvoiceTypeDetail = "A03E8FB4-34C6-4FCD-B263-B8775BC37BE4";
 
     }
 
