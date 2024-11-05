@@ -1,2 +1,9 @@
-# Ignore all subfolders, but include files in this folder (like readme)
-*/*
+# Ignore everything
+*
+
+# Except for the README file in the root directory
+!README
+
+# Include the online_kevinrutledge folder and all its subfolders and files
+!online_kevinrutledge/
+!online_kevinrutledge/**
