@@ -1,19 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Web.UI;
 
 using Rock;
 using Rock.Attribute;
+using Rock.Constants;
 using Rock.Data;
 using Rock.Model;
 using Rock.Web.Cache;
-using Rock.Web.UI.Controls;
+using Rock.Web.UI;
+
+
 
 using online.kevinrutledge.InvoiceSystem.Model;
-using Rock.Constants;
-using Rock.Web.UI;
+
 
 namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
 {
@@ -84,7 +85,10 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
 
 
             hfInvoiceTypeId.Value = invoiceType.Id.ToString();
+
+            /*
             tbName.Text = invoiceType.Name;
+            */
 
             bool readOnly = false;
 
@@ -100,9 +104,9 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
                 lActionTitle.Text = ActionTitle.View(InvoiceType.FriendlyTypeName);
                 btnCancel.Text = "Close";
             }
-
+            /*
             tbName.ReadOnly = readOnly;
-
+            */
 
 
             btnSave.Visible = !readOnly;
@@ -126,9 +130,9 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
             {
                 invoiceType = service.Get(invoiceTypeId);
             }
-
+            /*
             invoiceType.Name = tbName.Text;
-    
+    */
 
             if (!invoiceType.IsValid || !Page.IsValid)
             {

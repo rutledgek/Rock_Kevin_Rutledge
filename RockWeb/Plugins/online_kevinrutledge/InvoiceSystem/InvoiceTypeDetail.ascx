@@ -18,6 +18,7 @@
 
             <div class="row">
                 <div class="col-md-6">
+                    
                     <Rock:DataTextBox ID="tbName" runat="server" SourceTypeName="online.kevinrutledge.InvoiceSystem.Model.InvoiceType, online.kevinrutledge.InvoiceSystem" PropertyName="Name" />
 
                 </div>
