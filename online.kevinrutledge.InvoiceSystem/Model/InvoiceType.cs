@@ -42,7 +42,7 @@ namespace online.kevinrutledge.InvoiceSystem.Model
             /// Gets or sets the Id of the <see cref="Rock.Model.Campus"/> that this Group is associated with.
             /// </summary>
             /// <value>
-            /// A <see cref="System.Int32"/> representing the Id of the <see cref="Rock.Model.Campus"/> that the Group is associated with. If the group is not 
+            /// A <see cref="System.Int32"/> representing the Id of the <see cref="Rock.Model.Campus"/> that the Invoice Type is associated with. If the invoice type is not 
             /// associated with a campus, this value is null.
             /// </value>
             [HideFromReporting]
@@ -119,7 +119,17 @@ namespace online.kevinrutledge.InvoiceSystem.Model
         /// </summary>
         [DataMember]
             public decimal GlobalLateFeePercentage { get; set; }
-    }
+
+
+        [DataMember]
+        public int? CategoryId { get; set; }
+
+
+        #region Virtual Properties
+        public virtual Category Category { get; set; }
+        #endregion
+    
+}
 
     public partial class InvoiceTypeConfiguration : EntityTypeConfiguration<InvoiceType>
     {
@@ -129,6 +139,7 @@ namespace online.kevinrutledge.InvoiceSystem.Model
             // Since this example has no direct foreign keys on InvoiceType, 
             // no specific foreign key configuration is set here.
 
+            this.HasOptional(p => p.Category).WithMany().HasForeignKey(p => p.CategoryId).WillCascadeOnDelete(false);
             this.HasOptional(p => p.Campus).WithMany().HasForeignKey(p => p.CampusId).WillCascadeOnDelete(false);
 
             // Set entity set name for consistency and easy querying

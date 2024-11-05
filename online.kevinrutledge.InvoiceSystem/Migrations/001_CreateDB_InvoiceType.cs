@@ -29,6 +29,7 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
 	            [GlobalLateFeeAmount] [decimal](18, 2) Not Null default 0,
 	            [GlobalLateFeePercentage] [decimal](5, 2) Not NULL Default 0,
                 [CampusId] [int] NULL,
+                [CategoryId] [int] NULL,
 	            [Guid] [uniqueidentifier] NOT NULL,
 	            [CreatedDateTime] [datetime] NULL,
 	            [ModifiedDateTime] [datetime] NULL,
@@ -58,6 +59,15 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
 		            REFERENCES [dbo].[Campus] ([Id])
 
 	            ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] CHECK CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_CampusId]
+
+
+
+                ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType]  WITH CHECK ADD  CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_CategoryId] FOREIGN KEY([CategoryId])
+		            REFERENCES [dbo].[Category] ([Id])
+
+	            ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] CHECK CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_CategoryId]
+
+
 
             "
             );
