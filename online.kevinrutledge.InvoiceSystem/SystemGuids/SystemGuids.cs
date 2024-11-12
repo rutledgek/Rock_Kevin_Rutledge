@@ -5,6 +5,7 @@ namespace online.kevinrutledge.InvoiceSystem.SystemGuids
     public static class EntityTypeGuids
     {
         public const string Invoice_Type = "C359C6F6-44A9-455F-8513-2903D33BFF2D";
+        public const string Invoice = "279E1509-6BB2-40E8-8250-48AD495537B0";
 
     }
 

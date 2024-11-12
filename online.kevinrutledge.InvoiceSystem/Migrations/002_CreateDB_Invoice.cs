@@ -1,0 +1,85 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+using Rock.Plugin;
+
+namespace online.kevinrutledge.InvoiceSystem.Migrations
+{
+    [MigrationNumber(2, "1.15.0")]
+    public class CreateDB_Invoice : Migration
+    {
+        public override void Up()
+        {
+            Sql(
+                @" CREATE TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_Invoice]( 
+	            [Id] [int] IDENTITY(1,1) NOT NULL,
+                [InvoiceId] [int] NOT NULL,
+                [InvoiceStatus] [int] Null,
+                [Name] [nvarchar](100) NOT NULL,
+                [Summary] [nvarchar](max) NULL,
+                [DueDate] [datetime] NULL,
+                [LateDays] [int] NULL,
+                [LateDate] [datetime] NULL,
+	            [Guid] [uniqueidentifier] NOT NULL,
+	            [CreatedDateTime] [datetime] NULL,
+	            [ModifiedDateTime] [datetime] NULL,
+	            [CreatedByPersonAliasId] [int] NULL,
+	            [ModifiedByPersonAliasId] [int] NULL,
+	            [ForeignKey] [nvarchar](50) NULL,
+	            [ForeignGuid] [uniqueidentifier] NULL,
+	            [ForeignId] [int] NULL,
+	            CONSTRAINT [PK__online_kevinrutledge_InvoiceSystem_Invoice] PRIMARY KEY CLUSTERED 
+                (
+	                [Id] ASC
+                )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+                ) ON [PRIMARY]
+ 
+	            ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_Invoice]  WITH CHECK ADD  CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_Invoice_CreatedByPersonAliasId] FOREIGN KEY([CreatedByPersonAliasId])
+		            REFERENCES [dbo].[PersonAlias] ([Id])
+
+	            ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_Invoice] CHECK CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_Invoice_CreatedByPersonAliasId]
+
+	            ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_Invoice]  WITH CHECK ADD  CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_Invoice_ModifiedByPersonAliasId] FOREIGN KEY([ModifiedByPersonAliasId])
+		            REFERENCES [dbo].[PersonAlias] ([Id])
+
+	            ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_Invoice] CHECK CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_Invoice_ModifiedByPersonAliasId]
+
+
+                ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_Invoice]  WITH CHECK ADD  CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_Invoice_InvoiceTypeId] FOREIGN KEY([InvoiceTypeId])
+		            REFERENCES [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] ([Id])
+
+	            ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_Invoice] CHECK CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_Invoice_InvoiceTypeId
+ 
+
+
+
+            "
+            );
+
+
+
+
+            /* Update the EntityType */
+            RockMigrationHelper.UpdateEntityType("online.kevinrutledge.InvoiceSystem.Model.Invoice", online.kevinrutledge.InvoiceSystem.SystemGuids.EntityTypeGuids.Invoice, true, true);
+
+
+
+        }
+
+        public override void Down()
+        {
+            Sql(
+                @"
+                
+	            ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_Invoice] Drop CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_Invoice_CreatedByPersonAliasId] 
+		        ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_Invoice]  Drop CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_Invoice_ModifiedByPersonAliasId] 
+                ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_Invoice]  Drop  CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_Invoice_InvoiceTypeId]
+				Drop Table  [dbo].[_online_kevinrutledge_InvoiceSystem_Invoice]"
+            );
+
+        }
+    }
+}
