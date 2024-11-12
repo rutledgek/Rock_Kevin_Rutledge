@@ -27,8 +27,30 @@ namespace online.kevinrutledge.InvoiceSystem.Model
     [DataContract]
     public class Invoice : Model<Invoice>, IRockEntity
     {
-       
-    
+        /// <summary>
+        /// Gets or sets the Id of the <see cref="Rock.Model.InvoiceType"/> that this Group is a member belongs to. This property is required.
+        /// </summary>
+        /// <value>
+        /// An <see cref="System.Int32"/> representing the Id of the <see cref="Rock.Model.InvoiceType"/> that this group is a member of.
+        /// </value>
+        [Required]
+        [HideFromReporting]
+        [DataMember(IsRequired = true)]
+        public int InvoiceTypeId { get; set; }
+
+
+
+        #region Virtual Properties
+        /// <summary>
+        /// Gets or sets the <see cref="Rock.Model.InvoiceType"/> that this Group is a member of.
+        /// </summary>
+        /// <value>
+        /// The <see cref="Rock.Model.InvoiceType"/> that this Group is a member of.
+        /// </value>
+        [DataMember]
+        public virtual InvoiceType InvoiceType { get; set; }
+        #endregion
+
     }
 
     public partial class InvoiceConfiguration : EntityTypeConfiguration<Invoice>
@@ -38,7 +60,7 @@ namespace online.kevinrutledge.InvoiceSystem.Model
             // Specify relationships and cascade delete settings if any
             // Since this example has no direct foreign keys on Invoice, 
             // no specific foreign key configuration is set here.
-
+            this.HasRequired(p => p.InvoiceType).WithMany().HasForeignKey(p => p.InvoiceTypeId).WillCascadeOnDelete(false);
 
             // Set entity set name for consistency and easy querying
             this.HasEntitySetName("Invoice");
