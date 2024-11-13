@@ -6,6 +6,7 @@ namespace online.kevinrutledge.InvoiceSystem.SystemGuids
     {
         public const string Invoice_Type = "C359C6F6-44A9-455F-8513-2903D33BFF2D";
         public const string Invoice = "279E1509-6BB2-40E8-8250-48AD495537B0";
+        public const string Invoice_Item = "320C299F-2E37-4F09-97BB-AF808969C580";
 
     }
 
