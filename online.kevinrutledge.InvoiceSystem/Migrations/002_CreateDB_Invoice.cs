@@ -16,7 +16,7 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
             Sql(
                 @" CREATE TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_Invoice]( 
 	            [Id] [int] IDENTITY(1,1) NOT NULL,
-                [InvoiceId] [int] NOT NULL,
+                [InvoiceTypeId] [int] NOT NULL,
                 [InvoiceStatus] [int] Null,
                 [Name] [nvarchar](100) NOT NULL,
                 [Summary] [nvarchar](max) NULL,
@@ -51,7 +51,7 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
                 ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_Invoice]  WITH CHECK ADD  CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_Invoice_InvoiceTypeId] FOREIGN KEY([InvoiceTypeId])
 		            REFERENCES [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] ([Id])
 
-	            ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_Invoice] CHECK CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_Invoice_InvoiceTypeId
+	            ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_Invoice] CHECK CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_Invoice_InvoiceTypeId]
  
 
 
@@ -77,7 +77,8 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
 	            ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_Invoice] Drop CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_Invoice_CreatedByPersonAliasId] 
 		        ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_Invoice]  Drop CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_Invoice_ModifiedByPersonAliasId] 
                 ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_Invoice]  Drop  CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_Invoice_InvoiceTypeId]
-				Drop Table  [dbo].[_online_kevinrutledge_InvoiceSystem_Invoice]"
+				Drop Table  [dbo].[_online_kevinrutledge_InvoiceSystem_Invoice]
+"
             );
 
         }
