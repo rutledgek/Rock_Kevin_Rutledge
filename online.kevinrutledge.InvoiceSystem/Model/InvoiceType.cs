@@ -105,12 +105,19 @@ namespace online.kevinrutledge.InvoiceSystem.Model
         /// </summary>
         [DataMember]
         public string DefaultCommunicationTemplate { get; set; }
+               
 
         /// <summary>
         /// Communication template for late invoices.
         /// </summary>
         [DataMember]
         public string LateInvoiceCommunicationTemplate { get; set; }
+
+        /// <summary>
+        /// Default tax percentage for invoices of this type. This value is used for all invoices of this type unless changed on the invoice item.
+        /// </summary>
+        [DataMember]
+        public decimal GlobalTaxPercent { get; set; }
 
         /// <summary>
         /// Specifies the number of days after the due date that an invoice is considered late. This value is used for all invoices of this type unless changed on the invoice.

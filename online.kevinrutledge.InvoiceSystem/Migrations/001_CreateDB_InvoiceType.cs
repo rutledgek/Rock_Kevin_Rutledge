@@ -25,6 +25,7 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
 	            [IconCssClass] nvarchar(100) null,
 	            [DefaultCommunicationTemplate] nvarchar(max) null,
 	            [LateInvoiceCommunicationTemplate] nvarchar(max) null,
+                [GlobalTaxPercent] [decimal](18, 2) Not NULL Default 0,
 	            [GlobalDaysUntilLate] int Null,
 	            [GlobalLateFeeAmount] [decimal](18, 2) Not Null default 0,
 	            [GlobalLateFeePercentage] [decimal](5, 2) Not NULL Default 0,
