@@ -1,12 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿
 
-namespace Invoice_System.Model
+using Rock.Data;
+
+namespace online.kevinrutledge.InvoiceSystem.Model
 {
-    internal class Class1
+    public class InvoiceItemService : Service<InvoiceItem>
     {
+        public InvoiceItemService(RockContext context) : base(context) { }
+
+        public bool CanDelete(InvoiceItem item, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+            return true;
+        }
     }
 }
