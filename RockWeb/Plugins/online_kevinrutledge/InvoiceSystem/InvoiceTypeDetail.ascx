@@ -18,7 +18,7 @@
 
             <div class="row">
                 <div class="col-md-6">
-                    
+                    <!-- This field does not work for some reason. The Exception says the SourceTypeName is invalid --->
                     <Rock:DataTextBox ID="tbName" runat="server" SourceTypeName="online.kevinrutledge.InvoiceSystem.Model.InvoiceType, online.kevinrutledge.InvoiceSystem" PropertyName="Name" />
 
                 </div>
