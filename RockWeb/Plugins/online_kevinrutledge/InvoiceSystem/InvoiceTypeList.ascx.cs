@@ -20,7 +20,7 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
     [Category("online_kevinrutledge > Invoice System")]
     [Description("List of all Invoice Types.")]
 
-    [LinkedPage("Detail Page","",true,online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceTypeDetailPage)]
+    [LinkedPage("Detail Page","",true, online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceTypeDetailPage)]
     public partial class InvoiceTypeList : Rock.Web.UI.RockBlock
     {
 
