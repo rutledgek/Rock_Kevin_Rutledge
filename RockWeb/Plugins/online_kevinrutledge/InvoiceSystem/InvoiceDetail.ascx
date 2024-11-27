@@ -3,6 +3,9 @@
 <asp:UpdatePanel ID="upnlContent" runat="server">
     <ContentTemplate>
 
+        <asp:HiddenField ID="hfActiveDialog" runat="server" />
+        <asp:HiddenField ID="hfInvoiceId" runat="server" />
+        <asp:HiddenField ID="hfAssignmentGuid" runat="server" />
 
         <div class="banner">
             <h1>
@@ -17,29 +20,25 @@
 
         <div class="panel panel-block">
             <div class="panel-heading">
-                <h1 class="panel-title">Invoice</h1>
+                <h1 class="panel-title">
+                    <asp:Literal runat="server" ID="ltlInvoiceNumberAndName" />
+
+                </h1>
+                <Rock:HighlightLabel ID="hlblInvoiceStatus" runat="server" LabelType="Warning" Text="Draft"/>
             </div>
             <div class="panel-body">
                 <div class="row">
                     <div class="col-md-8">
 
-                   
+                   <div class="row">
+                       <div class="col-md-12">
+                           <Rock:DataTextBox ID="tbName" runat="server" SourceTypeName="online.kevinrutledge.InvoiceSystem.Model.Invoice, online.kevinrutledge.InvoiceSystem" PropertyName="Name" />
+
+
+                       </div>
+                   </div>
 
                         <!-- Invoice Details Section -->
-
-
-                        <div class="row">
-
-                            <div class="col-md-12">
-                                <p>
-                                    Invoice Id: #24<br />
-                                    Invoice Status: #24
-                                </p>
-                                <Rock:DataTextBox ID="tbInvoiceName" runat="server"
-                                    SourceTypeName="online.kevinrutledge.InvoiceSystem.Model.Invoice, online.kevinrutledge.InvoiceSystem"
-                                    PropertyName="Name" />
-                            </div>
-                        </div>
                         <div class="row">
                             <div class="col-md-12">
                                 <Rock:DataTextBox ID="tbSummary" runat="server"
@@ -100,10 +99,9 @@
                 </div>
             </div>
         </div>
-        <asp:HiddenField ID="hfActiveDialog" runat="server" />
-        <asp:HiddenField ID="hfAssignmentGuid" runat="server" />
+
         <Rock:ModalDialog ID="dlgAssignment" runat="server" ScrollbarEnabled="false" ValidationGroup="Assignment"
-            SaveButtonText="Add" OnCancelScript="clearActiveDialog();" OnSaveClick="btnSaveAssignment_Click"
+            SaveButtonText="Add" OnCancelClick="ClearAssignmentDialogFields()" OnSaveClick="btnSaveAssignment_Click"
             Title="Enter Person and Percent">
             <Content>
                 <asp:ValidationSummary ID="vsAssignment" runat="server" HeaderText="Please correct the following:"

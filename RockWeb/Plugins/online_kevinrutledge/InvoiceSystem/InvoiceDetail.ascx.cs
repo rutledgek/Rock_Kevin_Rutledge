@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Web.UI;
@@ -23,15 +22,19 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
     [Category("online_kevinrutledge > Invoice System")]
     [Description("Displays the details of an Invoice.")]
     [ContextAware(typeof(Invoice))]
-
     public partial class InvoiceDetail : Rock.Web.UI.RockBlock
     {
-        public Dictionary<Guid, (int AuthorizedPersonAliasId, decimal AssignedPercent)> InvoiceAssignmentState { get; set; } = new Dictionary<Guid, (int AuthorizedPersonAliasId, decimal AssignedPercent)>();
+        #region Properties and Fields
 
-        private static class AttributeKey
-        {
-            public const string DefaultDaysLate = "DefaultDaysLate";
-        }
+        // Dictionary to store the state of assignments (Guid as key)
+        public Dictionary<Guid, (int AuthorizedPersonAliasId, decimal AssignedPercent)> InvoiceAssignmentState { get; set; }
+            = new Dictionary<Guid, (int AuthorizedPersonAliasId, decimal AssignedPercent)>();
+
+        private Invoice _invoice = null; // Cached invoice instance
+
+        #endregion
+
+        #region Initialization and ViewState Handling
 
         protected override object SaveViewState()
         {
@@ -51,13 +54,15 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
         {
             base.OnInit(e);
 
-            this.BlockUpdated += Block_BlockUpdated;
-            this.AddConfigurationUpdateTrigger(upnlContent);
-
+            // Configure the Assignments grid
             gAssignments.DataKeyNames = new[] { "Guid" };
             gAssignments.Actions.ShowAdd = true;
             gAssignments.Actions.AddClick += gAssignments_AddClick;
-            gAssignments.GridRebind += gAssignments_GridRebind; // Attach the event handler here
+            gAssignments.GridRebind += gAssignments_GridRebind;
+
+            // Register BlockUpdated event
+            this.BlockUpdated += Block_BlockUpdated;
+            this.AddConfigurationUpdateTrigger(upnlContent);
         }
 
         protected override void OnLoad(EventArgs e)
@@ -66,8 +71,7 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
 
             if (!Page.IsPostBack)
             {
-                // Load initial state if necessary
-                BindAssignmentGrid();
+                ShowDetail();
             }
 
             if (!string.IsNullOrEmpty(hfActiveDialog.Value))
@@ -76,37 +80,78 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
             }
         }
 
+        #endregion
+
+        #region Page Methods
+
+        protected void ShowDetail()
+        {
+            var rockContext = new RockContext();
+            upnlContent.Visible = true;
+
+            // Retrieve Invoice ID from Page Parameters
+            int? invoiceId = PageParameter("InvoiceId").AsIntegerOrNull();
+
+            // Fetch Invoice
+            Invoice invoice = invoiceId.HasValue
+                ? _invoice ?? new InvoiceService(rockContext).Get(invoiceId.Value)
+                : null;
+
+            // Set Page Title and other UI elements
+            if (invoice != null)
+            {
+                string pageTitle = $"Invoice #{invoice.Id}: {invoice.Name}";
+                ltlInvoiceNumberAndName.Text = pageTitle;
+                RockPage.PageTitle = pageTitle;
+            }
+            else
+            {
+                string newInvoiceTitle = "Create New Invoice";
+                RockPage.PageTitle = newInvoiceTitle;
+                ltlInvoiceNumberAndName.Text = newInvoiceTitle;
+            }
+
+            // Load Invoice Data into Controls
+            hfInvoiceId.Value = invoice?.Id.ToString() ?? "0";
+            tbName.Text = invoice?.Name;
+            tbSummary.Text = invoice?.Summary;
+            dpDueDate.SelectedDate = invoice?.DueDate;
+            dpLateDate.SelectedDate = invoice?.LateDate;
+            numbLateDays.Text = invoice?.LateDays.ToString();
+
+            // Populate Assignment State
+            InvoiceAssignmentState.Clear();
+            if (invoice?.InvoiceAssignments != null)
+            {
+                foreach (var assignment in invoice.InvoiceAssignments)
+                {
+                    var assignmentKey = assignment.Guid != Guid.Empty ? assignment.Guid : Guid.NewGuid();
+                    InvoiceAssignmentState[assignmentKey] = (
+                        AuthorizedPersonAliasId: assignment.AuthorizedPersonAliasId,
+                        AssignedPercent: assignment.AssignedPercent
+                    );
+                }
+            }
+
+            // Bind Assignment Grid
+            BindAssignmentGrid();
+        }
+
         protected void Block_BlockUpdated(object sender, EventArgs e)
         {
-            // Update logic after block changes
+            // Logic to handle updates to the block
         }
 
-        /// <summary>
-        /// Handles the AddClick event for the Assignments grid.
-        /// </summary>
-        private void gAssignments_AddClick(object sender, EventArgs e)
+        #endregion
+
+        #region Grid Methods and Events
+
+        protected void gAssignments_AddClick(object sender, EventArgs e)
         {
             hfAssignmentGuid.Value = string.Empty; // Clear the GUID for new assignments
-            ClearDialogFields();
+            ClearAssignmentDialogFields();
             ShowDialog(Dialogs.InvoiceAssignment);
         }
-
-        /// <summary>
-        /// Handles the Delete event for the Assignments grid.
-        /// </summary>
-        protected void gAssignment_Delete(object sender, RowEventArgs e)
-        {
-            // Retrieve the Guid from the RowKeyValue
-            if (e.RowKeyValue is Guid assignmentKey && InvoiceAssignmentState.ContainsKey(assignmentKey))
-            {
-                // Remove the entry from the dictionary
-                InvoiceAssignmentState.Remove(assignmentKey);
-
-                // Rebind the grid to reflect the updated state
-                BindAssignmentGrid();
-            }
-        }
-
 
         protected void gAssignments_RowSelected(object sender, RowEventArgs e)
         {
@@ -128,9 +173,51 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
             }
         }
 
-        /// <summary>
-        /// Handles the Save event from the modal dialog.
-        /// </summary>
+        protected void gAssignment_Delete(object sender, RowEventArgs e)
+        {
+            if (e.RowKeyValue is Guid assignmentKey && InvoiceAssignmentState.ContainsKey(assignmentKey))
+            {
+                InvoiceAssignmentState.Remove(assignmentKey);
+                BindAssignmentGrid();
+            }
+        }
+
+        protected void gAssignments_GridRebind(object sender, EventArgs e)
+        {
+            BindAssignmentGrid();
+        }
+
+        protected void BindAssignmentGrid()
+        {
+            using (var rockContext = new RockContext())
+            {
+                var personAliasService = new PersonAliasService(rockContext);
+                var authorizedPersonAliasIds = InvoiceAssignmentState.Values.Select(v => v.AuthorizedPersonAliasId).ToList();
+
+                // Fetch Person Names for the Assignments
+                var personAliases = personAliasService.Queryable()
+                    .Where(pa => authorizedPersonAliasIds.Contains(pa.Id))
+                    .ToDictionary(pa => pa.Id, pa => pa.Person.FullName);
+
+                gAssignments.DataSource = InvoiceAssignmentState.Select(kvp => new
+                {
+                    Guid = kvp.Key,
+                    PersonAliasName = personAliases.ContainsKey(kvp.Value.AuthorizedPersonAliasId)
+                        ? personAliases[kvp.Value.AuthorizedPersonAliasId]
+                        : "Unknown",
+                    AssignedPercent = kvp.Value.AssignedPercent
+                }).ToList();
+
+                gAssignments.DataBind();
+            }
+        }
+
+       
+
+        #endregion
+
+        #region Modal Dialog Methods
+
         protected void btnSaveAssignment_Click(object sender, EventArgs e)
         {
             var personAliasId = ppAssignment.PersonAliasId;
@@ -140,73 +227,69 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
             {
                 Guid assignmentKey;
 
-                // Validate and parse the GUID from hfAssignmentGuid
                 if (!string.IsNullOrWhiteSpace(hfAssignmentGuid.Value) && Guid.TryParse(hfAssignmentGuid.Value, out assignmentKey))
                 {
-                    // Editing an existing entry
-                    if (InvoiceAssignmentState.ContainsKey(assignmentKey))
-                    {
-                        InvoiceAssignmentState[assignmentKey] = (AuthorizedPersonAliasId: personAliasId.Value, AssignedPercent: percentAssigned);
-                    }
+                    // Edit existing entry
+                    InvoiceAssignmentState[assignmentKey] = (personAliasId.Value, percentAssigned);
                 }
                 else
                 {
-                    // Adding a new entry
+                    // Add new entry
                     assignmentKey = Guid.NewGuid();
-                    InvoiceAssignmentState[assignmentKey] = (AuthorizedPersonAliasId: personAliasId.Value, AssignedPercent: percentAssigned);
+                    InvoiceAssignmentState[assignmentKey] = (personAliasId.Value, percentAssigned);
                 }
 
-                BindAssignmentGrid();
+                
             }
 
             HideDialog();
+
+            BindAssignmentGrid();
         }
 
-        /// <summary>
-        /// Binds the Assignments grid.
-        /// </summary>
-        private void BindAssignmentGrid()
+        protected void ShowDialog(Dialogs dialog)
         {
-            gAssignments.DataSource = InvoiceAssignmentState.Select(kvp => new
-            {
-                Guid = kvp.Key, // The unique identifier for each assignment
-                PersonAliasName = new PersonAliasService(new RockContext()).Get(kvp.Value.AuthorizedPersonAliasId)?.Person.FullName ?? "Unknown",
-                AssignedPercent = kvp.Value.AssignedPercent
-            }).ToList();
+            hfActiveDialog.Value = dialog.ToString();
 
-            var remainingPercent = 100 - InvoiceAssignmentState.Sum(a => a.Value.AssignedPercent);
-            if (remainingPercent == 0)
+            if (dialog == Dialogs.InvoiceAssignment)
             {
-                hlblCurrentAssignedTotalGridView.LabelType = Rock.Web.UI.Controls.LabelType.Success;
-                hlblCurrentAssignedTotalGridView.Text = $"{remainingPercent:0.##}% <strong>Not Assigned</strong> ";
+                var remainingPercent = 100 - InvoiceAssignmentState.Sum(a => a.Value.AssignedPercent);
+                hlblCurrentAssignedTotal.LabelType = remainingPercent == 0
+                    ? Rock.Web.UI.Controls.LabelType.Success
+                    : Rock.Web.UI.Controls.LabelType.Warning;
+                hlblCurrentAssignedTotal.Text = $"{remainingPercent:0.##}% Not Assigned";
+                dlgAssignment.Show();
             }
-            else if (remainingPercent < 0)
-            {
-                hlblCurrentAssignedTotalGridView.Text = $" <strong>Over Assigned By: </strong> {remainingPercent:0.##}%";
-
-            }
-            else
-            {
-                hlblCurrentAssignedTotalGridView.Text = $"{remainingPercent:0.##}% <strong>Not Assigned</strong> ";
-            }
-            gAssignments.DataBind();
         }
 
-        /// <summary>
-        /// Clears the dialog fields.
-        /// </summary>
-        private void ClearDialogFields()
+        protected void ClearActiveDialog()
+        {
+            
+            HideDialog();
+            BindAssignmentGrid();
+        }
+        protected void HideDialog()
+        {
+            
+            if (Enum.TryParse(hfActiveDialog.Value, out Dialogs dialog))
+            {
+                if (dialog == Dialogs.InvoiceAssignment)
+                {
+                    dlgAssignment.Hide();
+                    ClearAssignmentDialogFields();
+                }
+            }
+
+            hfActiveDialog.Value = string.Empty;
+        }
+
+        protected void ClearAssignmentDialogFields()
         {
             ppAssignment.SetValue(null);
             numbAssignedPercent.Text = string.Empty;
         }
 
-        #region Dialog Handling
-
-        /// <summary>
-        /// Shows the dialog specified in hfActiveDialog.
-        /// </summary>
-        private void ShowDialog()
+        protected void ShowDialog()
         {
             if (Enum.TryParse(hfActiveDialog.Value, out Dialogs dialog))
             {
@@ -214,51 +297,11 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
             }
         }
 
-        /// <summary>
-        /// Shows the specified dialog.
-        /// </summary>
-        private void ShowDialog(Dialogs dialog)
-        {
-            hfActiveDialog.Value = dialog.ToString();
+        #endregion
 
-            switch (dialog)
-            {
-                case Dialogs.InvoiceAssignment:
-                    var remainingPercent = 100 - InvoiceAssignmentState.Sum(a => a.Value.AssignedPercent);
-                    if (remainingPercent == 0)
-                    {
-                        hlblCurrentAssignedTotal.LabelType = Rock.Web.UI.Controls.LabelType.Success;
-                    }
-                    hlblCurrentAssignedTotal.Text = $"{remainingPercent:0.##}% <strong>Not Assigned</strong> ";
-                    dlgAssignment.Show();
-                    break;
-            }
-        }
+        #region Enums
 
-        private void gAssignments_GridRebind(object sender, EventArgs e)
-        {
-            BindAssignmentGrid();
-        }
-
-        /// <summary>
-        /// Hides the active dialog.
-        /// </summary>
-        private void HideDialog()
-        {
-            if (Enum.TryParse(hfActiveDialog.Value, out Dialogs dialog))
-            {
-                switch (dialog)
-                {
-                    case Dialogs.InvoiceAssignment:
-                        dlgAssignment.Hide();
-                        break;
-                }
-            }
-
-            hfActiveDialog.Value = string.Empty;
-        }
-
-        private enum Dialogs
+        protected enum Dialogs
         {
             InvoiceAssignment
         }
