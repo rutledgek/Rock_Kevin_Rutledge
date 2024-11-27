@@ -93,6 +93,15 @@ namespace online.kevinrutledge.InvoiceSystem.Model
         /// </value>
         [DataMember]
         public virtual InvoiceType InvoiceType { get; set; }
+
+
+
+        /// <summary>
+        /// Gets or sets the collection of Invoice Assignments associated with this Invoice.
+        /// </summary>
+        [DataMember]
+        public virtual ICollection<InvoiceAssignment> InvoiceAssignments { get; set; } = new Collection<InvoiceAssignment>();
+
         #endregion
 
     }
@@ -105,6 +114,11 @@ namespace online.kevinrutledge.InvoiceSystem.Model
             // Since this example has no direct foreign keys on Invoice, 
             // no specific foreign key configuration is set here.
             this.HasRequired(p => p.InvoiceType).WithMany().HasForeignKey(p => p.InvoiceTypeId).WillCascadeOnDelete(false);
+            // Configure the one-to-many relationship with InvoiceAssignment
+            this.HasMany(p => p.InvoiceAssignments)
+                .WithRequired(p => p.Invoice)
+                .HasForeignKey(p => p.InvoiceId)
+                .WillCascadeOnDelete(false);
 
             // Set entity set name for consistency and easy querying
             this.HasEntitySetName("Invoice");
