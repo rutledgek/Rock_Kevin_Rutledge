@@ -56,6 +56,7 @@
  <div class="panel panel-block">
             <div class="panel-heading">
                 <h1 class="panel-title">Invoice Assignments</h1>
+                <Rock:HighlightLabel ID="hlblCurrentAssignedTotalGridView" runat="server" LabelType="Danger"/>
             </div>
             <div class="panel-body">
 
@@ -82,6 +83,7 @@
                             HeaderText="Please correct the following:" CssClass="alert alert-validation"
                             ValidationGroup="Assignment" />
                         <Rock:PersonPicker ID="ppAssignment" runat="server" Required="true" Label="Person" />
+                        <Rock:HighlightLabel ID="hlblCurrentAssignedTotal" runat="server" LabelType="Danger"/>
                         <Rock:NumberBox ID="numbAssignedPercent" runat="server" Label="Percent of Invoice Assigned"
                             Help="What percent of the total invoice is this person responsible for." />
 

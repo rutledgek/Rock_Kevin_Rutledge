@@ -144,6 +144,19 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
                 AssignedPercent = kvp.Value.AssignedPercent
             }).ToList();
 
+            var remainingPercent = 100 - InvoiceAssignmentState.Sum(a => a.Value.AssignedPercent);
+            if (remainingPercent == 0)
+            {
+                hlblCurrentAssignedTotalGridView.LabelType = Rock.Web.UI.Controls.LabelType.Success;
+                hlblCurrentAssignedTotalGridView.Text = $"{remainingPercent:0.##}% <strong>Not Assigned</strong> ";
+            }
+            else if(remainingPercent < 0)
+            {
+                hlblCurrentAssignedTotalGridView.Text = $" <strong>Over Assigned By: </strong> {remainingPercent:0.##}%";
+
+            } else { 
+            hlblCurrentAssignedTotalGridView.Text = $"{remainingPercent:0.##}% <strong>Not Assigned</strong> ";
+            }
             gAssignments.DataBind();
         }
 
@@ -179,6 +192,12 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
             switch (dialog)
             {
                 case Dialogs.InvoiceAssignment:
+                    var remainingPercent = 100 - InvoiceAssignmentState.Sum(a => a.Value.AssignedPercent);
+                    if (remainingPercent == 0)
+                    {
+                        hlblCurrentAssignedTotal.LabelType = Rock.Web.UI.Controls.LabelType.Success;
+                    }
+                        hlblCurrentAssignedTotal.Text = $"{remainingPercent:0.##}% <strong>Not Assigned</strong> ";
                     dlgAssignment.Show();
                     break;
             }
