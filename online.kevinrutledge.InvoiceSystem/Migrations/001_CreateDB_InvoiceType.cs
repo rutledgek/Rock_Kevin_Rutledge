@@ -112,10 +112,12 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
 
             /* Update the BlockType */
             RockMigrationHelper.UpdateBlockType("Invoice Type List", "", "~/Plugins/online_kevinrutledge/InvoiceSystem/InvoiceTypeList.ascx", "online_kevinrutledge > Invoice System", online.kevinrutledge.InvoiceSystem.SystemGuids.BlockTypeGuids.InvoiceTypeList);
-            RockMigrationHelper.UpdateBlockType("Invoice Type Detail","", "~/Plugins/online_kevinrutledge/InvoiceSystem/InvoiceTypeDetail.ascx","online_kevinrutledge> Invoice System",online.kevinrutledge.InvoiceSystem.SystemGuids.BlockTypeGuids.InvoiceTypeDetail);
+            RockMigrationHelper.UpdateBlockType("Invoice Type Detail","", "~/Plugins/online_kevinrutledge/InvoiceSystem/InvoiceTypeDetail.ascx","online_kevinrutledge > Invoice System",online.kevinrutledge.InvoiceSystem.SystemGuids.BlockTypeGuids.InvoiceTypeDetail);
+            
 
             /* Update the EntityType */
             RockMigrationHelper.UpdateEntityType("online.kevinrutledge.InvoiceSystem.Model.InvoiceType", online.kevinrutledge.InvoiceSystem.SystemGuids.EntityTypeGuids.Invoice_Type, true, true);
+            
 
             /* Create Invoice System Page and add Page Menu Block */
             RockMigrationHelper.AddPage(online.kevinrutledge.InvoiceSystem.SystemGuids.SystemGuids.InstalledPluginsPage, online.kevinrutledge.InvoiceSystem.SystemGuids.SystemGuids.FullWidthLayout, "Invoice System","" , online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceSystemParentPage, "fa fa-file-list");

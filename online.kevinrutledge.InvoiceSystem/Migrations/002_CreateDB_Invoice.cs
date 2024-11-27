@@ -64,8 +64,14 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
 
             /* Update the EntityType */
             RockMigrationHelper.UpdateEntityType("online.kevinrutledge.InvoiceSystem.Model.Invoice", online.kevinrutledge.InvoiceSystem.SystemGuids.EntityTypeGuids.Invoice, true, true);
+            RockMigrationHelper.UpdateBlockType("Invoice Detail", "", "~/Plugins/online_kevinrutledge/InvoiceSystem/InvoiceDetail.ascx", "online_kevinrutledge > Invoice System", online.kevinrutledge.InvoiceSystem.SystemGuids.BlockTypeGuids.InvoiceDetail);
 
+            /* Create Invoice Detail Page */
 
+            RockMigrationHelper.AddPage(online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceSystemParentPage, online.kevinrutledge.InvoiceSystem.SystemGuids.SystemGuids.FullWidthLayout, "Invoice Detail Page", "", online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceDetailPage, "fa fa-pencil");
+            RockMigrationHelper.AddBlock(online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceDetailPage, null, online.kevinrutledge.InvoiceSystem.SystemGuids.BlockTypeGuids.InvoiceDetail, "Invoice Detail Page", "Main", "", "", 0, online.kevinrutledge.InvoiceSystem.SystemGuids.BlockGuids.InvoiceDetailBlock);
+
+           
 
         }
 
@@ -80,6 +86,11 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
 				Drop Table  [dbo].[_online_kevinrutledge_InvoiceSystem_Invoice]
 "
             );
+
+            RockMigrationHelper.DeleteEntityType(online.kevinrutledge.InvoiceSystem.SystemGuids.EntityTypeGuids.Invoice);
+
+            RockMigrationHelper.DeleteBlockType(online.kevinrutledge.InvoiceSystem.SystemGuids.BlockTypeGuids.InvoiceDetail);
+            RockMigrationHelper.DeletePage(online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceDetailPage);
 
         }
     }
