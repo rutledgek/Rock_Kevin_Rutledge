@@ -77,12 +77,6 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
 
             var query = service.Queryable();
 
-            int? campusId = gfSettings.GetFilterPreference("Campus").AsIntegerOrNull();
-            if (campusId.HasValue)
-            {
-                query = query.Where(a => a.CampusId == campusId.Value);
-            }
-
             bool showInactiveTypes = gfSettings.GetFilterPreference("Show Inactive Invoice Types").AsBoolean();
 
             if (!showInactiveTypes)
