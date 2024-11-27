@@ -76,6 +76,7 @@
     <Compile Include="Migrations\002_CreateDB_Invoice.cs" />
     <Compile Include="Migrations\001_CreateDB_InvoiceType.cs" />
     <Compile Include="Migrations\003_CreateDB_InvoiceItem.cs" />
+    <Compile Include="Migrations\004_CreateDB_SystemCommunications.cs" />
     <Compile Include="Model\InvoiceItem_Service.cs" />
     <Compile Include="Model\InvoiceItem.cs" />
     <Compile Include="Model\Invoice.cs" />
