@@ -188,7 +188,7 @@ namespace online.kevinrutledge.InvoiceSystem.Model
 
         #region Virtual Properties
         public virtual Category Category { get; set; }
-        #endregion
+      
 
         public virtual FinancialAccount FinancialAccount { get; set; }
 
@@ -201,7 +201,7 @@ namespace online.kevinrutledge.InvoiceSystem.Model
 
         public virtual PersonAlias LateNoticeFromPersonAlias { get; set; }
 
-
+        #endregion
     }
 
     public partial class InvoiceTypeConfiguration : EntityTypeConfiguration<InvoiceType>
