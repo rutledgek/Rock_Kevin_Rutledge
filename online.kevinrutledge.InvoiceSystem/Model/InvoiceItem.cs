@@ -32,7 +32,7 @@ namespace online.kevinrutledge.InvoiceSystem.Model
         #region Entity Properties
         // InvoiceId is a foreign key to the Invoice table
         [Required]
-        [DataMember( IsRequired = true )]
+        [DataMember(IsRequired = true)]
         public int InvoiceId { get; set; }
 
 

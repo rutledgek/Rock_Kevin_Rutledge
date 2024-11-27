@@ -188,7 +188,7 @@ namespace online.kevinrutledge.InvoiceSystem.Model
 
         #region Virtual Properties
         public virtual Category Category { get; set; }
-      
+
 
         public virtual FinancialAccount FinancialAccount { get; set; }
 

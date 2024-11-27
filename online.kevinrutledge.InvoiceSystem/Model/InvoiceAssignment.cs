@@ -44,7 +44,7 @@ namespace online.kevinrutledge.InvoiceSystem.Model
 
         public virtual Invoice Invoice { get; set; }
 
-        public virtual PersonAlias AuthorizedPersonAlias {  get; set; }
+        public virtual PersonAlias AuthorizedPersonAlias { get; set; }
 
         #endregion
 
