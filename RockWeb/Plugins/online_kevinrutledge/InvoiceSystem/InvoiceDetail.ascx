@@ -11,7 +11,7 @@
 
 
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-8">
                         <div class="row">
 
                             <div class="col-md-12">
@@ -47,7 +47,7 @@
                     </div>
 
 
-                    <div class="col-md-6">
+                    <div class="col-md-4">
 
                        
                         <div class="row">
@@ -61,7 +61,8 @@
             <div class="panel-body">
 
                 <div class="grid grid-panel">
-                               <Rock:Grid ID="gAssignments" runat="server" DisplayType="Light" RowItemText="Assignment" ShowConfirmDeleteDialog="false">
+                               <Rock:Grid ID="gAssignments" runat="server" DisplayType="Light" RowItemText="Assignment" 
+                                    ShowConfirmDeleteDialog="false" OnRowSelected="gAssignments_RowSelected" DataKeyNames="Guid">
                                     <Columns>
                                         <Rock:RockBoundField DataField="PersonAliasName" HeaderText="Person" />
                                         <Rock:RockBoundField DataField="AssignedPercent" HeaderText="Percent Assigned" />
@@ -75,6 +76,7 @@
                     </div>
                 </div>
                 <asp:HiddenField ID="hfActiveDialog" runat="server" />
+                <asp:HiddenField ID="hfAssignmentGuid" runat="server" />
                 <Rock:ModalDialog ID="dlgAssignment" runat="server" ScrollbarEnabled="false"
                     ValidationGroup="Assignment" SaveButtonText="Add" OnCancelScript="clearActiveDialog();"
                     OnSaveClick="btnSaveAssignment_Click" Title="Enter Person and Percent">

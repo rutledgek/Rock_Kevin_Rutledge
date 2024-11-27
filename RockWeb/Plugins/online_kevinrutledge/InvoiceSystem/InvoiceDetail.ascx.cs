@@ -26,7 +26,7 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
 
     public partial class InvoiceDetail : Rock.Web.UI.RockBlock
     {
-        public Dictionary<int, (int AuthorizedPersonAliasId, decimal AssignedPercent)> InvoiceAssignmentState { get; set; } = new Dictionary<int, (int AuthorizedPersonAliasId, decimal AssignedPercent)>();
+        public Dictionary<Guid, (int AuthorizedPersonAliasId, decimal AssignedPercent)> InvoiceAssignmentState { get; set; } = new Dictionary<Guid, (int AuthorizedPersonAliasId, decimal AssignedPercent)>();
 
         private static class AttributeKey
         {
@@ -43,8 +43,8 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
         {
             base.LoadViewState(savedState);
 
-            InvoiceAssignmentState = ViewState["AssignmentState"] as Dictionary<int, (int AuthorizedPersonAliasId, decimal AssignedPercent)>
-                ?? new Dictionary<int, (int AuthorizedPersonAliasId, decimal AssignedPercent)>();
+            InvoiceAssignmentState = ViewState["AssignmentState"] as Dictionary<Guid, (int AuthorizedPersonAliasId, decimal AssignedPercent)>
+                ?? new Dictionary<Guid, (int AuthorizedPersonAliasId, decimal AssignedPercent)>();
         }
 
         protected override void OnInit(EventArgs e)
@@ -54,7 +54,7 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
             this.BlockUpdated += Block_BlockUpdated;
             this.AddConfigurationUpdateTrigger(upnlContent);
 
-            gAssignments.DataKeyNames = new string[] { "Id" };
+            gAssignments.DataKeyNames = new[] { "Guid" };
             gAssignments.Actions.ShowAdd = true;
             gAssignments.Actions.AddClick += gAssignments_AddClick;
             gAssignments.GridRebind += gAssignments_GridRebind; // Attach the event handler here
@@ -86,6 +86,7 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
         /// </summary>
         private void gAssignments_AddClick(object sender, EventArgs e)
         {
+            hfAssignmentGuid.Value = string.Empty; // Clear the GUID for new assignments
             ClearDialogFields();
             ShowDialog(Dialogs.InvoiceAssignment);
         }
@@ -95,11 +96,35 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
         /// </summary>
         protected void gAssignment_Delete(object sender, RowEventArgs e)
         {
-            var assignmentId = e.RowKeyId; // Use the dictionary key as Id
-            if (InvoiceAssignmentState.ContainsKey(assignmentId))
+            // Retrieve the Guid from the RowKeyValue
+            if (e.RowKeyValue is Guid assignmentKey && InvoiceAssignmentState.ContainsKey(assignmentKey))
             {
-                InvoiceAssignmentState.Remove(assignmentId);
+                // Remove the entry from the dictionary
+                InvoiceAssignmentState.Remove(assignmentKey);
+
+                // Rebind the grid to reflect the updated state
                 BindAssignmentGrid();
+            }
+        }
+
+
+        protected void gAssignments_RowSelected(object sender, RowEventArgs e)
+        {
+            Guid assignmentKey = (Guid)e.RowKeyValue;
+
+            if (InvoiceAssignmentState.ContainsKey(assignmentKey))
+            {
+                var selectedAssignment = InvoiceAssignmentState[assignmentKey];
+
+                // Prefill dialog fields
+                ppAssignment.SetValue(new PersonAliasService(new RockContext()).Get(selectedAssignment.AuthorizedPersonAliasId)?.Person);
+                numbAssignedPercent.Text = selectedAssignment.AssignedPercent.ToString();
+
+                // Store the GUID in a hidden field for editing
+                hfAssignmentGuid.Value = assignmentKey.ToString();
+
+                // Show dialog
+                ShowDialog(Dialogs.InvoiceAssignment);
             }
         }
 
@@ -113,16 +138,21 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
 
             if (personAliasId.HasValue && percentAssigned > 0)
             {
-                // Generate a unique key (e.g., personAliasId or another identifier)
-                var assignmentKey = personAliasId.Value;
+                Guid assignmentKey;
 
-                // Add or update the dictionary entry
-                if (!InvoiceAssignmentState.ContainsKey(assignmentKey))
+                // Validate and parse the GUID from hfAssignmentGuid
+                if (!string.IsNullOrWhiteSpace(hfAssignmentGuid.Value) && Guid.TryParse(hfAssignmentGuid.Value, out assignmentKey))
                 {
-                    InvoiceAssignmentState[assignmentKey] = (AuthorizedPersonAliasId: personAliasId.Value, AssignedPercent: percentAssigned);
+                    // Editing an existing entry
+                    if (InvoiceAssignmentState.ContainsKey(assignmentKey))
+                    {
+                        InvoiceAssignmentState[assignmentKey] = (AuthorizedPersonAliasId: personAliasId.Value, AssignedPercent: percentAssigned);
+                    }
                 }
                 else
                 {
+                    // Adding a new entry
+                    assignmentKey = Guid.NewGuid();
                     InvoiceAssignmentState[assignmentKey] = (AuthorizedPersonAliasId: personAliasId.Value, AssignedPercent: percentAssigned);
                 }
 
@@ -139,7 +169,7 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
         {
             gAssignments.DataSource = InvoiceAssignmentState.Select(kvp => new
             {
-                Id = kvp.Key, // Use the dictionary key as Id
+                Guid = kvp.Key, // The unique identifier for each assignment
                 PersonAliasName = new PersonAliasService(new RockContext()).Get(kvp.Value.AuthorizedPersonAliasId)?.Person.FullName ?? "Unknown",
                 AssignedPercent = kvp.Value.AssignedPercent
             }).ToList();
