@@ -22,14 +22,24 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
 	            [InvoiceTerm] [nvarchar](100) Null, 
 	            [InvoiceItemTerm] [nvarchar](100) Null,
 	            [IconCssClass] nvarchar(100) null,
-	            [DefaultCommunicationTemplate] nvarchar(max) null,
-	            [LateInvoiceCommunicationTemplate] nvarchar(max) null,
                 [DefaultFinancialAccountId] [int] Null,
-                [DefaultTaxPercent] [decimal](18, 2) Not NULL Default 0,
+                [DefaultTaxRate] [decimal](18, 2) Not NULL Default 0,
 	            [DefaultDaysUntilLate] int Null,
 	            [DefaultLateFeeAmount] [decimal](18, 2) Not Null default 0,
-	            [DefaultLateFeePercentage] [decimal](5, 2) Not NULL Default 0,
+	            [DefaultLateFeePercent] [decimal](5, 2) Not NULL Default 0,
                 [CategoryId] [int] NULL,
+                [InvoiceFromPersonAliasId] [int] NULL,
+                [InvoiceFromName] [nvarchar](max) NULL,
+                [InvoiceFromEmail] [nvarchar](max) NULL,
+                [InvoiceSubject] [nvarchar](max) NULL,
+	            [InvoiceCommunicationTemplate] nvarchar(max) null,
+                [InvoiceSystemCommunicationId] int null,
+                [LateNoticeFromPersonAliasId] [int] NULL,
+                [LateNoticeFromName] [nvarchar](max) NULL,
+                [LateNoticeFromEmail] [nvarchar](max) NULL,
+	            [LateNoticeSubject] [nvarchar](max) NULL,
+                [LateNoticeCommunicationTemplate] nvarchar(max) null,
+                [LateNoticeSystemCommunicationId] int null,
 	            [Guid] [uniqueidentifier] NOT NULL,
 	            [CreatedDateTime] [datetime] NULL,
 	            [ModifiedDateTime] [datetime] NULL,
@@ -59,6 +69,34 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
 		            REFERENCES [dbo].[FinancialAccount] ([Id])
 
 	            ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] CHECK CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_DefaultFinancialAccountId]
+
+
+                ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType]  WITH CHECK ADD  CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_InvoiceSystemCommunicationId] FOREIGN KEY([InvoiceSystemCommunicationid])
+		            REFERENCES [dbo].[SystemCommunication] ([Id])
+
+	            ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] CHECK CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_InvoiceSystemCommunicationId]
+
+                ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType]  WITH CHECK ADD  CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_LateNoticeSystemCommunicationId] FOREIGN KEY([LateNoticeSystemCommunicationid])
+		            REFERENCES [dbo].[SystemCommunication] ([Id])
+
+	            ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] CHECK CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_LateNoticeSystemCommunicationId]
+
+
+
+                ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType]  WITH CHECK ADD  CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_InvoiceFromPersonAliasId] FOREIGN KEY([InvoiceFromPersonAliasId])
+		                            REFERENCES [dbo].[PersonAlias] ([Id])
+
+	            ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] CHECK CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_InvoiceFromPersonAliasId]
+
+
+
+                ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType]  WITH CHECK ADD  CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_LateNoticeFromPersonAliasId] FOREIGN KEY([LateNoticeFromPersonAliasId])
+		                            REFERENCES [dbo].[PersonAlias] ([Id])
+
+	            ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] CHECK CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_LateNoticeFromPersonAliasId]
+
+
+                
 
 
                 ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType]  WITH CHECK ADD  CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_CategoryId] FOREIGN KEY([CategoryId])
@@ -108,6 +146,23 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
 
                 ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] 
                     DROP CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_DefaultFinancialAccountId]
+
+                ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] 
+                    DROP CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_InvoiceSystemCommunicationId]
+
+                ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] 
+                    DROP CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_LateNoticeSystemCommunicationId]
+
+
+
+
+                ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] 
+                    DROP CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_LateNoticeFromPersonAliasId]
+
+
+
+                ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] 
+                    DROP CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_InvoiceFromPersonAliasId]
 
                 -- Drop primary key constraint
                 ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] 

@@ -47,7 +47,7 @@ namespace online.kevinrutledge.InvoiceSystem.Model
         [DataMember]
         public bool IsActive { get; set; } = true;
 
-                 
+
         /// <summary>
         /// Gets or sets the term used to describe invoices of this type.
         /// </summary>
@@ -69,23 +69,16 @@ namespace online.kevinrutledge.InvoiceSystem.Model
         public string IconCssClass { get; set; }
 
         /// <summary>
-        /// Default communication template for invoices of this type.
+        /// Gets or sets the Default Financial Account Id.
         /// </summary>
-        [DataMember]
-        public string DefaultCommunicationTemplate { get; set; }
-               
-
-        /// <summary>
-        /// Communication template for late invoices.
-        /// </summary>
-        [DataMember]
-        public string LateInvoiceCommunicationTemplate { get; set; }
+        [DataMember(IsRequired = false)]
+        public int? DefaultFinancialAccountId { get; set; }
 
         /// <summary>
         /// Default tax percentage for invoices of this type. This value is used for all invoices of this type unless changed on the invoice item.
         /// </summary>
         [DataMember]
-        public decimal DefaultTaxPercent { get; set; }
+        public decimal DefaultTaxRate { get; set; }
 
         /// <summary>
         /// Specifies the number of days after the due date that an invoice is considered late. This value is used for all invoices of this type unless changed on the invoice.
@@ -97,26 +90,118 @@ namespace online.kevinrutledge.InvoiceSystem.Model
         /// Default late fee amount for invoices of this type. This value is used for all invoices of this type unless changed on the invoice.
         /// </summary>
         [DataMember]
-            public decimal DefaultLateFeeAmount { get; set; }
+        public decimal DefaultLateFeeAmount { get; set; }
 
         /// <summary>
         /// Default late fee percentage for invoices of this type. This value is used for all invoices of this type unless changed on the invoice.
         /// </summary>
         [DataMember]
-            public decimal DefaultLateFeePercentage { get; set; }
+        public decimal DefaultLateFeePercent { get; set; }
 
-
+        /// <summary>
+        /// Gets or sets the Invoice Type Category Id.
+        /// </summary>
         [DataMember]
         public int? CategoryId { get; set; }
 
-        [DataMember(IsRequired = false)]
-        public int? DefaultFinancialAccountId { get; set; }
+        /// <summary>
+        ///Gets or sets the Invoice Fom Name
+        /// </summary>
+        [DataMember]
+        public string InvoiceFromName { get; set; }
+
+
+
+
+        [DataMember]
+        public int? InvoiceFromPersonAliasId { get; set; }
+
+        /// <summary>
+        ///Gets or Sets the Invoice From Email Address.
+        /// </summary>
+        [DataMember]
+        public string InvoiceFromEmail { get; set; }
+
+
+
+        /// <summary>
+        ///Gets or Sets the Invoice Subject.
+        /// </summary>
+        [DataMember]
+        public string InvoiceSubject { get; set; }
+
+        /// <summary>
+        /// Default communication template for invoices of this type.
+        /// </summary>
+        [DataMember]
+        public string InvoiceCommunicationTemplate { get; set; }
+
+
+        /// <summary>
+        ///Gets or sets the system communication to use for sending the invoices.
+        /// </summary>
+        public int? InvoiceSystemCommunicationId { get; set; }
+
+
+
+        [DataMember]
+        public int? LateNoticeFromPersonAliasId { get; set; }
+
+        /// <summary>
+        ///Gets or sets the Invoice Fom Name
+        /// </summary>
+        [DataMember]
+        public string LateNoticeFromName { get; set; }
+
+        /// <summary>
+        ///Gets or Sets the Invoice From Email Address.
+        /// </summary>
+        [DataMember]
+        public string LateNoticeFromEmail { get; set; }
+
+        /// <summary>
+        ///Gets or Sets the Invoice Subject.
+        /// </summary>
+        [DataMember]
+        public string LateNoticeSubject { get; set; }
+
+        /// <summary>
+        /// Default communication template for invoices of this type.
+        /// </summary>
+        [DataMember]
+        public string LateNoticeCommunicationTemplate { get; set; }
+
+
+        /// <summary>
+        ///Gets or sets the system communication to use for sending the invoices.
+        /// </summary>
+        public int? LateNoticeSystemCommunicationId { get; set; }
+
+
+
+
+
+
+
+
+
 
         #region Virtual Properties
         public virtual Category Category { get; set; }
         #endregion
 
         public virtual FinancialAccount FinancialAccount { get; set; }
+
+        public virtual SystemCommunication InvoiceSystemCommunication { get; set; }
+
+        public virtual SystemCommunication LateNoticeSystemCommunication { get; set; }
+
+
+        public virtual PersonAlias InvoiceFromPersonAlias { get; set; }
+
+        public virtual PersonAlias LateNoticeFromPersonAlias { get; set; }
+
+
     }
 
     public partial class InvoiceTypeConfiguration : EntityTypeConfiguration<InvoiceType>
@@ -129,6 +214,12 @@ namespace online.kevinrutledge.InvoiceSystem.Model
 
             this.HasOptional(p => p.Category).WithMany().HasForeignKey(p => p.CategoryId).WillCascadeOnDelete(false);
             this.HasOptional(p => p.FinancialAccount).WithMany().HasForeignKey(p => p.DefaultFinancialAccountId).WillCascadeOnDelete(false);
+            this.HasOptional(p => p.InvoiceSystemCommunication).WithMany().HasForeignKey(p => p.InvoiceSystemCommunicationId).WillCascadeOnDelete(false);
+            this.HasOptional(p => p.LateNoticeSystemCommunication).WithMany().HasForeignKey(p => p.LateNoticeSystemCommunicationId).WillCascadeOnDelete(false);
+
+            this.HasOptional(p => p.InvoiceFromPersonAlias).WithMany().HasForeignKey(p => p.InvoiceFromPersonAliasId).WillCascadeOnDelete(false);
+            this.HasOptional(p => p.LateNoticeFromPersonAlias).WithMany().HasForeignKey(p => p.LateNoticeFromPersonAliasId).WillCascadeOnDelete(false);
+
 
             // Set entity set name for consistency and easy querying
             this.HasEntitySetName("InvoiceType");
