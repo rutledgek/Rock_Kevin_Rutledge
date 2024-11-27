@@ -180,12 +180,14 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
                 hlblCurrentAssignedTotalGridView.LabelType = Rock.Web.UI.Controls.LabelType.Success;
                 hlblCurrentAssignedTotalGridView.Text = $"{remainingPercent:0.##}% <strong>Not Assigned</strong> ";
             }
-            else if(remainingPercent < 0)
+            else if (remainingPercent < 0)
             {
                 hlblCurrentAssignedTotalGridView.Text = $" <strong>Over Assigned By: </strong> {remainingPercent:0.##}%";
 
-            } else { 
-            hlblCurrentAssignedTotalGridView.Text = $"{remainingPercent:0.##}% <strong>Not Assigned</strong> ";
+            }
+            else
+            {
+                hlblCurrentAssignedTotalGridView.Text = $"{remainingPercent:0.##}% <strong>Not Assigned</strong> ";
             }
             gAssignments.DataBind();
         }
@@ -227,7 +229,7 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
                     {
                         hlblCurrentAssignedTotal.LabelType = Rock.Web.UI.Controls.LabelType.Success;
                     }
-                        hlblCurrentAssignedTotal.Text = $"{remainingPercent:0.##}% <strong>Not Assigned</strong> ";
+                    hlblCurrentAssignedTotal.Text = $"{remainingPercent:0.##}% <strong>Not Assigned</strong> ";
                     dlgAssignment.Show();
                     break;
             }
@@ -264,4 +266,3 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
         #endregion
     }
 }
- 

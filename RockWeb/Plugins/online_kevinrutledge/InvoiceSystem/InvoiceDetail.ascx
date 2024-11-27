@@ -2,7 +2,18 @@
     Inherits="RockWeb.Plugins.online_kevinrutledge.InvoiceSystem.InvoiceDetail" %>
     <asp:UpdatePanel ID="upnlContent" runat="server">
         <ContentTemplate>
+                            
 
+                <div class="banner">
+                    <h1>
+                        <asp:Literal ID="lActionTitle" runat="server" />
+                    </h1>
+                </div>
+
+                <asp:ValidationSummary ID="valSummaryTop" runat="server" HeaderText="Please Correct the Following"
+                    CssClass="alert alert-danger" />
+                <Rock:NotificationBox ID="nbWarningMessage" runat="server" NotificationBoxType="Warning" />
+                <Rock:NotificationBox ID="nbEditModeMessage" runat="server" NotificationBoxType="Info" />
 
             <div class="panel panel-block">
                 <div class="panel-heading">
