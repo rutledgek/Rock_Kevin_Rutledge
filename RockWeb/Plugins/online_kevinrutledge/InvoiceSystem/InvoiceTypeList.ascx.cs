@@ -20,7 +20,7 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
     [Category("online_kevinrutledge > Invoice System")]
     [Description("List of all Invoice Types.")]
 
-    [LinkedPage("Detail Page","",true,online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceTypeDetailpage)]
+    [LinkedPage("Detail Page","",true, online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceTypeDetailPage)]
     public partial class InvoiceTypeList : Rock.Web.UI.RockBlock
     {
 
@@ -76,12 +76,6 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
             SortProperty sortProperty = gInvoiceTypes.SortProperty;
 
             var query = service.Queryable();
-
-            int? campusId = gfSettings.GetFilterPreference("Campus").AsIntegerOrNull();
-            if (campusId.HasValue)
-            {
-                query = query.Where(a => a.CampusId == campusId.Value);
-            }
 
             bool showInactiveTypes = gfSettings.GetFilterPreference("Show Inactive Invoice Types").AsBoolean();
 

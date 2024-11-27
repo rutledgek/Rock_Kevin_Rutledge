@@ -21,16 +21,25 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
 	            [IsActive] bit NOT NULL Default 1,
 	            [InvoiceTerm] [nvarchar](100) Null, 
 	            [InvoiceItemTerm] [nvarchar](100) Null,
-	            [FinancialBatchPrefix] nvarchar(100) Null,
 	            [IconCssClass] nvarchar(100) null,
-	            [DefaultCommunicationTemplate] nvarchar(max) null,
-	            [LateInvoiceCommunicationTemplate] nvarchar(max) null,
-                [GlobalTaxPercent] [decimal](18, 2) Not NULL Default 0,
-	            [GlobalDaysUntilLate] int Null,
-	            [GlobalLateFeeAmount] [decimal](18, 2) Not Null default 0,
-	            [GlobalLateFeePercentage] [decimal](5, 2) Not NULL Default 0,
-                [CampusId] [int] NULL,
+                [DefaultFinancialAccountId] [int] Null,
+                [DefaultTaxRate] [decimal](18, 2) Not NULL Default 0,
+	            [DefaultDaysUntilLate] int Null,
+	            [DefaultLateFeeAmount] [decimal](18, 2) Not Null default 0,
+	            [DefaultLateFeePercent] [decimal](5, 2) Not NULL Default 0,
                 [CategoryId] [int] NULL,
+                [InvoiceFromPersonAliasId] [int] NULL,
+                [InvoiceFromName] [nvarchar](max) NULL,
+                [InvoiceFromEmail] [nvarchar](max) NULL,
+                [InvoiceSubject] [nvarchar](max) NULL,
+	            [InvoiceCommunicationTemplate] nvarchar(max) null,
+                [InvoiceSystemCommunicationId] int null,
+                [LateNoticeFromPersonAliasId] [int] NULL,
+                [LateNoticeFromName] [nvarchar](max) NULL,
+                [LateNoticeFromEmail] [nvarchar](max) NULL,
+	            [LateNoticeSubject] [nvarchar](max) NULL,
+                [LateNoticeCommunicationTemplate] nvarchar(max) null,
+                [LateNoticeSystemCommunicationId] int null,
 	            [Guid] [uniqueidentifier] NOT NULL,
 	            [CreatedDateTime] [datetime] NULL,
 	            [ModifiedDateTime] [datetime] NULL,
@@ -56,11 +65,38 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
 	            ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] CHECK CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_ModifiedByPersonAliasId]
 
 
-                ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType]  WITH CHECK ADD  CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_CampusId] FOREIGN KEY([CampusId])
-		            REFERENCES [dbo].[Campus] ([Id])
+                ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType]  WITH CHECK ADD  CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_DefaultFinancialAccountId] FOREIGN KEY([DefaultFinancialAccountId])
+		            REFERENCES [dbo].[FinancialAccount] ([Id])
 
-	            ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] CHECK CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_CampusId]
+	            ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] CHECK CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_DefaultFinancialAccountId]
 
+
+                ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType]  WITH CHECK ADD  CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_InvoiceSystemCommunicationId] FOREIGN KEY([InvoiceSystemCommunicationid])
+		            REFERENCES [dbo].[SystemCommunication] ([Id])
+
+	            ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] CHECK CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_InvoiceSystemCommunicationId]
+
+                ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType]  WITH CHECK ADD  CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_LateNoticeSystemCommunicationId] FOREIGN KEY([LateNoticeSystemCommunicationid])
+		            REFERENCES [dbo].[SystemCommunication] ([Id])
+
+	            ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] CHECK CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_LateNoticeSystemCommunicationId]
+
+
+
+                ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType]  WITH CHECK ADD  CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_InvoiceFromPersonAliasId] FOREIGN KEY([InvoiceFromPersonAliasId])
+		                            REFERENCES [dbo].[PersonAlias] ([Id])
+
+	            ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] CHECK CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_InvoiceFromPersonAliasId]
+
+
+
+                ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType]  WITH CHECK ADD  CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_LateNoticeFromPersonAliasId] FOREIGN KEY([LateNoticeFromPersonAliasId])
+		                            REFERENCES [dbo].[PersonAlias] ([Id])
+
+	            ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] CHECK CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_LateNoticeFromPersonAliasId]
+
+
+                
 
 
                 ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType]  WITH CHECK ADD  CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_CategoryId] FOREIGN KEY([CategoryId])
@@ -76,7 +112,7 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
 
             /* Update the BlockType */
             RockMigrationHelper.UpdateBlockType("Invoice Type List", "", "~/Plugins/online_kevinrutledge/InvoiceSystem/InvoiceTypeList.ascx", "online_kevinrutledge > Invoice System", online.kevinrutledge.InvoiceSystem.SystemGuids.BlockTypeGuids.InvoiceTypeList);
-
+            RockMigrationHelper.UpdateBlockType("Invoice Type Detail","", "~/Plugins/online_kevinrutledge/InvoiceSystem/InvoiceTypeDetail.ascx","online_kevinrutledge> Invoice System",online.kevinrutledge.InvoiceSystem.SystemGuids.BlockTypeGuids.InvoiceTypeDetail);
 
             /* Update the EntityType */
             RockMigrationHelper.UpdateEntityType("online.kevinrutledge.InvoiceSystem.Model.InvoiceType", online.kevinrutledge.InvoiceSystem.SystemGuids.EntityTypeGuids.Invoice_Type, true, true);
@@ -91,8 +127,8 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
             RockMigrationHelper.AddBlock(online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceTypeListPage, null,online.kevinrutledge.InvoiceSystem.SystemGuids.BlockTypeGuids.InvoiceTypeList, "Invoice Type List", "Main", "", "", 0, online.kevinrutledge.InvoiceSystem.SystemGuids.BlockGuids.InvoiceTypeListBlock);
 
             /* Create Invoice Type Detail Page */
-            RockMigrationHelper.AddPage(online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceTypeListPage, online.kevinrutledge.InvoiceSystem.SystemGuids.SystemGuids.FullWidthLayout, "Invoice Type Detail Page", "Detail of an Invoice Type.", online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceTypeDetailpage, "fa fa-file-list-o");
-
+            RockMigrationHelper.AddPage(online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceTypeListPage, online.kevinrutledge.InvoiceSystem.SystemGuids.SystemGuids.FullWidthLayout, "Invoice Type Detail Page", "Detail of an Invoice Type.", online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceTypeDetailPage, "fa fa-file-list-o");
+            RockMigrationHelper.AddBlock(online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceTypeDetailPage, null, online.kevinrutledge.InvoiceSystem.SystemGuids.BlockTypeGuids.InvoiceTypeDetail, "Invoice Type Detail", "Main", "", "", 0, online.kevinrutledge.InvoiceSystem.SystemGuids.BlockGuids.InvoiceTypeDetailBlock);
 
 
         }
@@ -108,10 +144,31 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
                 ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] 
                     DROP CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_ModifiedByPersonAliasId];
 
+                ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] 
+                    DROP CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_DefaultFinancialAccountId]
+
+                ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] 
+                    DROP CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_InvoiceSystemCommunicationId]
+
+                ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] 
+                    DROP CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_LateNoticeSystemCommunicationId]
+
+
+
+
+                ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] 
+                    DROP CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_LateNoticeFromPersonAliasId]
+
+
+
+                ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] 
+                    DROP CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_InvoiceFromPersonAliasId]
+
                 -- Drop primary key constraint
                 ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] 
                     DROP CONSTRAINT [PK__online_kevinrutledge_InvoiceSystem_InvoiceType];
 
+                
                 -- Drop the table
                 DROP TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType];"
             );
@@ -119,7 +176,7 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
             RockMigrationHelper.DeleteEntityType(online.kevinrutledge.InvoiceSystem.SystemGuids.EntityTypeGuids.Invoice_Type);
 
             RockMigrationHelper.DeleteBlockType(online.kevinrutledge.InvoiceSystem.SystemGuids.BlockTypeGuids.InvoiceTypeList);
-            RockMigrationHelper.DeletePage(online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceTypeDetailpage);
+            RockMigrationHelper.DeletePage(online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceTypeDetailPage);
             RockMigrationHelper.DeletePage(online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceTypeListPage);
             RockMigrationHelper.DeletePage(online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceSystemParentPage);
         }

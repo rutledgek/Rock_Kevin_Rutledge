@@ -16,9 +16,16 @@ namespace online.kevinrutledge.InvoiceSystem.SystemGuids
 
         public const string InvoiceSystemParentPage = "50AA4AB1-873D-48CB-B47E-9C39F493B2A9";
         public const string InvoiceTypeListPage = "B13741EE-8F2D-4269-A9D1-6020E4F52730";
-        public const string InvoiceTypeDetailpage = "75E3F4CF-E8F7-4D1E-88A0-F454657338C9";
+        public const string InvoiceTypeDetailPage = "75E3F4CF-E8F7-4D1E-88A0-F454657338C9";
     }
 
+    public static class Categories
+    {
+        public const string InvoiceSystemCommumincations = "17AFC761-9AEA-4AA8-B9A3-0C465FEB3EC0";
+        public const string InvoiceSystemInvoceCommunication = "0DCB034C-CCEC-4F44-806B-46F5294534C3";
+        public const string InvoiceSystemLateNoticeCommunication = "A72A3E1C-08C0-4FEA-B3C2-DD264459DB60";
+
+    }
 
     public static class BlockTypeGuids
     {
@@ -30,6 +37,7 @@ namespace online.kevinrutledge.InvoiceSystem.SystemGuids
     public static class BlockGuids
     {
         public const string InvoiceTypeListBlock = "2C71E4B7-1E55-47A6-BC0E-3FE1CAB85AA9";
+        public const string InvoiceTypeDetailBlock = "B03CAC59-D059-48BD-9761-ECF8A7C81026";
     }
 
 
