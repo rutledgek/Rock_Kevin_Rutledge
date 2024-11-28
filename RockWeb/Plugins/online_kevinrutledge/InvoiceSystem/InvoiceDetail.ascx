@@ -25,19 +25,19 @@
                     <asp:Literal runat="server" ID="ltlInvoiceNumberAndName" />
 
                 </h1>
-                <Rock:HighlightLabel ID="hlblInvoiceStatus" runat="server" LabelType="Warning" Text="Draft"/>
+                <Rock:HighlightLabel ID="hlblInvoiceStatus" runat="server" LabelType="Warning" Text="Draft" />
             </div>
             <div class="panel-body">
                 <div class="row">
                     <div class="col-md-8">
 
-                   <div class="row">
-                       <div class="col-md-12">
-                           <Rock:DataTextBox ID="tbName" runat="server" SourceTypeName="online.kevinrutledge.InvoiceSystem.Model.Invoice, online.kevinrutledge.InvoiceSystem" PropertyName="Name" />
+                        <div class="row">
+                            <div class="col-md-12">
+                                <Rock:DataTextBox ID="tbName" runat="server" SourceTypeName="online.kevinrutledge.InvoiceSystem.Model.Invoice, online.kevinrutledge.InvoiceSystem" PropertyName="Name" />
 
 
-                       </div>
-                   </div>
+                            </div>
+                        </div>
 
                         <!-- Invoice Details Section -->
                         <div class="row">
@@ -63,82 +63,84 @@
 
                             </div>
                         </div>
-                        <hr />
+
+                    </div>
+
+                    <div class="col-md-4">
+
+
                         <div class="row">
-                        <div class="col-md-12">
+                            <div class="col-md-12">
 
-                            <div class="panel panel-block">
-                                <div class="panel-heading">
-                                    <h1 class="panel-title">Invoice Items</h1>
-                                </div>
-                                <div class="panel-body">
-
-                                    <div class="grid grid-panel">
-                                        <Rock:Grid ID="gInvoiceItems" runat="server" DisplayType="Light"
-                                            RowItemText="Item" ShowConfirmDeleteDialog="false"
-                                            OnRowSelected="gInvoiceItems_RowSelected" DataKeyNames="Guid">
-                                            <Columns>
-                                                <Rock:RockBoundField DataField="Description" HeaderText="Name" />
-                                                <Rock:RockBoundField DataField="Quantity" HeaderText="Quantity" />
-                                                <Rock:RockBoundField DataField="UnitPrice" HeaderText="Price" />
-                                                <Rock:RockBoundField DataField="TotalPrice" HeaderText="Total Price" />
-                                                <Rock:DeleteField OnClick="gInvoiceItem_Delete" />
-                                            </Columns>
-                                        </Rock:Grid>
+                                <div class="panel panel-block">
+                                    <div class="panel-heading">
+                                        <h1 class="panel-title">Payee List</h1>
+                                        <Rock:HighlightLabel ID="hlblCurrentAssignedTotalGridView" runat="server"
+                                            LabelType="Danger" />
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    </div>
+                                    <div class="panel-body">
 
-                <div class="col-md-4">
-
-
-                    <div class="row">
-                        <div class="col-md-12">
-
-                            <div class="panel panel-block">
-                                <div class="panel-heading">
-                                    <h1 class="panel-title">Payee List</h1>
-                                    <Rock:HighlightLabel ID="hlblCurrentAssignedTotalGridView" runat="server"
-                                        LabelType="Danger" />
-                                </div>
-                                <div class="panel-body">
-
-                                    <div class="grid grid-panel">
-                                        <Rock:Grid ID="gAssignments" runat="server" DisplayType="Light"
-                                            RowItemText="Assignment" ShowConfirmDeleteDialog="false"
-                                            DataKeyNames="Guid">
-                                            <Columns>
-                                                <Rock:RockBoundField DataField="PersonAliasName"
-                                                    HeaderText="Person" />
-                                                <Rock:RockBoundField DataField="AssignedPercent"
-                                                    HeaderText="Percent Assigned" />
-                                                <Rock:EditField OnClick="gAssignments_RowSelected" />
-                                                <Rock:DeleteField OnClick="gAssignment_Delete" />
-                                            </Columns>
-                                        </Rock:Grid>
+                                        <div class="grid grid-panel">
+                                            <Rock:Grid ID="gAssignments" runat="server" DisplayType="Light"
+                                                RowItemText="Assignment" ShowConfirmDeleteDialog="false"
+                                                DataKeyNames="Guid">
+                                                <Columns>
+                                                    <Rock:RockBoundField DataField="PersonAliasName"
+                                                        HeaderText="Person" />
+                                                    <Rock:RockBoundField DataField="AssignedPercent"
+                                                        HeaderText="Percent Assigned" />
+                                                    <Rock:EditField OnClick="gAssignments_RowSelected" />
+                                                    <Rock:DeleteField OnClick="gAssignment_Delete" />
+                                                </Columns>
+                                            </Rock:Grid>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <hr />
+                <div class="row">
+                    <div class="col-md-12">
+
+                        <div class="panel panel-block">
+                            <div class="panel-heading">
+                                <h1 class="panel-title">Invoice Items</h1>
+                            </div>
+                            <div class="panel-body">
+
+                                <div class="grid grid-panel">
+                                    <Rock:Grid ID="gInvoiceItems" runat="server" DisplayType="Light"
+                                        RowItemText="Item" ShowConfirmDeleteDialog="false"
+                                        OnRowSelected="gInvoiceItems_RowSelected" DataKeyNames="Guid">
+                                        <Columns>
+                                            <Rock:RockBoundField DataField="Description" HeaderText="Description" />
+                                            <Rock:RockBoundField DataField="Quantity" HeaderText="Quantity" />
+                                            <Rock:RockBoundField DataField="UnitPrice" HeaderText="Unit Price" />
+                                            <Rock:RockBoundField DataField="TotalPrice" HeaderText="Total Price" />
+                                            <Rock:DeleteField OnClick="gInvoiceItem_Delete" />
+                                        </Columns>
+                                    </Rock:Grid>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <Rock:ModalDialog ID="dlgAssignment" runat="server" ScrollbarEnabled="false" ValidationGroup="Assignment"
-            SaveButtonText="Add" OnCancelClick="ClearAssignmentDialogFields()" OnSaveClick="btnSaveAssignment_Click"
+            SaveButtonText="Add" OnCancelClick="ClearAllModalFields" OnSaveClick="btnSaveAssignment_Click"
             Title="Enter Person and Percent">
             <Content>
                 <asp:ValidationSummary ID="vsAssignment" runat="server" HeaderText="Please correct the following:"
                     CssClass="alert alert-validation" ValidationGroup="Assignment" />
-                <Rock:PersonPicker ID="ppAssignment" runat="server" Required="true" Label="Person" />
-                <Rock:HighlightLabel ID="hlblCurrentAssignedTotal" runat="server" LabelType="Danger" />
+                <Rock:PersonPicker ID="ppAssignment" runat="server" Required="true" Label="Person" ValidationGroup="Assignment"/>
+                <Rock:HighlightLabel ID="hlblCurrentAssignedTotal" runat="server" LabelType="Danger"  ValidationGroup="Assignment" />
                 <Rock:NumberBox ID="numbAssignedPercent" runat="server" Label="Percent of Invoice Assigned"
-                    Help="What percent of the total invoice is this person responsible for." />
+                    Help="What percent of the total invoice is this person responsible for." NumberType="Integer"  ValidationGroup="Assignment"/>
 
             </Content>
         </Rock:ModalDialog>
@@ -147,18 +149,45 @@
 
 
 
-        <Rock:ModalDialog ID="dlgInvoiceItem" runat="server" ScrollbarEnabled="false" ValidationGroup="Assignment"
-    SaveButtonText="Add" OnCancelClick="ClearAssignmentDialogFields()" OnSaveClick="btnSaveAssignment_Click"
-    Title="Enter Person and Percent">
-    <Content>
-        <asp:ValidationSummary ID="ValidationSummary1" runat="server" HeaderText="Please correct the following:"
-            CssClass="alert alert-validation" ValidationGroup="Assignment" />
-        <Rock:PersonPicker ID="PersonPicker1" runat="server" Required="true" Label="Person" />
-        <Rock:HighlightLabel ID="HighlightLabel1" runat="server" LabelType="Danger" />
-        <Rock:NumberBox ID="NumberBox1" runat="server" Label="Percent of Invoice Assigned"
-            Help="What percent of the total invoice is this person responsible for." />
+        <Rock:ModalDialog ID="dlgInvoiceItem" runat="server" ScrollbarEnabled="false" ValidationGroup="InvoiceItem"
+            SaveButtonText="Add" OnCancelClick="ClearAllModalFields" OnSaveClick="btnSaveInvoiceItem_Click"
+            Title="Create the Invoice Item">
+            <Content>
+                <asp:ValidationSummary ID="vsInvoiceItem" runat="server" HeaderText="Please correct the following:"
+                    CssClass="alert alert-validation" ValidationGroup="InvoiceItem" />
+                <Rock:DataTextBox ID="tbItemDescription" runat="server" Label="Description" SourceTypeName="online.kevinrutledge.InvoiceSystem.Model.InvoiceItem, online.kevinrutledge.InvoiceSystem" PropertyName="Description" Required="true" ValidationGroup="IvoiceItem" />
+                <div class="row">
+                    <div class="col-md-6">
+                        <Rock:NumberBox ID="numbQuantity" runat="server" Label="Quantity" NumberType="Integer" Required="true" ValidationGroup="IvoiceItem" />
+                    </div>
+                    <div class="col-md-6">
+                        <Rock:NumberBox ID="numbUnitPrice" runat="server" Label="Unit Price" NumberType="Currency" Required="true" ValidationGroup="IvoiceItem" />
+                    </div>
+                </div>
+                 <Rock:NumberBox ID="numbTaxPercent" runat="server" Label="Item Tax Rate" NumberType="Double" Help="If this value is left blank, the Tax Rate value on the invoice type will be used for all items."/>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="panel panel-success">
+                            <div class="panel-heading">
+                                <h1 class="panel-title">Discounts to Apply</h1>
+                            </div>
+                            <div class="panel-body">
+                                <p>If you want to apply a discount to the item, enter the full price above and then choose either an Amount or Precent to apply.</p>
+                                <div class="row">
+                                    <div class="col-md-6">
 
-    </Content>
-</Rock:ModalDialog>
+                                        <Rock:NumberBox ID="numbDiscountAmount" runat="server" Label="Discount Amount" NumberType="Currency" />
+                                    </div>
+                                    <div class="col-md-6">
+                                        <Rock:NumberBox ID="numbDiscountPercentage" runat="server" Label="Discount Percent" NumberType="Double" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                                       
+            </Content>
+        </Rock:ModalDialog>
     </ContentTemplate>
 </asp:UpdatePanel>

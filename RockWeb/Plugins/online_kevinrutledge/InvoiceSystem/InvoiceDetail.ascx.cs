@@ -182,7 +182,7 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
         protected void gAssignments_AddClick(object sender, EventArgs e)
         {
             hfAssignmentGuid.Value = string.Empty; // Clear the GUID for new assignments
-            ClearAssignmentDialogFields();
+            ClearDialogFields();
             ShowDialog(Dialogs.InvoiceAssignment);
         }
 
@@ -278,12 +278,7 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
 
 
 
-        protected void ClearAssignmentDialogFields()
-        {
-            hfActiveDialog.Value = string.Empty;
-            ppAssignment.SetValue(null);
-            numbAssignedPercent.Text = string.Empty;
-        }
+
 
 
         #endregion
@@ -294,7 +289,7 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
         protected void gInvoiceItems_AddClick(object sender, EventArgs e)
         {
             hfInvoiceItemGuid.Value = string.Empty; // Clear the GUID for new Invoice Items
-            ClearInvoiceItemDialogFields();
+            ClearDialogFields();
             ShowDialog(Dialogs.InvoiceItem);
         }
 
@@ -384,13 +379,6 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
             gInvoiceItems.DataBind();
         }
 
-        protected void ClearInvoiceItemDialogFields()
-        {
-            //tbItemName.Text = string.Empty;
-            //nbQuantity.Text = string.Empty;
-            //nbUnitPrice.Text = string.Empty;
-        }
-
         #endregion
 
 
@@ -414,7 +402,13 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
                 if (dialog == Dialogs.InvoiceAssignment)
                 {
                     dlgAssignment.Hide();
-                    ClearAssignmentDialogFields();
+                    ClearDialogFields();
+                }
+           
+                if (dialog == Dialogs.InvoiceItem)
+                {
+                    dlgInvoiceItem.Hide();
+                    
                 }
             }
 
@@ -444,9 +438,32 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
                 hlblCurrentAssignedTotal.Text = $"{remainingPercent:0.##}% Not Assigned";
                 dlgAssignment.Show();
             }
+            if( dialog == Dialogs.InvoiceItem)
+            {
+                dlgInvoiceItem.Show();
+
+            }
         }
 
+        protected void ClearDialogFields()
+        {
+            // Clear fields in dlgAssignment
+            ppAssignment.SetValue(null); // Clear PersonPicker
+            hlblCurrentAssignedTotal.Text = string.Empty; // Clear HighlightLabel
+            numbAssignedPercent.Text = string.Empty; // Clear NumberBox
 
+            // Clear fields in dlgInvoiceItem
+            tbItemDescription.Text = string.Empty; // Clear DataTextBox
+            numbQuantity.Text = string.Empty; // Clear Quantity NumberBox
+            numbUnitPrice.Text = string.Empty; // Clear Unit Price NumberBox
+            numbTaxPercent.Text = string.Empty; // Clear Tax Percent NumberBox
+            numbDiscountAmount.Text = string.Empty; // Clear Discount Amount NumberBox
+            numbDiscountPercentage.Text = string.Empty; // Clear Discount Percentage NumberBox
+
+            // Clear Validation Summary Controls
+            vsAssignment.Controls.Clear(); 
+            vsInvoiceItem.Controls.Clear();
+        }
         #endregion
 
         #region Enums
