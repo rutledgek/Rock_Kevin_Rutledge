@@ -13,6 +13,41 @@
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
   </PropertyGroup>
+    <PropertyGroup>
+    <VersionFile>$(ProjectDir)\builds\.version</VersionFile>
+  </PropertyGroup>
+
+    <!-- Pre-build target to increment version -->
+  <Target Name="BeforeBuild">
+    <Message Text="Pre-Build: Incrementing version number in .version file." Importance="high" />
+
+    <!-- Define the version file location -->
+    <PropertyGroup>
+      <VersionFile>$(ProjectDir)\builds\.version</VersionFile>
+    </PropertyGroup>
+
+    <!-- Read the current version -->
+    <ReadLinesFromFile File="$(VersionFile)">
+      <Output TaskParameter="Lines" PropertyName="CurrentVersion" />
+    </ReadLinesFromFile>
+    <Message Text="Current version: $(CurrentVersion)" Importance="high" />
+
+    <!-- Parse and increment the build number -->
+    <PropertyGroup>
+      <MajorVersion>$([System.String]::new('$(CurrentVersion)').Split('.')[0])</MajorVersion>
+      <MinorVersion>$([System.String]::new('$(CurrentVersion)').Split('.')[1])</MinorVersion>
+      <BuildVersion>$([System.String]::new('$(CurrentVersion)').Split('.')[2])</BuildVersion>
+      <RevisionVersion>$([System.String]::new('$(CurrentVersion)').Split('.')[3])</RevisionVersion>
+      <BuildVersion>$([System.Int32]::Parse('$(BuildVersion)') + 1)</BuildVersion>
+      <NewVersion>$(MajorVersion).$(MinorVersion).$(BuildVersion).$(RevisionVersion)</NewVersion>
+    </PropertyGroup>
+    <Message Text="New version: $(NewVersion)" Importance="high" />
+
+    <!-- Write the updated version back to the .version file -->
+    <WriteLinesToFile File="$(VersionFile)" Lines="$(NewVersion)" Overwrite="true" />
+    <Message Text="Version number updated in .version file." Importance="high" />
+  </Target>
+  
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
@@ -93,4 +128,93 @@
     <Folder Include="Rest\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>@echo off
+SETLOCAL ENABLEDELAYEDEXPANSION
+
+REM Define paths
+SET SolutionDir=$(SolutionDir)
+SET ProjectDir=$(ProjectDir)
+SET BuildDir=%25SolutionDir%25\..\..\RockProjectBuilds
+SET AssemblyName=$(ProjectName)
+
+@echo off
+
+
+REM Replace first . with _
+FOR /F "tokens=1* delims=." %25%25A IN ("%25AssemblyName%25") DO (
+    SET TransformedName=%25%25A_%25%25B
+)
+
+REM Replace remaining . with \
+SET FolderParts=%25TransformedName%25
+:replaceLoop
+SET FolderParts=%25FolderParts:.=\%25
+IF NOT "%25FolderParts%25"=="%25FolderParts:.=%25" GOTO replaceLoop
+
+REM Read the .version file to get the version number
+SET VersionFile=%25ProjectDir%25\builds\.version
+IF EXIST "%25VersionFile%25" (
+    FOR /F "delims=" %25%25V IN (%25VersionFile%25) DO SET VersionNumber=%25%25V
+) ELSE (
+    echo ERROR: .version file not found!
+    pause
+    exit /b 1
+)
+
+SET FileOutputLocation=%25BuildDir%25\%25FolderParts%25\%25VersionNumber%25
+
+
+REM Debugging: Print variables
+echo SolutionDir = %25SolutionDir%25
+echo ProjectDir = %25ProjectDir%25
+echo BuildDir = %25BuildDir%25
+echo TransformedName = %25FolderParts%25
+echo FolderParts = %25FolderParts%25
+echo bin = "%25FileOutputLocation%25\content\bin"
+echo VersionNumber = %25VersionNumber%25
+echo FileOutputLocation = %25FileOutputLocation%25
+
+pause
+
+REM Create folder structure
+mkdir "%25FileOutputLocation%25\content\bin"
+mkdir "%25FileOutputLocation%25\content\Plugins"
+mkdir "%25FileOutputLocation%25\install"
+mkdir "%25FileOutputLocation%25\uninstall"
+
+REM Copy the DLL file
+xcopy /Y /F "%25ProjectDir%25\bin\Release\%25AssemblyName%25.dll" "%25FileOutputLocation%25\content\bin\"
+
+REM Copy all folders and files recursively within the FolderParts folder
+xcopy /Y /E /F "%25SolutionDir%25\RockWeb\Plugins\%25FolderParts%25\*" "%25FileOutputLocation%25\content\Plugins\%25FolderParts%25\"
+
+REM Include version file for install/uninstall
+xcopy /Y /H /F "%25ProjectDir%25\builds\.version" "%25FileOutputLocation%25\install"
+xcopy /Y /H /F "%25ProjectDir%25\builds\.version" "%25FileOutputLocation%25\uninstall"
+
+REM Compress files into a ZIP
+
+powershell -Command "Compress-Archive -Path '%25FileOutputLocation%25\*' -DestinationPath '%25BuildDir%25\%25TransformedName%25.zip' -Force"
+IF ERRORLEVEL 1 (
+    echo ERROR: ZIP file creation failed.
+    exit /b 1
+)
+echo ZIP file created successfully.
+
+REM Rename ZIP file to plugin file and move to parent directory
+rename "%25BuildDir%25\%25TransformedName%25.zip" "%25TransformedName%25_%25VersionNumber%25.plugin"
+move /Y "%25BuildDir%25\%25TransformedName%25_%25VersionNumber%25.plugin" "%25FileOutputLocation%25\"
+
+IF ERRORLEVEL 1 (
+    echo ERROR: Plugin file rename or move failed.
+    pause
+    exit /b 1
+)
+echo Plugin file created successfully.
+
+REM Complete
+echo Build script completed successfully.
+pause</PostBuildEvent>
+  </PropertyGroup>
 </Project>
