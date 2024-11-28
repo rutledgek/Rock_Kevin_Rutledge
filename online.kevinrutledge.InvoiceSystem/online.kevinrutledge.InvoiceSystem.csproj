@@ -16,38 +16,6 @@
     <PropertyGroup>
     <VersionFile>$(ProjectDir)\builds\.version</VersionFile>
   </PropertyGroup>
-
-    <!-- Pre-build target to increment version -->
-  <Target Name="BeforeBuild">
-    <Message Text="Pre-Build: Incrementing version number in .version file." Importance="high" />
-
-    <!-- Define the version file location -->
-    <PropertyGroup>
-      <VersionFile>$(ProjectDir)\builds\.version</VersionFile>
-    </PropertyGroup>
-
-    <!-- Read the current version -->
-    <ReadLinesFromFile File="$(VersionFile)">
-      <Output TaskParameter="Lines" PropertyName="CurrentVersion" />
-    </ReadLinesFromFile>
-    <Message Text="Current version: $(CurrentVersion)" Importance="high" />
-
-    <!-- Parse and increment the build number -->
-    <PropertyGroup>
-      <MajorVersion>$([System.String]::new('$(CurrentVersion)').Split('.')[0])</MajorVersion>
-      <MinorVersion>$([System.String]::new('$(CurrentVersion)').Split('.')[1])</MinorVersion>
-      <BuildVersion>$([System.String]::new('$(CurrentVersion)').Split('.')[2])</BuildVersion>
-      <RevisionVersion>$([System.String]::new('$(CurrentVersion)').Split('.')[3])</RevisionVersion>
-      <BuildVersion>$([System.Int32]::Parse('$(BuildVersion)') + 1)</BuildVersion>
-      <NewVersion>$(MajorVersion).$(MinorVersion).$(BuildVersion).$(RevisionVersion)</NewVersion>
-    </PropertyGroup>
-    <Message Text="New version: $(NewVersion)" Importance="high" />
-
-    <!-- Write the updated version back to the .version file -->
-    <WriteLinesToFile File="$(VersionFile)" Lines="$(NewVersion)" Overwrite="true" />
-    <Message Text="Version number updated in .version file." Importance="high" />
-  </Target>
-  
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>

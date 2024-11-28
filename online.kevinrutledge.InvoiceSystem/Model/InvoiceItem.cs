@@ -43,15 +43,18 @@ namespace online.kevinrutledge.InvoiceSystem.Model
 
         // Quantity of the item
         [DataMember]
+        [Range(0, int.MaxValue, ErrorMessage = "Quantity must be non-negative.")]
         public int? Quantity { get; set; }
 
 
         // Price of the item
         [DataMember]
-        public decimal? Price { get; set; }
+        [Range(0, double.MaxValue, ErrorMessage = "Unit Price must be non-negative.")]
+        public decimal? UnitPrice { get; set; }
 
         // Discount Percentage of the item
         [DataMember]
+        [Range(0, 100, ErrorMessage = "Discount Percentage must be between 0 and 100.")]
         public decimal? DiscountPercentage { get; set; }
 
         // Discount Amount of the item
@@ -60,6 +63,7 @@ namespace online.kevinrutledge.InvoiceSystem.Model
 
         // Tax Percentage of the item
         [DataMember]
+        [Range(0, 100, ErrorMessage = "Tax Percentage must be between 0 and 100.")]
         public decimal? TaxPercentage { get; set; }
 
         // Entity Type of the item
@@ -101,7 +105,7 @@ namespace online.kevinrutledge.InvoiceSystem.Model
             // no specific foreign key configuration is set here.
 
             //Create Relationship to Invoice
-            this.HasRequired(i => i.Invoice).WithMany().HasForeignKey(i => i.InvoiceId).WillCascadeOnDelete(false);
+            this.HasRequired(i => i.Invoice).WithMany().HasForeignKey(i => i.InvoiceId).WillCascadeOnDelete(true);
             this.HasOptional(i => i.EntityType).WithMany().HasForeignKey(i => i.EntityTypeId).WillCascadeOnDelete(false);
 
 

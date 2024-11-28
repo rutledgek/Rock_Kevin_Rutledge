@@ -30,6 +30,13 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
         public Dictionary<Guid, (int AuthorizedPersonAliasId, decimal AssignedPercent)> InvoiceAssignmentState { get; set; }
             = new Dictionary<Guid, (int AuthorizedPersonAliasId, decimal AssignedPercent)>();
 
+        public Dictionary<Guid, (string Description, int Quantity, decimal UnitPrice)> InvoiceItemState { get; set; }
+            = new Dictionary<Guid, (string Description, int Quantity, decimal UnitPrice)>();
+
+
+
+
+
         private Invoice _invoice = null; // Cached invoice instance
 
         #endregion
@@ -59,6 +66,13 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
             gAssignments.Actions.ShowAdd = true;
             gAssignments.Actions.AddClick += gAssignments_AddClick;
             gAssignments.GridRebind += gAssignments_GridRebind;
+
+            // Configure Items Grid
+            gInvoiceItems.DataKeyNames = new[] { "Guid" };
+            gInvoiceItems.Actions.ShowAdd = true;
+            gInvoiceItems.Actions.AddClick += gInvoiceItems_AddClick;
+            gInvoiceItems.GridRebind += gInvoiceItems_GridRebind;
+
 
             // Register BlockUpdated event
             this.BlockUpdated += Block_BlockUpdated;
@@ -133,8 +147,27 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
                 }
             }
 
+            // Populate Items State
+            InvoiceItemState.Clear();
+            if ( invoice?.InvoiceItems != null)
+            {
+                foreach( var item in invoice.InvoiceItems)
+                {
+                    var itemKey = item.Guid != Guid.Empty ? item.Guid : Guid.NewGuid();
+                    InvoiceItemState[itemKey] = (
+                        //
+                        Description: item.Description,
+                        Quantity: item.Quantity.ToIntSafe(),
+                        UnitPrice: item.UnitPrice.ToIntSafe()
+                        );
+                }
+
+            }    
+
+
             // Bind Assignment Grid
             BindAssignmentGrid();
+            BindInvoiceItemsGrid();
         }
 
         protected void Block_BlockUpdated(object sender, EventArgs e)
@@ -144,7 +177,7 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
 
         #endregion
 
-        #region Grid Methods and Events
+        #region Assignment Grid Methods and Events
 
         protected void gAssignments_AddClick(object sender, EventArgs e)
         {
@@ -187,6 +220,36 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
             BindAssignmentGrid();
         }
 
+
+        protected void btnSaveAssignment_Click(object sender, EventArgs e)
+        {
+            var personAliasId = ppAssignment.PersonAliasId;
+            var percentAssigned = numbAssignedPercent.Text.AsDecimal();
+
+            if (personAliasId.HasValue && percentAssigned > 0)
+            {
+                Guid assignmentKey;
+
+                if (!string.IsNullOrWhiteSpace(hfAssignmentGuid.Value) && Guid.TryParse(hfAssignmentGuid.Value, out assignmentKey))
+                {
+                    // Edit existing entry
+                    InvoiceAssignmentState[assignmentKey] = (personAliasId.Value, percentAssigned);
+                }
+                else
+                {
+                    // Add new entry
+                    assignmentKey = Guid.NewGuid();
+                    InvoiceAssignmentState[assignmentKey] = (personAliasId.Value, percentAssigned);
+                }
+
+
+            }
+
+            HideDialog();
+
+            BindAssignmentGrid();
+        }
+
         protected void BindAssignmentGrid()
         {
             using (var rockContext = new RockContext())
@@ -212,39 +275,160 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
             }
         }
 
-       
+
+
+
+        protected void ClearAssignmentDialogFields()
+        {
+            hfActiveDialog.Value = string.Empty;
+            ppAssignment.SetValue(null);
+            numbAssignedPercent.Text = string.Empty;
+        }
+
 
         #endregion
 
-        #region Modal Dialog Methods
 
-        protected void btnSaveAssignment_Click(object sender, EventArgs e)
+        #region InvoiceItems Grid Methods and Events
+
+        protected void gInvoiceItems_AddClick(object sender, EventArgs e)
         {
-            var personAliasId = ppAssignment.PersonAliasId;
-            var percentAssigned = numbAssignedPercent.Text.AsDecimal();
+            hfInvoiceItemGuid.Value = string.Empty; // Clear the GUID for new Invoice Items
+            ClearInvoiceItemDialogFields();
+            ShowDialog(Dialogs.InvoiceItem);
+        }
 
-            if (personAliasId.HasValue && percentAssigned > 0)
+        protected void gInvoiceItems_RowSelected(object sender, RowEventArgs e)
+        {
+            Guid invoiceItemKey = (Guid)e.RowKeyValue;
+
+            if (InvoiceItemState.ContainsKey(invoiceItemKey))
             {
-                Guid assignmentKey;
+                var selectedItem = InvoiceItemState[invoiceItemKey];
 
-                if (!string.IsNullOrWhiteSpace(hfAssignmentGuid.Value) && Guid.TryParse(hfAssignmentGuid.Value, out assignmentKey))
-                {
-                    // Edit existing entry
-                    InvoiceAssignmentState[assignmentKey] = (personAliasId.Value, percentAssigned);
-                }
-                else
-                {
-                    // Add new entry
-                    assignmentKey = Guid.NewGuid();
-                    InvoiceAssignmentState[assignmentKey] = (personAliasId.Value, percentAssigned);
-                }
+                // Prefill dialog fields
+                //tbItemName.Text = selectedItem.ItemName;
+                //nbQuantity.Text = selectedItem.Quantity.ToString();
+                //nbUnitPrice.Text = selectedItem.UnitPrice.ToString("F2");
 
-                
+                // Store the GUID in a hidden field for editing
+                hfInvoiceItemGuid.Value = invoiceItemKey.ToString();
+
+                // Show dialog
+                ShowDialog(Dialogs.InvoiceItem);
             }
+        }
+
+        protected void gInvoiceItem_Delete(object sender, RowEventArgs e)
+        {
+            if (e.RowKeyValue is Guid invoiceItemKey && InvoiceItemState.ContainsKey(invoiceItemKey))
+            {
+                InvoiceItemState.Remove(invoiceItemKey);
+                BindInvoiceItemsGrid();
+            }
+        }
+
+        protected void gInvoiceItems_GridRebind(object sender, EventArgs e)
+        {
+            BindInvoiceItemsGrid();
+        }
+
+        protected void btnSaveInvoiceItem_Click(object sender, EventArgs e)
+        {
+            //var itemName = tbItemName.Text;
+            //var quantity = nbQuantity.Text.AsInteger();
+            //var unitPrice = nbUnitPrice.Text.AsDecimal();
+
+            //if (!string.IsNullOrWhiteSpace(itemName) && quantity > 0 && unitPrice > 0)
+            //{
+            //    Guid invoiceItemKey;
+
+            //    if (!string.IsNullOrWhiteSpace(hfInvoiceItemGuid.Value) && Guid.TryParse(hfInvoiceItemGuid.Value, out invoiceItemKey))
+            //    {
+            //        // Edit existing entry
+            //        InvoiceItemState[invoiceItemKey] = new InvoiceItem
+            //        {
+            //            ItemName = itemName,
+            //            Quantity = quantity,
+            //            UnitPrice = unitPrice
+            //        };
+            //    }
+            //    else
+            //    {
+            //        // Add new entry
+            //        invoiceItemKey = Guid.NewGuid();
+            //        InvoiceItemState[invoiceItemKey] = new InvoiceItem
+            //        {
+            //            ItemName = itemName,
+            //            Quantity = quantity,
+            //            UnitPrice = unitPrice
+            //        };
+            //    }
+            //}
 
             HideDialog();
+            BindInvoiceItemsGrid();
+        }
 
+        protected void BindInvoiceItemsGrid()
+        {
+            gInvoiceItems.DataSource = InvoiceItemState.Select(kvp => new
+            {
+                Guid = kvp.Key,
+                ItemName = kvp.Value.Description,
+                Quantity = kvp.Value.Quantity,
+                UnitPrice = kvp.Value.UnitPrice,
+                TotalPrice = kvp.Value.Quantity * kvp.Value.UnitPrice
+            }).ToList();
+
+            gInvoiceItems.DataBind();
+        }
+
+        protected void ClearInvoiceItemDialogFields()
+        {
+            //tbItemName.Text = string.Empty;
+            //nbQuantity.Text = string.Empty;
+            //nbUnitPrice.Text = string.Empty;
+        }
+
+        #endregion
+
+
+
+
+        #region Global Modal Controls
+
+
+        protected void ClearActiveDialog()
+        {
+
+            HideDialog();
             BindAssignmentGrid();
+        }
+
+        protected void HideDialog()
+        {
+
+            if (Enum.TryParse(hfActiveDialog.Value, out Dialogs dialog))
+            {
+                if (dialog == Dialogs.InvoiceAssignment)
+                {
+                    dlgAssignment.Hide();
+                    ClearAssignmentDialogFields();
+                }
+            }
+
+            hfActiveDialog.Value = string.Empty;
+        }
+
+
+
+        protected void ShowDialog()
+        {
+            if (Enum.TryParse(hfActiveDialog.Value, out Dialogs dialog))
+            {
+                ShowDialog(dialog);
+            }
         }
 
         protected void ShowDialog(Dialogs dialog)
@@ -262,40 +446,6 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
             }
         }
 
-        protected void ClearActiveDialog()
-        {
-            
-            HideDialog();
-            BindAssignmentGrid();
-        }
-        protected void HideDialog()
-        {
-            
-            if (Enum.TryParse(hfActiveDialog.Value, out Dialogs dialog))
-            {
-                if (dialog == Dialogs.InvoiceAssignment)
-                {
-                    dlgAssignment.Hide();
-                    ClearAssignmentDialogFields();
-                }
-            }
-
-            hfActiveDialog.Value = string.Empty;
-        }
-
-        protected void ClearAssignmentDialogFields()
-        {
-            ppAssignment.SetValue(null);
-            numbAssignedPercent.Text = string.Empty;
-        }
-
-        protected void ShowDialog()
-        {
-            if (Enum.TryParse(hfActiveDialog.Value, out Dialogs dialog))
-            {
-                ShowDialog(dialog);
-            }
-        }
 
         #endregion
 
@@ -304,6 +454,7 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
         protected enum Dialogs
         {
             InvoiceAssignment
+                , InvoiceItem
         }
 
         #endregion

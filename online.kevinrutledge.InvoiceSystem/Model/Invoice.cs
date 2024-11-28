@@ -102,6 +102,9 @@ namespace online.kevinrutledge.InvoiceSystem.Model
         [DataMember]
         public virtual ICollection<InvoiceAssignment> InvoiceAssignments { get; set; } = new Collection<InvoiceAssignment>();
 
+        [DataMember]
+        public virtual ICollection<InvoiceItem> InvoiceItems { get; set; } = new Collection<InvoiceItem>();
+
         #endregion
 
     }
@@ -119,6 +122,13 @@ namespace online.kevinrutledge.InvoiceSystem.Model
                 .WithRequired(p => p.Invoice)
                 .HasForeignKey(p => p.InvoiceId)
                 .WillCascadeOnDelete(false);
+
+
+            // Congigure the One to Many Relationship with Invoice Items
+            this.HasMany(p => p.InvoiceItems)
+                .WithRequired(p => p.Invoice)
+                .HasForeignKey(p => p.InvoiceId)
+                .WillCascadeOnDelete(true);
 
             // Set entity set name for consistency and easy querying
             this.HasEntitySetName("Invoice");

@@ -6,6 +6,7 @@
         <asp:HiddenField ID="hfActiveDialog" runat="server" />
         <asp:HiddenField ID="hfInvoiceId" runat="server" />
         <asp:HiddenField ID="hfAssignmentGuid" runat="server" />
+        <asp:HiddenField ID="hfInvoiceItemGuid" runat="server" />
 
         <div class="banner">
             <h1>
@@ -62,6 +63,33 @@
 
                             </div>
                         </div>
+                        <hr />
+                        <div class="row">
+                        <div class="col-md-12">
+
+                            <div class="panel panel-block">
+                                <div class="panel-heading">
+                                    <h1 class="panel-title">Invoice Items</h1>
+                                </div>
+                                <div class="panel-body">
+
+                                    <div class="grid grid-panel">
+                                        <Rock:Grid ID="gInvoiceItems" runat="server" DisplayType="Light"
+                                            RowItemText="Item" ShowConfirmDeleteDialog="false"
+                                            OnRowSelected="gInvoiceItems_RowSelected" DataKeyNames="Guid">
+                                            <Columns>
+                                                <Rock:RockBoundField DataField="Description" HeaderText="Name" />
+                                                <Rock:RockBoundField DataField="Quantity" HeaderText="Quantity" />
+                                                <Rock:RockBoundField DataField="UnitPrice" HeaderText="Price" />
+                                                <Rock:RockBoundField DataField="TotalPrice" HeaderText="Total Price" />
+                                                <Rock:DeleteField OnClick="gInvoiceItem_Delete" />
+                                            </Columns>
+                                        </Rock:Grid>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     </div>
 
                 <div class="col-md-4">
@@ -72,7 +100,7 @@
 
                             <div class="panel panel-block">
                                 <div class="panel-heading">
-                                    <h1 class="panel-title">Invoice Assignments</h1>
+                                    <h1 class="panel-title">Payee List</h1>
                                     <Rock:HighlightLabel ID="hlblCurrentAssignedTotalGridView" runat="server"
                                         LabelType="Danger" />
                                 </div>
@@ -81,12 +109,13 @@
                                     <div class="grid grid-panel">
                                         <Rock:Grid ID="gAssignments" runat="server" DisplayType="Light"
                                             RowItemText="Assignment" ShowConfirmDeleteDialog="false"
-                                            OnRowSelected="gAssignments_RowSelected" DataKeyNames="Guid">
+                                            DataKeyNames="Guid">
                                             <Columns>
                                                 <Rock:RockBoundField DataField="PersonAliasName"
                                                     HeaderText="Person" />
                                                 <Rock:RockBoundField DataField="AssignedPercent"
                                                     HeaderText="Percent Assigned" />
+                                                <Rock:EditField OnClick="gAssignments_RowSelected" />
                                                 <Rock:DeleteField OnClick="gAssignment_Delete" />
                                             </Columns>
                                         </Rock:Grid>
@@ -113,5 +142,23 @@
 
             </Content>
         </Rock:ModalDialog>
+
+
+
+
+
+        <Rock:ModalDialog ID="dlgInvoiceItem" runat="server" ScrollbarEnabled="false" ValidationGroup="Assignment"
+    SaveButtonText="Add" OnCancelClick="ClearAssignmentDialogFields()" OnSaveClick="btnSaveAssignment_Click"
+    Title="Enter Person and Percent">
+    <Content>
+        <asp:ValidationSummary ID="ValidationSummary1" runat="server" HeaderText="Please correct the following:"
+            CssClass="alert alert-validation" ValidationGroup="Assignment" />
+        <Rock:PersonPicker ID="PersonPicker1" runat="server" Required="true" Label="Person" />
+        <Rock:HighlightLabel ID="HighlightLabel1" runat="server" LabelType="Danger" />
+        <Rock:NumberBox ID="NumberBox1" runat="server" Label="Percent of Invoice Assigned"
+            Help="What percent of the total invoice is this person responsible for." />
+
+    </Content>
+</Rock:ModalDialog>
     </ContentTemplate>
 </asp:UpdatePanel>

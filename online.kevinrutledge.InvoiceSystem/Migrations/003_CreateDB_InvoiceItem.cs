@@ -20,7 +20,7 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
                     [InvoiceId] [int] NOT NULL,
                     [Description] [nvarchar](max) NULL,
                     [Quantity] [int] NOT NULL Default 1,
-                    [Price] [decimal](18, 2) NOT NULL,
+                    [UnitPrice] [decimal](18, 2) NOT NULL,
                     [DiscountPercentage] [decimal](18, 2) NULL,
                     [DiscountAmount] [decimal](18, 2) NULL,
                     [TaxPercentage] [decimal](18, 2) NULL,
