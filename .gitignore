@@ -25,6 +25,7 @@ StyleCop.Cache
 **/[Oo]bj/[Rr]elease
 
 #specific folders
+.git
 RockWeb/Cache/*
 RockWeb/Content/ASM_Thumbnails
 RockWeb/App_Data/PackageStaging
