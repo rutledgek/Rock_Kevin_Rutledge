@@ -55,7 +55,7 @@ namespace online.kevinrutledge.InvoiceSystem.Model
         // Discount Percentage of the item
         [DataMember]
         [Range(0, 100, ErrorMessage = "Discount Percentage must be between 0 and 100.")]
-        public decimal? DiscountPercentage { get; set; }
+        public decimal? DiscountPercent { get; set; }
 
         // Discount Amount of the item
         [DataMember]
@@ -63,8 +63,8 @@ namespace online.kevinrutledge.InvoiceSystem.Model
 
         // Tax Percentage of the item
         [DataMember]
-        [Range(0, 100, ErrorMessage = "Tax Percentage must be between 0 and 100.")]
-        public decimal? TaxPercentage { get; set; }
+        [Range(0, 100, ErrorMessage = "Tax Rate must be between 0 and 100.")]
+        public decimal? TaxRate { get; set; }
 
         // Entity Type of the item
         [DataMember]
