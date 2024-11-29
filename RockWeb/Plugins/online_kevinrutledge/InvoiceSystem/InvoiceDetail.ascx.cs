@@ -15,6 +15,8 @@ using Rock.Web.UI;
 
 using online.kevinrutledge.InvoiceSystem.Model;
 using Rock.Web.UI.Controls;
+using dotless.Core.Parser;
+using Rock.Attribute;
 
 namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
 {
@@ -22,22 +24,69 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
     [Category("online_kevinrutledge > Invoice System")]
     [Description("Displays the details of an Invoice.")]
     [ContextAware(typeof(Invoice))]
+
+    [CustomCheckboxListField("Invoice Types",
+        Description = "The invoice types that will be included on the page. Leave blank to include all. Only active invoice types are shown.",
+        ListSource = "SELECT [Guid] AS [Value], [Name] AS [Text] FROM [_online_kevinrutledge_InvoiceSystem_InvoiceType] where [IsActive] = 1",
+        Key = AttributeKeys.InvoiceTypes,
+        Order = 0)]
+
     public partial class InvoiceDetail : Rock.Web.UI.RockBlock
     {
+        #region Attribute and Pageparameter Keys
+        private static class AttributeKeys
+        {
+            public const string InvoiceTypes = "InvoiceTypes";
+
+
+        }
+
+        private static class PageParameter
+        {
+            public const string InvoiceType = "InvoiceType";
+            public const string InvoiceId = "InvoiceId";
+        }
+
+        #endregion
+
+
         #region Properties and Fields
 
         // Dictionary to store the state of assignments (Guid as key)
-        public Dictionary<Guid, (int AuthorizedPersonAliasId, decimal AssignedPercent)> InvoiceAssignmentState { get; set; }
-            = new Dictionary<Guid, (int AuthorizedPersonAliasId, decimal AssignedPercent)>();
 
-        public Dictionary<Guid, (string Description, int Quantity, decimal UnitPrice)> InvoiceItemState { get; set; }
-            = new Dictionary<Guid, (string Description, int Quantity, decimal UnitPrice)>();
+        public Dictionary<Guid, (int AuthorizedPersonAliasId, decimal AssignedPercent)> InvoiceAssignmentState
+        {
+            get
+            {
+                // Use the correct key for InvoiceAssignmentState
+                return (Dictionary<Guid, (int AuthorizedPersonAliasId, decimal AssignedPercent)>)(ViewState["InvoiceAssignmentState"]
+                       ?? new Dictionary<Guid, (int AuthorizedPersonAliasId, decimal AssignedPercent)>());
+            }
+            set
+            {
+                ViewState["InvoiceAssignmentState"] = value;
+            }
+        }
+
+        public Dictionary<Guid, (string Description, int Quantity, decimal UnitPrice, decimal? TaxRate, decimal? DiscountAmount, decimal? DiscountPercent)> InvoiceItemState
+        {
+            get
+            {
+                return (Dictionary<Guid, (string, int, decimal, decimal?, decimal?, decimal?)>)(ViewState["InvoiceItemState"] ?? new Dictionary<Guid, (string, int, decimal, decimal?, decimal?, decimal?)>());
+            }
+            set
+            {
+                ViewState["InvoiceItemState"] = value;
+            }
+        }
+
 
 
 
 
 
         private Invoice _invoice = null; // Cached invoice instance
+        private List<Guid> _allowedInvoiceTypes;
 
         #endregion
 
@@ -45,7 +94,8 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
 
         protected override object SaveViewState()
         {
-            ViewState["AssignmentState"] = InvoiceAssignmentState;
+            ViewState["InvoiceAssignmentState"] = InvoiceAssignmentState;
+            ViewState["InvoiceItemState"] = InvoiceItemState; // Save both states
             return base.SaveViewState();
         }
 
@@ -53,13 +103,19 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
         {
             base.LoadViewState(savedState);
 
-            InvoiceAssignmentState = ViewState["AssignmentState"] as Dictionary<Guid, (int AuthorizedPersonAliasId, decimal AssignedPercent)>
-                ?? new Dictionary<Guid, (int AuthorizedPersonAliasId, decimal AssignedPercent)>();
+            // Restore both states from ViewState
+            InvoiceAssignmentState = ViewState["InvoiceAssignmentState"] as Dictionary<Guid, (int AuthorizedPersonAliasId, decimal AssignedPercent)>
+                                     ?? new Dictionary<Guid, (int AuthorizedPersonAliasId, decimal AssignedPercent)>();
+
+            InvoiceItemState = ViewState["InvoiceItemState"] as Dictionary<Guid, (string Description, int Quantity, decimal UnitPrice, decimal? TaxRate, decimal? DiscountAmount, decimal? DiscountPercent)>
+                               ?? new Dictionary<Guid, (string, int, decimal, decimal?, decimal?, decimal?)>();
         }
 
         protected override void OnInit(EventArgs e)
         {
             base.OnInit(e);
+
+
 
             // Configure the Assignments grid
             gAssignments.DataKeyNames = new[] { "Guid" };
@@ -100,11 +156,16 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
 
         protected void ShowDetail()
         {
+
+            _allowedInvoiceTypes =  GetAttributeValue(AttributeKeys.InvoiceTypes).SplitDelimitedValues().AsGuidList();
+            var invoiceTypeCount = _allowedInvoiceTypes.Count();
+
+
             var rockContext = new RockContext();
             upnlContent.Visible = true;
 
             // Retrieve Invoice ID from Page Parameters
-            int? invoiceId = PageParameter("InvoiceId").AsIntegerOrNull();
+            int? invoiceId = PageParameter(PageParameter.InvoiceId).AsIntegerOrNull();
 
             // Fetch Invoice
             Invoice invoice = invoiceId.HasValue
@@ -155,11 +216,15 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
                 {
                     var itemKey = item.Guid != Guid.Empty ? item.Guid : Guid.NewGuid();
                     InvoiceItemState[itemKey] = (
-                        //
-                        Description: item.Description,
+                         //
+                        item.Description,
                         Quantity: item.Quantity.ToIntSafe(),
-                        UnitPrice: item.UnitPrice.ToIntSafe()
+                        UnitPrice: item.UnitPrice.ToIntSafe(),
+                        item.TaxRate,
+                        item.DiscountAmount,
+                        item.DiscountPercent
                         );
+
                 }
 
             }    
@@ -182,7 +247,9 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
         protected void gAssignments_AddClick(object sender, EventArgs e)
         {
             hfAssignmentGuid.Value = string.Empty; // Clear the GUID for new assignments
+           
             ClearDialogFields();
+            numbAssignedPercent.Text = CalculateRemainingAssignedPercent().ToString();
             ShowDialog(Dialogs.InvoiceAssignment);
         }
 
@@ -272,6 +339,8 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
                 }).ToList();
 
                 gAssignments.DataBind();
+
+                hlblCurrentAssignedTotalGridView.Text = $"{CalculateRemainingAssignedPercent():0.##}% Not Assigned";
             }
         }
 
@@ -288,8 +357,9 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
 
         protected void gInvoiceItems_AddClick(object sender, EventArgs e)
         {
-            hfInvoiceItemGuid.Value = string.Empty; // Clear the GUID for new Invoice Items
             ClearDialogFields();
+            hfInvoiceItemGuid.Value = string.Empty; // Clear the GUID for new Invoice Items
+            numbQuantity.Text = "1";
             ShowDialog(Dialogs.InvoiceItem);
         }
 
@@ -301,17 +371,21 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
             {
                 var selectedItem = InvoiceItemState[invoiceItemKey];
 
-                // Prefill dialog fields
-                //tbItemName.Text = selectedItem.ItemName;
-                //nbQuantity.Text = selectedItem.Quantity.ToString();
-                //nbUnitPrice.Text = selectedItem.UnitPrice.ToString("F2");
+                // Prefill dialog fields with the selected item's values
+                tbItemDescription.Text = selectedItem.Description;
+                numbUnitPrice.Text = selectedItem.UnitPrice.ToString("F2"); // Format as decimal with 2 places
+                numbQuantity.Text = selectedItem.Quantity.ToString();
+                numbTaxPercent.Text = selectedItem.TaxRate?.ToString("F2") ?? string.Empty; // Handle nullable decimal
+                numbDiscountAmount.Text = selectedItem.DiscountAmount?.ToString("F2") ?? string.Empty; // Handle nullable decimal
+                numbDiscountPercent.Text = selectedItem.DiscountPercent?.ToString("F2") ?? string.Empty; // Optional discount percentage
 
                 // Store the GUID in a hidden field for editing
                 hfInvoiceItemGuid.Value = invoiceItemKey.ToString();
 
-                // Show dialog
-                ShowDialog(Dialogs.InvoiceItem);
+             
             }
+            // Show dialog
+            ShowDialog(Dialogs.InvoiceItem);
         }
 
         protected void gInvoiceItem_Delete(object sender, RowEventArgs e)
@@ -330,54 +404,121 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
 
         protected void btnSaveInvoiceItem_Click(object sender, EventArgs e)
         {
-            //var itemName = tbItemName.Text;
-            //var quantity = nbQuantity.Text.AsInteger();
-            //var unitPrice = nbUnitPrice.Text.AsDecimal();
+            // Extract input values
+            var description = tbItemDescription.Text;
+            var unitPrice = numbUnitPrice.Text.AsDecimal();
+            var quantity = numbQuantity.Text.AsInteger();
+            var discountAmount = numbDiscountAmount.Text.AsDecimalOrNull();
+            var discountPercent = numbDiscountPercent.Text.AsDecimalOrNull();
+            var guidValue = hfInvoiceItemGuid.Value;
 
-            //if (!string.IsNullOrWhiteSpace(itemName) && quantity > 0 && unitPrice > 0)
-            //{
-            //    Guid invoiceItemKey;
+            // Check form tax rate or fallback to global tax rate, then default to 0 if neither exists
+            var taxRate = numbTaxPercent.Text.AsDecimalOrNull()
+                         // ?? GlobalTaxRate
+                          ?? 0m;
 
-            //    if (!string.IsNullOrWhiteSpace(hfInvoiceItemGuid.Value) && Guid.TryParse(hfInvoiceItemGuid.Value, out invoiceItemKey))
-            //    {
-            //        // Edit existing entry
-            //        InvoiceItemState[invoiceItemKey] = new InvoiceItem
-            //        {
-            //            ItemName = itemName,
-            //            Quantity = quantity,
-            //            UnitPrice = unitPrice
-            //        };
-            //    }
-            //    else
-            //    {
-            //        // Add new entry
-            //        invoiceItemKey = Guid.NewGuid();
-            //        InvoiceItemState[invoiceItemKey] = new InvoiceItem
-            //        {
-            //            ItemName = itemName,
-            //            Quantity = quantity,
-            //            UnitPrice = unitPrice
-            //        };
-            //    }
-            //}
+            // Use ViewState-backed InvoiceItemState
+            var invoiceItemState = InvoiceItemState;
 
+            if (!string.IsNullOrWhiteSpace(guidValue) && Guid.TryParse(guidValue, out var itemGuid))
+            {
+                // Update existing item
+                if (invoiceItemState.ContainsKey(itemGuid))
+                {
+                    invoiceItemState[itemGuid] = (
+                        Description: description,
+                        Quantity: quantity,
+                        UnitPrice: unitPrice,
+                        TaxRate: taxRate,
+                        DiscountAmount: discountAmount,
+                        DiscountPercent: discountPercent
+                    );
+                }
+            }
+            else
+            {
+                // Add new item
+                var newItemGuid = Guid.NewGuid();
+                invoiceItemState[newItemGuid] = (
+                    Description: description,
+                    Quantity: quantity,
+                    UnitPrice: unitPrice,
+                    TaxRate: taxRate,
+                    DiscountAmount: discountAmount,
+                    DiscountPercent: discountPercent
+                );
+                hfInvoiceItemGuid.Value = newItemGuid.ToString();
+            }
+
+            // Persist state
+            InvoiceItemState = invoiceItemState;
+
+            // Hide dialog and refresh UI
             HideDialog();
             BindInvoiceItemsGrid();
         }
 
+
         protected void BindInvoiceItemsGrid()
         {
-            gInvoiceItems.DataSource = InvoiceItemState.Select(kvp => new
-            {
-                Guid = kvp.Key,
-                ItemName = kvp.Value.Description,
-                Quantity = kvp.Value.Quantity,
-                UnitPrice = kvp.Value.UnitPrice,
-                TotalPrice = kvp.Value.Quantity * kvp.Value.UnitPrice
-            }).ToList();
+            var dataSource = new List<dynamic>();
 
+            decimal subtotal = 0;
+            decimal discountTotal = 0;
+            decimal preTaxTotal = 0;
+            decimal taxTotal = 0;
+            decimal finalTotal = 0;
+
+            foreach (var kvp in InvoiceItemState)
+            {
+                var totalPrice = kvp.Value.Quantity * kvp.Value.UnitPrice;
+
+                // Calculate discounts
+                var discountAmountValue = kvp.Value.DiscountAmount ?? 0;
+                var discountPercentValue = totalPrice * (kvp.Value.DiscountPercent ?? 0) / 100;
+                var totalDiscount = Math.Max(discountAmountValue, discountPercentValue);
+                var priceAfterDiscount = totalPrice - totalDiscount;
+
+                // Calculate tax
+                var taxAmount = priceAfterDiscount * (kvp.Value.TaxRate ?? 0) / 100;
+
+                // Aggregate values
+                subtotal += totalPrice;
+                discountTotal += totalDiscount;
+                preTaxTotal += priceAfterDiscount;
+                taxTotal += taxAmount;
+                finalTotal += priceAfterDiscount + taxAmount;
+
+                // Add row data
+                dataSource.Add(new
+                {
+                    Guid = kvp.Key,
+                    Quantity = kvp.Value.Quantity,
+                    UnitPrice = kvp.Value.UnitPrice,
+                    Description = kvp.Value.Description,
+                    DiscountPercent = kvp.Value.DiscountPercent,
+                    DiscountAmount = kvp.Value.DiscountAmount,
+                    TotalPrice = totalPrice,
+                    TotalDiscount = totalDiscount,
+                    TotalAfterDiscount = priceAfterDiscount,
+                    TaxAmount = taxAmount,
+                    TotalAfterTax = priceAfterDiscount + taxAmount
+                });
+            }
+
+            // Set the literals
+            litInvoiceItemCount.Text = InvoiceItemState.Count.ToString();
+            litInvoiceSubtotal.Text = subtotal.ToString("C"); // Format as currency
+            litDiscountTotal.Text = discountTotal.ToString("C");
+            litInvoicePreTaxTotal.Text = preTaxTotal.ToString("C");
+            litTaxTotal.Text = taxTotal.ToString("C");
+            litInvoiceFinalTotal.Text = finalTotal.ToString("C");
+
+            // Bind data to grid
+            gInvoiceItems.DataSource = dataSource;
             gInvoiceItems.DataBind();
         }
+
 
         #endregion
 
@@ -425,13 +566,19 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
             }
         }
 
+        protected decimal CalculateRemainingAssignedPercent()
+        {
+            var remainingPercent = 100 - InvoiceAssignmentState.Sum(a => a.Value.AssignedPercent);
+            return remainingPercent;
+        }
+
         protected void ShowDialog(Dialogs dialog)
         {
             hfActiveDialog.Value = dialog.ToString();
 
             if (dialog == Dialogs.InvoiceAssignment)
             {
-                var remainingPercent = 100 - InvoiceAssignmentState.Sum(a => a.Value.AssignedPercent);
+                var remainingPercent = CalculateRemainingAssignedPercent();
                 hlblCurrentAssignedTotal.LabelType = remainingPercent == 0
                     ? Rock.Web.UI.Controls.LabelType.Success
                     : Rock.Web.UI.Controls.LabelType.Warning;
@@ -458,7 +605,7 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
             numbUnitPrice.Text = string.Empty; // Clear Unit Price NumberBox
             numbTaxPercent.Text = string.Empty; // Clear Tax Percent NumberBox
             numbDiscountAmount.Text = string.Empty; // Clear Discount Amount NumberBox
-            numbDiscountPercentage.Text = string.Empty; // Clear Discount Percentage NumberBox
+            numbDiscountPercent.Text = string.Empty; // Clear Discount Percentage NumberBox
 
             // Clear Validation Summary Controls
             vsAssignment.Controls.Clear(); 

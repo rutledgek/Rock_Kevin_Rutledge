@@ -2,11 +2,12 @@
     Inherits="RockWeb.Plugins.online_kevinrutledge.InvoiceSystem.InvoiceDetail" %>
 <asp:UpdatePanel ID="upnlContent" runat="server">
     <ContentTemplate>
-
+        
         <asp:HiddenField ID="hfActiveDialog" runat="server" />
         <asp:HiddenField ID="hfInvoiceId" runat="server" />
         <asp:HiddenField ID="hfAssignmentGuid" runat="server" />
         <asp:HiddenField ID="hfInvoiceItemGuid" runat="server" />
+        <asp:HiddenField ID="hrRemainingPercent" runat="server" />
 
         <div class="banner">
             <h1>
@@ -103,7 +104,7 @@
 
                 <hr />
                 <div class="row">
-                    <div class="col-md-12">
+                    <div class="col-md-8">
 
                         <div class="panel panel-block">
                             <div class="panel-heading">
@@ -114,18 +115,40 @@
                                 <div class="grid grid-panel">
                                     <Rock:Grid ID="gInvoiceItems" runat="server" DisplayType="Light"
                                         RowItemText="Item" ShowConfirmDeleteDialog="false"
-                                        OnRowSelected="gInvoiceItems_RowSelected" DataKeyNames="Guid">
+                                        DataKeyNames="Guid">
                                         <Columns>
                                             <Rock:RockBoundField DataField="Description" HeaderText="Description" />
                                             <Rock:RockBoundField DataField="Quantity" HeaderText="Quantity" />
-                                            <Rock:RockBoundField DataField="UnitPrice" HeaderText="Unit Price" />
-                                            <Rock:RockBoundField DataField="TotalPrice" HeaderText="Total Price" />
+                                            <Rock:CurrencyField DataField="UnitPrice" HeaderText="Unit Price" />
+                                            <Rock:CurrencyField DataField="TotalPrice" HeaderText="Total Price" DataFormatString="Currency" />
+                                            <Rock:CurrencyField DataField="TotalDiscount" HeaderText="Total Discount" DataFormatString="Currency" />
+                                            <Rock:CurrencyField DataField="TaxAmount" HeaderText="Tax" DataFormatString="Currency" />
+                                            <Rock:CurrencyField DataField="TotalAfterTax" HeaderText="Total After Tax" DataFormatString="Currency" />
+                                            <Rock:EditField OnClick="gInvoiceItems_RowSelected" />
                                             <Rock:DeleteField OnClick="gInvoiceItem_Delete" />
                                         </Columns>
+                                        
                                     </Rock:Grid>
                                 </div>
                             </div>
+
                         </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="panel panel-info">
+                                                        <div class="panel-heading">
+                                <h1 class="panel-title">Invoice Summary</h1>
+                            </div>
+                                <div class="panel-body">
+                                   <strong>Invoice Item Count: </strong> <asp:Literal ID="litInvoiceItemCount" runat="server" /><br />
+                                    <strong>Item Subtotal: </strong> <asp:Literal ID="litInvoiceSubtotal" runat="server" /> <br />
+                                    <strong>Discount Total: </strong> <asp:Literal ID="litDiscountTotal" runat="server" /> <br />
+                                    <strong>Invoice Pre-Tax Total:</strong> <asp:Literal ID="litInvoicePreTaxTotal" runat="server" /> <br />
+                                    <strong>Tax: </strong> <asp:Literal ID="litTaxTotal" runat="server" /> <br />
+                                    <strong>Invoice Total: </strong> <asp:Literal ID="litInvoiceFinalTotal" runat="server" /> <br />
+                                </div>
+                        </>
+
                     </div>
                 </div>
             </div>
@@ -140,7 +163,7 @@
                 <Rock:PersonPicker ID="ppAssignment" runat="server" Required="true" Label="Person" ValidationGroup="Assignment"/>
                 <Rock:HighlightLabel ID="hlblCurrentAssignedTotal" runat="server" LabelType="Danger"  ValidationGroup="Assignment" />
                 <Rock:NumberBox ID="numbAssignedPercent" runat="server" Label="Percent of Invoice Assigned"
-                    Help="What percent of the total invoice is this person responsible for." NumberType="Integer"  ValidationGroup="Assignment"/>
+                    Help="What percent of the total invoice is this person responsible for." NumberType="Integer"  ValidationGroup="Assignment" required="true" />
 
             </Content>
         </Rock:ModalDialog>
@@ -161,7 +184,7 @@
                         <Rock:NumberBox ID="numbQuantity" runat="server" Label="Quantity" NumberType="Integer" Required="true" ValidationGroup="IvoiceItem" />
                     </div>
                     <div class="col-md-6">
-                        <Rock:NumberBox ID="numbUnitPrice" runat="server" Label="Unit Price" NumberType="Currency" Required="true" ValidationGroup="IvoiceItem" />
+                        <Rock:CurrencyBox ID="numbUnitPrice" runat="server" Label="Unit Price" NumberType="Currency" Required="true" ValidationGroup="IvoiceItem" />
                     </div>
                 </div>
                  <Rock:NumberBox ID="numbTaxPercent" runat="server" Label="Item Tax Rate" NumberType="Double" Help="If this value is left blank, the Tax Rate value on the invoice type will be used for all items."/>
@@ -176,10 +199,10 @@
                                 <div class="row">
                                     <div class="col-md-6">
 
-                                        <Rock:NumberBox ID="numbDiscountAmount" runat="server" Label="Discount Amount" NumberType="Currency" />
+                                        <Rock:CurrencyBox ID="numbDiscountAmount" runat="server" Label="Discount Amount" NumberType="Currency" />
                                     </div>
                                     <div class="col-md-6">
-                                        <Rock:NumberBox ID="numbDiscountPercentage" runat="server" Label="Discount Percent" NumberType="Double" />
+                                        <Rock:NumberBox ID="numbDiscountPercent" runat="server" Label="Discount Percent" NumberType="Double" />
                                     </div>
                                 </div>
                             </div>
