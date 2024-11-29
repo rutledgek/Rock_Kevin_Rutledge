@@ -23,7 +23,7 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
 	            [InvoiceItemTerm] [nvarchar](100) Null,
 	            [IconCssClass] nvarchar(100) null,
                 [DefaultFinancialAccountId] [int] Null,
-                [DefaultTaxRate] [decimal](18, 2) Not NULL Default 0,
+                [DefaultTaxRate] [decimal](18, 2) NULL Default 0,
 	            [DefaultDaysUntilLate] int Null,
 	            [DefaultLateFeeAmount] [decimal](18, 2) Not Null default 0,
 	            [DefaultLateFeePercent] [decimal](5, 2) Not NULL Default 0,
@@ -105,7 +105,17 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
 	            ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] CHECK CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_CategoryId]
 
 
-
+               --Insert Sample Data
+                    INSERT INTO [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] 
+                    ([Name], [Description], [IsActive], [InvoiceTerm], [InvoiceItemTerm], [IconCssClass], 
+                    [DefaultFinancialAccountId], [DefaultTaxRate], [DefaultDaysUntilLate], [DefaultLateFeeAmount], 
+                    [DefaultLateFeePercent], [CategoryId], [InvoiceFromPersonAliasId], [InvoiceFromName], 
+                    [InvoiceFromEmail], [InvoiceSubject], [InvoiceCommunicationTemplate], 
+                    [InvoiceSystemCommunicationId], [LateNoticeFromPersonAliasId], [LateNoticeFromName], 
+                    [LateNoticeFromEmail], [LateNoticeSubject], [LateNoticeCommunicationTemplate], 
+                    [LateNoticeSystemCommunicationId], [Guid], [CreatedDateTime], [ModifiedDateTime], 
+                    [CreatedByPersonAliasId], [ModifiedByPersonAliasId], [ForeignKey], [ForeignGuid], [ForeignId])
+                    VALUES ('Test Type', 'Test', 1, 'Childcare Bill', 'Child', '', 1, 0.06, 5, 0.00, 0.00, NULL, NULL, '', '', '', '', NULL, NULL, '', '', '', '', NULL, NEWID(), '2024-11-29 10:42:52', '2024-11-29 10:42:52', 10, 10, 'SampleData', NULL, NULL)
             "
             );
 
