@@ -208,19 +208,19 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
                 .Select(t => new { Value = t.Guid, Text = t.Name }) // Format for dropdown
                 .ToList(); // Return as list
 
+
+            ddlInvoiceType.DataSource = invoiceTypeOptions;
+
             if (invoiceTypeOptions.Count == 1)
             {
                 // Only one item exists, disable the dropdown and select the single item
-                ddlInvoiceType.DataSource = invoiceTypeOptions;
-                ddlInvoiceType.DataBind();
 
+                ddlInvoiceType.DataBind();
                 ddlInvoiceType.SelectedValue = invoiceTypeOptions[0].Value.ToString();
                 ddlInvoiceType.Enabled = false; // Disable the dropdown
             }
             else
             {
-                // Multiple items exist, bind normally
-                ddlInvoiceType.DataSource = invoiceTypeOptions;
                 ddlInvoiceType.DataBind();
                 ddlInvoiceType.Enabled = true; // Enable the dropdown
             }
