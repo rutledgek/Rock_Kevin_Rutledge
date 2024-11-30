@@ -26,6 +26,8 @@ using Rock.Web.UI;
 
 using online.kevinrutledge.InvoiceSystem.Model;
 using Rock.Attribute;
+using Newtonsoft.Json;
+using online.kevinrutledge.InvoiceSystem.Cache;
 
 
 namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
@@ -46,13 +48,36 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
         )]
     #endregion
 
-    public partial class InvoiceTypeDetail : Rock.Web.UI.RockBlock
+    public partial class InvoiceTypeDetail : RockBlock
     {
         private static class AttributeKey
         {
             public const string DefaultDaysLate = "DefaultDaysLate";
 
         }
+
+        private List<Rock.Model.Attribute> InvoiceAttributesState { get; set; }
+
+        private List<string> InvoiceFormAttributesState { get; set; }
+
+        protected override void LoadViewState(object savedState)
+        {
+            base.LoadViewState(savedState);
+
+            InvoiceFormAttributesState = ViewState["InvoiceformAttributesState"] as List<string> ?? new List<string>();
+            
+            string json = ViewState["InvoiceAttributesState"] as string;
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                InvoiceAttributesState = new List<Rock.Model.Attribute>();
+            }
+            else
+            {
+                InvoiceAttributesState = JsonConvert.DeserializeObject<List<Rock.Model.Attribute>>(json);
+            }
+        }
+
+
 
         protected override void OnInit(EventArgs e)
         {
@@ -61,6 +86,7 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
             this.BlockUpdated += Block_BlockUpdated;
             this.AddConfigurationUpdateTrigger(upnlContent);
 
+            
 
         }
 
@@ -159,9 +185,8 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
             tbInvoiceTerm.Text = invoiceType.InvoiceTerm;
             tbInvoiceItemTerm.Text = invoiceType.InvoiceItemTerm;
 
-
-
-
+            catpInvoiceTypeCategory.SetValue(invoiceType.CategoryId);
+            
             // Populate the UI controls with the data from invoiceType
             tbName.Text = invoiceType.Name;
             tbDescription.Text = invoiceType.Description;
@@ -241,27 +266,34 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
         protected void btnSave_Click(object sender, EventArgs e)
         {
             InvoiceType invoiceType;
-            var dataContext = new RockContext();
-            var service = new InvoiceTypeService(dataContext);
+            var rockContext = new RockContext();
+            var invoiceTypeService = new InvoiceTypeService(rockContext);
 
             int invoiceTypeId = int.Parse(hfInvoiceTypeId.Value);
 
             if (invoiceTypeId == 0)
             {
                 invoiceType = new InvoiceType();
-                service.Add(invoiceType);
+                invoiceTypeService.Add(invoiceType);
+                invoiceType.CreatedByPersonAliasId = CurrentPersonAliasId;
+                invoiceType.CreatedDateTime = RockDateTime.Now;
             }
             else
             {
-                invoiceType = service.Get(invoiceTypeId);
+                invoiceType = invoiceTypeService.Get(invoiceTypeId);
+                invoiceType.ModifiedByPersonAliasId = CurrentPersonAliasId;
+                invoiceType.ModifiedDateTime = RockDateTime.Now;
             }
 
+            if( invoiceType != null )
+            { 
             invoiceType.Name = tbName.Text;
             invoiceType.Description = tbDescription.Text;
             invoiceType.IsActive = cbIsActive.Checked;
             invoiceType.IconCssClass = tbCssIcon.Text;
             invoiceType.InvoiceTerm = tbInvoiceTerm.Text;
             invoiceType.InvoiceItemTerm = tbInvoiceItemTerm.Text;
+            invoiceType.CategoryId = catpInvoiceTypeCategory.SelectedValueAsId();
             invoiceType.DefaultDaysUntilLate = rsDaysUntilLate.SelectedValue;
 
 
@@ -292,16 +324,29 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
 
 
 
-            if (!invoiceType.IsValid || !Page.IsValid)
+            if (!invoiceType.IsValid || !Page.IsValid )
             {
                 // Controls will render the error messages
                 return;
             }
 
-            dataContext.SaveChanges();
+                rockContext.WrapTransaction(() =>
+                {
+                    rockContext.SaveChanges();
+
+                    //get it back to make sure we have a good ID for it for the Attributes
+                    invoiceType = invoiceTypeService.Get(invoiceType.Guid);
+
+                    //int entityTypeId = EntityTypeCache.Get(typeof(InvoiceType)).Id;
+                    //SaveAttributes(invoiceType.Id, entityTypeId, InvoiceAttributesState, rockContext); 
+                } );
+
+                InvoiceTypeCache.Clear();
+                EntityTypeAttributesCache.Clear();
+            
 
             NavigateToParentPage();
-
+            }
         }
 
         public override List<BreadCrumb> GetBreadCrumbs(Rock.Web.PageReference pageReference)

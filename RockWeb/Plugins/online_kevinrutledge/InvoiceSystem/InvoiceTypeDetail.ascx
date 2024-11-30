@@ -58,7 +58,7 @@
 
                                         <Rock:CategoryPicker ID="catpInvoiceTypeCategory" runat="server"
                                             Label="Category" Help="Choose a Category for this Invoice Type"
-                                            EntityTypeName="online.kevinrutledge.InvoiceSystem.InvoiceType" />
+                                            EntityTypeName="online.kevinrutledge.InvoiceSystem.Model.InvoiceType" />
 
 
                                         <Rock:DataTextBox ID="tbDescription" runat="server"

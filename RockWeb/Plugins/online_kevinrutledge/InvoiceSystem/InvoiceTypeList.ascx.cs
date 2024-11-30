@@ -10,8 +10,10 @@ using Rock.Data;
 using Rock.Model;
 using Rock.Web.Cache;
 using Rock.Web.UI.Controls;
+using Rock.Security;
 
 using online.kevinrutledge.InvoiceSystem.Model;
+using online.kevinrutledge.InvoiceSystem.Cache;
 
 
 namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
@@ -31,18 +33,22 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
         {
             base.OnInit(e);
 
-            bool canEdit = IsUserAuthorized(Rock.Security.Authorization.EDIT);
+            bool canAddEditDelete = IsUserAuthorized(Rock.Security.Authorization.EDIT);
 
             gfSettings.ApplyFilterClick += gfSettings_ApplyFilterClick;
-            gInvoiceTypes.Actions.ShowAdd = canEdit;
-            gInvoiceTypes.IsDeleteEnabled = canEdit;
+            gInvoiceTypes.Actions.ShowAdd = canAddEditDelete;
+            gInvoiceTypes.IsDeleteEnabled = canAddEditDelete;
             gInvoiceTypes.Actions.AddClick += gInvoiceTypes_Add;
 
             gInvoiceTypes.RowItemText = "Invoice Type";
             gInvoiceTypes.DataKeyNames = new string[] { "id" };
 
-            SecurityField securityField = gInvoiceTypes.Columns.OfType<SecurityField>().First();
-            securityField.EntityTypeId = EntityTypeCache.Get(typeof(InvoiceType)).Id;
+            var securityField = gInvoiceTypes.Columns.OfType<SecurityField>().FirstOrDefault();
+            if( securityField != null )
+            {
+                securityField.EntityTypeId = EntityTypeCache.Get(typeof(InvoiceType)).Id;
+            }
+
 
 
             BindFilter();
@@ -76,18 +82,24 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
 
         private void BindGrid()
         {
-            var service = new InvoiceTypeService(new RockContext());
+            var service = new InvoiceTypeService( new RockContext() );
             SortProperty sortProperty = gInvoiceTypes.SortProperty;
 
             var query = service.Queryable();
 
             bool showInactiveTypes = gfSettings.GetFilterPreference("Show Inactive Invoice Types").AsBoolean();
+            int? limitCategory = gfSettings.GetFilterPreference("Limit To Category").AsIntegerOrNull();
+
 
             if (!showInactiveTypes)
             {
                 query = query.Where(a => a.IsActive == true);
             }
 
+            if(limitCategory.HasValue)
+            {
+                query = query.Where(a => a.CategoryId == limitCategory);
+            }
 
             // Sort Results (For adding filters and sorts later)
             if ( sortProperty != null )
@@ -106,9 +118,11 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
         protected void gfSettings_ApplyFilterClick(object sender, EventArgs e)
         {
             var gfSettingsShowInactive = gfSettings.GetFilterPreference("Show Inactive Invoice Types");
+            var gfSettingsLimitToCategory = gfSettings.GetFilterPreference("Limit To Category");
 
             gfSettings.SetFilterPreference("Campus", cpCampus.SelectedCampusId != null ? cpCampus.SelectedCampusId.Value.ToString() : string.Empty);
             gfSettings.SetFilterPreference("Show Inactive Invoice Types", cbShowInActive.Checked.ToString());
+            gfSettings.SetFilterPreference("Limit To Category", cpCategory.SelectedValueAsId() != null ? cpCategory.SelectedValueAsId().ToString() : string.Empty);
 
             BindGrid();
         }
@@ -135,20 +149,29 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
 
         protected void gInvoiceTypes_Delete(object sender, RowEventArgs e)
         {
-            var dataContext = new RockContext();
-            var service = new InvoiceTypeService(dataContext);
-            var invoiceType = service.Get((int)e.RowKeyValue);
+            var rockContext = new RockContext();
+            var invoiceTypeService = new InvoiceTypeService( rockContext );
+            var invoiceType = invoiceTypeService.Get((int)e.RowKeyValue);
             if (invoiceType != null)
             {
+
+                int invoiceTypeId = invoiceType.Id;
+                if( !invoiceType.IsAuthorized( Authorization.ADMINISTRATE, CurrentPerson))
+                {
+                    mdGridWarning.Show("Sorry, you are not authorized to delete this Invoice Type.", ModalAlertType.Alert);
+                    return;
+                }
                 string errorMessage;
-                if (!service.CanDelete(invoiceType, out errorMessage))
+                if (!invoiceTypeService.CanDelete(invoiceType, out errorMessage))
                 {
                     mdGridWarning.Show(errorMessage, ModalAlertType.Information);
                     return;
                 }
 
-                service.Delete(invoiceType);
-                dataContext.SaveChanges();
+
+                invoiceTypeService.Delete(invoiceType);
+                rockContext.SaveChanges();
+                InvoiceTypeCache.Remove(invoiceTypeId);
             }
 
             BindGrid();

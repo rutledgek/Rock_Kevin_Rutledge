@@ -20,6 +20,7 @@ using dotless.Core.Parser;
 using Rock.Attribute;
 using PayPal.Payments.DataObjects;
 using Invoice = online.kevinrutledge.InvoiceSystem.Model.Invoice;
+using cache = online.kevinrutledge.InvoiceSystem.Cache;
 
 namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
 {
@@ -137,6 +138,9 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
             // Register BlockUpdated event
             this.BlockUpdated += Block_BlockUpdated;
             this.AddConfigurationUpdateTrigger(upnlContent);
+
+            gAssignments.Actions.ShowAdd = false;
+            gInvoiceItems.Actions.ShowAdd = false;
         }
 
         protected override void OnLoad(EventArgs e)
@@ -145,6 +149,19 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
 
             if (!Page.IsPostBack)
             {
+                var rockContext = new RockContext();
+                bool authorized = true;
+
+                // Retrieve Invoice ID from Page Parameters
+                int? invoiceId = PageParameter(PageParameter.InvoiceId).AsIntegerOrNull();
+                int? invoiceTypeId = PageParameter(PageParameter.InvoiceTypeId).AsIntegerOrNull();
+
+                if (invoiceTypeId.HasValue)
+                { 
+                var invoiceType = cache.InvoiceTypeCache.Get(invoiceTypeId.Value);
+                }
+
+
                 ShowDetail();
             }
 
@@ -247,7 +264,10 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
 
             nbEditModeMessage.Text = string.Empty;
 
-            bool CanEdit = invoiceType.IsAuthorized("ManageInvoices", CurrentPerson) || Rock.Security.Authorization.EDIT.AsBoolean();
+            bool CanEdit = (invoiceType != null && invoiceType.IsAuthorized("ManageInvoices", CurrentPerson))
+               || IsUserAuthorized(Authorization.EDIT);
+
+            
             if (!CanEdit)
             {
                 readOnly = true;

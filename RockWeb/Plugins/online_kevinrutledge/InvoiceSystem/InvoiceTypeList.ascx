@@ -3,6 +3,7 @@
     <ContentTemplate>
          <Rock:GridFilter ID="gfSettings" runat="server">
             <Rock:CampusPicker ID="cpCampus" runat="server" Label="Campus" />
+            <Rock:CategoryPicker ID="cpCategory" runat="server" Label="Category"  EntityTypeName="online.kevinrutledge.InvoiceSystem.Model.InvoiceType" />
             <Rock:RockCheckBox ID="cbShowInActive" runat="server" Label="Show Inactive" Checked="false"  />
         </Rock:GridFilter>
         <Rock:ModalAlert ID="mdGridWarning" runat="server" />
@@ -11,6 +12,7 @@
             <Columns>
                 <asp:BoundField DataField="Name" HeaderText="Invoice Name" SortExpression="Name" />
                 <asp:BoundField DataField="Description" HeaderText="Description" SortExpression="Description" />
+                <asp:BoundField DataField="Category" HeaderText="Category" SortExpression="Category" />
                 <Rock:BoolField DataField="IsActive" HeaderText="Is Active" SortExpression="IsActe" />
                 <Rock:DeleteField OnClick="gInvoiceTypes_Delete" />
                 <Rock:SecurityField TitleField="Name" />
