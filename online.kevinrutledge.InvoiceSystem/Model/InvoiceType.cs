@@ -8,6 +8,7 @@ using System.Runtime.Serialization;
 using Rock;
 using Rock.Data;
 using Rock.Model;
+using Rock.Web.Cache;
 
 namespace online.kevinrutledge.InvoiceSystem.Model
 {
@@ -15,7 +16,7 @@ namespace online.kevinrutledge.InvoiceSystem.Model
     // That line goes right above the class definition...
     [DataContract]
     [Rock.SystemGuid.EntityTypeGuid(online.kevinrutledge.InvoiceSystem.SystemGuids.EntityTypeGuids.Invoice_Type)]
-    public class InvoiceType : Model<InvoiceType>, IRockEntity
+    public partial class InvoiceType : Model<InvoiceType>, IRockEntity, ICacheable
     {
         /// <summary>
         /// Gets or sets the name of the Invoice Type.
