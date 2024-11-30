@@ -181,6 +181,7 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
             tbDescription.Text = invoiceType.Description;
             tbCssIcon.Text = invoiceType.IconCssClass;
             cbIsActive.Checked = invoiceType.IsActive;
+            pgPaymentPage.SetValue( invoiceType.PaymentPageId );
 
             tbInvoiceTerm.Text = invoiceType.InvoiceTerm;
             tbInvoiceItemTerm.Text = invoiceType.InvoiceItemTerm;
@@ -297,11 +298,12 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
             invoiceType.DefaultDaysUntilLate = rsDaysUntilLate.SelectedValue;
 
 
+
             invoiceType.DefaultFinancialAccountId = acctpDefaultFinancialAccount.SelectedValueAsInt();
             invoiceType.DefaultTaxRate = numbTaxRate.Text.AsDecimal() * 0.01m;
             invoiceType.DefaultLateFeeAmount = numbLateFeeAmount.Text.AsDecimal();
             invoiceType.DefaultLateFeePercent = numbLateFeePercent.Text.AsDecimal() * 0.01m;
-
+            invoiceType.PaymentPageId = pgPaymentPage.SelectedValueAsInt();
 
 
             invoiceType.InvoiceFromPersonAliasId = ppInvoiceFromPerson.PersonAliasId ?? null;

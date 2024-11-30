@@ -156,6 +156,11 @@
 
                                 </div>
                             </div>
+                            
+
+                                <Rock:PagePicker ID="pgPaymentPage" runat="server" Label="Payment Page" Help="Please select a pagement page for invoices of this type to be paid online. It should be set up to receive the entiy information, account information, and amounts." />
+                            
+                            
                         </div>
                     </div>
 

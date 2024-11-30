@@ -168,7 +168,8 @@ namespace online.kevinrutledge.InvoiceSystem.Model
         /// </summary>
         public int? LateNoticeSystemCommunicationId { get; set; }
 
-
+        [DataMember]
+        public int? PaymentPageId { get; set; }
 
         private Dictionary<string, string> _supportedActions;
 
@@ -196,6 +197,8 @@ namespace online.kevinrutledge.InvoiceSystem.Model
 
         public virtual PersonAlias LateNoticeFromPersonAlias { get; set; }
 
+        public virtual Page PaymentPage {  get; set; }
+
         #endregion
     }
 
@@ -211,7 +214,7 @@ namespace online.kevinrutledge.InvoiceSystem.Model
             this.HasOptional(p => p.FinancialAccount).WithMany().HasForeignKey(p => p.DefaultFinancialAccountId).WillCascadeOnDelete(false);
             this.HasOptional(p => p.InvoiceSystemCommunication).WithMany().HasForeignKey(p => p.InvoiceSystemCommunicationId).WillCascadeOnDelete(false);
             this.HasOptional(p => p.LateNoticeSystemCommunication).WithMany().HasForeignKey(p => p.LateNoticeSystemCommunicationId).WillCascadeOnDelete(false);
-
+            this.HasOptional(p => p.PaymentPage).WithMany().HasForeignKey(p => p.PaymentPageId).WillCascadeOnDelete(false);
             this.HasOptional(p => p.InvoiceFromPersonAlias).WithMany().HasForeignKey(p => p.InvoiceFromPersonAliasId).WillCascadeOnDelete(false);
             this.HasOptional(p => p.LateNoticeFromPersonAlias).WithMany().HasForeignKey(p => p.LateNoticeFromPersonAliasId).WillCascadeOnDelete(false);
 

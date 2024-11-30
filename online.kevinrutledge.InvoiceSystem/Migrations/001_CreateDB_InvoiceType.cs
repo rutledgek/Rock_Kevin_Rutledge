@@ -40,6 +40,7 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
 	            [LateNoticeSubject] [nvarchar](max) NULL,
                 [LateNoticeCommunicationTemplate] nvarchar(max) null,
                 [LateNoticeSystemCommunicationId] int null,
+                [PaymentPageId] int null,
 	            [Guid] [uniqueidentifier] NOT NULL,
 	            [CreatedDateTime] [datetime] NULL,
 	            [ModifiedDateTime] [datetime] NULL,
@@ -96,8 +97,10 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
 	            ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] CHECK CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_LateNoticeFromPersonAliasId]
 
 
+                Alter Table [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] WITH CHECK ADD CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_PaymentPageId] Foreign Key([PaymentPageId])
+                                    References [dbo].[Page] ([Id])
                 
-
+                ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] CHECK CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_PaymentPageId]
 
                 ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType]  WITH CHECK ADD  CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_CategoryId] FOREIGN KEY([CategoryId])
 		            REFERENCES [dbo].[Category] ([Id])
@@ -176,10 +179,15 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
                 ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] 
                     DROP CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_InvoiceFromPersonAliasId]
 
+
+                ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType]
+                    DROP CONSTRAINT [FK__online_kevinrutledge_InvoiceSystem_InvoiceType_PaymentPageId]
+
                 -- Drop primary key constraint
                 ALTER TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType] 
                     DROP CONSTRAINT [PK__online_kevinrutledge_InvoiceSystem_InvoiceType];
 
+    
                 
                 -- Drop the table
                 DROP TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_InvoiceType];"
