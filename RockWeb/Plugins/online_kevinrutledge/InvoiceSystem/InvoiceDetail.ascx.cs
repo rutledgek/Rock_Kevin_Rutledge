@@ -184,13 +184,29 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
             _allowedInvoiceTypes = GetAttributeValue(AttributeKeys.InvoiceTypes).SplitDelimitedValues().AsGuidList();
 
             var rockContext = new RockContext();
+
+            // Fetches and filters the available invoice types for the dropdown list.
+            // 1. Query all active InvoiceTypes from the database using InvoiceTypeService.
+            // 2. Filter results in-memory after loading data with .ToList():
+            //    a. Restrict to allowed GUIDs (_allowedInvoiceTypes):
+            //       - If the list is empty, include all InvoiceTypes.
+            //       - Otherwise, only include InvoiceTypes with a GUID present in _allowedInvoiceTypes.
+            //    b. Ensure the CurrentPerson has authorization to manage invoices for the type:
+            //       - The person must either have "ManageInvoices" permission or Authorization.EDIT permission for the InvoiceType.
+            //    c. Include InvoiceTypes without a category (t.Category == null) or those where the associated category is authorized for the CurrentPerson:
+            //       - Ensures categories without explicit restrictions are visible.
+            //       - Categories with restrictions are included only if authorized.
+            // 3. Convert the filtered InvoiceTypes into a dropdown-compatible format with Guid as the value and Name as the text.
+            // 4. Return the results as a list for use in the application.
+
             var invoiceTypeOptions = new InvoiceTypeService( rockContext ).Queryable()
-                .Where(t => t.IsActive) // Only active invoice types
-                .ToList()
-                .Where(t => t.IsAuthorized(Authorization.VIEW, CurrentPerson)) // Check VIEW authorization
-                .Where(t => !_allowedInvoiceTypes.Any() || _allowedInvoiceTypes.Contains(t.Guid)) // Filter by allowed GUIDs or include all if empty
-                .Select(t => new { Value = t.Guid, Text = t.Name }) // Project to Guid (Value) and Name (Text)
-                .ToList();
+               .Where(t => t.IsActive) // Only active invoice types
+                .Where(t => !_allowedInvoiceTypes.Any() || _allowedInvoiceTypes.Contains(t.Guid)) // Restrict to allowed GUIDs
+                .ToList() // Load remaining data into memory
+                .Where(t => t.IsAuthorized("ManageInvoices", CurrentPerson) || t.IsAuthorized(Authorization.EDIT, CurrentPerson)) // Authorization to manage or edit invoices
+                .Where(t => t.Category == null || (t.Category != null && t.Category.IsAuthorized(Authorization.VIEW, CurrentPerson))) // Category authorization or no category
+                .Select(t => new { Value = t.Guid, Text = t.Name }) // Format for dropdown
+                .ToList(); // Return as list
 
             if (invoiceTypeOptions.Count == 1)
             {
