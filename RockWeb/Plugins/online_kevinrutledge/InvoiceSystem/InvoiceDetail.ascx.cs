@@ -18,6 +18,8 @@ using online.kevinrutledge.InvoiceSystem.Model;
 using Rock.Web.UI.Controls;
 using dotless.Core.Parser;
 using Rock.Attribute;
+using PayPal.Payments.DataObjects;
+using Invoice = online.kevinrutledge.InvoiceSystem.Model.Invoice;
 
 namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
 {
@@ -44,7 +46,7 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
 
         private static class PageParameter
         {
-            public const string InvoiceType = "InvoiceType";
+            public const string InvoiceTypeId = "InvoiceTypeId";
             public const string InvoiceId = "InvoiceId";
         }
 
@@ -87,6 +89,7 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
 
 
         private Invoice _invoice = null; // Cached invoice instance
+        private InvoiceType _invoiceType = null; // Cached Invoice Type
         private List<Guid> _allowedInvoiceTypes;
 
         #endregion
@@ -159,7 +162,7 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
         /// Bind the reminder types dropdown list.
         /// </summary>
         /// <param name="invoiceTypes">The reminder types.</param>
-        private void BindINvoiceTypes()
+        private void BindInvoiceTypes()
             {
             _allowedInvoiceTypes = GetAttributeValue(AttributeKeys.InvoiceTypes).SplitDelimitedValues().AsGuidList();
 
@@ -194,23 +197,29 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
 
         protected void ShowDetail()
         {
-
-            BindINvoiceTypes();
-
-            var invoiceTypeCount = _allowedInvoiceTypes.Count();
-
-            
-            
             var rockContext = new RockContext();
-            upnlContent.Visible = true;
-
             // Retrieve Invoice ID from Page Parameters
             int? invoiceId = PageParameter(PageParameter.InvoiceId).AsIntegerOrNull();
+            int? invoiceTypeId = PageParameter(PageParameter.InvoiceTypeId).AsIntegerOrNull();
 
             // Fetch Invoice
             Invoice invoice = invoiceId.HasValue
                 ? _invoice ?? new InvoiceService(rockContext).Get(invoiceId.Value)
                 : null;
+
+            // Fetch Invoice Type
+            InvoiceType invoiceType = invoiceTypeId.HasValue ? _invoiceType ?? new InvoiceTypeService(rockContext).Get(invoiceTypeId.Value) : null;
+
+            BindInvoiceTypes();
+
+            var invoiceTypeCount = _allowedInvoiceTypes.Count();
+
+            
+            
+           
+            upnlContent.Visible = true;
+
+            
 
             // Set Page Title and other UI elements
             if (invoice != null)
@@ -233,6 +242,35 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
             dpDueDate.SelectedDate = invoice?.DueDate;
             dpLateDate.SelectedDate = invoice?.LateDate;
             numbLateDays.Text = invoice?.LateDays.ToString();
+
+            bool readOnly = false;
+
+            nbEditModeMessage.Text = string.Empty;
+
+            bool CanEdit = invoiceType.IsAuthorized("ManageInvoices", CurrentPerson) || Rock.Security.Authorization.EDIT.AsBoolean();
+            if (!CanEdit)
+            {
+                readOnly = true;
+                nbEditModeMessage.Text = EditModeMessage.ReadOnlyEditActionNotAllowed(Invoice.FriendlyTypeName);
+
+
+            }
+
+            if (readOnly)
+            {
+                ltlInvoiceNumberAndName.Text = ActionTitle.View(Invoice.FriendlyTypeName);
+
+            }
+            tbName.ReadOnly = readOnly;
+            tbSummary.ReadOnly = readOnly;
+            dpDueDate.ReadOnly = readOnly;
+            dpLateDate.ReadOnly = readOnly;
+            numbLateDays.ReadOnly = readOnly;
+            gAssignments.Actions.ShowAdd = !readOnly;
+            gInvoiceItems.Actions.ShowAdd = !readOnly;
+
+
+
 
             // Populate Assignment State
             InvoiceAssignmentState.Clear();
@@ -652,6 +690,32 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
             vsInvoiceItem.Controls.Clear();
         }
         #endregion
+
+
+        public override List<BreadCrumb> GetBreadCrumbs(Rock.Web.PageReference pageReference)
+        {
+            var breadCrumbs = new List<BreadCrumb>();
+
+            string crumbName = ActionTitle.Add(Invoice.FriendlyTypeName);
+
+            int? invoiceId = PageParameter(PageParameter.InvoiceId).AsIntegerOrNull();
+
+            if (invoiceId.HasValue)
+            {
+                _invoice = new InvoiceService(new RockContext()).Get(invoiceId.Value);
+                if (_invoice != null)
+                {
+                    crumbName = $"Invoice #{_invoice.Id}: {_invoice.Name}";
+                }
+            }
+
+            breadCrumbs.Add(new BreadCrumb(crumbName, pageReference));
+
+            return breadCrumbs;
+        }
+
+
+
 
         #region Enums
 
