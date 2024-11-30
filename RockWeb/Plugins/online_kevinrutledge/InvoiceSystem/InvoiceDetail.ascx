@@ -5,6 +5,7 @@
         
         <asp:HiddenField ID="hfActiveDialog" runat="server" />
         <asp:HiddenField ID="hfInvoiceId" runat="server" />
+        <asp:HiddenField ID="hfInvoiceTypeGuid" runat="server" />
         <asp:HiddenField ID="hfAssignmentGuid" runat="server" />
         <asp:HiddenField ID="hfInvoiceItemGuid" runat="server" />
         <asp:HiddenField ID="hrRemainingPercent" runat="server" />
@@ -34,6 +35,7 @@
 
                         <div class="row">
                             <div class="col-md-12">
+                                <Rock:RockDropDownList ID="ddlInvoiceType" runat="server" Label="InvoiceType" DataTextField="Text" DataValueField="Value" />
                                 <Rock:DataTextBox ID="tbName" runat="server" SourceTypeName="online.kevinrutledge.InvoiceSystem.Model.Invoice, online.kevinrutledge.InvoiceSystem" PropertyName="Name" />
 
 

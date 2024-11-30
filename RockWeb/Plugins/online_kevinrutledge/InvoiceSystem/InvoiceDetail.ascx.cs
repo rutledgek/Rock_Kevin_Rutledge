@@ -12,6 +12,7 @@ using Rock.Data;
 using Rock.Model;
 using Rock.Web.Cache;
 using Rock.Web.UI;
+using Rock.Security;
 
 using online.kevinrutledge.InvoiceSystem.Model;
 using Rock.Web.UI.Controls;
@@ -154,13 +155,52 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
 
         #region Page Methods
 
+        /// <summary>
+        /// Bind the reminder types dropdown list.
+        /// </summary>
+        /// <param name="invoiceTypes">The reminder types.</param>
+        private void BindINvoiceTypes()
+            {
+            _allowedInvoiceTypes = GetAttributeValue(AttributeKeys.InvoiceTypes).SplitDelimitedValues().AsGuidList();
+
+            var rockContext = new RockContext();
+            var invoiceTypeOptions = new InvoiceTypeService( rockContext ).Queryable()
+                .Where(t => t.IsActive) // Only active invoice types
+                .ToList()
+                .Where(t => t.IsAuthorized(Authorization.VIEW, CurrentPerson)) // Check VIEW authorization
+                .Where(t => !_allowedInvoiceTypes.Any() || _allowedInvoiceTypes.Contains(t.Guid)) // Filter by allowed GUIDs or include all if empty
+                .Select(t => new { Value = t.Guid, Text = t.Name }) // Project to Guid (Value) and Name (Text)
+                .ToList();
+
+            if (invoiceTypeOptions.Count == 1)
+            {
+                // Only one item exists, disable the dropdown and select the single item
+                ddlInvoiceType.DataSource = invoiceTypeOptions;
+                ddlInvoiceType.DataBind();
+
+                ddlInvoiceType.SelectedValue = invoiceTypeOptions[0].Value.ToString();
+                ddlInvoiceType.Enabled = false; // Disable the dropdown
+            }
+            else
+            {
+                // Multiple items exist, bind normally
+                ddlInvoiceType.DataSource = invoiceTypeOptions;
+                ddlInvoiceType.DataBind();
+                ddlInvoiceType.Enabled = true; // Enable the dropdown
+            }
+
+        }
+
+
         protected void ShowDetail()
         {
 
-            _allowedInvoiceTypes =  GetAttributeValue(AttributeKeys.InvoiceTypes).SplitDelimitedValues().AsGuidList();
+            BindINvoiceTypes();
+
             var invoiceTypeCount = _allowedInvoiceTypes.Count();
 
-
+            
+            
             var rockContext = new RockContext();
             upnlContent.Visible = true;
 
