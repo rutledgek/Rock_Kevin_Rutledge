@@ -13,6 +13,7 @@
                 <asp:BoundField DataField="Description" HeaderText="Description" SortExpression="Description" />
                 <Rock:BoolField DataField="IsActive" HeaderText="Is Active" SortExpression="IsActe" />
                 <Rock:DeleteField OnClick="gInvoiceTypes_Delete" />
+                <Rock:SecurityField TitleField="Name" />
             </Columns>
         </Rock:Grid>
 

@@ -13,7 +13,7 @@
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
   </PropertyGroup>
-    <PropertyGroup>
+  <PropertyGroup>
     <VersionFile>$(ProjectDir)\builds\.version</VersionFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -94,6 +94,12 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Rest\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Rock.Common\Rock.Common.csproj">
+      <Project>{13568622-324E-4493-B605-C9896E725D30}</Project>
+      <Name>Rock.Common</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

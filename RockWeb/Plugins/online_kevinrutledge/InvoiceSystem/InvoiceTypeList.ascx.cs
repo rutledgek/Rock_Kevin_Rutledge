@@ -41,6 +41,10 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
             gInvoiceTypes.RowItemText = "Invoice Type";
             gInvoiceTypes.DataKeyNames = new string[] { "id" };
 
+            SecurityField securityField = gInvoiceTypes.Columns.OfType<SecurityField>().First();
+            securityField.EntityTypeId = EntityTypeCache.Get(typeof(InvoiceType)).Id;
+
+
             BindFilter();
         }
 

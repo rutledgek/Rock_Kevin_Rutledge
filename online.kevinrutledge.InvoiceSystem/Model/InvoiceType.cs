@@ -4,27 +4,17 @@ using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Entity.ModelConfiguration;
-using System.Linq;
 using System.Runtime.Serialization;
-
+using Rock;
 using Rock.Data;
 using Rock.Model;
-
-
-
-
-using Rock.Web.Cache;
-using Rock.UniversalSearch;
-using Rock.UniversalSearch.IndexModels;
-using Rock.Security;
-using Rock.Transactions;
-using Rock;
 
 namespace online.kevinrutledge.InvoiceSystem.Model
 {
     [Table("_online_kevinrutledge_InvoiceSystem_InvoiceType")]
     // That line goes right above the class definition...
     [DataContract]
+    [Rock.SystemGuid.EntityTypeGuid(online.kevinrutledge.InvoiceSystem.SystemGuids.EntityTypeGuids.Invoice_Type)]
     public class InvoiceType : Model<InvoiceType>, IRockEntity
     {
         /// <summary>
@@ -179,14 +169,18 @@ namespace online.kevinrutledge.InvoiceSystem.Model
 
 
 
+        private Dictionary<string, string> _supportedActions;
 
-
-
-
-
-
-
-        #region Virtual Properties
+        public override Dictionary<string, string> SupportedActions
+        {
+            get
+            {
+                var supportedActions = base.SupportedActions;
+                supportedActions.AddOrReplace("ManageInvoices", "The roles and/or users that have the ability to manage invoices of this type. ");
+                return supportedActions;
+            }
+        }
+  #region Virtual Properties
         public virtual Category Category { get; set; }
 
 
