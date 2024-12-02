@@ -21,6 +21,9 @@ using Rock.Attribute;
 using PayPal.Payments.DataObjects;
 using Invoice = online.kevinrutledge.InvoiceSystem.Model.Invoice;
 using cache = online.kevinrutledge.InvoiceSystem.Cache;
+using FCM.Net;
+using online.kevinrutledge.InvoiceSystem.Cache;
+using OpenXmlPowerTools;
 
 namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
 {
@@ -62,21 +65,23 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
         {
             get
             {
-                // Use the correct key for InvoiceAssignmentState
-                return (Dictionary<Guid, (int AuthorizedPersonAliasId, decimal AssignedPercent)>)(ViewState["InvoiceAssignmentState"]
-                       ?? new Dictionary<Guid, (int AuthorizedPersonAliasId, decimal AssignedPercent)>());
+                if (ViewState["InvoiceAssignmentState"] == null)
+                {
+                    ViewState["InvoiceAssignmentState"] = new Dictionary<Guid, (int AuthorizedPersonAliasId, decimal AssignedPercent)>();
+                }
+                return (Dictionary<Guid, (int AuthorizedPersonAliasId, decimal AssignedPercent)>)ViewState["InvoiceAssignmentState"];
             }
             set
             {
                 ViewState["InvoiceAssignmentState"] = value;
             }
         }
-
         public Dictionary<Guid, (string Description, int Quantity, decimal UnitPrice, decimal? TaxRate, decimal? DiscountAmount, decimal? DiscountPercent)> InvoiceItemState
         {
             get
             {
-                return (Dictionary<Guid, (string, int, decimal, decimal?, decimal?, decimal?)>)(ViewState["InvoiceItemState"] ?? new Dictionary<Guid, (string, int, decimal, decimal?, decimal?, decimal?)>());
+                return (Dictionary<Guid, (string, int, decimal, decimal?, decimal?, decimal?)>)(ViewState["InvoiceItemState"]
+                       ?? new Dictionary<Guid, (string, int, decimal, decimal?, decimal?, decimal?)>());
             }
             set
             {
@@ -91,6 +96,8 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
 
         private Invoice _invoice = null; // Cached invoice instance
         private InvoiceType _invoiceType = null; // Cached Invoice Type
+        private int? _invoiceTypeId = null;
+        private int? _invoiceId = null;
         private List<Guid> _allowedInvoiceTypes;
 
         #endregion
@@ -99,8 +106,15 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
 
         protected override object SaveViewState()
         {
-            ViewState["InvoiceAssignmentState"] = InvoiceAssignmentState;
-            ViewState["InvoiceItemState"] = InvoiceItemState; // Save both states
+            // Convert dictionary to serializable list
+            ViewState["InvoiceAssignmentState"] = InvoiceAssignmentState
+                .Select(kvp => new KeyValuePair<Guid, (int, decimal)>(kvp.Key, kvp.Value))
+                .ToList();
+
+            ViewState["InvoiceItemState"] = InvoiceItemState
+                .Select(kvp => new KeyValuePair<Guid, (string, int, decimal, decimal?, decimal?, decimal?)>(kvp.Key, kvp.Value))
+                .ToList();
+
             return base.SaveViewState();
         }
 
@@ -108,11 +122,13 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
         {
             base.LoadViewState(savedState);
 
-            // Restore both states from ViewState
-            InvoiceAssignmentState = ViewState["InvoiceAssignmentState"] as Dictionary<Guid, (int AuthorizedPersonAliasId, decimal AssignedPercent)>
-                                     ?? new Dictionary<Guid, (int AuthorizedPersonAliasId, decimal AssignedPercent)>();
+            // Convert serialized list back to dictionary
+            var assignmentStateList = ViewState["InvoiceAssignmentState"] as List<KeyValuePair<Guid, (int, decimal)>>;
+            InvoiceAssignmentState = assignmentStateList?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
+                                   ?? new Dictionary<Guid, (int AuthorizedPersonAliasId, decimal AssignedPercent)>();
 
-            InvoiceItemState = ViewState["InvoiceItemState"] as Dictionary<Guid, (string Description, int Quantity, decimal UnitPrice, decimal? TaxRate, decimal? DiscountAmount, decimal? DiscountPercent)>
+            var itemStateList = ViewState["InvoiceItemState"] as List<KeyValuePair<Guid, (string, int, decimal, decimal?, decimal?, decimal?)>>;
+            InvoiceItemState = itemStateList?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
                                ?? new Dictionary<Guid, (string, int, decimal, decimal?, decimal?, decimal?)>();
         }
 
@@ -147,20 +163,14 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
         {
             base.OnLoad(e);
 
+            
+
             if (!Page.IsPostBack)
             {
-                var rockContext = new RockContext();
+
+
+
                 bool authorized = true;
-
-                // Retrieve Invoice ID from Page Parameters
-                int? invoiceId = PageParameter(PageParameter.InvoiceId).AsIntegerOrNull();
-                int? invoiceTypeId = PageParameter(PageParameter.InvoiceTypeId).AsIntegerOrNull();
-
-                if (invoiceTypeId.HasValue)
-                { 
-                var invoiceType = cache.InvoiceTypeCache.Get(invoiceTypeId.Value);
-                }
-
 
                 ShowDetail();
             }
@@ -205,7 +215,7 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
                 .ToList() // Load remaining data into memory
                 .Where(t => t.IsAuthorized("ManageInvoices", CurrentPerson) || t.IsAuthorized(Authorization.EDIT, CurrentPerson)) // Authorization to manage or edit invoices
                 .Where(t => t.Category == null || (t.Category != null && t.Category.IsAuthorized(Authorization.VIEW, CurrentPerson))) // Category authorization or no category
-                .Select(t => new { Value = t.Guid, Text = t.Name }) // Format for dropdown
+                .Select(t => new { Value = t.Id, Text = t.Name }) // Format for dropdown
                 .ToList(); // Return as list
 
 
@@ -218,6 +228,7 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
                 ddlInvoiceType.DataBind();
                 ddlInvoiceType.SelectedValue = invoiceTypeOptions[0].Value.ToString();
                 ddlInvoiceType.Enabled = false; // Disable the dropdown
+                hfInvoiceTypeId.Value = invoiceTypeOptions[0].Value.ToString();
             }
             else
             {
@@ -230,18 +241,43 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
 
         protected void ShowDetail()
         {
+
+
             var rockContext = new RockContext();
             // Retrieve Invoice ID from Page Parameters
             int? invoiceId = PageParameter(PageParameter.InvoiceId).AsIntegerOrNull();
             int? invoiceTypeId = PageParameter(PageParameter.InvoiceTypeId).AsIntegerOrNull();
 
-            // Fetch Invoice
-            Invoice invoice = invoiceId.HasValue
-                ? _invoice ?? new InvoiceService(rockContext).Get(invoiceId.Value)
-                : null;
+            Invoice invoice = null;
+
+            if(_invoice == null && invoiceId > 0)
+            {
+                invoice = new InvoiceService(rockContext).Get(4);
+
+                
+            } else {
+                invoice = _invoice;
+            }
 
             // Fetch Invoice Type
             InvoiceType invoiceType = invoiceTypeId.HasValue ? _invoiceType ?? new InvoiceTypeService(rockContext).Get(invoiceTypeId.Value) : null;
+
+            
+
+            
+            
+
+            if (invoiceTypeId.HasValue)
+            {
+                hfInvoiceTypeId.Value = InvoiceTypeCache.Get(invoiceTypeId.Value).Id.ToString();
+            }
+            else
+            {
+                // Handle the case where invoiceTypeId is null
+                hfInvoiceTypeId.Value = string.Empty; // or a default value
+            }
+
+            hfInvoiceId.Value = invoiceId.ToString();
 
             BindInvoiceTypes();
 
@@ -306,21 +342,22 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
             gInvoiceItems.Actions.ShowAdd = !readOnly;
 
 
-
-
             // Populate Assignment State
             InvoiceAssignmentState.Clear();
-            if (invoice?.InvoiceAssignments != null)
+            if (invoice?.InvoiceAssignments.Count() > 0)
             {
                 foreach (var assignment in invoice.InvoiceAssignments)
                 {
-                    var assignmentKey = assignment.Guid != Guid.Empty ? assignment.Guid : Guid.NewGuid();
-                    InvoiceAssignmentState[assignmentKey] = (
+                    var assignmentKey = assignment.Guid != null ? assignment.Guid : Guid.NewGuid();
+                    var tempState = InvoiceAssignmentState;
+                    tempState[assignmentKey] = (
                         AuthorizedPersonAliasId: assignment.AuthorizedPersonAliasId,
                         AssignedPercent: assignment.AssignedPercent
                     );
+                    InvoiceAssignmentState = tempState;
                 }
             }
+            
 
             // Populate Items State
             InvoiceItemState.Clear();
@@ -329,15 +366,16 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
                 foreach( var item in invoice.InvoiceItems)
                 {
                     var itemKey = item.Guid != Guid.Empty ? item.Guid : Guid.NewGuid();
-                    InvoiceItemState[itemKey] = (
-                         //
-                        item.Description,
+                    var tempState = InvoiceItemState;
+                    tempState[itemKey] = (
+                        Description: item.Description,
                         Quantity: item.Quantity.ToIntSafe(),
                         UnitPrice: item.UnitPrice.ToIntSafe(),
                         item.TaxRate,
                         item.DiscountAmount,
                         item.DiscountPercent
-                        );
+                    );
+                    InvoiceItemState = tempState;
 
                 }
 
@@ -750,7 +788,118 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
             return breadCrumbs;
         }
 
+        protected void btnSave_Click(object sender, EventArgs e)
+        {
+            // Create Rock Context and Initiate Service
+            var rockContext = new RockContext();
+            Invoice invoice;
 
+            InvoiceService invoiceService = new InvoiceService(rockContext);
+
+            int invoiceId = int.Parse(hfInvoiceId.Value);
+
+            if (invoiceId == 0)
+            {
+                invoice = new Invoice();
+                invoiceService.Add(invoice);
+                invoice.CreatedByPersonAliasId = CurrentPersonAliasId;
+                invoice.CreatedDateTime = RockDateTime.Now;
+            }
+            else
+            {
+                invoice = invoiceService.Get(invoiceId);
+                invoice.ModifiedByPersonAliasId = CurrentPersonAliasId;
+                invoice.ModifiedDateTime = RockDateTime.Now;
+            }
+
+            if (invoice != null)
+            {
+                invoice.Name = tbName.Text;
+                invoice.Summary = tbSummary.Text;
+                invoice.InvoiceTypeId = ddlInvoiceType.SelectedValueAsInt() ?? 0;
+                var invoiceAssignments = new List<InvoiceAssignment>();
+
+                var dueDate = dpDueDate.SelectedDate ?? RockDateTime.Now;
+                invoice.DueDate = dueDate;
+
+                if (dpLateDate.SelectedDate.HasValue)
+                {
+                    // Use the value from the LateDatePicker
+                    invoice.LateDate = dpLateDate.SelectedDate.Value;
+                }
+                else
+                {
+                    invoice.LateDate = dueDate.AddDays((double)numbLateDays.Text.AsDouble());
+                }
+
+
+                rockContext.SaveChanges();
+
+                // Get the Invoice Back to make sure we have a good Id for saving the assignments and items.
+                invoice = invoiceService.Get(invoice.Guid);
+
+                // Save the Project Attributes
+
+
+
+
+
+
+
+
+
+
+
+                foreach (var stateItem in InvoiceAssignmentState)
+                {
+                    // Loop Through the State they are already in invoice.InvoiceItems make sure the values are updated.
+                    var assignmentGuid = stateItem.Key;
+                    var (authorizedPersonAliasId, assignedPercent) = stateItem.Value;
+
+
+
+
+                    var existingAssignment = invoice.InvoiceAssignments.FirstOrDefault(a => a.Guid == assignmentGuid);
+
+                    if (existingAssignment != null)
+                    {
+                        existingAssignment.AuthorizedPersonAliasId = authorizedPersonAliasId;
+                        existingAssignment.AssignedPercent = assignedPercent;
+
+                    }
+                    else
+                    {
+                        var newAssignment = new InvoiceAssignment
+                        {
+                            AuthorizedPersonAliasId = authorizedPersonAliasId,
+                            AssignedPercent = assignedPercent,
+                            InvoiceId = invoice.Id
+                        };
+
+                        invoice.InvoiceAssignments.Add(newAssignment);
+
+                    }
+
+
+
+
+                }
+
+                rockContext.SaveChanges();
+
+
+            }
+        }
+
+        protected void btnCancel_Click(object sender, EventArgs e)
+        {
+
+
+           
+
+            NavigateToParentPage();
+            // 
+        }
 
 
         #region Enums

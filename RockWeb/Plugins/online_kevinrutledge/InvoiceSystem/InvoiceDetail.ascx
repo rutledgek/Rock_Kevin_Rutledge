@@ -2,10 +2,11 @@
     Inherits="RockWeb.Plugins.online_kevinrutledge.InvoiceSystem.InvoiceDetail" %>
 <asp:UpdatePanel ID="upnlContent" runat="server">
     <ContentTemplate>
-        
+
         <asp:HiddenField ID="hfActiveDialog" runat="server" />
         <asp:HiddenField ID="hfInvoiceId" runat="server" />
         <asp:HiddenField ID="hfInvoiceTypeGuid" runat="server" />
+        <asp:HiddenField ID="hfInvoiceTypeId" runat="server" />
         <asp:HiddenField ID="hfAssignmentGuid" runat="server" />
         <asp:HiddenField ID="hfInvoiceItemGuid" runat="server" />
         <asp:HiddenField ID="hrRemainingPercent" runat="server" />
@@ -129,7 +130,7 @@
                                             <Rock:EditField OnClick="gInvoiceItems_RowSelected" />
                                             <Rock:DeleteField OnClick="gInvoiceItem_Delete" />
                                         </Columns>
-                                        
+
                                     </Rock:Grid>
                                 </div>
                             </div>
@@ -138,81 +139,98 @@
                     </div>
                     <div class="col-md-4">
                         <div class="panel panel-info">
-                                                        <div class="panel-heading">
+                            <div class="panel-heading">
                                 <h1 class="panel-title">Invoice Summary</h1>
                             </div>
-                                <div class="panel-body">
-                                   <strong>Invoice Item Count: </strong> <asp:Literal ID="litInvoiceItemCount" runat="server" /><br />
-                                    <strong>Item Subtotal: </strong> <asp:Literal ID="litInvoiceSubtotal" runat="server" /> <br />
-                                    <strong>Discount Total: </strong> <asp:Literal ID="litDiscountTotal" runat="server" /> <br />
-                                    <strong>Invoice Pre-Tax Total:</strong> <asp:Literal ID="litInvoicePreTaxTotal" runat="server" /> <br />
-                                    <strong>Tax: </strong> <asp:Literal ID="litTaxTotal" runat="server" /> <br />
-                                    <strong>Invoice Total: </strong> <asp:Literal ID="litInvoiceFinalTotal" runat="server" /> <br />
-                                </div>
-                        </>
+                            <div class="panel-body">
+                                <strong>Invoice Item Count: </strong>
+                                <asp:Literal ID="litInvoiceItemCount" runat="server" /><br />
+                                <strong>Item Subtotal: </strong>
+                                <asp:Literal ID="litInvoiceSubtotal" runat="server" />
+                                <br />
+                                <strong>Discount Total: </strong>
+                                <asp:Literal ID="litDiscountTotal" runat="server" />
+                                <br />
+                                <strong>Invoice Pre-Tax Total:</strong>
+                                <asp:Literal ID="litInvoicePreTaxTotal" runat="server" />
+                                <br />
+                                <strong>Tax: </strong>
+                                <asp:Literal ID="litTaxTotal" runat="server" />
+                                <br />
+                                <strong>Invoice Total: </strong>
+                                <asp:Literal ID="litInvoiceFinalTotal" runat="server" />
+                                <br />
+                            </div>
+                            </>
 
+                        </div>
                     </div>
+                </div>
+                <div class="actions">
+                    <asp:LinkButton ID="btnSave" runat="server" Text="Save" CssClass="btn btn-primary"
+                        OnClick="btnSave_Click" />
+                    <asp:LinkButton ID="btnCancel" runat="server" Text="Cancel" CssClass="btn btn-link"
+                        CausesValidation="false" OnClick="btnCancel_Click" />
                 </div>
             </div>
-        </div>
 
-        <Rock:ModalDialog ID="dlgAssignment" runat="server" ScrollbarEnabled="false" ValidationGroup="Assignment"
-            SaveButtonText="Add" OnCancelClick="ClearAllModalFields" OnSaveClick="btnSaveAssignment_Click"
-            Title="Enter Person and Percent">
-            <Content>
-                <asp:ValidationSummary ID="vsAssignment" runat="server" HeaderText="Please correct the following:"
-                    CssClass="alert alert-validation" ValidationGroup="Assignment" />
-                <Rock:PersonPicker ID="ppAssignment" runat="server" Required="true" Label="Person" ValidationGroup="Assignment"/>
-                <Rock:HighlightLabel ID="hlblCurrentAssignedTotal" runat="server" LabelType="Danger"  ValidationGroup="Assignment" />
-                <Rock:NumberBox ID="numbAssignedPercent" runat="server" Label="Percent of Invoice Assigned"
-                    Help="What percent of the total invoice is this person responsible for." NumberType="Integer"  ValidationGroup="Assignment" required="true" />
+            <Rock:ModalDialog ID="dlgAssignment" runat="server" ScrollbarEnabled="false" ValidationGroup="Assignment"
+                SaveButtonText="Add" OnCancelClick="ClearAllModalFields" OnSaveClick="btnSaveAssignment_Click"
+                Title="Enter Person and Percent">
+                <Content>
+                    <asp:ValidationSummary ID="vsAssignment" runat="server" HeaderText="Please correct the following:"
+                        CssClass="alert alert-validation" ValidationGroup="Assignment" />
+                    <Rock:PersonPicker ID="ppAssignment" runat="server" Required="true" Label="Person" ValidationGroup="Assignment" />
+                    <Rock:HighlightLabel ID="hlblCurrentAssignedTotal" runat="server" LabelType="Danger" ValidationGroup="Assignment" />
+                    <Rock:NumberBox ID="numbAssignedPercent" runat="server" Label="Percent of Invoice Assigned"
+                        Help="What percent of the total invoice is this person responsible for." NumberType="Integer" ValidationGroup="Assignment" Required="true" />
 
-            </Content>
-        </Rock:ModalDialog>
-
+                </Content>
+            </Rock:ModalDialog>
 
 
 
 
-        <Rock:ModalDialog ID="dlgInvoiceItem" runat="server" ScrollbarEnabled="false" ValidationGroup="InvoiceItem"
-            SaveButtonText="Add" OnCancelClick="ClearAllModalFields" OnSaveClick="btnSaveInvoiceItem_Click"
-            Title="Create the Invoice Item">
-            <Content>
-                <asp:ValidationSummary ID="vsInvoiceItem" runat="server" HeaderText="Please correct the following:"
-                    CssClass="alert alert-validation" ValidationGroup="InvoiceItem" />
-                <Rock:DataTextBox ID="tbItemDescription" runat="server" Label="Description" SourceTypeName="online.kevinrutledge.InvoiceSystem.Model.InvoiceItem, online.kevinrutledge.InvoiceSystem" PropertyName="Description" Required="true" ValidationGroup="IvoiceItem" />
-                <div class="row">
-                    <div class="col-md-6">
-                        <Rock:NumberBox ID="numbQuantity" runat="server" Label="Quantity" NumberType="Integer" Required="true" ValidationGroup="IvoiceItem" />
+
+            <Rock:ModalDialog ID="dlgInvoiceItem" runat="server" ScrollbarEnabled="false" ValidationGroup="InvoiceItem"
+                SaveButtonText="Add" OnCancelClick="ClearAllModalFields" OnSaveClick="btnSaveInvoiceItem_Click"
+                Title="Create the Invoice Item">
+                <Content>
+                    <asp:ValidationSummary ID="vsInvoiceItem" runat="server" HeaderText="Please correct the following:"
+                        CssClass="alert alert-validation" ValidationGroup="InvoiceItem" />
+                    <Rock:DataTextBox ID="tbItemDescription" runat="server" Label="Description" SourceTypeName="online.kevinrutledge.InvoiceSystem.Model.InvoiceItem, online.kevinrutledge.InvoiceSystem" PropertyName="Description" Required="true" ValidationGroup="IvoiceItem" />
+                    <div class="row">
+                        <div class="col-md-6">
+                            <Rock:NumberBox ID="numbQuantity" runat="server" Label="Quantity" NumberType="Integer" Required="true" ValidationGroup="IvoiceItem" />
+                        </div>
+                        <div class="col-md-6">
+                            <Rock:CurrencyBox ID="numbUnitPrice" runat="server" Label="Unit Price" NumberType="Currency" Required="true" ValidationGroup="IvoiceItem" />
+                        </div>
                     </div>
-                    <div class="col-md-6">
-                        <Rock:CurrencyBox ID="numbUnitPrice" runat="server" Label="Unit Price" NumberType="Currency" Required="true" ValidationGroup="IvoiceItem" />
-                    </div>
-                </div>
-                 <Rock:NumberBox ID="numbTaxPercent" runat="server" Label="Item Tax Rate" NumberType="Double" Help="If this value is left blank, the Tax Rate value on the invoice type will be used for all items."/>
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="panel panel-success">
-                            <div class="panel-heading">
-                                <h1 class="panel-title">Discounts to Apply</h1>
-                            </div>
-                            <div class="panel-body">
-                                <p>If you want to apply a discount to the item, enter the full price above and then choose either an Amount or Precent to apply.</p>
-                                <div class="row">
-                                    <div class="col-md-6">
+                    <Rock:NumberBox ID="numbTaxPercent" runat="server" Label="Item Tax Rate" NumberType="Double" Help="If this value is left blank, the Tax Rate value on the invoice type will be used for all items." />
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="panel panel-success">
+                                <div class="panel-heading">
+                                    <h1 class="panel-title">Discounts to Apply</h1>
+                                </div>
+                                <div class="panel-body">
+                                    <p>If you want to apply a discount to the item, enter the full price above and then choose either an Amount or Precent to apply.</p>
+                                    <div class="row">
+                                        <div class="col-md-6">
 
-                                        <Rock:CurrencyBox ID="numbDiscountAmount" runat="server" Label="Discount Amount" NumberType="Currency" />
-                                    </div>
-                                    <div class="col-md-6">
-                                        <Rock:NumberBox ID="numbDiscountPercent" runat="server" Label="Discount Percent" NumberType="Double" />
+                                            <Rock:CurrencyBox ID="numbDiscountAmount" runat="server" Label="Discount Amount" NumberType="Currency" />
+                                        </div>
+                                        <div class="col-md-6">
+                                            <Rock:NumberBox ID="numbDiscountPercent" runat="server" Label="Discount Percent" NumberType="Double" />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                                       
-            </Content>
-        </Rock:ModalDialog>
+
+                </Content>
+            </Rock:ModalDialog>
     </ContentTemplate>
 </asp:UpdatePanel>
