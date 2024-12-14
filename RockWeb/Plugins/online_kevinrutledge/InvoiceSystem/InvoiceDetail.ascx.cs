@@ -26,6 +26,7 @@ using online.kevinrutledge.InvoiceSystem.Cache;
 using Newtonsoft.Json;
 using OpenXmlPowerTools;
 
+
 #endregion
 
 
@@ -177,6 +178,9 @@ private void SaveInvoiceItemState()
                 {
                     InvoiceItemState = new List<InvoiceItem>();
                 }
+
+                LoadInvoiceStatusDropdown();
+
                 ShowDetail();
             }
         }
@@ -238,10 +242,32 @@ private void SaveInvoiceItemState()
 
         }
 
-        // Enter Invoice Item Binding Here
 
 
 
+        private void LoadInvoiceStatusDropdown()
+        {
+            // Define statuses to exclude
+            var excludedStatuses = new[] { InvoiceStatus.Sent, InvoiceStatus.Paid, InvoiceStatus.Late };
+
+            // Filter out excluded statuses and prepare for dropdown binding
+            var invoiceStatusList = Enum.GetValues(typeof(InvoiceStatus))
+                .Cast<InvoiceStatus>()
+                .Where(status => !excludedStatuses.Contains(status)) // Exclude specific statuses
+                .Select(status => new
+                {
+                    Value = ((int)status).ToString(), // Enum value as string
+                    Text = status.ToString()         // Enum name
+                })
+                .ToList();
+
+            // Bind to dropdown
+            ddlInvoiceStatus.DataSource = invoiceStatusList;
+            ddlInvoiceStatus.DataTextField = "Text";  // Displayed text
+            ddlInvoiceStatus.DataValueField = "Value"; // Hidden value
+            ddlInvoiceStatus.DataBind();
+
+        }
 
 
         // Show Content and Fields
@@ -276,7 +302,6 @@ private void SaveInvoiceItemState()
 
             // Fetch Invoice Type
             InvoiceType invoiceType = invoiceTypeId.HasValue ? _invoiceType ?? new InvoiceTypeService(rockContext).Get(invoiceTypeId.Value) : null;
-
 
 
 
@@ -326,6 +351,15 @@ private void SaveInvoiceItemState()
             dpDueDate.SelectedDate = invoice?.DueDate;
             dpLateDate.SelectedDate = invoice?.LateDate;
             numbLateDays.Text = invoice?.LateDays.ToString();
+            if (invoice?.InvoiceStatusId != null)
+            {
+                ddlInvoiceStatus.SelectedValue = ((int)invoice.InvoiceStatusId).ToString();
+                hlblInvoiceStatus.Text = invoice.InvoiceStatusId.ToString();
+            }
+            else
+            {
+                ddlInvoiceStatus.SelectedValue = ""; // Clear the selection or set to a default value
+            }
 
             bool readOnly = false;
 
@@ -450,8 +484,9 @@ private void SaveInvoiceItemState()
                 invoice.Name = tbName.Text;
                 invoice.Summary = tbSummary.Text;
                 invoice.InvoiceTypeId = ddlInvoiceType.SelectedValueAsInt() ?? 0;
-                var invoiceAssignments = new List<InvoiceAssignment>();
-                var invoiceITems = new List<InvoiceItem>();
+
+                invoice.InvoiceStatusId = (InvoiceStatus)ddlInvoiceStatus.SelectedValueAsInt();
+
 
 
                 var dueDate = dpDueDate.SelectedDate ?? RockDateTime.Now;
@@ -460,12 +495,15 @@ private void SaveInvoiceItemState()
                 if (dpLateDate.SelectedDate.HasValue)
                 {
                     // Use the value from the LateDatePicker
+                    Debug.WriteLine(dpLateDate.SelectedDate.Value);
                     invoice.LateDate = dpLateDate.SelectedDate.Value;
-                }
-                else
+                } else
                 {
-                    invoice.LateDate = dueDate.AddDays((double)numbLateDays.Text.AsDouble());
+                    invoice.LateDate = null;
                 }
+
+                invoice.LateDays = numbLateDays.Text.AsIntegerOrNull() ?? 0;
+
 
 
 
@@ -703,6 +741,7 @@ private void SaveInvoiceItemState()
         {
 
             HideDialog();
+            ClearDialogFields();
             BindAssignmentGrid();
         }
 
@@ -714,7 +753,7 @@ private void SaveInvoiceItemState()
                 if (dialog == Dialogs.InvoiceAssignment)
                 {
                     dlgAssignment.Hide();
-                    //ClearDialogFields();
+                    ClearDialogFields();
                 }
 
                 if (dialog == Dialogs.InvoiceItem)
@@ -771,9 +810,7 @@ private void SaveInvoiceItemState()
         protected void gAssignments_AddClick(object sender, EventArgs e)
         {
             hfAssignmentGuid.Value = string.Empty; // Clear the GUID for new assignments
-            ppAssignment.SelectedValue = 10;
-
-            //ClearDialogFields();
+            
             numbAssignedPercent.Text = CalculateRemainingAssignedPercent().ToString();
             ShowDialog(Dialogs.InvoiceAssignment);
         }
@@ -874,14 +911,16 @@ private void SaveInvoiceItemState()
 
         protected void gInvoiceItems_AddClick(object sender, EventArgs e)
         {
-            // Clear dialog fields for adding a new Invoice Item
-            hfInvoiceItemGuid.Value = string.Empty; // Clear the GUID for new Invoice Items
-            tbItemDescription.Text = string.Empty;
-            numbUnitPrice.Text = string.Empty;
-            numbQuantity.Text = "1"; // Default quantity
-            numbTaxPercent.Text = string.Empty;
-            numbDiscountAmount.Text = string.Empty;
-            numbDiscountPercent.Text = string.Empty;
+            //// Clear dialog fields for adding a new Invoice Item
+            //hfInvoiceItemGuid.Value = string.Empty; // Clear the GUID for new Invoice Items
+            //tbItemDescription.Text = string.Empty;
+            //numbUnitPrice.Text = string.Empty;
+            //numbQuantity.Text = "1"; // Default quantity
+            //numbTaxPercent.Text = string.Empty;
+            //numbDiscountAmount.Text = string.Empty;
+            //numbDiscountPercent.Text = string.Empty;
+
+         
 
             // Show dialog
             ShowDialog(Dialogs.InvoiceItem);
