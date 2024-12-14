@@ -55,7 +55,7 @@ namespace online.kevinrutledge.InvoiceSystem.Model
         /// Gets or sets the status of the invoice.
         /// </summary>
         [DataMember]
-        public InvoiceStatus InvoiceStatus { get; set; }
+        public InvoiceStatus InvoiceStatusId { get; set; }
 
         /// <summary>
         /// Gets or sets the due date for the invoice.
