@@ -123,6 +123,7 @@
                                             <Rock:RockBoundField DataField="Description" HeaderText="Description" />
                                             <Rock:RockBoundField DataField="Quantity" HeaderText="Quantity" />
                                             <Rock:CurrencyField DataField="UnitPrice" HeaderText="Unit Price" />
+                                            <Rock:CurrencyField DataField="UnitDiscount" HeaderText="Unit Discount" />
                                             <Rock:CurrencyField DataField="TotalPrice" HeaderText="Total Price" DataFormatString="Currency" />
                                             <Rock:CurrencyField DataField="TotalDiscount" HeaderText="Total Discount" DataFormatString="Currency" />
                                             <Rock:CurrencyField DataField="TaxAmount" HeaderText="Tax" DataFormatString="Currency" />
