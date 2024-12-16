@@ -205,10 +205,10 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
             NavigateToDetailPage(e.RowKeyId);
         }
 
-        private void NavigateToDetailPage(int invoiceTypeId)
+        private void NavigateToDetailPage(int invoiceId)
         {
             var queryParams = new Dictionary<string, string>();
-            queryParams.Add("InvoiceTypeId", invoiceTypeId.ToString());
+            queryParams.Add("InvoiceId", invoiceId.ToString());
 
             NavigateToLinkedPage("DetailPage", queryParams);
         }

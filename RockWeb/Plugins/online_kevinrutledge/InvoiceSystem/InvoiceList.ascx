@@ -11,11 +11,13 @@
 
         <Rock:Grid ID="gInvoices" runat="server" AllowSorting="true" OnRowSelected="gInvoiceTypes_Edit" TooltipField="Description">
             <Columns>
-                <asp:BoundField DataField="InvoiceStatus" HeaderText="Invoice Status" SortExpression="InvoiceStatus" />
+                <Rock:ColorField DataField="InvoiceStatusColor" ToolTipDataField="DefinedValueTypeName" HeaderText="" />
                 <asp:BoundField DataField="Name" HeaderText="Invoice Name" SortExpression="Name" />
                 <Rock:DateField DataField="DueDate" HeaderText="Invoice Due Date" SortExpression="DueDate" />
                 <Rock:DateField DataField="LateDate" HeaderText="Invoice Late Date" SortExpression="LateDate" />
-                
+                <Rock:CurrencyField DataField="InvoiceTotal" HeaderText="Invoice Total" SortExpression="InvoiceTotal" />
+                <Rock:CurrencyField DataField="TotalPaid" HeaderText="Total Paid" SortExpression="TotalPaid" />
+                <Rock:CurrencyField DataField="OutstandingBalance" HeaderText="Outstanding Balance" SortExpression="OutstandingBalance"/>
             </Columns>
         </Rock:Grid>
 
