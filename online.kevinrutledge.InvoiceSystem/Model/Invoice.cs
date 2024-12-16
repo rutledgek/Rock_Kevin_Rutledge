@@ -55,7 +55,105 @@ namespace online.kevinrutledge.InvoiceSystem.Model
         /// Gets or sets the status of the invoice.
         /// </summary>
         [DataMember]
-        public InvoiceStatus InvoiceStatusId { get; set; }
+        public int? InvoiceStatusId { get; set; }
+
+        /// <summary>
+        /// Gets the text representation of the invoice status if the status is Draft, Scheduled, or Canceled.
+        /// </summary>
+        public InvoiceStatus InvoiceStatus
+        {
+            get
+            {
+                if (!InvoiceStatusId.HasValue)
+                {
+                    // Default to Draft if InvoiceStatusId is null
+                    return InvoiceStatus.Draft;
+                }
+
+                // Example: Logic for Sent status (commented out for now)
+                /*
+                if (InvoiceStatusId == (int)InvoiceStatus.Sent)
+                {
+                    if (SentDate.HasValue && SentDate.Value <= DateTime.Now)
+                    {
+                        return InvoiceStatus.Sent;
+                    }
+                    else
+                    {
+                        // Fallback to Draft if conditions for Sent are not met
+                        return InvoiceStatus.Draft;
+                    }
+                }
+                */
+
+                // Example: Logic for Late status (commented out for now)
+                /*
+                if (InvoiceStatusId == (int)InvoiceStatus.Late)
+                {
+                    if (DueDate.HasValue && DateTime.Now > DueDate.Value && !IsPaid)
+                    {
+                        return InvoiceStatus.Late;
+                    }
+                    else
+                    {
+                        // If not late, fallback to Scheduled or another status
+                        return InvoiceStatus.Scheduled;
+                    }
+                }
+                */
+
+                // Example: Logic for Paid status (commented out for now)
+                /*
+                if (InvoiceStatusId == (int)InvoiceStatus.Paid)
+                {
+                    if (IsPaid)
+                    {
+                        return InvoiceStatus.Paid;
+                    }
+                    else
+                    {
+                        // Fallback to Draft if not paid
+                        return InvoiceStatus.Draft;
+                    }
+                }
+                */
+
+                // Default behavior for other statuses
+                if (Enum.IsDefined(typeof(InvoiceStatus), InvoiceStatusId.Value))
+                {
+                    return (InvoiceStatus)InvoiceStatusId.Value;
+                }
+
+                // Fallback for unexpected values
+                return InvoiceStatus.Draft;
+            }
+        }
+
+        public virtual Rock.Web.UI.Controls.LabelType InvoiceStatusLabelType
+        {
+            get
+            {
+                // Map InvoiceStatus to Rock.Web.UI.Controls.LabelType
+                switch (InvoiceStatus)
+                {
+                    case InvoiceStatus.Draft:
+                        return Rock.Web.UI.Controls.LabelType.Warning;
+                    case InvoiceStatus.Scheduled:
+                        return Rock.Web.UI.Controls.LabelType.Info;
+                    case InvoiceStatus.Sent:
+                        return Rock.Web.UI.Controls.LabelType.Info;
+                    case InvoiceStatus.Paid:
+                        return Rock.Web.UI.Controls.LabelType.Success;
+                    case InvoiceStatus.Late:
+                        return Rock.Web.UI.Controls.LabelType.Danger;
+                    case InvoiceStatus.Canceled:
+                        return Rock.Web.UI.Controls.LabelType.Info;
+                    default:
+                        return Rock.Web.UI.Controls.LabelType.Default;
+                }
+            }
+        }
+
 
         /// <summary>
         /// Gets or sets the due date for the invoice.
@@ -63,11 +161,11 @@ namespace online.kevinrutledge.InvoiceSystem.Model
         [DataMember]
         public DateTime? DueDate { get; set; }
 
-        /// <summary>
-        /// Gets or sets the number of days after the due date when this invoice is considered late.
-        /// </summary>
-        [DataMember]
-        public int? LateDays { get; set; }
+        ///// <summary>
+        ///// Gets or sets the number of days after the due date when this invoice is considered late.
+        ///// </summary>
+        //[DataMember]
+        //public int? LateDays { get; set; }
 
         /// <summary>
         /// Gets or sets the late date for this invoice, if applicable.
@@ -146,6 +244,51 @@ namespace online.kevinrutledge.InvoiceSystem.Model
         Paid = 3,
         Late = 4,
         Canceled = 5
+    }
+
+    public static class InvoiceStatusHelper
+    {
+        public static string GetStatusText(InvoiceStatus status)
+        {
+            switch (status)
+            {
+                case InvoiceStatus.Draft:
+                    return "Draft";
+                case InvoiceStatus.Scheduled:
+                    return "Scheduled";
+                case InvoiceStatus.Sent:
+                    return "Sent";
+                case InvoiceStatus.Paid:
+                    return "Paid";
+                case InvoiceStatus.Late:
+                    return "Late";
+                case InvoiceStatus.Canceled:
+                    return "Canceled";
+                default:
+                    return "Draft";
+            }
+        }
+
+        public static Rock.Web.UI.Controls.LabelType GetLabelType(InvoiceStatus status)
+        {
+            switch (status)
+            {
+                case InvoiceStatus.Draft:
+                    return Rock.Web.UI.Controls.LabelType.Warning;
+                case InvoiceStatus.Scheduled:
+                    return Rock.Web.UI.Controls.LabelType.Info;
+                case InvoiceStatus.Sent:
+                    return Rock.Web.UI.Controls.LabelType.Info;
+                case InvoiceStatus.Paid:
+                    return Rock.Web.UI.Controls.LabelType.Success;
+                case InvoiceStatus.Late:
+                    return Rock.Web.UI.Controls.LabelType.Danger;
+                case InvoiceStatus.Canceled:
+                    return Rock.Web.UI.Controls.LabelType.Info;
+                default:
+                    return Rock.Web.UI.Controls.LabelType.Warning;
+            }
+        }
     }
 
     #endregion

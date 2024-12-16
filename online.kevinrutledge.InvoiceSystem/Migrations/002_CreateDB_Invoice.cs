@@ -21,7 +21,6 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
                 [Name] [nvarchar](100) NOT NULL,
                 [Summary] [nvarchar](max) NULL,
                 [DueDate] [datetime] NULL,
-                [LateDays] [int] NULL,
                 [LateDate] [datetime] NULL,
 	            [Guid] [uniqueidentifier] NOT NULL,
 	            [CreatedDateTime] [datetime] NULL,
@@ -69,6 +68,10 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
             /* Create Invoice Detail Page */
 
             RockMigrationHelper.AddPage(online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceSystemParentPage, online.kevinrutledge.InvoiceSystem.SystemGuids.SystemGuids.FullWidthLayout, "Invoice Detail Page", "", online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceDetailPage, "fa fa-pencil");
+            RockMigrationHelper.AddPageRoute(online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceDetailPage,"invoice");
+            RockMigrationHelper.AddPageRoute(online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceDetailPage, "invoice/{InvoiceId}");
+            RockMigrationHelper.AddPageRoute(online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceDetailPage, "invoice/{InvoiceTypeId}/{InvoiceId}");
+
             RockMigrationHelper.AddBlock(online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceDetailPage, null, online.kevinrutledge.InvoiceSystem.SystemGuids.BlockTypeGuids.InvoiceDetail, "Invoice Detail Page", "Main", "", "", 0, online.kevinrutledge.InvoiceSystem.SystemGuids.BlockGuids.InvoiceDetailBlock);
 
            
@@ -90,6 +93,10 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
             RockMigrationHelper.DeleteEntityType(online.kevinrutledge.InvoiceSystem.SystemGuids.EntityTypeGuids.Invoice);
 
             RockMigrationHelper.DeleteBlockType(online.kevinrutledge.InvoiceSystem.SystemGuids.BlockTypeGuids.InvoiceDetail);
+            
+            RockMigrationHelper.DeletePageRoute(online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceDetailPage);
+            RockMigrationHelper.DeletePageRoute(online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceDetailPage);
+            RockMigrationHelper.DeletePageRoute(online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceDetailPage);
             RockMigrationHelper.DeletePage(online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceDetailPage);
 
         }
