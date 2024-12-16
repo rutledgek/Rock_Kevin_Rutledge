@@ -53,22 +53,6 @@
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-4">
-                                <Rock:DatePicker ID="dpDueDate" runat="server" Label="Due Date" />
-                            </div>
-                            <div class="col-md-4">
-                                <Rock:DatePicker ID="dpLateDate" runat="server" Label="Late Date"
-                                    Help="The Date the invoice will be considered late.  Alternatively, you can select a number of days after the due date." />
-                            </div>
-                            <div class="col-md-4">
-                                <Rock:NumberBox ID="numbLateDays" runat="server"
-                                    Label="Number of Days After Due Date"
-                                    Help="This is the number of days after the Due Date the invoice should be considered late.  This will be used to calculate the due date." />
-
-                            </div>
-                        </div>
-
                     </div>
 
                     <div class="col-md-4">
@@ -98,6 +82,41 @@
                                                     <Rock:DeleteField OnClick="gAssignment_Delete" />
                                                 </Columns>
                                             </Rock:Grid>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+
+
+                                <div class="panel panel-warning">
+                                    <div class="panel-heading">
+                                        <h1 class="panel-title">Due and Late Payment Date:</h1>
+                                    </div>
+                                    <div class="panel-body">
+                                        <div class="row">
+
+                                            <div class="col-md-12">
+                                                <p>the late date for the invoice or the number of days after the due date when it should be considered late. If neither is provided, the default value from the invoice type will be used.</p>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-lg-12 col-md-12">
+                                            <Rock:DatePicker ID="dpDueDate" runat="server" Label="Due Date" Required="true" />
+                                            <hr />
+                                        </div>
+
+                                        <div class="col-lg-4 col-md-12">
+                                            <Rock:DatePicker ID="dpLateDate" runat="server" Label="Late Date"
+                                                Help="The Date the invoice will be considered late.  Alternatively, you can select a number of days after the due date." />
+                                        </div>
+                                        <div class="col-lg-4 col-md-12">
+                                            <Rock:NumberBox ID="numbLateDays" runat="server"
+                                                Label="Number of Days After Due Date"
+                                                Help="This is the number of days after the Due Date the invoice should be considered late.  This will be used to calculate the due date." />
+
                                         </div>
                                     </div>
                                 </div>
@@ -175,8 +194,7 @@
                         CausesValidation="false" OnClick="btnCancel_Click" />
                 </div>
             </div>
-
-            <Rock:ModalDialog ID="dlgAssignment" runat="server" ScrollbarEnabled="false" ValidationGroup="Assignment"
+        <Rock:ModalDialog ID="dlgAssignment" runat="server" ScrollbarEnabled="false" ValidationGroup="Assignment"
                 SaveButtonText="Add" OnCancelClick="ClearAllModalFields" OnSaveClick="btnSaveAssignment_Click"
                 Title="Enter Person and Percent">
                 <Content>
