@@ -344,13 +344,19 @@ private void SaveInvoiceItemState()
                 ltlInvoiceNumberAndName.Text = newInvoiceTitle;
             }
 
+
+            int? invoiceTypeDaysLate = invoice?.InvoiceType?.DefaultDaysUntilLate;
+
             // Load Invoice Data into Controls
             hfInvoiceId.Value = invoice?.Id.ToString() ?? "0";
             tbName.Text = invoice?.Name;
             tbSummary.Text = invoice?.Summary;
             dpDueDate.SelectedDate = invoice?.DueDate;
             dpLateDate.SelectedDate = invoice?.LateDate;
-            
+            if (invoiceTypeDaysLate.HasValue) {
+                numbLateDays.Placeholder = invoiceTypeDaysLate.ToString();
+            }
+
             if (invoice?.InvoiceStatusId != null)
             {
                 ddlInvoiceStatus.SelectedValue = ((int)invoice.InvoiceStatusId).ToString();
@@ -493,7 +499,7 @@ private void SaveInvoiceItemState()
                 var dueDate = dpDueDate.SelectedDate ?? RockDateTime.Now;
                 invoice.DueDate = dueDate;
 
-                int? invoiceTypeDaysLate = invoice.InvoiceType.DefaultDaysUntilLate;
+                int? invoiceTypeDaysLate = invoice?.InvoiceType?.DefaultDaysUntilLate;
 
                 if (dpLateDate.SelectedDate.HasValue)
                 {
@@ -504,7 +510,7 @@ private void SaveInvoiceItemState()
                 {
                     // Determine the number of days late
                     int daysLate = numbLateDays.Text.AsIntegerOrNull() ?? invoiceTypeDaysLate ?? 0;
-                    invoice.LateDate = RockDateTime.Now.AddDays(daysLate);
+                    invoice.LateDate = dueDate.AddDays(daysLate);
                 }
 
 
@@ -929,6 +935,7 @@ private void SaveInvoiceItemState()
             // Retrieve the selected item by its GUID
             var selectedItem = InvoiceItemState.FirstOrDefault(item => item.Guid == invoiceItemKey);
 
+            dlgInvoiceItem.SaveButtonText = "Save Changes";
             if (selectedItem != null)
             {
                 // Prefill dialog fields with the selected item's values

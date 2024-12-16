@@ -87,7 +87,10 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="row">
+
+                    </div>
+                </div>
+                                        <div class="row">
                             <div class="col-md-12">
 
 
@@ -114,6 +117,7 @@
                                         </div>
                                         <div class="col-lg-4 col-md-12">
                                             <Rock:NumberBox ID="numbLateDays" runat="server"
+                                                Default="5"
                                                 Label="Number of Days After Due Date"
                                                 Help="This is the number of days after the Due Date the invoice should be considered late.  This will be used to calculate the due date." />
 
@@ -122,8 +126,6 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
 
                 <hr />
                 <div class="row">
