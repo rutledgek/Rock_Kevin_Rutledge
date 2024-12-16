@@ -350,11 +350,12 @@ private void SaveInvoiceItemState()
             tbSummary.Text = invoice?.Summary;
             dpDueDate.SelectedDate = invoice?.DueDate;
             dpLateDate.SelectedDate = invoice?.LateDate;
-            numbLateDays.Text = invoice?.LateDays.ToString();
+            
             if (invoice?.InvoiceStatusId != null)
             {
                 ddlInvoiceStatus.SelectedValue = ((int)invoice.InvoiceStatusId).ToString();
-                hlblInvoiceStatus.Text = invoice.InvoiceStatusId.ToString();
+                hlblInvoiceStatus.Text = invoice.InvoiceStatus.ToString();
+                hlblInvoiceStatus.LabelType = invoice.InvoiceStatusLabelType;
             }
             else
             {
@@ -485,31 +486,26 @@ private void SaveInvoiceItemState()
                 invoice.Summary = tbSummary.Text;
                 invoice.InvoiceTypeId = ddlInvoiceType.SelectedValueAsInt() ?? 0;
 
-                invoice.InvoiceStatusId = (InvoiceStatus)ddlInvoiceStatus.SelectedValueAsInt();
+                invoice.InvoiceStatusId = ddlInvoiceStatus.SelectedValueAsInt();
 
 
 
                 var dueDate = dpDueDate.SelectedDate ?? RockDateTime.Now;
                 invoice.DueDate = dueDate;
 
+                int? invoiceTypeDaysLate = invoice.InvoiceType.DefaultDaysUntilLate;
+
                 if (dpLateDate.SelectedDate.HasValue)
                 {
                     // Use the value from the LateDatePicker
-                    Debug.WriteLine(dpLateDate.SelectedDate.Value);
                     invoice.LateDate = dpLateDate.SelectedDate.Value;
-                } else
-                {
-                    invoice.LateDate = null;
                 }
-
-                invoice.LateDays = numbLateDays.Text.AsIntegerOrNull() ?? 0;
-
-
-
-
-
-
-
+                else
+                {
+                    // Determine the number of days late
+                    int daysLate = numbLateDays.Text.AsIntegerOrNull() ?? invoiceTypeDaysLate ?? 0;
+                    invoice.LateDate = RockDateTime.Now.AddDays(daysLate);
+                }
 
 
                 rockContext.SaveChanges();
