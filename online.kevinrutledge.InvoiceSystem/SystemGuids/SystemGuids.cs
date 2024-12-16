@@ -34,6 +34,7 @@ namespace online.kevinrutledge.InvoiceSystem.SystemGuids
     {
         public const string InvoiceTypeList = "71EA18D3-0086-421B-8059-DF00630DBA7B";
         public const string InvoiceTypeDetail = "A03E8FB4-34C6-4FCD-B263-B8775BC37BE4";
+        public const string InvoiceList = "BCAD5374-C2AC-40CD-8FD9-867913394978";
         public const string InvoiceDetail = "61AAAEAE-BFA5-4DF8-A9AF-E9B7D01A5372";
 
     }
@@ -42,6 +43,7 @@ namespace online.kevinrutledge.InvoiceSystem.SystemGuids
     {
         public const string InvoiceTypeListBlock = "2C71E4B7-1E55-47A6-BC0E-3FE1CAB85AA9";
         public const string InvoiceTypeDetailBlock = "B03CAC59-D059-48BD-9761-ECF8A7C81026";
+        public const string InvoiceListBlock = "1782A86D-5595-4056-87B5-A7D2567D1428";
         public const string InvoiceDetailBlock = "CCFD1C06-389D-44AE-BBA0-1797B43B8103";
     }
 
