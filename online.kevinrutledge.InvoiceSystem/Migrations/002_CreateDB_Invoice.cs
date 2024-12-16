@@ -22,6 +22,7 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
                 [Summary] [nvarchar](max) NULL,
                 [DueDate] [datetime] NULL,
                 [LateDate] [datetime] NULL,
+                [LastSentDate] [datetime] Null,
 	            [Guid] [uniqueidentifier] NOT NULL,
 	            [CreatedDateTime] [datetime] NULL,
 	            [ModifiedDateTime] [datetime] NULL,
