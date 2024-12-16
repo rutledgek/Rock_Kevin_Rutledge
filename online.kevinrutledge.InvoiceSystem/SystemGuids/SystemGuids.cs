@@ -18,7 +18,7 @@ namespace online.kevinrutledge.InvoiceSystem.SystemGuids
         public const string InvoiceSystemParentPage = "50AA4AB1-873D-48CB-B47E-9C39F493B2A9";
         public const string InvoiceTypeListPage = "B13741EE-8F2D-4269-A9D1-6020E4F52730";
         public const string InvoiceTypeDetailPage = "75E3F4CF-E8F7-4D1E-88A0-F454657338C9";
-
+        public const string InvoiceListPage = "E1D051DE-17AF-49BD-B2B2-1EEE73C18D64";
         public const string InvoiceDetailPage = "4CDBBB54-F4F3-4614-B240-E73FB6B3D679";
     }
 
