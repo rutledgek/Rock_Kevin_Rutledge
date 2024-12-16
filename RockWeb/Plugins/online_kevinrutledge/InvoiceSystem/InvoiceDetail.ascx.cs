@@ -380,8 +380,6 @@ private void SaveInvoiceItemState()
             {
                 readOnly = true;
                 nbEditModeMessage.Text = EditModeMessage.ReadOnlyEditActionNotAllowed(Invoice.FriendlyTypeName);
-                Debug.WriteLine($"Show CanEdit Check Fired");
-
 
             }
 
@@ -655,7 +653,8 @@ private void SaveInvoiceItemState()
                     PersonAliasName = personAliases.TryGetValue(assignment.AuthorizedPersonAliasId, out var fullName)
                         ? fullName
                         : "Unknown",
-                    AssignedPercent = assignment.AssignedPercent
+                    AssignedPercent = assignment.AssignedPercent,
+                    TotalPaid = assignment.TotalPaid
                 }).ToList();
 
                 gAssignments.DataBind();

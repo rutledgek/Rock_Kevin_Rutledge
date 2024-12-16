@@ -78,6 +78,7 @@
                                                         HeaderText="Person" />
                                                     <Rock:RockBoundField DataField="AssignedPercent"
                                                         HeaderText="Percent Assigned" />
+                                                    <Rock:CurrencyField DataField="TotalPaid" HeaderText="Total Paid" />
                                                     <Rock:EditField OnClick="gAssignments_RowSelected" />
                                                     <Rock:DeleteField OnClick="gAssignment_Delete" />
                                                 </Columns>
