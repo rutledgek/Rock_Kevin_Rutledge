@@ -143,54 +143,11 @@ namespace online.kevinrutledge.InvoiceSystem.Model
         Scheduled = 1,
         Sent = 2,
         Paid = 3,
-        Late = 4,
-        Canceled = 5
+        PaidLate = 4,
+        Late = 5,
+        Canceled = 6
     }
 
-    public static class InvoiceStatusHelper
-    {
-        public static string GetStatusText(InvoiceStatus status)
-        {
-            switch (status)
-            {
-                case InvoiceStatus.Draft:
-                    return "Draft";
-                case InvoiceStatus.Scheduled:
-                    return "Scheduled";
-                case InvoiceStatus.Sent:
-                    return "Sent";
-                case InvoiceStatus.Paid:
-                    return "Paid";
-                case InvoiceStatus.Late:
-                    return "Late";
-                case InvoiceStatus.Canceled:
-                    return "Canceled";
-                default:
-                    return "Draft";
-            }
-        }
-
-        public static Rock.Web.UI.Controls.LabelType GetLabelType(InvoiceStatus status)
-        {
-            switch (status)
-            {
-                case InvoiceStatus.Draft:
-                    return Rock.Web.UI.Controls.LabelType.Warning;
-                case InvoiceStatus.Scheduled:
-                    return Rock.Web.UI.Controls.LabelType.Info;
-                case InvoiceStatus.Sent:
-                    return Rock.Web.UI.Controls.LabelType.Info;
-                case InvoiceStatus.Paid:
-                    return Rock.Web.UI.Controls.LabelType.Success;
-                case InvoiceStatus.Late:
-                    return Rock.Web.UI.Controls.LabelType.Danger;
-                case InvoiceStatus.Canceled:
-                    return Rock.Web.UI.Controls.LabelType.Info;
-                default:
-                    return Rock.Web.UI.Controls.LabelType.Warning;
-            }
-        }
-    }
-
+   
     #endregion
 }
