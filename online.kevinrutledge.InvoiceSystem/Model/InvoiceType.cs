@@ -81,13 +81,13 @@ namespace online.kevinrutledge.InvoiceSystem.Model
         /// Default late fee amount for invoices of this type. This value is used for all invoices of this type unless changed on the invoice.
         /// </summary>
         [DataMember]
-        public decimal DefaultLateFeeAmount { get; set; }
+        public decimal? DefaultLateFeeAmount { get; set; }
 
         /// <summary>
         /// Default late fee percentage for invoices of this type. This value is used for all invoices of this type unless changed on the invoice.
         /// </summary>
         [DataMember]
-        public decimal DefaultLateFeePercent { get; set; }
+        public decimal? DefaultLateFeePercent { get; set; }
 
         /// <summary>
         /// Gets or sets the Invoice Type Category Id.
