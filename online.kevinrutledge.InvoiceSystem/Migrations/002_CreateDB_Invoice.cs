@@ -17,7 +17,7 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
                 @" CREATE TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_Invoice]( 
 	            [Id] [int] IDENTITY(1,1) NOT NULL,
                 [InvoiceTypeId] [int] NOT NULL,
-                [InvoiceStatusId] [int] Null,
+                [InvoiceStatus] [int] Null,
                 [Name] [nvarchar](100) NOT NULL,
                 [Summary] [nvarchar](max) NULL,
                 [DueDate] [datetime] NULL,
