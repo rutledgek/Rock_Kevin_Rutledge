@@ -19,12 +19,18 @@ using Rock.UniversalSearch.IndexModels;
 using Rock.Security;
 using Rock.Transactions;
 using Rock;
+using System.ComponentModel;
+using System.Reflection;
+using Rock.Attribute;
+
 
 namespace online.kevinrutledge.InvoiceSystem.Model
 {
     [Table("_online_kevinrutledge_InvoiceSystem_Invoice")]
     // That line goes right above the class definition...
     [DataContract]
+
+
     public partial class Invoice : Model<Invoice>, IRockEntity
     {
         /// <summary>
@@ -51,13 +57,8 @@ namespace online.kevinrutledge.InvoiceSystem.Model
         [DataMember]
         public string Summary { get; set; }
 
-        /// <summary>
-        /// Gets or sets the status of the invoice.
-        /// </summary>
         [DataMember]
-        public int? InvoiceStatusId { get; set; }
-
-
+        public virtual InvoiceStatus InvoiceStatus {get; set;}
 
         /// <summary>
         /// Gets or sets the due date for the invoice.
@@ -139,15 +140,60 @@ namespace online.kevinrutledge.InvoiceSystem.Model
 
     public enum InvoiceStatus
     {
+        [CSSColor("#ffd866"), LabelType(Rock.Web.UI.Controls.LabelType.Default)]
         Draft = 0,
+
+        [CSSColor("#084298"), LabelType(Rock.Web.UI.Controls.LabelType.Info)]
         Scheduled = 1,
+
+        [CSSColor("#084298"), LabelType(Rock.Web.UI.Controls.LabelType.Info)]
         Sent = 2,
+
+        [CSSColor("#0f5132"), LabelType(Rock.Web.UI.Controls.LabelType.Success)]
         Paid = 3,
+
+        [CSSColor("#0f5132"), LabelType(Rock.Web.UI.Controls.LabelType.Success), Description("Paid Late")]
         PaidLate = 4,
+
+        [CSSColor("#842029"), LabelType(Rock.Web.UI.Controls.LabelType.Danger)]
         Late = 5,
+
+        [CSSColor("#084298"), LabelType(Rock.Web.UI.Controls.LabelType.Info)]
         Canceled = 6
     }
 
-   
+    public static class EnumExtensions
+    {
+        public static string GetDescription(this Enum value)
+        {
+            // Get the enum field
+            FieldInfo field = value.GetType().GetField(value.ToString());
+            if (field == null) return value.ToString();
+
+            // Check if the Description attribute is applied
+            DescriptionAttribute attribute = System.Attribute.GetCustomAttribute(field, typeof(DescriptionAttribute)) as DescriptionAttribute;
+
+            return attribute?.Description ?? value.ToString();
+        }
+
+        public static string GetCssColor(this Enum value)
+        {
+            if (value == null) return "#ffd866"; // Default color
+
+            FieldInfo field = value.GetType().GetField(value.ToString());
+            CSSColorAttribute attribute = field?.GetCustomAttribute<CSSColorAttribute>();
+            return attribute?.Color ?? "#ffd866"; // Default fallback
+        }
+
+        public static Rock.Web.UI.Controls.LabelType GetLabelType(this Enum value)
+        {
+            FieldInfo field = value.GetType().GetField(value.ToString());
+            LabelTypeAttribute attribute = field?.GetCustomAttribute<LabelTypeAttribute>();
+            return attribute?.LabelType ?? Rock.Web.UI.Controls.LabelType.Default; // Default fallback
+        }
+    }
+
+
+
     #endregion
 }
