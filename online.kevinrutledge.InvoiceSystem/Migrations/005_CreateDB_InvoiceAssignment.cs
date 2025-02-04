@@ -20,6 +20,7 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
 				[InvoiceId] [int] Not Null,
 				[AuthorizedPersonAliasId] [int] Not Null,
 				[AssignedPercent] [decimal](18,2) Not Null Default 1,
+                [LastSentDate] [datetime] NULL,
 	            [Guid] [uniqueidentifier] NOT NULL,
 	            [CreatedDateTime] [datetime] NULL,
 	            [ModifiedDateTime] [datetime] NULL,

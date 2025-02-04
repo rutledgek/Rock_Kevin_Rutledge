@@ -18,6 +18,7 @@ using Rock.UniversalSearch;
 using Rock.UniversalSearch.IndexModels;
 using Rock.Security;
 using Rock.Transactions;
+using Rock.Lava;
 using Rock;
 
 namespace online.kevinrutledge.InvoiceSystem.Model
@@ -25,7 +26,7 @@ namespace online.kevinrutledge.InvoiceSystem.Model
     [Table("_online_kevinrutledge_InvoiceSystem_InvoiceAssignment")]
     // That line goes right above the class definition...
     [DataContract]
-    public class InvoiceAssignment : Model<InvoiceAssignment>, IRockEntity
+    public partial class InvoiceAssignment : Model<InvoiceAssignment>, IRockEntity
     {
         #region Database Properties
 
@@ -38,6 +39,8 @@ namespace online.kevinrutledge.InvoiceSystem.Model
         [DataMember]
         public decimal AssignedPercent { get; set; }
 
+        [DataMember]
+        public DateTime? LastSentDate { get; set; }
         #endregion
 
         #region Virtual Properties
@@ -46,12 +49,9 @@ namespace online.kevinrutledge.InvoiceSystem.Model
 
         public virtual PersonAlias AuthorizedPersonAlias { get; set; }
 
-        #endregion
-
     }
-
-
-    public partial class InvoiceAssignmentConfiguration : EntityTypeConfiguration<InvoiceAssignment>
+        #endregion
+        public partial class InvoiceAssignmentConfiguration : EntityTypeConfiguration<InvoiceAssignment>
     {
         public InvoiceAssignmentConfiguration()
         {

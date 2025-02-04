@@ -19,13 +19,19 @@ using Rock.UniversalSearch.IndexModels;
 using Rock.Security;
 using Rock.Transactions;
 using Rock;
+using System.ComponentModel;
+using System.Reflection;
+using Rock.Attribute;
+
 
 namespace online.kevinrutledge.InvoiceSystem.Model
 {
     [Table("_online_kevinrutledge_InvoiceSystem_Invoice")]
     // That line goes right above the class definition...
     [DataContract]
-    public class Invoice : Model<Invoice>, IRockEntity
+
+
+    public partial class Invoice : Model<Invoice>, IRockEntity
     {
         /// <summary>
         /// Gets or sets the Id of the <see cref="Rock.Model.InvoiceType"/> that this Group is a member belongs to. This property is required.
@@ -45,115 +51,16 @@ namespace online.kevinrutledge.InvoiceSystem.Model
         [MaxLength(200)]
         public string Name { get; set; }
 
+
+
         /// <summary>
         /// Gets or sets a summary or description for the invoice.
         /// </summary>
         [DataMember]
         public string Summary { get; set; }
 
-        /// <summary>
-        /// Gets or sets the status of the invoice.
-        /// </summary>
         [DataMember]
-        public int? InvoiceStatusId { get; set; }
-
-        /// <summary>
-        /// Gets the text representation of the invoice status if the status is Draft, Scheduled, or Canceled.
-        /// </summary>
-        public InvoiceStatus InvoiceStatus
-        {
-            get
-            {
-                if (!InvoiceStatusId.HasValue)
-                {
-                    // Default to Draft if InvoiceStatusId is null
-                    return InvoiceStatus.Draft;
-                }
-
-                // Example: Logic for Sent status (commented out for now)
-                /*
-                if (InvoiceStatusId == (int)InvoiceStatus.Sent)
-                {
-                    if (SentDate.HasValue && SentDate.Value <= DateTime.Now)
-                    {
-                        return InvoiceStatus.Sent;
-                    }
-                    else
-                    {
-                        // Fallback to Draft if conditions for Sent are not met
-                        return InvoiceStatus.Draft;
-                    }
-                }
-                */
-
-                // Example: Logic for Late status (commented out for now)
-                /*
-                if (InvoiceStatusId == (int)InvoiceStatus.Late)
-                {
-                    if (DueDate.HasValue && DateTime.Now > DueDate.Value && !IsPaid)
-                    {
-                        return InvoiceStatus.Late;
-                    }
-                    else
-                    {
-                        // If not late, fallback to Scheduled or another status
-                        return InvoiceStatus.Scheduled;
-                    }
-                }
-                */
-
-                // Example: Logic for Paid status (commented out for now)
-                /*
-                if (InvoiceStatusId == (int)InvoiceStatus.Paid)
-                {
-                    if (IsPaid)
-                    {
-                        return InvoiceStatus.Paid;
-                    }
-                    else
-                    {
-                        // Fallback to Draft if not paid
-                        return InvoiceStatus.Draft;
-                    }
-                }
-                */
-
-                // Default behavior for other statuses
-                if (Enum.IsDefined(typeof(InvoiceStatus), InvoiceStatusId.Value))
-                {
-                    return (InvoiceStatus)InvoiceStatusId.Value;
-                }
-
-                // Fallback for unexpected values
-                return InvoiceStatus.Draft;
-            }
-        }
-
-        public virtual Rock.Web.UI.Controls.LabelType InvoiceStatusLabelType
-        {
-            get
-            {
-                // Map InvoiceStatus to Rock.Web.UI.Controls.LabelType
-                switch (InvoiceStatus)
-                {
-                    case InvoiceStatus.Draft:
-                        return Rock.Web.UI.Controls.LabelType.Warning;
-                    case InvoiceStatus.Scheduled:
-                        return Rock.Web.UI.Controls.LabelType.Info;
-                    case InvoiceStatus.Sent:
-                        return Rock.Web.UI.Controls.LabelType.Info;
-                    case InvoiceStatus.Paid:
-                        return Rock.Web.UI.Controls.LabelType.Success;
-                    case InvoiceStatus.Late:
-                        return Rock.Web.UI.Controls.LabelType.Danger;
-                    case InvoiceStatus.Canceled:
-                        return Rock.Web.UI.Controls.LabelType.Info;
-                    default:
-                        return Rock.Web.UI.Controls.LabelType.Default;
-                }
-            }
-        }
-
+        public virtual InvoiceStatus InvoiceStatus {get; set;}
 
         /// <summary>
         /// Gets or sets the due date for the invoice.
@@ -174,12 +81,11 @@ namespace online.kevinrutledge.InvoiceSystem.Model
         public DateTime? LateDate { get; set; }
 
 
-        /// <summary>
-        /// Gets or sets the collection of invoice items associated with this invoice.
-        /// </summary>
-        /// [LavaInclude]
-        /// public virtual ICollection<InvoiceItem> InvoiceItems { get; set; } = new List<InvoiceItem>();
+        [DataMember]
+        public DateTime? LastSentDate { get; set; }
 
+        [DataMember]
+        public decimal? LateFee { get; set; }
 
 
         #region Virtual Properties
@@ -202,6 +108,7 @@ namespace online.kevinrutledge.InvoiceSystem.Model
 
         [DataMember]
         public virtual ICollection<InvoiceItem> InvoiceItems { get; set; } = new Collection<InvoiceItem>();
+
 
         #endregion
 
@@ -238,58 +145,60 @@ namespace online.kevinrutledge.InvoiceSystem.Model
 
     public enum InvoiceStatus
     {
+        [CSSColor("#ffd866"), LabelType(Rock.Web.UI.Controls.LabelType.Default)]
         Draft = 0,
+
+        [CSSColor("#084298"), LabelType(Rock.Web.UI.Controls.LabelType.Info)]
         Scheduled = 1,
+
+        [CSSColor("#084298"), LabelType(Rock.Web.UI.Controls.LabelType.Info)]
         Sent = 2,
+
+        [CSSColor("#0f5132"), LabelType(Rock.Web.UI.Controls.LabelType.Success)]
         Paid = 3,
-        Late = 4,
-        Canceled = 5
+
+        [CSSColor("#0f5132"), LabelType(Rock.Web.UI.Controls.LabelType.Success), Description("Paid Late")]
+        PaidLate = 4,
+
+        [CSSColor("#842029"), LabelType(Rock.Web.UI.Controls.LabelType.Danger)]
+        Late = 5,
+
+        [CSSColor("#084298"), LabelType(Rock.Web.UI.Controls.LabelType.Info)]
+        Canceled = 6
     }
 
-    public static class InvoiceStatusHelper
+    public static class EnumExtensions
     {
-        public static string GetStatusText(InvoiceStatus status)
+        public static string GetDescription(this Enum value)
         {
-            switch (status)
-            {
-                case InvoiceStatus.Draft:
-                    return "Draft";
-                case InvoiceStatus.Scheduled:
-                    return "Scheduled";
-                case InvoiceStatus.Sent:
-                    return "Sent";
-                case InvoiceStatus.Paid:
-                    return "Paid";
-                case InvoiceStatus.Late:
-                    return "Late";
-                case InvoiceStatus.Canceled:
-                    return "Canceled";
-                default:
-                    return "Draft";
-            }
+            // Get the enum field
+            FieldInfo field = value.GetType().GetField(value.ToString());
+            if (field == null) return value.ToString();
+
+            // Check if the Description attribute is applied
+            DescriptionAttribute attribute = System.Attribute.GetCustomAttribute(field, typeof(DescriptionAttribute)) as DescriptionAttribute;
+
+            return attribute?.Description ?? value.ToString();
         }
 
-        public static Rock.Web.UI.Controls.LabelType GetLabelType(InvoiceStatus status)
+        public static string GetCssColor(this Enum value)
         {
-            switch (status)
-            {
-                case InvoiceStatus.Draft:
-                    return Rock.Web.UI.Controls.LabelType.Warning;
-                case InvoiceStatus.Scheduled:
-                    return Rock.Web.UI.Controls.LabelType.Info;
-                case InvoiceStatus.Sent:
-                    return Rock.Web.UI.Controls.LabelType.Info;
-                case InvoiceStatus.Paid:
-                    return Rock.Web.UI.Controls.LabelType.Success;
-                case InvoiceStatus.Late:
-                    return Rock.Web.UI.Controls.LabelType.Danger;
-                case InvoiceStatus.Canceled:
-                    return Rock.Web.UI.Controls.LabelType.Info;
-                default:
-                    return Rock.Web.UI.Controls.LabelType.Warning;
-            }
+            if (value == null) return "#ffd866"; // Default color
+
+            FieldInfo field = value.GetType().GetField(value.ToString());
+            CSSColorAttribute attribute = field?.GetCustomAttribute<CSSColorAttribute>();
+            return attribute?.Color ?? "#ffd866"; // Default fallback
+        }
+
+        public static Rock.Web.UI.Controls.LabelType GetLabelType(this Enum value)
+        {
+            FieldInfo field = value.GetType().GetField(value.ToString());
+            LabelTypeAttribute attribute = field?.GetCustomAttribute<LabelTypeAttribute>();
+            return attribute?.LabelType ?? Rock.Web.UI.Controls.LabelType.Default; // Default fallback
         }
     }
+
+
 
     #endregion
 }

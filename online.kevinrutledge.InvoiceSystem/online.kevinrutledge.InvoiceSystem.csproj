@@ -76,11 +76,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Attributes\EnumAttributes.cs" />
     <Compile Include="Migrations\002_CreateDB_Invoice.cs" />
     <Compile Include="Migrations\001_CreateDB_InvoiceType.cs" />
     <Compile Include="Migrations\003_CreateDB_InvoiceItem.cs" />
     <Compile Include="Migrations\004_CreateDB_SystemCommunications.cs" />
     <Compile Include="Migrations\005_CreateDB_InvoiceAssignment.cs" />
+    <Compile Include="Model\InvoiceAssignment_ExtensionMethods.cs" />
+    <Compile Include="Model\InvoiceAssignment_Logic.cs" />
     <Compile Include="Model\InvoiceType_Cache.cs" />
     <Compile Include="Model\InvoiceAssignment_Service.cs" />
     <Compile Include="Model\InvoiceAssignment.cs" />
@@ -89,6 +92,8 @@
     <Compile Include="Model\Invoice.cs" />
     <Compile Include="Model\InvoiceType.cs" />
     <Compile Include="Model\InvoiceType_Logic.cs" />
+    <Compile Include="Model\Invoice_ExtensionMethods.cs" />
+    <Compile Include="Model\Invoice_Logic.cs" />
     <Compile Include="Model\Invoice_Service.cs" />
     <Compile Include="Model\InvoiceType_Service.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
