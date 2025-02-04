@@ -8,6 +8,7 @@ using Rock.Lava;
 using Rock.Web.UI.Controls;
 using online.kevinrutledge.InvoiceSystem;
 using System.Diagnostics;
+using Rock.Jobs;
 
 
 namespace online.kevinrutledge.InvoiceSystem.Model
@@ -17,6 +18,38 @@ namespace online.kevinrutledge.InvoiceSystem.Model
     /// </summary>
     public partial class Invoice
     {
+
+        /* Get Transactions */
+        /// <summary>
+        /// Gets the <see cref="Rock.Model.FinancialTransactionDetail">payments</see>.
+        /// </summary>
+        /// <value>
+        /// The payments.
+        /// </value>
+        [NotMapped]
+        [LavaVisible]
+        public virtual IQueryable<FinancialTransactionDetail> Payments
+        {
+            get
+            {
+                return this.GetPayments();
+            }
+        }
+
+        /* Calculate Payment Total */
+        [NotMapped]
+        [LavaVisible]
+        public virtual decimal TotalPaid
+        {
+            get
+            {
+                return this.GetTotalPaid();
+            }
+        }
+
+
+
+        /* Calculate the Invoice Total */
 
         [NotMapped]
         [LavaVisible]
@@ -42,19 +75,22 @@ namespace online.kevinrutledge.InvoiceSystem.Model
             }
         }
 
+
+        /* Invoice Discount Total */
+
         [NotMapped]
         [LavaVisible]
         public virtual decimal InvoiceDiscountTotal
         {
             get
             {
-                if (InvoiceItems == null || !InvoiceItems.Any())
+                if (InvoiceItems.Count() == 0 || !InvoiceItems.Any())
                 {
                     return 0.0M;
                 }
 
 
-                decimal runningTotal = 0.0M;
+                decimal discountTotal = 0.0M;
 
                 foreach (var item in InvoiceItems)
                 {
@@ -66,22 +102,23 @@ namespace online.kevinrutledge.InvoiceSystem.Model
 
                     // Ensure both values are decimals
                     var totalDiscount = Math.Max((decimal)(discountAmountValue * item.Quantity), (decimal)discountPercentValue);
-                    runningTotal += totalDiscount;
+                    discountTotal += totalDiscount;
 
 
                 }
 
-                return runningTotal;
+                return discountTotal;
             }
         }
 
+        /* Invoice Tax Total */
         [NotMapped]
         [LavaVisible]
-        public virtual decimal InvoiceTotalTax
+        public virtual decimal InvoiceTaxTotal
         {
             get
             {
-                if (InvoiceItems == null || !InvoiceItems.Any())
+                if (InvoiceItems.Count() == 0 || !InvoiceItems.Any())
                 {
                     return 0.0M;
                 }
@@ -111,230 +148,130 @@ namespace online.kevinrutledge.InvoiceSystem.Model
             }
         }
 
+
+        /* Calculated Late Fee */
         [NotMapped]
         [LavaVisible]
-        public virtual decimal InvoiceTotal
+        public virtual decimal CalculatedLateFee
         {
             get
             {
-                return InvoiceItemTotal - InvoiceDiscountTotal + InvoiceTotalTax;
+                // Use the database LateFee value if it exists
+                if (this.LateFee.HasValue)
+                {
+                    return this.LateFee.Value;
+                }
+
+                // Fallback to calculated late fee
+                decimal lateFeeAmount = this.InvoiceType?.DefaultLateFeeAmount ?? 0M;
+                decimal lateFeePercent = ((this.InvoiceType?.DefaultLateFeePercent ?? 0M)/ 100) * (this.InvoiceItemTotal - this.InvoiceDiscountTotal);
+
+                // Return the greater of the flat fee or percentage-based fee
+                return Math.Max(lateFeeAmount, lateFeePercent);
             }
         }
 
-        /// <summary>
-        /// Gets the <see cref="Rock.Model.FinancialTransactionDetail">payments</see>.
-        /// </summary>
-        /// <value>
-        /// The payments.
-        /// </value>
-        [NotMapped]
-        [LavaVisible]
-        public virtual IQueryable<FinancialTransactionDetail> Payments
-        {
-            get
-            {
-                return this.GetPayments();
-            }
-        }
-        [NotMapped]
-        [LavaVisible]
-        public virtual decimal TotalPaid
-        {
-            get
-            {
-                return this.GetTotalPaid();
-            }
-        }
-        [NotMapped]
-        [LavaVisible]
 
-        public virtual decimal OutstandingBalance
+
+        /* Total Before Late Fees */
+        [NotMapped]
+        [LavaVisible]
+        public virtual decimal InvoiceTotalBeforeLateFee
         {
             get
             {
-                return InvoiceTotal - TotalPaid;
+                return InvoiceItemTotal - InvoiceDiscountTotal + InvoiceTaxTotal;
             }
         }
 
+
+        /* Calculate Is Paid */
         [NotMapped]
         [LavaVisible]
         public virtual bool IsPaid
         {
             get
             {
-                bool isPaid = false;
+                // Directly calculate OutstandingBalance instead of calling the property
+                decimal outstandingBalance = InvoiceTotalBeforeLateFee - TotalPaid;
+                return outstandingBalance <= 0;
+            }
+        }
 
-                if( OutstandingBalance <= 0 )
+        /* Calculate Is Late */
+        [NotMapped]
+        [LavaVisible]
+        public virtual bool IsLate
+        {
+            get
+            {
+                if (DueDate.HasValue && DueDate < RockDateTime.Now && !IsPaid)
                 {
-                    isPaid = true;
+                    return true;
                 }
-
-                return isPaid;
+                return false;
             }
         }
 
         [NotMapped]
         [LavaVisible]
-        public virtual bool IsLate {
-
-            get {
-
-                bool isLate = false;
-
-                if( OutstandingBalance > 0 && DueDate < RockDateTime.Now)
+        public bool ShouldIncludeLateFee
+        {
+            get
+            {
+                // Check if the invoice status is Late or Paid Late
+                if (InvoiceStatus == InvoiceStatus.Late || InvoiceStatus == InvoiceStatus.PaidLate || InvoiceStatus == InvoiceStatus.Sent && IsLate)
                 {
-                    isLate = true;
-
+                    return true;
                 }
-                return isLate;
+
+                return false;
             }
+        }
 
-            }
+       
 
-
-        /// <summary>
-        /// Gets the text representation of the invoice status if the status is Draft, Scheduled, or Canceled.
-        /// </summary>
         [NotMapped]
         [LavaVisible]
-        public InvoiceStatus InvoiceStatus
+        public virtual decimal InvoiceTotal
         {
             get
             {
-                if (!InvoiceStatusId.HasValue)
+                // Base total
+                decimal invoiceTotal = InvoiceItemTotal - InvoiceDiscountTotal + InvoiceTaxTotal;
+
+                // Include Late Fee only if conditions are met
+                if (ShouldIncludeLateFee)
                 {
-                    // Default to Draft if InvoiceStatusId is null
-                    return InvoiceStatus.Draft;
+                    invoiceTotal += CalculatedLateFee;
                 }
 
+                return invoiceTotal;
+            }
+        }
 
-                // Either the Invoice status is scheduled or the last sent date is in the future. Set it to scheduled
-                if(InvoiceStatusId == (int)InvoiceStatus.Scheduled && (LastSentDate > RockDateTime.Now || LastSentDate == null))
-                {
-                    return InvoiceStatus.Scheduled;
-                }
-
-                //Check to see if the status is scheduled and the email was sent.
-                if(InvoiceStatusId == (int)InvoiceStatus.Scheduled && LastSentDate < RockDateTime.Now)
-                {
-                        //If so and it hasn't been paid and it isn't late return sent.
-                        if(!IsPaid && !IsLate)
-                        {
-                            return InvoiceStatus.Sent;
-                        }
-
-                        //If so and it hasn't been paid but it is late, return late.
-                        if(!IsPaid && IsLate)
-                        {
-                            return InvoiceStatus.Late;
-                        }          
-
-                        //If so and it is paid, return paid.
-                        if (IsPaid)
-                        {
-                            return InvoiceStatus.Paid;
-                        }
-                }
-
-                // Example: Logic for Late status (commented out for now)
-                /*
-                if (InvoiceStatusId == (int)InvoiceStatus.Late)
-                {
-                    if (DueDate.HasValue && DateTime.Now > DueDate.Value && !IsPaid)
-                    {
-                        return InvoiceStatus.Late;
-                    }
-                    else
-                    {
-                        // If not late, fallback to Scheduled or another status
-                        return InvoiceStatus.Scheduled;
-                    }
-                }
-                */
-
-                // Example: Logic for Paid status (commented out for now)
-                /*
-                if (InvoiceStatusId == (int)InvoiceStatus.Paid)
-                {
-                    if (IsPaid)
-                    {
-                        return InvoiceStatus.Paid;
-                    }
-                    else
-                    {
-                        // Fallback to Draft if not paid
-                        return InvoiceStatus.Draft;
-                    }
-                }
-                */
-
-                // Default behavior for other statuses
-                if (Enum.IsDefined(typeof(InvoiceStatus), InvoiceStatusId.Value))
-                {
-                    return (InvoiceStatus)InvoiceStatusId.Value;
-                }
-
-                // Fallback for unexpected values
-                return InvoiceStatus.Draft;
+        
+        [NotMapped]
+        [LavaVisible]
+        public virtual decimal OutstandingBalance
+        {
+            get
+            {
+                // Directly calculate to avoid circular calls
+                return InvoiceItemTotal - InvoiceDiscountTotal + InvoiceTaxTotal + CalculatedLateFee - TotalPaid;
             }
         }
 
         [NotMapped]
-        public virtual LabelType InvoiceStatusLabelType
-        {
-            get
-            {
-                // Map InvoiceStatus to Rock.Web.UI.Controls.LabelType
-                switch (InvoiceStatus)
-                {
-                    case InvoiceStatus.Draft:
-                        return Rock.Web.UI.Controls.LabelType.Warning;
-                    case InvoiceStatus.Scheduled:
-                        return Rock.Web.UI.Controls.LabelType.Info;
-                    case InvoiceStatus.Sent:
-                        return Rock.Web.UI.Controls.LabelType.Info;
-                    case InvoiceStatus.Paid:
-                        return Rock.Web.UI.Controls.LabelType.Success;
-                    case InvoiceStatus.PaidLate:
-                        return Rock.Web.UI.Controls.LabelType.Success;
-                    case InvoiceStatus.Late:
-                        return Rock.Web.UI.Controls.LabelType.Danger;
-                    case InvoiceStatus.Canceled:
-                        return Rock.Web.UI.Controls.LabelType.Info;
-                    default:
-                        return Rock.Web.UI.Controls.LabelType.Default;
-                }
-            }
-        }
+        [LavaVisible]
+        // Virtual property to expose the CSS color
+        public string InvoiceStatusCssColor => InvoiceStatus.GetCssColor();
 
         [NotMapped]
-        public virtual string InvoiceStatusColor
-        {
-            get
-            {
-                // Map InvoiceStatus to Rock.Web.UI.Controls.LabelType
-                switch (InvoiceStatus)
-                {
-                    case InvoiceStatus.Draft:
-                        return "#ffd866";
-                    case InvoiceStatus.Scheduled:
-                        return "#084298";
-                    case InvoiceStatus.Sent:
-                        return "#084298";
-                    case InvoiceStatus.Paid:
-                        return "#0f5132";
-                    case InvoiceStatus.PaidLate:
-                        return "#0f5132";
-                    case InvoiceStatus.Late:
-                        return "#842029";
-                    case InvoiceStatus.Canceled:
-                        return "#084298";
-                    default:
-                        return "#bcbebf";
-                }
-            }
-        }
-
+        [LavaVisible]
+        // Virtual property to expose the Rock LabelType
+        public Rock.Web.UI.Controls.LabelType InvoiceStatusLabelType => InvoiceStatus.GetLabelType();
 
     }
 }
+

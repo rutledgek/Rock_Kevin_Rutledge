@@ -195,9 +195,11 @@ private void SaveInvoiceItemState()
         /// <param name="invoiceTypes">The reminder types.</param>
         private void BindInvoiceTypes()
         {
-            _allowedInvoiceTypes = GetAttributeValue(AttributeKeys.InvoiceTypes).SplitDelimitedValues().AsGuidList();
-
             var rockContext = new RockContext();
+            _allowedInvoiceTypes = GetAttributeValue(AttributeKeys.InvoiceTypes).SplitDelimitedValues().AsGuidList();
+            InvoiceTypeService invoiceTypeService = new InvoiceTypeService(rockContext);
+
+            
 
             // Fetches and filters the available invoice types for the dropdown list.
             // 1. Query all active InvoiceTypes from the database using InvoiceTypeService.
@@ -230,6 +232,7 @@ private void SaveInvoiceItemState()
                 // Only one item exists, disable the dropdown and select the single item
 
                 ddlInvoiceType.DataBind();
+                _invoiceType = invoiceTypeService.Get(invoiceTypeOptions[0].Value);
                 ddlInvoiceType.SelectedValue = invoiceTypeOptions[0].Value.ToString();
                 ddlInvoiceType.Enabled = false; // Disable the dropdown
                 hfInvoiceTypeId.Value = invoiceTypeOptions[0].Value.ToString();
@@ -248,7 +251,7 @@ private void SaveInvoiceItemState()
         private void LoadInvoiceStatusDropdown()
         {
             // Define statuses to exclude
-            var excludedStatuses = new[] { InvoiceStatus.Sent, InvoiceStatus.Paid, InvoiceStatus.Late };
+            var excludedStatuses = new[] { InvoiceStatus.Sent, InvoiceStatus.Paid, InvoiceStatus.PaidLate, InvoiceStatus.Late };
 
             // Filter out excluded statuses and prepare for dropdown binding
             var invoiceStatusList = Enum.GetValues(typeof(InvoiceStatus))
@@ -257,8 +260,9 @@ private void SaveInvoiceItemState()
                 .Select(status => new
                 {
                     Value = ((int)status).ToString(), // Enum value as string
-                    Text = status.ToString()         // Enum name
-                })
+                    Text = online.kevinrutledge.InvoiceSystem.Model.EnumExtensions.GetDescription(status)
+            
+        })
                 .ToList();
 
             // Bind to dropdown
@@ -300,11 +304,9 @@ private void SaveInvoiceItemState()
                 invoice = _invoice;
             }
 
+
             // Fetch Invoice Type
             InvoiceType invoiceType = invoiceTypeId.HasValue ? _invoiceType ?? new InvoiceTypeService(rockContext).Get(invoiceTypeId.Value) : null;
-
-
-
 
 
             if (invoiceTypeId.HasValue)
@@ -351,16 +353,18 @@ private void SaveInvoiceItemState()
             hfInvoiceId.Value = invoice?.Id.ToString() ?? "0";
             tbName.Text = invoice?.Name;
             tbSummary.Text = invoice?.Summary;
+            dpSendInvoiceDate.SelectedDateTime = invoice?.LastSentDate;
             dpDueDate.SelectedDate = invoice?.DueDate;
             dpLateDate.SelectedDate = invoice?.LateDate;
             if (invoiceTypeDaysLate.HasValue) {
                 numbLateDays.Placeholder = invoiceTypeDaysLate.ToString();
             }
 
-            if (invoice?.InvoiceStatusId != null)
+            if (invoice?.InvoiceStatus != null)
             {
-                ddlInvoiceStatus.SelectedValue = ((int)invoice.InvoiceStatusId).ToString();
-                hlblInvoiceStatus.Text = invoice.InvoiceStatus.ToString();
+                ddlInvoiceStatus.SelectedValue = ((int)invoice.InvoiceStatus).ToString();
+                var status = invoice.InvoiceStatus;
+                hlblInvoiceStatus.Text = online.kevinrutledge.InvoiceSystem.Model.EnumExtensions.GetDescription(status);
                 hlblInvoiceStatus.LabelType = invoice.InvoiceStatusLabelType;
             }
             else
@@ -409,30 +413,15 @@ private void SaveInvoiceItemState()
                 InvoiceItemState = invoice?.InvoiceItems?.ToList() ?? new List<InvoiceItem>();
             }
 
-
-            //// Populate Items State
-            //InvoiceItemState.Clear();
-            //if (invoice?.InvoiceItems != null)
-            //{
-            //    foreach (var item in invoice.InvoiceItems)
-            //    {
-            //        var itemKey = item.Guid != Guid.Empty ? item.Guid : Guid.NewGuid();
-            //        var tempState = InvoiceItemState;
-            //        tempState[itemKey] = (
-            //            Description: item.Description,
-            //            Quantity: item.Quantity.ToIntSafe(),
-            //            UnitPrice: item.UnitPrice.ToIntSafe(),
-            //            item.TaxRate,
-            //            item.DiscountAmount,
-            //            item.DiscountPercent
-            //        );
-            //        InvoiceItemState = tempState;
-
-            //    }
-
-            //}
-
-            // Bind Assignment Grid
+            if (invoice != null && invoice.IsLate)
+            {
+                litLateFee.Text = invoice.LateFee.ToString();
+            }
+            else
+            {
+                litLateFee.Text = "0"; // Optional: Handle the case where invoice is null or not late
+            }
+          
             BindAssignmentGrid();
             BindInvoiceItemsGrid();
 
@@ -467,8 +456,13 @@ private void SaveInvoiceItemState()
             InvoiceService invoiceService = new InvoiceService(rockContext);
             InvoiceAssignmentService invoiceAssignmentService = new InvoiceAssignmentService(rockContext);
             InvoiceItemService invoiceItemService = new InvoiceItemService(rockContext);
+            InvoiceTypeService invoiceTypeService = new InvoiceTypeService(rockContext);
 
             int invoiceId = int.Parse(hfInvoiceId.Value);
+            int invoiceTypeId = ddlInvoiceType.SelectedValueAsInt() ?? 0;
+
+
+            InvoiceType invoiceType = invoiceTypeService.Get(invoiceTypeId);
 
             if (invoiceId == 0)
             {
@@ -488,14 +482,22 @@ private void SaveInvoiceItemState()
             {
                 invoice.Name = tbName.Text;
                 invoice.Summary = tbSummary.Text;
-                invoice.InvoiceTypeId = ddlInvoiceType.SelectedValueAsInt() ?? 0;
+                invoice.InvoiceTypeId = invoiceType.Id;
 
-                invoice.InvoiceStatusId = ddlInvoiceStatus.SelectedValueAsInt();
-
+                var selectedValue = ddlInvoiceStatus.SelectedValueAsInt();
+                invoice.InvoiceStatus = selectedValue.HasValue
+                    ? (InvoiceStatus)selectedValue.Value
+                    : InvoiceStatus.Draft; // Default value
 
 
                 var dueDate = dpDueDate.SelectedDate ?? RockDateTime.Now;
                 invoice.DueDate = dueDate;
+
+                decimal lateFeeAmount = invoiceType.DefaultLateFeeAmount ?? 0M;
+                decimal lateFeePercent = (invoiceType.DefaultLateFeePercent ?? 0M) / 100 * invoice.InvoiceTotalBeforeLateFee;
+                invoice.LateFee = Math.Max(lateFeeAmount, lateFeePercent);
+
+
 
                 int? invoiceTypeDaysLate = invoice?.InvoiceType?.DefaultDaysUntilLate;
 
@@ -511,6 +513,15 @@ private void SaveInvoiceItemState()
                     invoice.LateDate = dueDate.AddDays(daysLate);
                 }
 
+                if(dpSendInvoiceDate.SelectedDateTime.HasValue)
+                {
+                    invoice.LastSentDate = dpSendInvoiceDate.SelectedDateTime;
+                }
+
+                else
+                {
+                    invoice.LastSentDate = RockDateTime.Now.AddHours(2);
+                }
 
                 rockContext.SaveChanges();
 
@@ -912,16 +923,17 @@ private void SaveInvoiceItemState()
 
         protected void gInvoiceItems_AddClick(object sender, EventArgs e)
         {
-            //// Clear dialog fields for adding a new Invoice Item
-            //hfInvoiceItemGuid.Value = string.Empty; // Clear the GUID for new Invoice Items
-            //tbItemDescription.Text = string.Empty;
-            //numbUnitPrice.Text = string.Empty;
-            //numbQuantity.Text = "1"; // Default quantity
-            //numbTaxPercent.Text = string.Empty;
-            //numbDiscountAmount.Text = string.Empty;
-            //numbDiscountPercent.Text = string.Empty;
+            // Clear dialog fields for adding a new Invoice Item
+            hfInvoiceItemGuid.Value = string.Empty; // Clear the GUID for new Invoice Items
+            tbItemDescription.Text = string.Empty;
+            numbUnitPrice.Text = string.Empty;
+            numbQuantity.Text = "1"; // Default quantity
+            numbTaxPercent.Placeholder = _invoiceType?.DefaultTaxRate.ToString("F2") ?? string.Empty;
 
-         
+            numbDiscountAmount.Text = string.Empty;
+            numbDiscountPercent.Text = string.Empty;
+
+
 
             // Show dialog
             ShowDialog(Dialogs.InvoiceItem);
@@ -937,11 +949,13 @@ private void SaveInvoiceItemState()
             dlgInvoiceItem.SaveButtonText = "Save Changes";
             if (selectedItem != null)
             {
+
+                decimal taxRate = selectedItem.TaxRate ?? _invoiceType?.DefaultTaxRate ?? 0M;
                 // Prefill dialog fields with the selected item's values
                 tbItemDescription.Text = selectedItem.Description;
                 numbUnitPrice.Text = selectedItem.UnitPrice.ToStringOrDefault("F2"); // Format as decimal with 2 places
                 numbQuantity.Text = selectedItem.Quantity.ToString();
-                numbTaxPercent.Text = selectedItem.TaxRate?.ToString("F2") ?? string.Empty; // Handle nullable decimal
+                numbTaxPercent.Placeholder = _invoiceType?.DefaultTaxRate.ToString("F2") ?? string.Empty;
                 numbDiscountAmount.Text = selectedItem.DiscountAmount?.ToString("F2") ?? string.Empty; // Handle nullable decimal
                 numbDiscountPercent.Text = selectedItem.DiscountPercent?.ToString("F2") ?? string.Empty; // Optional discount percentage
 
@@ -966,64 +980,15 @@ private void SaveInvoiceItemState()
             }
         }
 
-        //protected void btnSaveInvoiceItem_Click(object sender, EventArgs e)
-        //{
-        //    var description = tbItemDescription.Text;
-        //    var unitPrice = numbUnitPrice.Text.AsDecimal();
-        //    var quantity = numbQuantity.Text.AsInteger();
-        //    var taxPercent = numbTaxPercent.Text.AsDecimalOrNull();
-        //    var discountAmount = numbDiscountAmount.Text.AsDecimalOrNull();
-        //    var discountPercent = numbDiscountPercent.Text.AsDecimalOrNull();
-
-        //    if (!string.IsNullOrWhiteSpace(description) && quantity > 0 && unitPrice >= 0)
-        //    {
-        //        Guid invoiceItemKey;
-
-        //        // Edit existing item if GUID exists
-        //        if (!string.IsNullOrWhiteSpace(hfInvoiceItemGuid.Value) && Guid.TryParse(hfInvoiceItemGuid.Value, out invoiceItemKey))
-        //        {
-        //            var existingItem = InvoiceItemState.FirstOrDefault(item => item.Guid == invoiceItemKey);
-        //            if (existingItem != null)
-        //            {
-        //                existingItem.Description = description;
-        //                existingItem.UnitPrice = unitPrice;
-        //                existingItem.Quantity = quantity;
-        //                existingItem.TaxRate = taxPercent;
-        //                existingItem.DiscountAmount = discountAmount;
-        //                existingItem.DiscountPercent = discountPercent;
-        //            }
-        //        }
-        //        else
-        //        {
-        //            // Add a new item
-        //            InvoiceItemState.Add(new InvoiceItem
-        //            {
-        //                Guid = Guid.NewGuid(),
-        //                Description = description,
-        //                UnitPrice = unitPrice,
-        //                Quantity = quantity,
-        //                TaxRate = taxPercent,
-        //                DiscountAmount = discountAmount,
-        //                DiscountPercent = discountPercent
-        //            });
-        //        }
-        //    }
-
-        //    HideDialog();
-        //    BindInvoiceItemsGrid(); // Refresh the grid after saving
-        //}
-
-
-
-
-
-
         #endregion
 
         #region Helper Methods
 
         protected void btnSaveInvoiceItem_Click(object sender, EventArgs e)
         {
+            var rockContext = new RockContext();
+            InvoiceTypeService invoiceTypeService = new InvoiceTypeService(rockContext);
+
             var description = tbItemDescription.Text;
             var quantity = numbQuantity.Text.AsInteger();
             var unitPrice = numbUnitPrice.Text.AsDecimal();
@@ -1073,6 +1038,10 @@ private void SaveInvoiceItemState()
 
         protected void BindInvoiceItemsGrid()
         {
+            var rockContext = new RockContext();
+            InvoiceTypeService invvoiceTypeService = new InvoiceTypeService(rockContext);
+
+
             var dataSource = new List<dynamic>();
 
             decimal subtotal = 0;
@@ -1080,6 +1049,12 @@ private void SaveInvoiceItemState()
             decimal preTaxTotal = 0;
             decimal taxTotal = 0;  
             decimal finalTotal = 0;
+
+            if (_invoiceType == null)
+            {
+                _invoiceType = invvoiceTypeService.Get((int)ddlInvoiceType.SelectedValueAsInt());
+
+            }
 
             // Iterate through the list of InvoiceItems
             foreach (var item in InvoiceItemState)
@@ -1092,11 +1067,12 @@ private void SaveInvoiceItemState()
 
                 // Ensure both values are decimals
                 var totalDiscount = Math.Max((decimal)(discountAmountValue * item.Quantity), (decimal)discountPercentValue);
-                Debug.WriteLine(totalDiscount);
                 var priceAfterDiscount = totalPrice - totalDiscount;
 
                 // Calculate tax
-                var taxAmount = priceAfterDiscount * (item.TaxRate ?? 0) / 100;
+                decimal taxRate = item.TaxRate ?? (_invoiceType?.DefaultTaxRate ?? 0M);
+                decimal taxAmount = (decimal)(priceAfterDiscount * (taxRate / 100));
+
 
                 // Aggregate values
                 subtotal += (decimal)totalPrice;
@@ -1129,7 +1105,28 @@ private void SaveInvoiceItemState()
             litDiscountTotal.Text = discountTotal.ToString("C");
             litInvoicePreTaxTotal.Text = preTaxTotal.ToString("C");
             litTaxTotal.Text = taxTotal.ToString("C");
+
+            if(_invoice?.ShouldIncludeLateFee == true)
+            {
+                decimal lateFee = _invoice?.ShouldIncludeLateFee == true ? _invoice.CalculatedLateFee : 0M;
+                litLateFee.Text = lateFee.ToString("C");
+                finalTotal += lateFee;
+
+
+                if(_invoice?.InvoiceStatus == InvoiceStatus.Sent)
+                {
+                    hlblInvoiceStatus.LabelType = InvoiceStatus.Late.GetLabelType();
+                    hlblInvoiceStatus.Text = online.kevinrutledge.InvoiceSystem.Model.EnumExtensions.GetDescription(InvoiceStatus.Late);
+
+                }
+            }
+            else
+            {
+                divLateFee.Visible = false;
+            }
+
             litInvoiceFinalTotal.Text = finalTotal.ToString("C");
+
 
             // Bind data to grid
             gInvoiceItems.DataSource = dataSource;

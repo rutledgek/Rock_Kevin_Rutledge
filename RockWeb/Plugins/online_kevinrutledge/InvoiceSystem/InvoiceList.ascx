@@ -11,7 +11,7 @@
 
         <Rock:Grid ID="gInvoices" runat="server" AllowSorting="true" OnRowSelected="gInvoiceTypes_Edit" TooltipField="Description">
             <Columns>
-                <Rock:ColorField DataField="InvoiceStatusColor" ToolTipDataField="DefinedValueTypeName" HeaderText="" />
+                <Rock:ColorField DataField="InvoiceStatusCssColor" ToolTipDataField="DefinedValueTypeName" HeaderText="" />
                 <asp:BoundField DataField="Name" HeaderText="Invoice Name" SortExpression="Name" />
                 <Rock:DateField DataField="DueDate" HeaderText="Invoice Due Date" SortExpression="DueDate" />
                 <Rock:DateField DataField="LateDate" HeaderText="Invoice Late Date" SortExpression="LateDate" />

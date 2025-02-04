@@ -51,6 +51,8 @@ namespace online.kevinrutledge.InvoiceSystem.Model
         [MaxLength(200)]
         public string Name { get; set; }
 
+
+
         /// <summary>
         /// Gets or sets a summary or description for the invoice.
         /// </summary>
@@ -82,6 +84,8 @@ namespace online.kevinrutledge.InvoiceSystem.Model
         [DataMember]
         public DateTime? LastSentDate { get; set; }
 
+        [DataMember]
+        public decimal? LateFee { get; set; }
 
 
         #region Virtual Properties
@@ -104,6 +108,7 @@ namespace online.kevinrutledge.InvoiceSystem.Model
 
         [DataMember]
         public virtual ICollection<InvoiceItem> InvoiceItems { get; set; } = new Collection<InvoiceItem>();
+
 
         #endregion
 

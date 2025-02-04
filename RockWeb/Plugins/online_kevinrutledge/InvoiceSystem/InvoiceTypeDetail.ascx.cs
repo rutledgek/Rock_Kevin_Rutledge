@@ -199,8 +199,7 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
 
             acctpDefaultFinancialAccount.SetValue(invoiceType.DefaultFinancialAccountId);
             numbTaxRate.Text = (invoiceType.DefaultTaxRate * 100).ToString("0.##");
-            numbLateFeeAmount.Text = invoiceType.DefaultLateFeeAmount.ToString("0.##");
-            numbLateFeePercent.Text = (invoiceType.DefaultLateFeePercent * 100).ToString("0.##");
+
 
 
             if (invoiceType.InvoiceFromPersonAliasId != null)
@@ -300,9 +299,9 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
 
 
             invoiceType.DefaultFinancialAccountId = acctpDefaultFinancialAccount.SelectedValueAsInt();
-            invoiceType.DefaultTaxRate = numbTaxRate.Text.AsDecimal() * 0.01m;
-            invoiceType.DefaultLateFeeAmount = numbLateFeeAmount.Text.AsDecimal();
-            invoiceType.DefaultLateFeePercent = numbLateFeePercent.Text.AsDecimal() * 0.01m;
+            invoiceType.DefaultTaxRate = numbTaxRate.Text.AsDecimal();
+            invoiceType.DefaultLateFeeAmount = numbLateFeeAmount.Text.AsDecimalOrNull();
+            invoiceType.DefaultLateFeePercent = numbLateFeePercent.Text.AsDecimal();
             invoiceType.PaymentPageId = pgPaymentPage.SelectedValueAsInt();
 
 

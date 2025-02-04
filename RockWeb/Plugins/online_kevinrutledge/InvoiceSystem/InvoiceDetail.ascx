@@ -107,9 +107,11 @@
                                             </div>
                                         </div>
 
-                                        <div class="col-lg-12 col-md-12">
+                                        <div class="col-lg-6 col-md-6">
                                             <Rock:DatePicker ID="dpDueDate" runat="server" Label="Due Date" Required="true" />
-                                            <hr />
+                                            
+                                            
+                                            <Rock:DateTimePicker ID="dpSendInvoiceDate" runat="server" Label="Send InvoiceDate" Required="false" Help="If you lave this field blank. The invoice will be sent the next itme the job runs." />
                                         </div>
 
                                         <div class="col-lg-4 col-md-12">
@@ -167,25 +169,45 @@
                                 <h1 class="panel-title">Invoice Summary</h1>
                             </div>
                             <div class="panel-body">
-                                <strong>Invoice Item Count: </strong>
-                                <asp:Literal ID="litInvoiceItemCount" runat="server" /><br />
-                                <strong>Item Subtotal: </strong>
-                                <asp:Literal ID="litInvoiceSubtotal" runat="server" />
-                                <br />
-                                <strong>Discount Total: </strong>
-                                <asp:Literal ID="litDiscountTotal" runat="server" />
-                                <br />
-                                <strong>Invoice Pre-Tax Total:</strong>
-                                <asp:Literal ID="litInvoicePreTaxTotal" runat="server" />
-                                <br />
-                                <strong>Tax: </strong>
-                                <asp:Literal ID="litTaxTotal" runat="server" />
-                                <br />
-                                <strong>Invoice Total: </strong>
-                                <asp:Literal ID="litInvoiceFinalTotal" runat="server" />
-                                <br />
+                                <div class="panel-body">
+                                    <div id="divInvoiceItemCount" runat="server">
+                                        <strong>Invoice Item Count: </strong>
+                                        <asp:Literal ID="litInvoiceItemCount" runat="server" />
+                                        <br />
+                                    </div>
+                                    <div id="divInvoiceSubtotal" runat="server">
+                                        <strong>Item Subtotal: </strong>
+                                        <asp:Literal ID="litInvoiceSubtotal" runat="server" />
+                                        <br />
+                                    </div>
+                                    <div id="divDiscountTotal" runat="server">
+                                        <strong>Discount Total: </strong>
+                                        <asp:Literal ID="litDiscountTotal" runat="server" />
+                                        <br />
+                                    </div>
+                                    <div id="divInvoicePreTaxTotal" runat="server">
+                                        <strong>Invoice Pre-Tax Total: </strong>
+                                        <asp:Literal ID="litInvoicePreTaxTotal" runat="server" />
+                                        <br />
+                                    </div>
+                                    <div id="divTaxTotal" runat="server">
+                                        <strong>Tax: </strong>
+                                        <asp:Literal ID="litTaxTotal" runat="server" />
+                                        <br />
+                                    </div>
+                                    <div id="divLateFee" runat="server">
+                                        <strong>Late Fee: </strong>
+                                        <asp:Literal ID="litLateFee" runat="server" />
+                                        <br />
+                                    </div>
+                                    <div id="divInvoiceFinalTotal" runat="server">
+                                        <strong>Invoice Total: </strong>
+                                        <asp:Literal ID="litInvoiceFinalTotal" runat="server" />
+                                        <br />
+                                    </div>
+                                </div>
                             </div>
-                            </>
+                            
 
                         </div>
                     </div>

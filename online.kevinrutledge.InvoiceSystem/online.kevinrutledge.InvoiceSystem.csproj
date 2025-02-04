@@ -76,6 +76,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Attributes\EnumAttributes.cs" />
     <Compile Include="Migrations\002_CreateDB_Invoice.cs" />
     <Compile Include="Migrations\001_CreateDB_InvoiceType.cs" />
     <Compile Include="Migrations\003_CreateDB_InvoiceItem.cs" />
