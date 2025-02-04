@@ -4,28 +4,19 @@ using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Entity.ModelConfiguration;
-using System.Linq;
 using System.Runtime.Serialization;
-
+using Rock;
 using Rock.Data;
 using Rock.Model;
-
-
-
-
 using Rock.Web.Cache;
-using Rock.UniversalSearch;
-using Rock.UniversalSearch.IndexModels;
-using Rock.Security;
-using Rock.Transactions;
-using Rock;
 
 namespace online.kevinrutledge.InvoiceSystem.Model
 {
     [Table("_online_kevinrutledge_InvoiceSystem_InvoiceType")]
     // That line goes right above the class definition...
     [DataContract]
-    public class InvoiceType : Model<InvoiceType>, IRockEntity
+    [Rock.SystemGuid.EntityTypeGuid(online.kevinrutledge.InvoiceSystem.SystemGuids.EntityTypeGuids.Invoice_Type)]
+    public partial class InvoiceType : Model<InvoiceType>, IRockEntity, ICacheable
     {
         /// <summary>
         /// Gets or sets the name of the Invoice Type.
@@ -90,13 +81,13 @@ namespace online.kevinrutledge.InvoiceSystem.Model
         /// Default late fee amount for invoices of this type. This value is used for all invoices of this type unless changed on the invoice.
         /// </summary>
         [DataMember]
-        public decimal DefaultLateFeeAmount { get; set; }
+        public decimal? DefaultLateFeeAmount { get; set; }
 
         /// <summary>
         /// Default late fee percentage for invoices of this type. This value is used for all invoices of this type unless changed on the invoice.
         /// </summary>
         [DataMember]
-        public decimal DefaultLateFeePercent { get; set; }
+        public decimal? DefaultLateFeePercent { get; set; }
 
         /// <summary>
         /// Gets or sets the Invoice Type Category Id.
@@ -177,18 +168,23 @@ namespace online.kevinrutledge.InvoiceSystem.Model
         /// </summary>
         public int? LateNoticeSystemCommunicationId { get; set; }
 
+        [DataMember]
+        public int? PaymentPageId { get; set; }
 
+        private Dictionary<string, string> _supportedActions;
 
-
-
-
-
-
-
-
-        #region Virtual Properties
+        public override Dictionary<string, string> SupportedActions
+        {
+            get
+            {
+                var supportedActions = base.SupportedActions;
+                supportedActions.AddOrReplace("ManageInvoices", "The roles and/or users that have the ability to manage invoices of this type. ");
+                return supportedActions;
+            }
+        }
+  #region Virtual Properties
         public virtual Category Category { get; set; }
-        #endregion
+
 
         public virtual FinancialAccount FinancialAccount { get; set; }
 
@@ -201,7 +197,9 @@ namespace online.kevinrutledge.InvoiceSystem.Model
 
         public virtual PersonAlias LateNoticeFromPersonAlias { get; set; }
 
+        public virtual Page PaymentPage {  get; set; }
 
+        #endregion
     }
 
     public partial class InvoiceTypeConfiguration : EntityTypeConfiguration<InvoiceType>
@@ -216,7 +214,7 @@ namespace online.kevinrutledge.InvoiceSystem.Model
             this.HasOptional(p => p.FinancialAccount).WithMany().HasForeignKey(p => p.DefaultFinancialAccountId).WillCascadeOnDelete(false);
             this.HasOptional(p => p.InvoiceSystemCommunication).WithMany().HasForeignKey(p => p.InvoiceSystemCommunicationId).WillCascadeOnDelete(false);
             this.HasOptional(p => p.LateNoticeSystemCommunication).WithMany().HasForeignKey(p => p.LateNoticeSystemCommunicationId).WillCascadeOnDelete(false);
-
+            this.HasOptional(p => p.PaymentPage).WithMany().HasForeignKey(p => p.PaymentPageId).WillCascadeOnDelete(false);
             this.HasOptional(p => p.InvoiceFromPersonAlias).WithMany().HasForeignKey(p => p.InvoiceFromPersonAliasId).WillCascadeOnDelete(false);
             this.HasOptional(p => p.LateNoticeFromPersonAlias).WithMany().HasForeignKey(p => p.LateNoticeFromPersonAliasId).WillCascadeOnDelete(false);
 
