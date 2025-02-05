@@ -1,4 +1,4 @@
-﻿<%@ Control Language="C#" AutoEventWireup="true" CodeFile="InvoiceList.ascx.cs" Inherits="RockWeb.Plugins.online_kevinrutledge.InvoiceSystem.InvoiceTypeList" %>
+﻿<%@ Control Language="C#" AutoEventWireup="true" CodeFile="InvoiceList.ascx.cs" Inherits="RockWeb.Plugins.online_kevinrutledge.InvoiceSystem.InvoiceList" %>
 <asp:UpdatePanel ID="upnlContent" runat="server">
     
     <ContentTemplate>

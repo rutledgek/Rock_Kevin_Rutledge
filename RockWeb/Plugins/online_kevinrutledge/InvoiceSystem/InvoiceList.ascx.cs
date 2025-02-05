@@ -18,9 +18,9 @@ using online.kevinrutledge.InvoiceSystem.Cache;
 
 namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
 {
-    [DisplayName("Invoice Type List")]
+    [DisplayName("Invoice List")]
     [Category("online_kevinrutledge > Invoice System")]
-    [Description("List of all Invoice Types.")]
+    [Description("List of all Invoices.")]
 
     [LinkedPage("Detail Page","",true, online.kevinrutledge.InvoiceSystem.SystemGuids.PageGuids.InvoiceDetailPage)]
     [CustomCheckboxListField("Invoice Types",
@@ -28,7 +28,7 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
         ListSource = "SELECT [Guid] AS [Value], [Name] AS [Text] FROM [_online_kevinrutledge_InvoiceSystem_InvoiceType] where [IsActive] = 1",
         Key = AttributeKeys.InvoiceTypes,
         Order = 0)]
-    public partial class InvoiceTypeList : Rock.Web.UI.RockBlock
+    public partial class InvoiceList : Rock.Web.UI.RockBlock
     {
         #region Constants
         private static class AttributeKeys
@@ -215,35 +215,7 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
 
 
 
-        protected void gInvoiceTypes_Delete(object sender, RowEventArgs e)
-        {
-            var rockContext = new RockContext();
-            var invoiceTypeService = new InvoiceTypeService( rockContext );
-            var invoiceType = invoiceTypeService.Get((int)e.RowKeyValue);
-            if (invoiceType != null)
-            {
 
-                int invoiceTypeId = invoiceType.Id;
-                if( !invoiceType.IsAuthorized( Authorization.ADMINISTRATE, CurrentPerson))
-                {
-                    mdGridWarning.Show("Sorry, you are not authorized to delete this Invoice Type.", ModalAlertType.Alert);
-                    return;
-                }
-                string errorMessage;
-                if (!invoiceTypeService.CanDelete(invoiceType, out errorMessage))
-                {
-                    mdGridWarning.Show(errorMessage, ModalAlertType.Information);
-                    return;
-                }
-
-
-                invoiceTypeService.Delete(invoiceType);
-                rockContext.SaveChanges();
-                InvoiceTypeCache.Remove(invoiceTypeId);
-            }
-
-            BindGrid();
-        }
 
 
         protected void gInvoiceTypes_GridRebind(object sender, EventArgs e)
