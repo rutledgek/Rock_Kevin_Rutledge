@@ -923,12 +923,18 @@ private void SaveInvoiceItemState()
 
         protected void gInvoiceItems_AddClick(object sender, EventArgs e)
         {
+            var rockContext = new RockContext();
+            InvoiceTypeService invoiceTypeService = new InvoiceTypeService(rockContext);
+
+            // Fetch Invoice Type
+            InvoiceType invoiceType = invoiceTypeService.Get((int)ddlInvoiceType.SelectedValueAsInt());
+
             // Clear dialog fields for adding a new Invoice Item
             hfInvoiceItemGuid.Value = string.Empty; // Clear the GUID for new Invoice Items
             tbItemDescription.Text = string.Empty;
             numbUnitPrice.Text = string.Empty;
             numbQuantity.Text = "1"; // Default quantity
-            numbTaxPercent.Placeholder = _invoiceType?.DefaultTaxRate.ToString("F2") ?? string.Empty;
+            numbTaxPercent.Placeholder = invoiceType?.DefaultTaxRate.ToString("F2") ?? string.Empty;
 
             numbDiscountAmount.Text = string.Empty;
             numbDiscountPercent.Text = string.Empty;
@@ -949,13 +955,18 @@ private void SaveInvoiceItemState()
             dlgInvoiceItem.SaveButtonText = "Save Changes";
             if (selectedItem != null)
             {
+                var rockContext = new RockContext();
+                InvoiceTypeService invoiceTypeService = new InvoiceTypeService(rockContext);
 
-                decimal taxRate = selectedItem.TaxRate ?? _invoiceType?.DefaultTaxRate ?? 0M;
+                // Fetch Invoice Type
+                InvoiceType invoiceType = invoiceTypeService.Get((int)ddlInvoiceType.SelectedValueAsInt());
+
+                decimal taxRate = selectedItem.TaxRate ?? invoiceType?.DefaultTaxRate ?? 0M;
                 // Prefill dialog fields with the selected item's values
                 tbItemDescription.Text = selectedItem.Description;
                 numbUnitPrice.Text = selectedItem.UnitPrice.ToStringOrDefault("F2"); // Format as decimal with 2 places
                 numbQuantity.Text = selectedItem.Quantity.ToString();
-                numbTaxPercent.Placeholder = _invoiceType?.DefaultTaxRate.ToString("F2") ?? string.Empty;
+                numbTaxPercent.Placeholder = invoiceType?.DefaultTaxRate.ToString("F2") ?? string.Empty;
                 numbDiscountAmount.Text = selectedItem.DiscountAmount?.ToString("F2") ?? string.Empty; // Handle nullable decimal
                 numbDiscountPercent.Text = selectedItem.DiscountPercent?.ToString("F2") ?? string.Empty; // Optional discount percentage
 

@@ -111,7 +111,7 @@
                                             <Rock:DatePicker ID="dpDueDate" runat="server" Label="Due Date" Required="true" />
                                             
                                             
-                                            <Rock:DateTimePicker ID="dpSendInvoiceDate" runat="server" Label="Send InvoiceDate" Required="false" Help="If you lave this field blank. The invoice will be sent the next itme the job runs." />
+                                            <Rock:DateTimePicker ID="dpSendInvoiceDate" runat="server" Label="Send Invoice Date and Time" Required="false" Help="If you lave this field blank. The invoice will be sent the next itme the job runs." />
                                         </div>
 
                                         <div class="col-lg-4 col-md-12">
@@ -121,7 +121,7 @@
                                         <div class="col-lg-4 col-md-12">
                                             <Rock:NumberBox ID="numbLateDays" runat="server"
                                                 Default="5"
-                                                Label="Number of Days After Due Date"
+                                                Label="Number of Days After Due Date Invoice is late"
                                                 Help="This is the number of days after the Due Date the invoice should be considered late.  This will be used to calculate the due date." />
 
                                         </div>
