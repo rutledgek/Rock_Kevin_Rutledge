@@ -70,7 +70,7 @@ namespace online.kevinrutledge.InvoiceSystem.Model
         /// Gets or sets a Schedule Id for the Scheduled Invoice.
         /// </summary>
         [DataMember(IsRequired = true)]
-        public int ScheduleId {  get; set; }
+        public int? ScheduleId {  get; set; }
 
         /// <summary>
         /// Gets or sets the number of days before the due date the invoice should be sent.
