@@ -78,6 +78,12 @@ namespace online.kevinrutledge.InvoiceSystem.Model
         public int? DefaultDaysUntilLate { get; set; }
 
         /// <summary>
+        /// Specifies the number of days before the due date to send invoices of this type.
+        /// </summary>
+        [DataMember]
+        public int? DefaultSendInvoiceDaysBeforeDue { get; set; }
+
+        /// <summary>
         /// Default late fee amount for invoices of this type. This value is used for all invoices of this type unless changed on the invoice.
         /// </summary>
         [DataMember]
