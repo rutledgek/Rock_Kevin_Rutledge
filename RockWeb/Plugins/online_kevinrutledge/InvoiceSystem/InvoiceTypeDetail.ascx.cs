@@ -195,10 +195,11 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
             tbCssIcon.Text = invoiceType.IconCssClass;
             tbInvoiceTerm.Text = invoiceType.InvoiceTerm;
             tbInvoiceItemTerm.Text = invoiceType.InvoiceItemTerm;
+            rsSendInvoiceDaysBefore.SelectedValue = invoiceType.DefaultSendInvoiceDaysBeforeDue;
             rsDaysUntilLate.SelectedValue = invoiceType.DefaultDaysUntilLate;
 
             acctpDefaultFinancialAccount.SetValue(invoiceType.DefaultFinancialAccountId);
-            numbTaxRate.Text = (invoiceType.DefaultTaxRate * 100).ToString("0.##");
+            numbTaxRate.Text = (invoiceType.DefaultTaxRate ).ToString("0.##");
 
 
 
@@ -294,6 +295,7 @@ namespace RockWeb.Plugins.online_kevinrutledge.InvoiceSystem
             invoiceType.InvoiceTerm = tbInvoiceTerm.Text;
             invoiceType.InvoiceItemTerm = tbInvoiceItemTerm.Text;
             invoiceType.CategoryId = catpInvoiceTypeCategory.SelectedValueAsId();
+            invoiceType.DefaultSendInvoiceDaysBeforeDue = rsSendInvoiceDaysBefore.SelectedValue;
             invoiceType.DefaultDaysUntilLate = rsDaysUntilLate.SelectedValue;
 
 
