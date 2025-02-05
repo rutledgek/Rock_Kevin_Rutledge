@@ -24,6 +24,7 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
 	            [IconCssClass] nvarchar(100) null,
                 [DefaultFinancialAccountId] [int] Null,
                 [DefaultTaxRate] [decimal](18, 2) NULL Default 0,
+                [DefaultSendInvoiceDaysBeforeDue] int NULL,
 	            [DefaultDaysUntilLate] int Null,
 	            [DefaultLateFeeAmount] [decimal](18, 2) Null default 0,
 	            [DefaultLateFeePercent] [decimal](5, 2) NULL Default 0,
