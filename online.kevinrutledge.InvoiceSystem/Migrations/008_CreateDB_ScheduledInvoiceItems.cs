@@ -17,7 +17,7 @@ namespace online.kevinrutledge.InvoiceSystem.Migrations
                 @"
                 CREATE TABLE [dbo].[_online_kevinrutledge_InvoiceSystem_ScheduledInvoiceItem](
                     [Id] [int] IDENTITY(1,1) NOT NULL,
-                    [ScheduledScheduledInvoiceId] [int] NOT NULL,
+                    [ScheduledInvoiceId] [int] NOT NULL,
                     [Description] [nvarchar](max) NULL,
                     [Quantity] [int] NOT NULL Default 1,
                     [UnitPrice] [decimal](18, 2) NOT NULL,
