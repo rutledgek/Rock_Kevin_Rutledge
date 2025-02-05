@@ -82,6 +82,9 @@
     <Compile Include="Migrations\003_CreateDB_InvoiceItem.cs" />
     <Compile Include="Migrations\004_CreateDB_SystemCommunications.cs" />
     <Compile Include="Migrations\005_CreateDB_InvoiceAssignment.cs" />
+    <Compile Include="Migrations\006_CreateDB_SheduledInvoice.cs" />
+    <Compile Include="Migrations\007_CreateDB_ScheduledInvoiceAssignments.cs" />
+    <Compile Include="Migrations\008_CreateDB_ScheduledInvoiceItems.cs" />
     <Compile Include="Model\InvoiceAssignment_ExtensionMethods.cs" />
     <Compile Include="Model\InvoiceAssignment_Logic.cs" />
     <Compile Include="Model\InvoiceType_Cache.cs" />
@@ -96,6 +99,13 @@
     <Compile Include="Model\Invoice_Logic.cs" />
     <Compile Include="Model\Invoice_Service.cs" />
     <Compile Include="Model\InvoiceType_Service.cs" />
+    <Compile Include="Model\ScheduledInvoice.cs" />
+    <Compile Include="Model\ScheduledInvoiceAssignment.cs" />
+    <Compile Include="Model\ScheduledInvoiceAssignment_Logic.cs" />
+    <Compile Include="Model\ScheduledInvoiceItem.cs" />
+    <Compile Include="Model\ScheduledInvoiceItem_Service.cs" />
+    <Compile Include="Model\ScheduledInvoice_Logic.cs" />
+    <Compile Include="Model\ScheduledInvoice_Service.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SystemGuids\SystemGuids.cs" />
   </ItemGroup>
