@@ -102,6 +102,7 @@
     <Compile Include="Model\ScheduledInvoice.cs" />
     <Compile Include="Model\ScheduledInvoiceAssignment.cs" />
     <Compile Include="Model\ScheduledInvoiceAssignment_Logic.cs" />
+    <Compile Include="Model\ScheduledInvoiceAssignment_Service.cs" />
     <Compile Include="Model\ScheduledInvoiceItem.cs" />
     <Compile Include="Model\ScheduledInvoiceItem_Service.cs" />
     <Compile Include="Model\ScheduledInvoice_Logic.cs" />
